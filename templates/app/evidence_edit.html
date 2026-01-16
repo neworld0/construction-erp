@@ -1,0 +1,76 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}보고서 수정{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --card: #101a2b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --border: rgba(148, 163, 184, 0.2);
+    --warning: #f59e0b;
+  }
+  .container {
+    display: grid;
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  }
+  form {
+    display: grid;
+    gap: 12px;
+  }
+  label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  input,
+  textarea,
+  button {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    width: 100%;
+    background: transparent;
+    color: var(--text);
+  }
+  button {
+    background: var(--primary);
+    color: #0b1220;
+    border: 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .notice {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    font-size: 13px;
+  }
+</style>
+
+<div class="container">
+  <div class="card">
+    <h3>보고서 수정</h3>
+    {% if error %}
+    <div class="notice">{{ error }}</div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <label for="title">제목</label>
+      <input id="title" name="title" value="{{ evidence.title }}" required />
+      <label for="description">설명</label>
+      <textarea id="description" name="description" rows="3">{{ evidence.description }}</textarea>
+      <label for="file">첨부 파일 추가</label>
+      <input id="file" type="file" name="file" />
+      <button type="submit">저장</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

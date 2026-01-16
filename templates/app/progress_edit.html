@@ -1,0 +1,88 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}진행률 수정{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --card: #101a2b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --border: rgba(148, 163, 184, 0.2);
+  }
+  .container {
+    display: grid;
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  }
+  form {
+    display: grid;
+    gap: 12px;
+  }
+  label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  input,
+  select,
+  textarea,
+  button {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    width: 100%;
+    background: transparent;
+    color: var(--text);
+  }
+  button {
+    background: var(--primary);
+    color: #0b1220;
+    border: 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .form-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 4px 0 12px;
+  }
+</style>
+
+<div class="container">
+  <div class="card">
+    <h3>진행률 수정</h3>
+    <p class="subtitle">제출 전 임시저장 항목을 수정할 수 있습니다.</p>
+    <form method="post">
+      {% csrf_token %}
+      <label for="task_id">태스크</label>
+      <select id="task_id" name="task_id" required>
+        {% for task in tasks %}
+        <option value="{{ task.id }}" {% if task.id == progress.task_id %}selected{% endif %}>{{ task.name }}</option>
+        {% endfor %}
+      </select>
+      <label for="progress_percent">진행률(%)</label>
+      <input id="progress_percent" name="progress_percent" type="number" step="0.001" min="0" max="100" value="{{ progress.progress_percent }}" required />
+      <label for="report_date">작성일</label>
+      <input id="report_date" type="date" value="{{ progress.report_date }}" disabled />
+      <input type="hidden" name="report_date" value="{{ progress.report_date }}" />
+      <label for="note">메모</label>
+      <textarea id="note" name="note" rows="2">{{ progress.note }}</textarea>
+      <div class="form-actions">
+        <button type="submit" name="action" value="draft">임시저장</button>
+        <button type="submit" name="action" value="submit">제출</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

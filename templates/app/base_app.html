@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block page_title %}ERP{% endblock %}</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: #101a2b;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --warn: #f59e0b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR",
+          "Segoe UI", sans-serif;
+      }
+      header {
+        padding: 16px 24px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .nav-left,
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand {
+        font-weight: 700;
+        color: var(--text);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        box-shadow: 0 6px 16px rgba(15, 118, 110, 0.35);
+        color: #0b1220;
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.6px;
+      }
+      .nav-link {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .nav-link:hover {
+        color: var(--text);
+      }
+      .btn {
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 0;
+        background: var(--accent);
+        color: #0b1220;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        color: var(--text);
+      }
+      main {
+        padding: 20px;
+      }
+      .card {
+        background: var(--panel);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+      }
+      .alert {
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+      .alert-danger {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+      }
+      .form-control {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: transparent;
+        color: var(--text);
+        width: 100%;
+      }
+      select,
+      option {
+        background: #0f172a;
+        color: var(--text);
+      }
+      .form-label {
+        font-size: 13px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .mb-3 {
+        margin-bottom: 12px;
+      }
+    </style>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <header>
+      <div class="nav">
+        <div class="nav-left">
+          <a class="brand" href="/app/">
+            <span class="brand-mark" aria-label="ASAN">ASAN</span>
+          </a>
+        </div>
+        <div class="nav-right">
+          <a class="btn btn-outline" href="/">홈페이지로</a>
+          {% if request.user.is_authenticated %}
+          <form method="post" action="/logout/">
+            {% csrf_token %}
+            <button class="btn" type="submit">로그아웃</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

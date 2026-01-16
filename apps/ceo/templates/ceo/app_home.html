@@ -1,0 +1,67 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}CEO 대시보드{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>CEO 대시보드</h2>
+  <p>프로젝트 포트폴리오 요약</p>
+  <ul>
+    <li>누적 매출: {{ total_revenue|floatformat:0|intcomma }}</li>
+    <li>누적 원가: {{ total_cost|floatformat:0|intcomma }}</li>
+    <li>손익: {{ total_profit|floatformat:0|intcomma }}</li>
+    <li>평균 진행률: {{ avg_progress|floatformat:2 }}%</li>
+  </ul>
+  <a class="btn" href="/app/ceo/projects/">프로젝트 보기</a>
+  <a class="btn btn-outline" href="{{ csv_url }}">CSV 다운로드</a>
+</div>
+
+<div class="card">
+  <h3>리스크 요약</h3>
+  <p>OPEN: {{ risk_open_count }}, CRITICAL: {{ risk_critical_count }}</p>
+</div>
+
+<div class="card chart-wrap">
+  <h3>프로젝트별 진행률</h3>
+  <canvas id="progressChart" height="140"></canvas>
+  {% if not chart_labels %}
+    <p class="muted" style="margin-top:8px;">데이터가 없습니다. 데모 데이터를 생성하세요.</p>
+  {% endif %}
+</div>
+
+{{ chart_labels|json_script:"chart-labels" }}
+{{ chart_values|json_script:"chart-values" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    var labels = JSON.parse(document.getElementById("chart-labels").textContent || "[]");
+    var values = JSON.parse(document.getElementById("chart-values").textContent || "[]");
+    var ctx = document.getElementById("progressChart");
+    if (!ctx) {
+      return;
+    }
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "진행률 %",
+          data: values,
+          backgroundColor: "rgba(56, 189, 248, 0.55)",
+          borderColor: "rgba(56, 189, 248, 1)",
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+          },
+        },
+      },
+    });
+  })();
+</script>
+{% endblock %}

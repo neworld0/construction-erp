@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}CEO Dashboard{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h2 class="card-title">Portfolio Overview</h2>
+    <form method="get" class="filters">
+      <div>
+        <label for="as_of_date">As of date</label><br />
+        <input type="date" id="as_of_date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}">
+      </div>
+      <div>
+        <label for="q">Search</label><br />
+        <input type="text" id="q" name="q" value="{{ q }}" placeholder="Project name">
+      </div>
+      <div>
+        <label for="sort">Sort</label><br />
+        <select id="sort" name="sort">
+          <option value="">Default</option>
+          <option value="profit_desc" {% if sort == "profit_desc" %}selected{% endif %}>Profit desc</option>
+          <option value="margin_desc" {% if sort == "margin_desc" %}selected{% endif %}>Margin desc</option>
+          <option value="progress_desc" {% if sort == "progress_desc" %}selected{% endif %}>Progress desc</option>
+          <option value="risk_desc" {% if sort == "risk_desc" %}selected{% endif %}>Risk desc</option>
+        </select>
+      </div>
+      <div style="align-self:flex-end;">
+        <button type="submit">Apply</button>
+      </div>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Progress %</th>
+          <th>Revenue</th>
+          <th>Accrual Cost</th>
+          <th>Profit</th>
+          <th>Margin %</th>
+          <th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+          <tr>
+            <td>
+              <a href="/ceo/projects/{{ project.project_id }}/?as_of_date={{ as_of_date|date:'Y-m-d' }}">
+                {{ project.project_name|default:"Project" }}
+              </a>
+              <div class="muted">ID {{ project.project_id }}</div>
+            </td>
+            <td>{{ project.overall_progress_percent|floatformat:2 }}%</td>
+            <td>{{ project.recognized_revenue|floatformat:2|intcomma }}</td>
+            <td>{{ project.accrual_cost|floatformat:2|intcomma }}</td>
+            <td>{{ project.profit|floatformat:2|intcomma }}</td>
+            <td>{{ project.margin_percent|floatformat:2 }}%</td>
+            <td>
+              <span class="badge badge-open">OPEN {{ project.risk_open_count|default:0 }}</span>
+              {% if project.risk_critical_count|default:0 %}
+                <span class="badge badge-critical">CRITICAL {{ project.risk_critical_count }}</span>
+              {% else %}
+                <span class="badge badge-neutral">CRITICAL 0</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">No projects found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card chart-wrap">
+    <h3 class="card-title">Progress by Project</h3>
+    <canvas id="progressChart" height="120"></canvas>
+  </div>
+
+  {{ chart_labels|json_script:"chart-labels" }}
+  {{ chart_values|json_script:"chart-values" }}
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script>
+    const labels = JSON.parse(document.getElementById("chart-labels").textContent);
+    const values = JSON.parse(document.getElementById("chart-values").textContent);
+    const ctx = document.getElementById("progressChart");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Progress %",
+          data: values,
+          backgroundColor: "rgba(192, 107, 62, 0.7)",
+          borderColor: "rgba(192, 107, 62, 1)",
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+          },
+        },
+      },
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background: #f5f7fb;
+        color: #0f172a;
+      }
+      .wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        width: 100%;
+        max-width: 420px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        padding: 24px;
+      }
+      h1 {
+        margin: 0 0 16px;
+        font-size: 22px;
+      }
+      label {
+        display: block;
+        font-size: 14px;
+        margin: 12px 0 6px;
+      }
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #dbe0ea;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      button {
+        width: 100%;
+        margin-top: 16px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #1d4ed8;
+        color: #ffffff;
+        font-size: 15px;
+        cursor: pointer;
+      }
+      .error {
+        margin-top: 12px;
+        padding: 10px 12px;
+        background: #fee2e2;
+        color: #991b1b;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      @media (max-width: 480px) {
+        .card {
+          padding: 18px;
+        }
+        h1 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>ERP Login</h1>
+        <form method="post" action="/login/">
+          {% csrf_token %}
+          {{ wizard.management_form }}
+          {% if wizard.form.non_field_errors %}
+          <div class="error">{{ wizard.form.non_field_errors }}</div>
+          {% endif %}
+          {% for field in wizard.form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+          <div class="error">{{ field.errors }}</div>
+          {% endif %}
+          {% endfor %}
+          <input type="hidden" name="next" value="{{ next_url|default:'/app/' }}" />
+          <button type="submit">
+            {% if wizard.steps.current == "auth" %}
+            Continue
+            {% else %}
+            Sign in
+            {% endif %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

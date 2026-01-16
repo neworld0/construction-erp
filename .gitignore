@@ -1,0 +1,15 @@
+.env
+.env.prod
+.env.local
+.env.demo
+.env.*.local
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+media/
+staticfiles/
+*.log
+.pytest_cache/

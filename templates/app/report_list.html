@@ -1,0 +1,196 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}보고서 목록{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --card: #101a2b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --border: rgba(148, 163, 184, 0.2);
+    --panel: rgba(2, 6, 23, 0.55);
+  }
+  .container {
+    display: grid;
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  }
+  .filter-card {
+    display: grid;
+    gap: 12px;
+  }
+  .filter-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: end;
+  }
+  label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  select,
+  button,
+  a.action-link {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    background: transparent;
+    color: var(--text);
+  }
+  button,
+  a.action-link.primary {
+    background: var(--primary);
+    color: #0b1220;
+    border: 0;
+    font-weight: 600;
+  }
+  a.action-link {
+    text-decoration: none;
+    text-align: center;
+  }
+  .table-card {
+    background: var(--panel);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th,
+  td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  th {
+    color: var(--muted);
+    font-weight: normal;
+  }
+  .badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: rgba(148, 163, 184, 0.2);
+  }
+  .badge.DRAFT {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+  }
+  .badge.SUBMITTED {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+  }
+  .badge.APPROVED {
+    background: rgba(22, 163, 74, 0.2);
+    color: #22c55e;
+  }
+  .success {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(22, 163, 74, 0.2);
+    color: #22c55e;
+    font-size: 13px;
+  }
+  .title {
+    font-size: 18px;
+    margin: 0 0 8px;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .tab.active {
+    background: var(--primary);
+    color: #0b1220;
+    border-color: var(--primary);
+  }
+</style>
+
+<div class="container">
+  {% if messages %}
+  <div class="card">
+    {% for message in messages %}
+    <div class="success">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="card">
+    <div class="tabs">
+      <a class="tab" href="/app/field/?tab=progress{% if project_id %}&project_id={{ project_id }}{% endif %}">진행률</a>
+      <a class="tab active" href="/app/reports/{% if project_id %}?project_id={{ project_id }}{% endif %}">보고서</a>
+      <a class="tab" href="/app/field/?tab=cost{% if project_id %}&project_id={{ project_id }}{% endif %}">원가</a>
+    </div>
+  </div>
+  <div class="card filter-card">
+    <form method="get">
+      <div class="filter-row">
+        <div>
+          <label for="project_id">프로젝트 선택</label>
+          <select id="project_id" name="project_id">
+            <option value="">전체</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}" {% if project_id and project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit">조회</button>
+        {% if project_id %}
+        <a class="action-link primary" href="/app/reports/new/?project_id={{ project_id }}">보고서 작성</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div class="card table-card">
+    <h3 class="title">보고서 목록</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>날짜</th>
+          <th>제목</th>
+          <th>상태</th>
+          <th>첨부 수</th>
+          <th>작성자</th>
+          <th>작성일</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+        <tr>
+          <td>{{ report.report_date }}</td>
+          <td>
+            {% if report.status == "DRAFT" and role == "field" %}
+            <a href="/app/reports/{{ report.id }}/edit/">{{ report.title }}</a>
+            {% else %}
+            <a href="/app/reports/{{ report.id }}/">{{ report.title }}</a>
+            {% endif %}
+          </td>
+          <td><span class="badge {{ report.status }}">{{ report.status }}</span></td>
+          <td>{{ report.files.count }}</td>
+          <td>{{ report.created_by }}</td>
+          <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">보고서가 없습니다.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

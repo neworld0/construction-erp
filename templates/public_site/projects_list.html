@@ -1,0 +1,27 @@
+{% extends "public_site/base_public.html" %}
+{% block page_title %}주요실적 | {{ site_title }}{% endblock %}
+{% block content %}
+<section class="py-5">
+  <div class="container">
+    <h1 class="h3 fw-bold mb-4">주요 실적</h1>
+    <div class="row g-4">
+      {% for project in projects %}
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+          {% if project.thumbnail %}
+          <img src="{{ project.thumbnail.url }}" class="card-img-top" alt="{{ project.title }}" />
+          {% endif %}
+          <div class="card-body">
+            <h5 class="card-title">{{ project.title }}</h5>
+            <p class="card-text small text-muted">{{ project.summary|default:"요약 정보 준비 중" }}</p>
+            <a href="/projects/{{ project.slug }}/" class="stretched-link"></a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-muted">등록된 공개 프로젝트가 없습니다.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

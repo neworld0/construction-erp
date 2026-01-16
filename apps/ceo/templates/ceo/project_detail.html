@@ -1,0 +1,120 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}프로젝트 상세{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h2 class="card-title">프로젝트 요약</h2>
+    <div class="muted">프로젝트 ID: {{ summary.project_id }}</div>
+    <div class="muted">기준일: {{ summary.as_of_date|default:"-" }}</div>
+
+    <table>
+      <tbody>
+        <tr>
+          <th>진행률</th>
+          <td>{{ summary.overall_progress_percent|floatformat:2 }}%</td>
+          <th>매출</th>
+          <td>{{ summary.recognized_revenue|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <th>발생원가</th>
+          <td>{{ summary.accrual_cost|floatformat:2 }}</td>
+          <th>손익</th>
+          <td>{{ summary.profit|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <th>손익률</th>
+          <td>{{ summary.margin_percent|floatformat:2 }}%</td>
+          <th>리스크 OPEN</th>
+          <td>{{ summary.risk_open_count|default:0 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top: 24px;">
+    <h3 class="card-title">태스크</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>태스크</th>
+          <th>가중치 %</th>
+          <th>최신 진행률 %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in summary.tasks %}
+          <tr>
+            <td>{{ task.name }}</td>
+            <td>{{ task.weight_percent|floatformat:2 }}</td>
+            <td>{{ task.latest_progress_percent|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="3">태스크가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top: 24px;">
+    <h3 class="card-title">원가 카테고리</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>카테고리</th>
+          <th>금액</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key, value in summary.cost_by_category.items %}
+          <tr>
+            <td>{{ key }}</td>
+            <td>{{ value|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="2">원가 데이터가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top: 24px;">
+    <h3 class="card-title">최근 리스크</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>위험도</th>
+          <th>제목</th>
+          <th>상태</th>
+          <th>업데이트</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for risk in summary.risk_findings %}
+          <tr>
+            <td>
+              {% if risk.severity == "critical" %}
+                <span class="badge badge-critical">CRITICAL</span>
+              {% elif risk.severity == "high" %}
+                <span class="badge badge-open">HIGH</span>
+              {% else %}
+                <span class="badge badge-neutral">{{ risk.severity|upper }}</span>
+              {% endif %}
+            </td>
+            <td>{{ risk.title }}</td>
+            <td>{{ risk.status|upper }}</td>
+            <td>{{ risk.updated_at|default:"-" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4">리스크 데이터가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

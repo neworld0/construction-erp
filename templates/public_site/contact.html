@@ -1,0 +1,39 @@
+{% extends "public_site/base_public.html" %}
+{% block page_title %}문의 | {{ site_title }}{% endblock %}
+{% block content %}
+<section class="py-5">
+  <div class="container">
+    <h1 class="h3 fw-bold mb-3">문의</h1>
+    <p class="text-muted">프로젝트 문의를 남겨주시면 빠르게 회신드립니다.</p>
+    {% if sent %}
+    <div class="alert alert-success mt-3">문의가 접수되었습니다.</div>
+    {% endif %}
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">이름</label>
+              <input class="form-control" name="name" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">이메일</label>
+              <input class="form-control" type="email" name="email" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">전화번호</label>
+              <input class="form-control" name="phone" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">문의 내용</label>
+              <textarea class="form-control" name="message" rows="4" required></textarea>
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3" type="submit">문의 접수</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

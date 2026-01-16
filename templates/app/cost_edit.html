@@ -1,0 +1,182 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}원가 수정{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --card: #101a2b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --border: rgba(148, 163, 184, 0.2);
+    --warning: #f59e0b;
+  }
+  .container {
+    display: grid;
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  }
+  form {
+    display: grid;
+    gap: 12px;
+  }
+  label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  input,
+  textarea,
+  button {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    width: 100%;
+    background: transparent;
+    color: var(--text);
+  }
+  button {
+    background: var(--primary);
+    color: #0b1220;
+    border: 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button[disabled] { cursor: not-allowed; opacity: 0.6; }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .notice {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    font-size: 13px;
+  }
+  .form-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .inline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card">
+    <h3>원가 수정</h3>
+    {% if error %}
+    <div class="notice">{{ error }}</div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <label for="cost_item_id">원가 항목</label>
+      <select id="cost_item_id" name="cost_item_id" required>
+        {% for item in cost_items %}
+        <option value="{{ item.id }}" {% if line and item.id == line.cost_item_id %}selected{% endif %}>{{ item.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="inline-grid">
+        <div>
+          <label for="quantity">수량</label>
+          <input
+            id="quantity"
+            name="quantity"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            value="{% if line %}{{ line.quantity|floatformat:3 }}{% endif %}"
+            required
+          />
+        </div>
+        <div>
+          <label for="unit_price">단가</label>
+          <input
+            id="unit_price"
+            name="unit_price"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            value="{% if line %}{{ line.unit_price|floatformat:0|intcomma }}{% endif %}"
+            required
+          />
+        </div>
+        <div>
+          <label for="amount">금액</label>
+          <input
+            id="amount"
+            name="amount"
+            type="text"
+            readonly
+            value="{% if line %}{{ line.amount|floatformat:0|intcomma }}{% endif %}"
+          />
+        </div>
+      </div>
+      <p class="hint">금액은 수량 × 단가로 자동 계산됩니다.</p>
+      <label for="memo">메모</label>
+      <textarea id="memo" name="memo" rows="3">{% if line %}{{ line.description }}{% endif %}</textarea>
+      <label for="evidence_file">증빙 파일 추가</label>
+      <input id="evidence_file" type="file" name="evidence_file" />
+      <div class="form-actions">
+        <button type="submit" name="action" value="draft">임시저장</button>
+        <button type="submit" name="action" value="submit" {% if cost_actual.status != "draft" %}disabled{% endif %}>제출</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  (function () {
+    var quantityInput = document.getElementById("quantity");
+    var unitPriceInput = document.getElementById("unit_price");
+    var amountInput = document.getElementById("amount");
+
+    if (!quantityInput || !unitPriceInput || !amountInput) {
+      return;
+    }
+
+    function toNumber(value, allowDecimal) {
+      var cleaned = value.replace(/[^0-9.]/g, "");
+      if (!allowDecimal) {
+        cleaned = cleaned.replace(/\\./g, "");
+      }
+      return cleaned;
+    }
+
+    function formatNumber(value) {
+      var digits = value.replace(/\\D/g, "");
+      if (!digits) {
+        return "";
+      }
+      return digits.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",");
+    }
+
+    function updateAmount() {
+      var qty = parseFloat(toNumber(quantityInput.value, true) || "0");
+      var price = parseFloat(toNumber(unitPriceInput.value, false) || "0");
+      var total = Math.round(qty * price);
+      amountInput.value = total ? formatNumber(String(total)) : "";
+    }
+
+    quantityInput.addEventListener("input", function () {
+      quantityInput.value = toNumber(quantityInput.value, true);
+      updateAmount();
+    });
+
+    unitPriceInput.addEventListener("input", function () {
+      unitPriceInput.value = formatNumber(unitPriceInput.value);
+      updateAmount();
+    });
+
+    updateAmount();
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}보고서 상세{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --card: #101a2b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --border: rgba(148, 163, 184, 0.2);
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .files li {
+    margin-bottom: 6px;
+  }
+  a {
+    color: var(--text);
+  }
+  .success {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(22, 163, 74, 0.2);
+    color: #22c55e;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .tab {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .tab.active {
+    background: var(--primary);
+    color: #0b1220;
+    border-color: var(--primary);
+  }
+</style>
+
+<div class="card">
+  <div class="tabs">
+    <a class="tab" href="/app/field/?tab=progress&project_id={{ report.project.id }}">진행률</a>
+    <a class="tab active" href="/app/reports/?project_id={{ report.project.id }}">보고서</a>
+    <a class="tab" href="/app/field/?tab=cost&project_id={{ report.project.id }}">원가</a>
+  </div>
+</div>
+
+{% if messages %}
+<div class="card success">
+  {% for message in messages %}
+  <div>{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>{{ report.title }}</h3>
+  <div class="meta">
+    {{ report.project.name }} · {{ report.report_date }} · {{ report.created_by }}
+  </div>
+  <p>{{ report.content }}</p>
+  <div class="meta">상태: {{ report.status }}</div>
+  <h4>첨부 파일</h4>
+  <ul class="files">
+    {% for file in report.files.all %}
+    <li><a href="{{ file.file.url }}" target="_blank" rel="noopener noreferrer">{{ file.original_name }}</a></li>
+    {% empty %}
+    <li>첨부 파일이 없습니다.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

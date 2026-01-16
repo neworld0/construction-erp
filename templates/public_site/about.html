@@ -1,0 +1,35 @@
+{% extends "public_site/base_public.html" %}
+{% block page_title %}회사소개 | {{ site_title }}{% endblock %}
+{% block content %}
+<section class="py-5">
+  <div class="container">
+    <h1 class="h3 fw-bold mb-3">회사소개</h1>
+    <p class="text-muted">
+      우리는 공공과 민간의 다양한 프로젝트를 수행하며, 신뢰 기반의 시공 역량을
+      제공하는 중견 건설사입니다.
+    </p>
+    <div class="row g-3 mt-4">
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">미션</h5>
+            <p class="card-text small text-muted">
+              안전하고 지속 가능한 공간을 구축하여 사람들의 삶을 변화시킵니다.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">비전</h5>
+            <p class="card-text small text-muted">
+              데이터 기반의 현장 관리로 산업의 표준을 높입니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

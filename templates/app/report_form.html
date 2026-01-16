@@ -1,0 +1,114 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}보고서 작성{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --card: #101a2b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --border: rgba(148, 163, 184, 0.2);
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  }
+  form {
+    display: grid;
+    gap: 12px;
+  }
+  label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  input,
+  textarea,
+  select,
+  button {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    width: 100%;
+    background: transparent;
+    color: var(--text);
+  }
+  button {
+    background: var(--primary);
+    color: #0b1220;
+    border: 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .form-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .success {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(22, 163, 74, 0.2);
+    color: #22c55e;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .tab {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .tab.active {
+    background: var(--primary);
+    color: #0b1220;
+    border-color: var(--primary);
+  }
+</style>
+
+<div class="card">
+  <div class="tabs">
+    <a class="tab" href="/app/field/?tab=progress{% if project %}&project_id={{ project.id }}{% endif %}">진행률</a>
+    <a class="tab active" href="/app/reports/{% if project %}?project_id={{ project.id }}{% endif %}">보고서</a>
+    <a class="tab" href="/app/field/?tab=cost{% if project %}&project_id={{ project.id }}{% endif %}">원가</a>
+  </div>
+</div>
+
+{% if messages %}
+<div class="card success">
+  {% for message in messages %}
+  <div>{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>{% if report %}보고서 수정{% else %}보고서 작성{% endif %}</h3>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="project_id" value="{{ project.id }}" />
+    <label for="report_date">작성일</label>
+    <input id="report_date" name="report_date" type="date" value="{% if report %}{{ report.report_date }}{% else %}{{ now|default:'' }}{% endif %}" />
+    <label for="title">제목</label>
+    <input id="title" name="title" value="{% if report %}{{ report.title }}{% endif %}" required />
+    <label for="content">내용</label>
+    <textarea id="content" name="content" rows="4">{% if report %}{{ report.content }}{% endif %}</textarea>
+    <label for="files">첨부 파일</label>
+    <input id="files" type="file" name="files" multiple />
+    <div class="form-actions">
+      <button type="submit" name="action" value="draft">임시저장</button>
+      <button type="submit" name="action" value="submit">제출</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

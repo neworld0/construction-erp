@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+<title>{% block title %}ERP{% endblock %}</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@400;600&display=swap");
+      :root {
+        --ink: #1b1d1f;
+        --muted: #6b7280;
+        --accent: #c06b3e;
+        --paper: #f4f1ec;
+        --card: #ffffff;
+        --line: #e6e0d9;
+        --critical: #c0392b;
+        --warning: #f1c40f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: "Source Sans 3", sans-serif;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top right, #f3e7d8 0%, transparent 40%),
+          linear-gradient(180deg, #f7f3ee 0%, #f2eee9 100%);
+      }
+      header {
+        background: #121417;
+        color: #f7f5f2;
+        padding: 18px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      header .brand {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+      }
+      header a { color: #f7f5f2; text-decoration: none; margin-right: 16px; }
+      .container { max-width: 1200px; margin: 28px auto 48px; padding: 0 24px; }
+      .card {
+        background: var(--card);
+        padding: 18px 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(18, 20, 23, 0.08);
+        border: 1px solid var(--line);
+      }
+      .card-title { font-family: "Playfair Display", serif; font-size: 20px; margin: 0 0 12px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px 8px; text-align: left; }
+      th { background: #f8f5f0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+      .filters { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+      .filters label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      .filters input, .filters select {
+        padding: 8px 10px;
+        border: 1px solid #d6cfc7;
+        border-radius: 6px;
+        background: #fffdfb;
+        min-width: 180px;
+      }
+      .filters button {
+        padding: 9px 14px;
+        border-radius: 8px;
+        border: none;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .muted { color: var(--muted); font-size: 12px; }
+      .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+      .badge-critical { background: rgba(192, 57, 43, 0.12); color: var(--critical); }
+      .badge-open { background: rgba(241, 196, 15, 0.15); color: #8a6d00; }
+      .badge-neutral { background: #eef2f7; color: #415a77; }
+      .chart-wrap { margin-top: 24px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">Construction ERP - CEO</div>
+      <nav>
+        <a href="/ceo/dashboard/">Dashboard</a>
+        <a href="/admin/">Admin</a>
+      </nav>
+    </header>
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>
