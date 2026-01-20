@@ -1,0 +1,195 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}프로젝트 KPI 상세{% endblock %}
+{% block content %}
+<style>
+  .grid { display: grid; gap: 16px; }
+  .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .kpi { display: grid; gap: 6px; }
+  .kpi .label { color: var(--muted); font-size: 13px; }
+  .kpi .value { font-size: 20px; font-weight: 700; }
+  .table { display: grid; gap: 8px; }
+  .row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.6);
+    align-items: center;
+  }
+  .row.header {
+    background: rgba(15, 23, 42, 0.9);
+    font-weight: 600;
+  }
+  .muted { color: var(--muted); }
+  .badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    display: inline-block;
+  }
+  .badge.green { background: rgba(34,197,94,0.2); color: #4ade80; }
+  .badge.yellow { background: rgba(234,179,8,0.2); color: #fbbf24; }
+  .badge.red { background: rgba(239,68,68,0.2); color: #f87171; }
+</style>
+
+<div class="grid">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <h2>{{ project.name }} KPI 상세</h2>
+      <a class="btn btn-outline" href="/app/ceo/">대시보드로</a>
+    </div>
+    <form method="get" style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <label class="muted">
+        기준일
+        <input type="date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}" class="input" />
+      </label>
+      <label class="muted">
+        <input type="checkbox" name="include_submitted" value="1" {% if include_submitted %}checked{% endif %} />
+        제출 포함
+      </label>
+      <button class="btn" type="submit">조회</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>요약 지표</h3>
+    <div class="grid kpi-grid" style="margin-top:12px;">
+      <div class="kpi">
+        <div class="label">계약금액</div>
+        <div class="value">{{ kpi.baseline.contract_amount|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">총 예산</div>
+        <div class="value">{{ kpi.baseline.budget_total|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">누적 원가</div>
+        <div class="value">{{ kpi.actual.actual_cost_total|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">기준공정률</div>
+        <div class="value">{{ kpi.baseline.planned_progress_percent|floatformat:1 }}%</div>
+      </div>
+      <div class="kpi">
+        <div class="label">실제진행률</div>
+        <div class="value">{{ kpi.actual.actual_progress_percent|floatformat:1 }}%</div>
+      </div>
+      <div class="kpi">
+        <div class="label">CPI / SPI</div>
+        <div class="value">
+          {{ kpi.CPI|floatformat:2 }} /
+          {{ kpi.SPI|floatformat:2 }}
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="label">EAC</div>
+        <div class="value">{{ kpi.EAC_budget|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">예상 손익</div>
+        <div class="value">{{ kpi.forecast_profit|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">리스크 점수</div>
+        <div class="value">
+          {{ kpi.risk_score|floatformat:0 }}
+          {% if kpi.risk_band %}
+            <span class="badge {{ kpi.risk_band|lower }}">{{ kpi.risk_band }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% if not kpi.flags.baseline_ready %}
+      <p class="muted" style="margin-top:8px;">기준선 미확정: KPI가 제한적으로 계산됩니다.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>예산 vs 실적 (카테고리)</h3>
+    <div class="table">
+      <div class="row header">
+        <div>카테고리</div>
+        <div>예산</div>
+        <div>누적 원가</div>
+        <div>차이</div>
+      </div>
+      {% for row in category_rows %}
+        <div class="row">
+          <div>{{ row.category }}</div>
+          <div>{{ row.budget|floatformat:0|intcomma }}</div>
+          <div>{{ row.actual|floatformat:0|intcomma }}</div>
+          <div>{{ row.diff|floatformat:0|intcomma }}</div>
+        </div>
+      {% empty %}
+        <div class="row">
+          <div>데이터가 없습니다.</div>
+          <div></div><div></div><div></div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>WBS 진행 현황</h3>
+    <div class="table">
+      <div class="row header">
+        <div>WBS</div>
+        <div>가중치</div>
+        <div>계획 기간</div>
+        <div>실제 진행률</div>
+      </div>
+      {% for row in wbs_rows %}
+        <div class="row">
+          <div>{{ row.name }}</div>
+          <div>{{ row.weight|floatformat:1 }}</div>
+          <div>{{ row.plan_start }} ~ {{ row.plan_end }}</div>
+          <div>
+            {% if row.actual_progress != None %}
+              {{ row.actual_progress|floatformat:1 }}%
+            {% else %}
+              <span class="muted">-</span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="row">
+          <div>데이터가 없습니다.</div>
+          <div></div><div></div><div></div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>승인 대기 현황</h3>
+    <div class="table">
+      <div class="row header">
+        <div>유형</div>
+        <div>대기 건수</div>
+        <div>링크</div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div>원가</div>
+        <div>{{ pending_breakdown.cost }}</div>
+        <div><a href="/app/hq/">승인 대기 보기</a></div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div>진행</div>
+        <div>{{ pending_breakdown.progress }}</div>
+        <div><a href="/app/hq/">승인 대기 보기</a></div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div>보고서</div>
+        <div>{{ pending_breakdown.report }}</div>
+        <div><a href="/app/hq/">승인 대기 보기</a></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
