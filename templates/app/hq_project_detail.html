@@ -1,0 +1,295 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}프로젝트 상세{% endblock %}
+{% block content %}
+<style>
+  .table {
+    display: grid;
+    gap: 8px;
+  }
+  .row {
+    display: grid;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.6);
+    align-items: center;
+  }
+  .row.assignment {
+    grid-template-columns: 2fr 1fr 1fr auto;
+  }
+  .row.budget {
+    grid-template-columns: 1.2fr 1.4fr 1.4fr 1fr auto;
+  }
+  .row.labor {
+    grid-template-columns: 1.6fr 1.6fr 1fr auto;
+  }
+      .row.wbs {
+        grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr auto;
+      }
+      .badge.draft {
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+      .badge.submitted {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+      .badge.approved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #86efac;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+  .row.header {
+    background: rgba(15, 23, 42, 0.9);
+    font-weight: 600;
+  }
+  .btn.small {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+</style>
+<div class="card">
+  <h3>프로젝트 상세</h3>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+    {% if project.status == "draft" %}
+      <span class="badge draft">draft</span>
+    {% elif project.status == "submitted" %}
+      <span class="badge submitted">submitted</span>
+    {% elif project.status == "approved" %}
+      <span class="badge approved">approved</span>
+    {% endif %}
+  </div>
+  <div class="mb-3">
+    <strong>프로젝트명</strong> {{ project.name }}
+  </div>
+  <div class="mb-3">
+    <strong>상태:</strong> <span class="badge {{ project.status }}">{{ project.status }}</span>
+  </div>
+  <div class="mb-3">
+    <strong>시작일</strong> {{ project.start_date }}
+  </div>
+  <div class="mb-3">
+    <strong>종료일</strong> {{ project.end_date }}
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    {% if project.status == "draft" %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="submit_baseline" />
+        <button class="btn" type="submit">제출</button>
+      </form>
+    {% elif project.status == "submitted" and role == "ceo" %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve_baseline" />
+        <button class="btn" type="submit">승인</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top: 16px;">
+  <h3>계약 정보</h3>
+  {% if contract %}
+    <div class="mb-3"><strong>계약 금액:</strong> {{ contract.contract_amount }}</div>
+    <div class="mb-3"><strong>계약 시작일</strong> {{ contract.contract_start_date }}</div>
+    <div class="mb-3"><strong>계약 종료일</strong> {{ contract.contract_end_date }}</div>
+    <div class="mb-3">
+      <strong>계약 파일:</strong>
+      {% if contract.contract_file %}
+        <a href="{{ contract.contract_file.url }}" target="_blank" rel="noopener noreferrer">다운로드</a>
+      {% else %}
+        없음
+      {% endif %}
+    </div>
+    <div class="mb-3"><strong>메모:</strong> {{ contract.memo }}</div>
+  {% else %}
+    <div>계약 정보가 없습니다.</div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top: 16px;">
+  <h3>프로젝트 배정</h3>
+  {% if wbs_locked %}
+    <div class="alert alert-danger">제출 이후에는 배정을 수정할 수 없습니다.</div>
+  {% endif %}
+  <form method="get" style="margin-bottom: 12px;">
+    <div class="grid" style="grid-template-columns: 160px auto; gap: 12px; align-items: end;">
+      <div>
+        <label for="role_filter">역할 필터</label>
+        <select id="role_filter" name="role">
+          <option value="">전체</option>
+          <option value="field" {% if role_filter == "field" %}selected{% endif %}>FIELD</option>
+          <option value="hq" {% if role_filter == "hq" %}selected{% endif %}>HQ</option>
+        </select>
+      </div>
+      <div>
+        <button class="btn" type="submit">필터 적용</button>
+      </div>
+    </div>
+  </form>
+  <form method="post" style="margin-bottom: 16px;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_assignment" />
+    <div class="grid" style="grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end;">
+      <div>
+        <label for="id_user">사용자</label>
+        {{ assignment_form.user }}
+      </div>
+      <div>
+        <label for="id_role_in_project">역할(프로젝트)</label>
+        {{ assignment_form.role_in_project }}
+      </div>
+      <div>
+        <label for="id_is_active">활성</label>
+        {{ assignment_form.is_active }}
+      </div>
+      <div>
+        <button class="btn" type="submit">배정 추가</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="table">
+    <div class="row header assignment">
+      <div>사용자</div>
+      <div>역할</div>
+      <div>상태</div>
+      <div>관리</div>
+    </div>
+    {% for assignment in assignments %}
+      <div class="row assignment">
+        <div>{{ assignment.user.username }}</div>
+        <div>{{ assignment.role_in_project|default:"-" }}</div>
+        <div>
+          {% if assignment.is_active %}
+            <span class="badge approved">active</span>
+          {% else %}
+            <span class="badge rejected">inactive</span>
+          {% endif %}
+        </div>
+        <div>
+          <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="toggle_assignment" />
+            <input type="hidden" name="assignment_id" value="{{ assignment.id }}" />
+            <button class="btn small" type="submit">
+              {% if assignment.is_active %}비활성{% else %}활성{% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div class="row assignment">
+        <div>배정된 사용자가 없습니다.</div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card" style="margin-top: 16px;">
+  <h3>프로젝트 예산</h3>
+  {% if wbs_locked %}
+    <div class="alert alert-danger">제출 이후 예산은 수정할 수 없습니다.</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_budget" />
+    <h4 style="margin-top: 8px;">예산 항목</h4>
+    {{ budget_formset.management_form }}
+    <div class="table">
+      <div class="row header budget">
+        <div>카테고리</div>
+        <div>원가 항목</div>
+        <div>명칭</div>
+        <div>예산 금액</div>
+        <div>삭제</div>
+      </div>
+      {% for form in budget_formset %}
+        <div class="row budget">
+          <div>{{ form.category }}</div>
+          <div>{{ form.cost_item }}</div>
+          <div>{{ form.name }}</div>
+          <div>{{ form.planned_amount }}</div>
+          <div>{{ form.DELETE }}</div>
+          <div style="grid-column: 1 / -1;">
+            {{ form.notes }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <h4 style="margin-top: 20px;">인건비</h4>
+    {{ labor_formset.management_form }}
+    <div class="table">
+      <div class="row header labor">
+        <div>원가 항목</div>
+        <div>명칭</div>
+        <div>예산 금액</div>
+        <div>삭제</div>
+      </div>
+      {% for form in labor_formset %}
+        <div class="row labor">
+          <div>{{ form.cost_item }}{{ form.category }}</div>
+          <div>{{ form.name }}</div>
+          <div>{{ form.planned_amount }}</div>
+          <div>{{ form.DELETE }}</div>
+          <div style="grid-column: 1 / -1;">
+            {{ form.notes }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div style="margin-top: 12px;">
+      <button class="btn" type="submit">예산 저장</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top: 16px;">
+  <h3>WBS</h3>
+  {% if wbs_locked %}
+    <div class="alert alert-danger">제출 이후 WBS는 수정할 수 없습니다.</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_wbs" />
+    {{ wbs_formset.management_form }}
+    <div class="table">
+      <div class="row header wbs">
+        <div>항목</div>
+        <div>상위</div>
+        <div>가중치</div>
+        <div>시작</div>
+        <div>종료</div>
+        <div>삭제</div>
+      </div>
+      {% for form in wbs_formset %}
+        <div class="row wbs">
+          <div>{{ form.name }}</div>
+          <div>{{ form.parent }}</div>
+          <div>{{ form.weight }}</div>
+          <div>{{ form.plan_start_date }}</div>
+          <div>{{ form.plan_end_date }}</div>
+          <div>{{ form.DELETE }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top: 12px;">
+      <button class="btn" type="submit" {% if wbs_locked %}disabled{% endif %}>WBS 저장</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

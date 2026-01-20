@@ -1,0 +1,32 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}HQ 프로젝트 목록{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="actions-row" style="justify-content: space-between;">
+    <h3>프로젝트 목록</h3>
+    <a class="tab" href="/app/hq/projects/new/">신규 등록</a>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>프로젝트명</th>
+        <th>상태</th>
+        <th>시작일</th>
+        <th>종료일</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for project in projects %}
+      <tr>
+        <td><a href="/app/hq/projects/{{ project.id }}/">{{ project.name }}</a></td>
+        <td><span class="badge {{ project.status }}">{{ project.status }}</span></td>
+        <td>{{ project.start_date }}</td>
+        <td>{{ project.end_date }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">등록된 프로젝트가 없습니다.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
