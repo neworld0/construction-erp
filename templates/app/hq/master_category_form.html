@@ -1,0 +1,59 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}
+  {% if mode == "create" %}신규 카테고리{% else %}카테고리 수정{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">
+        {% if mode == "create" %}신규 카테고리 등록{% else %}카테고리 수정{% endif %}
+      </div>
+      <div class="hint">카테고리 코드는 품목 코드 자동 생성에 사용됩니다.</div>
+    </div>
+    <a class="btn btn-outline" href="/app/hq/master/categories/">목록</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <form method="post">
+    {% csrf_token %}
+    <div class="container" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <label>
+        이름
+        {{ form.name }}
+        {% if form.name.errors %}
+          <div class="hint" style="color:#f87171;">{{ form.name.errors|striptags }}</div>
+        {% endif %}
+      </label>
+      <label>
+        코드
+        {{ form.code }}
+      </label>
+      <label>
+        상위 카테고리
+        {{ form.parent }}
+      </label>
+      <label>
+        정렬 순서
+        {{ form.sort_order }}
+      </label>
+      <label>
+        활성
+        {{ form.is_active }}
+      </label>
+    </div>
+    {% if form.non_field_errors %}
+      <div class="hint" style="color:#f87171; margin-top:10px;">
+        {{ form.non_field_errors|striptags }}
+      </div>
+    {% endif %}
+    <div style="margin-top:16px; display:flex; gap:8px;">
+      <button class="btn" type="submit">저장</button>
+      <a class="btn btn-outline" href="/app/hq/master/categories/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

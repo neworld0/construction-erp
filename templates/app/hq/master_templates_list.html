@@ -1,0 +1,93 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}마스터 템플릿{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="section-title">마스터 템플릿</div>
+  <div class="helper">WBS/예산 템플릿을 버전 관리합니다.</div>
+  <form method="get" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+    <div>
+      <label class="form-label">카테고리</label>
+      <select name="category" class="form-control">
+        <option value="">전체</option>
+        {% for code,label in categories %}
+          <option value="{{ code }}" {% if category == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label">도메인</label>
+      <select name="domain" class="form-control">
+        <option value="">전체</option>
+        {% for code,label in domains %}
+          <option value="{{ code }}" {% if domain == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label">활성</label>
+      <select name="active" class="form-control">
+        <option value="">전체</option>
+        <option value="1" {% if active == "1" %}selected{% endif %}>활성</option>
+        <option value="0" {% if active == "0" %}selected{% endif %}>비활성</option>
+      </select>
+    </div>
+    <div style="display:flex; align-items:end; gap:8px;">
+      <button class="btn" type="submit">조회</button>
+      <a class="btn btn-outline" href="/app/hq/master/templates/new/">새 템플릿</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>도메인</th>
+        <th>카테고리</th>
+        <th>버전</th>
+        <th>이름</th>
+        <th>활성</th>
+        <th>액션</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for template in page.object_list %}
+        <tr>
+          <td>{{ template.domain }}</td>
+          <td>{{ template.category }}</td>
+          <td>v{{ template.version }}</td>
+          <td>{{ template.name }}</td>
+          <td>{% if template.is_active %}활성{% else %}비활성{% endif %}</td>
+          <td class="actions">
+            <a class="btn btn-outline" href="/app/hq/master/templates/{{ template.id }}/edit/">편집</a>
+            <form method="post" action="/app/hq/master/templates/{{ template.id }}/clone/">
+              {% csrf_token %}
+              <button class="btn btn-outline" type="submit">복제</button>
+            </form>
+            <form method="post" action="/app/hq/master/templates/{{ template.id }}/toggle/">
+              {% csrf_token %}
+              <button class="btn btn-outline" type="submit">
+                {% if template.is_active %}비활성{% else %}활성{% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="6">등록된 템플릿이 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="actions" style="justify-content:center;">
+  {% if page.has_previous %}
+    <a class="btn btn-outline" href="?page={{ page.previous_page_number }}{% if category %}&category={{ category }}{% endif %}{% if domain %}&domain={{ domain }}{% endif %}{% if active %}&active={{ active }}{% endif %}">이전</a>
+  {% endif %}
+  <span class="hint">페이지 {{ page.number }} / {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}
+    <a class="btn btn-outline" href="?page={{ page.next_page_number }}{% if category %}&category={{ category }}{% endif %}{% if domain %}&domain={{ domain }}{% endif %}{% if active %}&active={{ active }}{% endif %}">다음</a>
+  {% endif %}
+</div>
+{% endblock %}

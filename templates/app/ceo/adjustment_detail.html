@@ -1,0 +1,36 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}정정 승인 상세{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>정정 승인 상세</h2>
+  <p class="hint">프로젝트: {{ adjustment.project.name }}</p>
+  <div style="display:grid; gap:8px; margin:12px 0;">
+    <div><strong>대상:</strong> {{ adjustment.get_target_type_display }}</div>
+    <div><strong>마감 월:</strong> {{ adjustment.period_year }}-{{ adjustment.period_month|stringformat:"02d" }}</div>
+    <div><strong>정정 금액:</strong> {{ adjustment.amount_delta|intcomma }}</div>
+    {% if base_amount %}
+    <div><strong>원본 합계:</strong> {{ base_amount|intcomma }}</div>
+    {% endif %}
+    <div><strong>사유:</strong> {{ adjustment.reason|linebreaksbr }}</div>
+    <div><strong>상태:</strong> {{ adjustment.status }}</div>
+    <div><strong>요청자:</strong> {{ adjustment.created_by }}</div>
+  </div>
+  <div class="actions-row" style="gap:8px;">
+    <a class="btn btn-outline" href="/app/ceo/adjustments/">목록</a>
+    {% if adjustment.status == "SUBMITTED" %}
+    <form method="post" action="/app/ceo/adjustments/{{ adjustment.id }}/approve/">
+      {% csrf_token %}
+      <button class="btn" type="submit">승인</button>
+    </form>
+    <form method="post" action="/app/ceo/adjustments/{{ adjustment.id }}/reject/">
+      {% csrf_token %}
+      <div style="display:flex; gap:8px; align-items:center;">
+        {{ decision_form.note }}
+        <button class="btn btn-outline" type="submit">반려</button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

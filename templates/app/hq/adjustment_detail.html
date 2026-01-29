@@ -1,0 +1,30 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}정정 상세{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>정정 상세</h2>
+  <p class="hint">프로젝트: {{ adjustment.project.name }}</p>
+  <div style="display:grid; gap:8px; margin:12px 0;">
+    <div><strong>대상:</strong> {{ adjustment.get_target_type_display }}</div>
+    <div><strong>마감 월:</strong> {{ adjustment.period_year }}-{{ adjustment.period_month|stringformat:"02d" }}</div>
+    <div><strong>정정 금액:</strong> {{ adjustment.amount_delta|intcomma }}</div>
+    {% if base_amount %}
+    <div><strong>원본 합계:</strong> {{ base_amount|intcomma }}</div>
+    {% endif %}
+    <div><strong>사유:</strong> {{ adjustment.reason|linebreaksbr }}</div>
+    <div><strong>상태:</strong> {{ adjustment.status }}</div>
+    <div><strong>요청자:</strong> {{ adjustment.created_by }}</div>
+    <div><strong>승인자:</strong> {{ adjustment.approved_by|default:"-" }}</div>
+  </div>
+  <div class="actions-row">
+    <a class="btn btn-outline" href="/app/hq/adjustments/">목록</a>
+    {% if can_submit %}
+    <form method="post" action="/app/hq/adjustments/{{ adjustment.id }}/submit/">
+      {% csrf_token %}
+      <button type="submit" class="btn">제출</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}
+  {% if mode == "create" %}신규 품목{% else %}품목 수정{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">
+        {% if mode == "create" %}신규 품목 등록{% else %}품목 수정{% endif %}
+      </div>
+      <div class="hint">품목 코드는 표준 규칙을 따릅니다. 자동 생성도 가능합니다.</div>
+    </div>
+    <a class="btn btn-outline" href="/app/hq/master/items/">목록</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <form method="post">
+    {% csrf_token %}
+    <div class="container" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <label>
+        코드
+        {{ form.code }}
+        {% if mode == "create" %}
+          <div style="margin-top:6px;">{{ form.auto_code }} {{ form.auto_code.label }}</div>
+        {% endif %}
+        {% if form.code.errors %}
+          <div class="hint" style="color:#f87171;">{{ form.code.errors|striptags }}</div>
+        {% endif %}
+      </label>
+      <label>
+        품목명
+        {{ form.name }}
+        {% if form.name.errors %}
+          <div class="hint" style="color:#f87171;">{{ form.name.errors|striptags }}</div>
+        {% endif %}
+      </label>
+      <label>
+        카테고리
+        {{ form.category }}
+        {% if form.category.errors %}
+          <div class="hint" style="color:#f87171;">{{ form.category.errors|striptags }}</div>
+        {% endif %}
+      </label>
+      <label>
+        단위
+        {{ form.uom }}
+        {% if form.uom.errors %}
+          <div class="hint" style="color:#f87171;">{{ form.uom.errors|striptags }}</div>
+        {% endif %}
+      </label>
+      <label>
+        규격
+        {{ form.spec }}
+      </label>
+      <label>
+        바코드
+        {{ form.barcode }}
+      </label>
+      <label style="grid-column:1/-1;">
+        설명
+        {{ form.description }}
+      </label>
+      <label>
+        활성
+        {{ form.is_active }}
+      </label>
+    </div>
+    {% if form.non_field_errors %}
+      <div class="hint" style="color:#f87171; margin-top:10px;">
+        {{ form.non_field_errors|striptags }}
+      </div>
+    {% endif %}
+    <div style="margin-top:16px; display:flex; gap:8px;">
+      <button class="btn" type="submit">저장</button>
+      <a class="btn btn-outline" href="/app/hq/master/items/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

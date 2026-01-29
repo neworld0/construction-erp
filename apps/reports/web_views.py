@@ -6,6 +6,8 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from apps.closing.guards import guard_write
+
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import get_user_role, require_project_access
 from apps.projects.models import Project
@@ -77,11 +79,28 @@ def report_create(request):
         title = (request.POST.get("title") or "").strip()
         content = (request.POST.get("content") or "").strip()
         report_date = request.POST.get("report_date") or date.today().isoformat()
+        try:
+            report_date_obj = date.fromisoformat(report_date)
+        except ValueError:
+            messages.error(request, "?? ??? ??? ???.")
+            return redirect(f"/app/reports/new/?project_id={project.id}")
         files = request.FILES.getlist("files")
 
         if not title:
             messages.error(request, "제목을 입력하세요.")
             return redirect(f"/app/reports/new/?project_id={project.id}")
+
+        try:
+            guard_write(
+                project=project,
+                target_date=report_date_obj,
+                message_context="??? ??????.",
+                exc=PermissionDenied,
+            )
+        except PermissionDenied as exc:
+            messages.error(request, str(exc))
+            return redirect(f"/app/reports/new/?project_id={project.id}")
+
 
         status = FieldReportStatus.DRAFT
         submitted_at = None
@@ -91,7 +110,7 @@ def report_create(request):
 
         report = FieldReport.objects.create(
             project=project,
-            report_date=report_date,
+            report_date=report_date_obj,
             title=title,
             content=content,
             status=status,
@@ -117,6 +136,17 @@ def report_edit(request, report_id):
     report = get_object_or_404(FieldReport, id=report_id)
     require_project_access(request.user, report.project_id)
     _ensure_can_edit(report, request.user)
+    try:
+        guard_write(
+            project=report.project,
+            target_date=report.report_date,
+            message_context="??? ??????.",
+            exc=PermissionDenied,
+        )
+    except PermissionDenied as exc:
+        messages.error(request, str(exc))
+        return redirect("/app/reports/")
+
 
     if request.method == "POST":
         action = request.POST.get("action", "draft")
@@ -161,6 +191,17 @@ def report_submit(request, report_id):
     report = get_object_or_404(FieldReport, id=report_id)
     require_project_access(request.user, report.project_id)
     _ensure_can_edit(report, request.user)
+    try:
+        guard_write(
+            project=report.project,
+            target_date=report.report_date,
+            message_context="??? ??????.",
+            exc=PermissionDenied,
+        )
+    except PermissionDenied as exc:
+        messages.error(request, str(exc))
+        return redirect("/app/reports/")
+
 
     report.status = FieldReportStatus.SUBMITTED
     report.submitted_at = timezone.now()

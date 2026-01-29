@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Q, Sum
 
 
 
@@ -17,6 +17,8 @@ class CostItemCategory(models.TextChoices):
 class CostItem(models.Model):
     code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=255)
+    cost_type = models.CharField(max_length=1, blank=True, default="")
+    work_type = models.CharField(max_length=2, blank=True, default="")
     category = models.CharField(max_length=20, choices=CostItemCategory.choices)
     unit = models.CharField(max_length=30, blank=True, default="")
     is_direct = models.BooleanField(default=True)
@@ -28,8 +30,50 @@ class CostItem(models.Model):
     class Meta:
         ordering = ["sort_order", "-created_at"]
 
+    def get_display_name(self) -> str:
+        primary = getattr(self, "aliases", None)
+        if primary is not None:
+            alias = primary.filter(is_primary=True).order_by("-updated_at").first()
+            if alias and alias.alias:
+                return alias.alias
+        return self.name
+
     def __str__(self) -> str:
-        return f"{self.code} - {self.name}"
+        return f"{self.code} - {self.get_display_name()}"
+
+
+class CostItemAlias(models.Model):
+    cost_item = models.ForeignKey(
+        CostItem,
+        related_name="aliases",
+        on_delete=models.CASCADE,
+    )
+    alias = models.CharField(max_length=120)
+    is_primary = models.BooleanField(default=True)
+    note = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cost_item_aliases",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cost_item"],
+                condition=Q(is_primary=True),
+                name="uniq_costitem_primary_alias",
+            ),
+            models.UniqueConstraint(
+                fields=["cost_item", "alias"],
+                name="uniq_costitem_alias",
+            ),
+        ]
+        ordering = ["-updated_at"]
 
 
 class CostActualStatus(models.TextChoices):

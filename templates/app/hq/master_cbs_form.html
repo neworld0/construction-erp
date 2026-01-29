@@ -1,0 +1,137 @@
+{% extends "app/base_app.html" %}
+{% load utils %}
+
+{% block page_title %}
+  {% if is_create %}CBS 신규 요청{% else %}CBS 변경 요청{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  .form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .alert {
+    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    background: rgba(239, 68, 68, 0.15);
+    color: #fecaca;
+  }
+  .hint {
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">{% if is_create %}CBS 신규 요청{% else %}CBS 변경 요청{% endif %}</h2>
+  <p class="muted">
+    CBS는 현장 원가 입력의 기준 코드입니다. 변경 시 리포트/KPI 해석에 영향을 줍니다.
+  </p>
+
+  {% if locked %}
+    <div class="alert" style="margin-top:12px;">
+      잠긴 CBS는 제출/승인된 실적에 사용되어 핵심 필드를 변경할 수 없습니다.
+      {% if reasons %}
+        <ul style="margin:8px 0 0 16px;">
+          {% for reason in reasons %}
+            <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {% if alias_available %}
+        <div style="margin-top:10px;">
+          <a class="btn btn-outline" href="/app/hq/master/cbs/{{ item.pk }}/aliases/?from=rename_locked">별칭으로 해결하기</a>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if errors %}
+    <div class="alert" style="margin-top:12px;">
+      {% for error in errors %}
+        <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <form method="post">
+    {% csrf_token %}
+    {% if item %}
+      <input type="hidden" name="id" value="{{ item.pk }}" />
+    {% endif %}
+    <div class="form-grid">
+      <label>
+        코드
+        <input
+          class="input"
+          type="text"
+          name="code"
+          value="{{ values|get_attribute:mapping.code }}"
+          {% if not is_create %}readonly{% endif %}
+          {% if locked %}disabled{% endif %}
+          placeholder="CB-M-07-001"
+        />
+        {% if not is_create %}
+          <div class="hint">코드는 변경할 수 없습니다.</div>
+        {% endif %}
+      </label>
+      <label>
+        항목명
+        <input
+          class="input"
+          type="text"
+          name="name"
+          value="{{ values|get_attribute:mapping.name }}"
+          {% if locked %}disabled{% endif %}
+        />
+      </label>
+      <label>
+        비목
+        <select class="input" name="cost_type" {% if locked %}disabled{% endif %}>
+          <option value="">선택</option>
+          {% for opt in cost_type_options %}
+            <option value="{{ opt.code }}" {% if values|get_attribute:mapping.cost_type == opt.code %}selected{% endif %}>
+              {{ opt.code }}{% if opt.label %} · {{ opt.label }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        공종
+        <select class="input" name="work_type" {% if locked %}disabled{% endif %}>
+          <option value="">선택</option>
+          {% for opt in work_type_options %}
+            <option value="{{ opt.code }}" {% if values|get_attribute:mapping.work_type == opt.code %}selected{% endif %}>
+              {{ opt.code }}{% if opt.label %} · {{ opt.label }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      {% if active_supported %}
+        <label style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+          <input type="checkbox" name="active" value="1" {% if values|get_attribute:mapping.active %}checked{% endif %} {% if locked %}disabled{% endif %} />
+          활성
+        </label>
+      {% endif %}
+    </div>
+
+    <label style="margin-top:12px; display:block;">
+      변경 사유
+      <textarea class="input" name="reason" rows="2" {% if locked %}disabled{% endif %}></textarea>
+    </label>
+
+    <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+      {% if not locked %}
+        <button class="btn" type="submit" name="action" value="save">임시저장</button>
+        <button class="btn btn-outline" type="submit" name="action" value="submit">제출</button>
+      {% endif %}
+      <a class="btn btn-outline" href="/app/hq/master/cbs/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

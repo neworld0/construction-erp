@@ -1,0 +1,53 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}WBS 변경 요청{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h2 style="margin:0 0 6px 0;">WBS 변경 요청</h2>
+      <div class="muted">제출된 요청을 승인/반려합니다.</div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a class="btn btn-outline" href="?status=submitted">대기</a>
+      <a class="btn btn-outline" href="?status=approved">승인</a>
+      <a class="btn btn-outline" href="?status=rejected">반려</a>
+      <a class="btn btn-outline" href="?status=all">전체</a>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <table class="table" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th>프로젝트</th>
+        <th>요청구분</th>
+        <th>요청자</th>
+        <th>기준 버전</th>
+        <th>상태</th>
+        <th>요청일</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in requests %}
+        <tr>
+          <td>{{ req.project.name }}</td>
+          <td>{{ req.request_type }}</td>
+          <td>{{ req.requested_by.username }}</td>
+          <td>v{{ req.base_version }}</td>
+          <td>{{ req.status }}</td>
+          <td>{{ req.created_at|date:"Y-m-d H:i" }}</td>
+          <td>
+            <a class="btn btn-outline" href="/app/ceo/wbs-change/requests/{{ req.id }}/">상세</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="7" class="muted">요청이 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

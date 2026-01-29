@@ -5,7 +5,12 @@ from django.shortcuts import redirect, render
 
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import require_role
+from apps.projects.models import Project
 from .services.dashboard import get_ceo_project_summary, get_ceo_projects_list
+from apps.projects.services.wbs_baseline import (
+    get_wbs_baseline_badge,
+    get_wbs_baseline_history,
+)
 
 
 def _parse_date(value):
@@ -28,9 +33,15 @@ def project_detail_page(request, project_id):
     require_role(request.user, [Role.CEO, Role.HQ])
     as_of_date = _parse_date(request.GET.get("as_of_date"))
     summary = get_ceo_project_summary(project_id, as_of_date)
+    project = Project.objects.filter(id=project_id).first()
+    wbs_badge = get_wbs_baseline_badge(project) if project else {}
+    wbs_history = get_wbs_baseline_history(project) if project else []
 
     context = {
         "summary": summary,
         "as_of_date": as_of_date,
+        "project": project,
+        "wbs_badge": wbs_badge,
+        "wbs_history": wbs_history,
     }
     return render(request, "ceo/project_detail.html", context)

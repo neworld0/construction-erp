@@ -1,0 +1,452 @@
+﻿{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}HQ 신규 공사 등록{% endblock %}
+{% block content %}
+<style>
+  .grid {
+    display: grid;
+    gap: 16px;
+  }
+  .grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .helper {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .row-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .input-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+</style>
+
+<div class="grid">
+  <div class="card">
+    <div class="section-title">HQ 신규 공사 등록</div>
+    <div class="helper">
+      계약/예산/WBS 기준선을 함께 등록하여 KPI가 즉시 계산되도록 합니다.
+    </div>
+    {% if project_form.errors or contract_form.errors or budget_formset.non_form_errors or wbs_formset.non_form_errors %}
+      <div class="alert alert-danger">
+        <div>입력 오류가 있습니다. 아래 항목을 확인해 주세요.</div>
+        {% if project_form.errors %}
+          <div>공사 기본정보에 오류가 있습니다.</div>
+        {% endif %}
+        {% if contract_form.errors %}
+          <div>계약 기준선에 오류가 있습니다.</div>
+        {% endif %}
+        {% if budget_formset.non_form_errors %}
+          {% for err in budget_formset.non_form_errors %}
+            <div>예산: {{ err }}</div>
+          {% endfor %}
+        {% endif %}
+        {% if wbs_formset.non_form_errors %}
+          {% for err in wbs_formset.non_form_errors %}
+            <div>WBS: {{ err }}</div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="card">
+      <div class="section-title">공사 기본정보</div>
+      <div class="grid grid-2">
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.name.id_for_label }}">공사명</label>
+          {{ project_form.name }}
+          {% if project_form.name.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.name.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.project_type.id_for_label }}">공사 유형</label>
+          {{ project_form.project_type }}
+          {% if project_form.project_type.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.project_type.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.start_date.id_for_label }}">공사 시작일</label>
+          {{ project_form.start_date }}
+          {% if project_form.start_date.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.start_date.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.end_date.id_for_label }}">공사 종료일</label>
+          {{ project_form.end_date }}
+          {% if project_form.end_date.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.end_date.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.client_name.id_for_label }}">발주처</label>
+          {{ project_form.client_name }}
+          {% if project_form.client_name.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.client_name.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.site_address.id_for_label }}">현장 주소</label>
+          {{ project_form.site_address }}
+          {% if project_form.site_address.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.site_address.errors|striptags }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {{ project_form.status.as_hidden }}
+    </div>
+
+    <div class="card">
+      <div class="section-title">계약 기준선</div>
+      <div class="grid grid-2">
+        <div class="mb-3">
+          <label class="form-label" for="{{ contract_form.contract_amount.id_for_label }}">계약 금액</label>
+          {{ contract_form.contract_amount }}
+          <div class="input-hint">원 단위 정수, 천단위 콤마 입력 가능</div>
+          {% if contract_form.contract_amount.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ contract_form.contract_amount.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ contract_form.contract_file.id_for_label }}">계약서 파일</label>
+          {{ contract_form.contract_file }}
+          {% if contract_form.contract_file.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ contract_form.contract_file.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ contract_form.contract_start_date.id_for_label }}">계약 시작일</label>
+          {{ contract_form.contract_start_date }}
+          {% if contract_form.contract_start_date.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ contract_form.contract_start_date.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ contract_form.contract_end_date.id_for_label }}">계약 종료일</label>
+          {{ contract_form.contract_end_date }}
+          {% if contract_form.contract_end_date.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ contract_form.contract_end_date.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ contract_form.memo.id_for_label }}">메모</label>
+          {{ contract_form.memo }}
+          {% if contract_form.memo.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ contract_form.memo.errors|striptags }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">예산 라인 입력</div>
+      <div class="helper">예산 라인은 최소 1개 이상 필요합니다.</div>
+      <div class="helper">비활성/변경승인대기 CBS는 신규 예산으로 저장할 수 없습니다.</div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label class="form-label" for="budget_template_select">예산 템플릿</label>
+          <select id="budget_template_select" name="budget_template_id" class="form-control">
+            <option value="">템플릿 선택</option>
+            {% for tpl in budget_templates %}
+              <option value="{{ tpl.id }}" {% if selected_budget_template and tpl.id == selected_budget_template.id %}selected{% endif %}>
+                {{ tpl.domain }}-{{ tpl.category }} v{{ tpl.version }} {{ tpl.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% if budget_template_notice %}
+        <div class="alert" style="background:rgba(56,189,248,0.15); color:var(--text);">
+          {{ budget_template_notice }}
+        </div>
+      {% endif %}
+      {% if budget_template_warnings %}
+        <div class="alert alert-danger">
+          {% for warning in budget_template_warnings %}
+            <div>{{ warning }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {{ budget_formset.management_form }}
+      {% if budget_formset.non_form_errors %}
+        <div class="alert alert-danger">
+          {% for err in budget_formset.non_form_errors %}
+            <div>{{ err }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <table class="table" id="budget-table">
+        <thead>
+          <tr>
+            <th>비목</th>
+            <th>CBS</th>
+            <th>항목명</th>
+            <th>예산 금액</th>
+            <th>비고</th>
+            <th>삭제</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for form in budget_formset %}
+            <tr class="budget-row">
+              <td>{{ form.category }}</td>
+              <td>{{ form.cost_item }}</td>
+              <td>{{ form.name }}</td>
+              <td>{{ form.planned_amount }}</td>
+              <td>{{ form.note }}</td>
+              <td>{{ form.DELETE }}</td>
+            </tr>
+            {% if form.errors %}
+              <tr>
+                <td colspan="6">
+                  <div class="input-hint" style="color:#fca5a5;">{{ form.errors|striptags }}</div>
+                </td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <template id="budget-empty-form">
+        <tr class="budget-row">
+          <td>{{ budget_formset.empty_form.category }}</td>
+          <td>{{ budget_formset.empty_form.cost_item }}</td>
+          <td>{{ budget_formset.empty_form.name }}</td>
+          <td>{{ budget_formset.empty_form.planned_amount }}</td>
+          <td>{{ budget_formset.empty_form.note }}</td>
+          <td>{{ budget_formset.empty_form.DELETE }}</td>
+        </tr>
+      </template>
+      <div class="row-actions">
+        <button type="button" class="btn btn-outline" id="add-budget-row">예산 행 추가</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">WBS 기준선</div>
+      <div class="helper">가중치 합계는 100%여야 합니다.</div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label class="form-label" for="wbs_template_select">WBS 템플릿</label>
+          <select id="wbs_template_select" name="wbs_template_id" class="form-control">
+            <option value="">템플릿 선택</option>
+            {% for tpl in wbs_templates %}
+              <option value="{{ tpl.id }}" {% if selected_wbs_template and tpl.id == selected_wbs_template.id %}selected{% endif %}>
+                {{ tpl.domain }}-{{ tpl.category }} v{{ tpl.version }} {{ tpl.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% if wbs_template_notice %}
+        <div class="alert" style="background:rgba(56,189,248,0.15); color:var(--text);">
+          {{ wbs_template_notice }}
+        </div>
+      {% endif %}
+      {{ wbs_formset.management_form }}
+      {% if wbs_formset.non_form_errors %}
+        <div class="alert alert-danger">
+          {% for err in wbs_formset.non_form_errors %}
+            <div>{{ err }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <table class="table" id="wbs-table">
+        <thead>
+          <tr>
+            <th>작업명</th>
+            <th>가중치(%)</th>
+            <th>계획 시작일</th>
+            <th>계획 종료일</th>
+            <th>순서</th>
+            <th>삭제</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for form in wbs_formset %}
+            <tr class="wbs-row">
+              <td>{{ form.name }}</td>
+              <td>{{ form.weight }}</td>
+              <td>{{ form.plan_start_date }}</td>
+              <td>{{ form.plan_end_date }}</td>
+              <td>{{ form.sort_order }}</td>
+              <td>{{ form.DELETE }}</td>
+            </tr>
+            {% if form.errors %}
+              <tr>
+                <td colspan="6">
+                  <div class="input-hint" style="color:#fca5a5;">{{ form.errors|striptags }}</div>
+                </td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <template id="wbs-empty-form">
+        <tr class="wbs-row">
+          <td>{{ wbs_formset.empty_form.name }}</td>
+          <td>{{ wbs_formset.empty_form.weight }}</td>
+          <td>{{ wbs_formset.empty_form.plan_start_date }}</td>
+          <td>{{ wbs_formset.empty_form.plan_end_date }}</td>
+          <td>{{ wbs_formset.empty_form.sort_order }}</td>
+          <td>{{ wbs_formset.empty_form.DELETE }}</td>
+        </tr>
+      </template>
+      <div class="row-actions">
+        <button type="button" class="btn btn-outline" id="add-wbs-row">WBS 행 추가</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" type="submit">등록</button>
+      <a class="btn btn-outline" href="/app/hq/projects/">취소</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const numberInputs = ["id_contract_amount"];
+  function formatNumber(value) {
+    const digits = value.replace(/[^0-9]/g, "");
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function bindCommaInput(input) {
+    if (!input) return;
+    input.addEventListener("input", () => {
+      input.value = formatNumber(input.value);
+    });
+  }
+  numberInputs.forEach((id) => bindCommaInput(document.getElementById(id)));
+
+  function cloneFromTemplate(templateId, prefix, total) {
+    const template = document.getElementById(templateId);
+    if (!template) return null;
+    const html = template.innerHTML.replace(/__prefix__/g, total);
+    const wrapper = document.createElement("tbody");
+    wrapper.innerHTML = html;
+    const row = wrapper.querySelector("tr");
+    row.querySelectorAll("input, select, textarea").forEach((el) => {
+      const name = el.getAttribute("name");
+      if (name) {
+        el.setAttribute("name", name.replace(`${prefix}-__prefix__-`, `${prefix}-${total}-`));
+      }
+      const id = el.getAttribute("id");
+      if (id) {
+        el.setAttribute("id", id.replace(`${prefix}-__prefix__-`, `${prefix}-${total}-`));
+      }
+      if (el.type === "checkbox") {
+        el.checked = false;
+      } else {
+        el.value = "";
+      }
+    });
+    return row;
+  }
+
+  function addFormRow(tableId, prefix, totalInputId, templateId) {
+    const table = document.getElementById(tableId);
+    const totalInput = document.getElementById(totalInputId);
+    if (!table || !totalInput) return;
+    const total = parseInt(totalInput.value, 10);
+    const lastRow = table.querySelector("tbody tr:last-child");
+    let newRow = null;
+    if (!lastRow) {
+      newRow = cloneFromTemplate(templateId, prefix, total);
+    } else {
+      newRow = lastRow.cloneNode(true);
+      newRow.querySelectorAll("input, select, textarea").forEach((el) => {
+        const name = el.getAttribute("name");
+        if (!name) return;
+        const newName = name.replace(`${prefix}-${total - 1}-`, `${prefix}-${total}-`);
+        const id = el.getAttribute("id");
+        el.setAttribute("name", newName);
+        if (id) {
+          el.setAttribute("id", id.replace(`${prefix}-${total - 1}-`, `${prefix}-${total}-`));
+        }
+        if (el.type === "checkbox") {
+          el.checked = false;
+        } else {
+          el.value = "";
+        }
+      });
+    }
+    if (!newRow) return;
+    table.querySelector("tbody").appendChild(newRow);
+    totalInput.value = total + 1;
+  }
+
+  document.getElementById("add-budget-row")?.addEventListener("click", () => {
+    addFormRow("budget-table", "budget", "id_budget-TOTAL_FORMS", "budget-empty-form");
+  });
+  document.getElementById("add-wbs-row")?.addEventListener("click", () => {
+    addFormRow("wbs-table", "wbs", "id_wbs-TOTAL_FORMS", "wbs-empty-form");
+  });
+
+  function reloadWithTemplates() {
+    const params = new URLSearchParams(window.location.search);
+    const projectType = document.getElementById("id_project_type")?.value;
+    const wbsTemplate = document.getElementById("wbs_template_select")?.value;
+    const budgetTemplate = document.getElementById("budget_template_select")?.value;
+    if (projectType) {
+      params.set("project_type", projectType);
+    }
+    if (wbsTemplate) {
+      params.set("wbs_template_id", wbsTemplate);
+    } else {
+      params.delete("wbs_template_id");
+    }
+    if (budgetTemplate) {
+      params.set("budget_template_id", budgetTemplate);
+    } else {
+      params.delete("budget_template_id");
+    }
+    const next = `${window.location.pathname}?${params.toString()}`;
+    window.location.href = next;
+  }
+
+  document.getElementById("wbs_template_select")?.addEventListener("change", reloadWithTemplates);
+  document.getElementById("budget_template_select")?.addEventListener("change", reloadWithTemplates);
+  document.getElementById("id_project_type")?.addEventListener("change", reloadWithTemplates);
+</script>
+{% endblock %}

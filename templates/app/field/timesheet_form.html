@@ -1,0 +1,147 @@
+﻿{% extends "app/base_app.html" %}
+{% block page_title %}출역부 입력{% endblock %}
+{% block content %}
+<style>
+  .grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .inline-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+  }
+  .btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: #04111f;
+    border-color: transparent;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #facc15;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 12px;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">출역부 입력</h2>
+  <p class="muted">일자별 직종/인원/작업내용을 기록합니다.</p>
+  {% if form_disabled %}
+    <div class="warning">제출 이후에는 수정할 수 없습니다.</div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <form method="post">
+    {% csrf_token %}
+    <div class="grid">
+      <div>
+        <label>프로젝트</label>
+        <select class="inline-input" name="project_id" required {% if form_disabled %}disabled{% endif %}>
+          {% for project in projects %}
+            <option value="{{ project.id }}" {% if timesheet and timesheet.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>작성일</label>
+        <input class="inline-input" type="date" name="work_date" value="{% if timesheet %}{{ timesheet.work_date|date:"Y-m-d" }}{% endif %}" required {% if form_disabled %}disabled{% endif %} />
+      </div>
+      <div style="grid-column: span 2;">
+        <label>비고</label>
+        <input class="inline-input" type="text" name="note" value="{% if timesheet %}{{ timesheet.note }}{% endif %}" {% if form_disabled %}disabled{% endif %} />
+      </div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>직종</th>
+            <th>인원수</th>
+            <th>시간</th>
+            <th>단가 유형</th>
+            <th>메모</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in line_rows %}
+            <tr>
+              <td>
+                <select class="inline-input" name="lines-{{ forloop.counter0 }}-role_id" {% if form_disabled %}disabled{% endif %}>
+                  <option value="">선택</option>
+                  {% for role in roles %}
+                    <option value="{{ role.id }}" {% if row.role_id == role.id %}selected{% endif %}>{{ role.code }} - {{ role.name }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <input class="inline-input" type="number" step="0.1" name="lines-{{ forloop.counter0 }}-headcount" value="{{ row.headcount }}" {% if form_disabled %}disabled{% endif %} />
+              </td>
+              <td>
+                <input class="inline-input" type="number" step="0.1" name="lines-{{ forloop.counter0 }}-hours" value="{{ row.hours }}" {% if form_disabled %}disabled{% endif %} />
+              </td>
+              <td>
+                <select class="inline-input" name="lines-{{ forloop.counter0 }}-rate_type" {% if form_disabled %}disabled{% endif %}>
+                  <option value="DAY" {% if row.rate_type == "DAY" %}selected{% endif %}>일 단가</option>
+                  <option value="HOUR" {% if row.rate_type == "HOUR" %}selected{% endif %}>시간 단가</option>
+                </select>
+              </td>
+              <td>
+                <input class="inline-input" type="text" name="lines-{{ forloop.counter0 }}-memo" value="{{ row.memo }}" {% if form_disabled %}disabled{% endif %} />
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions" style="margin-top:14px;">
+      <button type="submit" name="action" value="draft" class="btn" {% if form_disabled %}disabled{% endif %}>임시저장</button>
+      <button type="submit" name="action" value="submit" class="btn primary" {% if form_disabled %}disabled{% endif %}>제출</button>
+      <a class="btn" href="/app/field/labor/timesheets/">목록</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

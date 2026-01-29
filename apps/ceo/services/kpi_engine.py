@@ -5,13 +5,20 @@ import time
 from datetime import date
 from decimal import Decimal
 
+from django.apps import apps
 from django.db.models import Case, Count, IntegerField, OuterRef, Subquery, Sum, When
 from django.utils import timezone
 
+from apps.closing.adjustments import (
+    AdjustmentTargetType,
+    get_adjustment_totals,
+    get_cost_adjustment_by_category,
+)
 from apps.contracts.models import ContractChange, ContractChangeStatus
 from apps.core.models import ApprovalRequest, ApprovalStatus
-from apps.cost.models import CostActual, CostActualLine, CostActualStatus
-from apps.projects.models import BudgetItem, Project, ProjectContract, ProjectStatus
+from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
+from apps.labor.services import get_labor_totals_for_projects
+from apps.projects.models import Project, ProjectStatus
 from apps.reports.models import FieldReport, FieldReportStatus
 from apps.schedule.models import (
     DailyProgress,
@@ -57,7 +64,7 @@ def _approval_included(object_type, object_id, include_submitted=False):
 
 
 def _baseline_ready(project, contract_amount, budget_total, planned_progress_percent):
-    if project.status != ProjectStatus.APPROVED:
+    if not _project_status_is_approved(project.status):
         return False, "baseline_not_approved"
     if contract_amount is None or contract_amount <= 0:
         return False, "missing_contract"
@@ -66,6 +73,16 @@ def _baseline_ready(project, contract_amount, budget_total, planned_progress_per
     if planned_progress_percent is None:
         return False, "missing_plan_dates"
     return True, None
+
+
+def _project_status_is_approved(status_value):
+    if status_value is None:
+        return False
+    status = str(status_value).lower()
+    approved_values = [choice.value for choice in ProjectStatus]
+    if any(str(value).lower() == "approved" for value in approved_values):
+        return status == "approved"
+    return status in ("active", "closed")
 
 
 def _planned_progress_percent_for_items(project, wbs_items, as_of_date):
@@ -146,22 +163,29 @@ def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include
     if not project_ids:
         return {}
 
-    contract_map = {}
-    for project in projects:
-        contract = getattr(project, "contract", None)
-        contract_map[project.id] = getattr(contract, "contract_amount", None)
+    contract_map = {
+        project.id: getattr(project, "contract_amount", None) for project in projects
+    }
+    contract_model = apps.get_model("projects", "ProjectContract")
+    if contract_model:
+        for row in contract_model.objects.filter(project_id__in=project_ids).values(
+            "project_id", "contract_amount"
+        ):
+            contract_map[row["project_id"]] = row["contract_amount"]
 
     budget_by_project = {}
     budget_by_category = {pid: {} for pid in project_ids}
-    for row in (
-        BudgetItem.objects.filter(project_id__in=project_ids)
-        .values("project_id", "category")
-        .annotate(total=Sum("planned_amount"))
-    ):
-        pid = row["project_id"]
-        total = row["total"] or Decimal("0")
-        budget_by_project[pid] = budget_by_project.get(pid, Decimal("0")) + total
-        budget_by_category[pid][row["category"]] = total
+    budget_model = apps.get_model("projects", "BudgetItem")
+    if budget_model:
+        for row in (
+            budget_model.objects.filter(project_id__in=project_ids)
+            .values("project_id", "category")
+            .annotate(total=Sum("planned_amount"))
+        ):
+            pid = row["project_id"]
+            total = row["total"] or Decimal("0")
+            budget_by_project[pid] = budget_by_project.get(pid, Decimal("0")) + total
+            budget_by_category[pid][row["category"]] = total
 
     cost_statuses = [CostActualStatus.APPROVED, CostActualStatus.CLOSED]
     if include_submitted:
@@ -182,6 +206,28 @@ def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include
         total = row["total"] or Decimal("0")
         cost_totals[pid] = cost_totals.get(pid, Decimal("0")) + total
         cost_by_category[pid][row["cost_item__category"]] = total
+
+    labor_totals = get_labor_totals_for_projects(project_ids, as_of_date=as_of_date)
+    labor_cbs_ids = set()
+    for summary in labor_totals.values():
+        labor_cbs_ids.update((summary.get("by_cbs") or {}).keys())
+    labor_cbs_map = {
+        item.id: item for item in CostItem.objects.filter(id__in=labor_cbs_ids)
+    }
+
+    adjustment_totals = get_adjustment_totals(
+        project_ids,
+        target_type=AdjustmentTargetType.COST,
+        as_of_date=as_of_date,
+    )
+    adjustment_by_category = get_cost_adjustment_by_category(
+        project_ids, as_of_date=as_of_date
+    )
+    for (project_id, category), amount in adjustment_by_category.items():
+        cost_by_category.setdefault(project_id, {})
+        cost_by_category[project_id][category] = cost_by_category[project_id].get(
+            category, Decimal("0")
+        ) + (amount or Decimal("0"))
 
     progress_statuses = ["approved"]
     if include_submitted:
@@ -205,7 +251,21 @@ def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include
             project, contract_amount, budget_total, planned_progress
         )
 
-        actual_cost_total = _safe_decimal(cost_totals.get(project.id))
+        actual_cost_total = _safe_decimal(cost_totals.get(project.id)) + _safe_decimal(
+            adjustment_totals.get(project.id)
+        )
+        labor_summary = labor_totals.get(project.id, {})
+        labor_total = _safe_decimal(labor_summary.get("total"))
+        if labor_total:
+            actual_cost_total += labor_total
+            for cbs_id, amount in (labor_summary.get("by_cbs") or {}).items():
+                cost_item = labor_cbs_map.get(cbs_id)
+                category = (getattr(cost_item, "category", "") or "").upper() or "LABOR"
+                cost_by_category.setdefault(project.id, {})
+                cost_by_category[project.id][category] = (
+                    cost_by_category[project.id].get(category, Decimal("0"))
+                    + (amount or Decimal("0"))
+                )
         actual_progress = _safe_decimal(
             progress_by_project.get(project.id, Decimal("0"))
         )
@@ -250,6 +310,7 @@ def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include
                 "actual_cost_total": actual_cost_total,
                 "actual_cost_by_category": cost_by_category.get(project.id, {}),
                 "actual_progress_percent": actual_progress,
+                "labor_cost_total": labor_total,
             },
             "EV": ev,
             "PV": pv,

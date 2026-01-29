@@ -1,0 +1,84 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}창고 조회{% endblock %}
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .badge.hq {
+    background: rgba(56, 189, 248, 0.2);
+    color: #7dd3fc;
+  }
+  .badge.site {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">창고 조회</h2>
+  <p class="muted">배정된 현장 창고와 본사 창고를 확인합니다.</p>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>구분</th>
+        <th>창고명</th>
+        <th>코드</th>
+        <th>프로젝트</th>
+        <th>기본 위치</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for warehouse in warehouses %}
+        <tr>
+          <td>
+            {% if warehouse.warehouse_type == "hq" %}
+              <span class="badge hq">HQ</span>
+            {% else %}
+              <span class="badge site">SITE</span>
+            {% endif %}
+          </td>
+          <td>{{ warehouse.name }}</td>
+          <td>{{ warehouse.code }}</td>
+          <td>{{ warehouse.project.name|default:"-" }}</td>
+          <td>
+            {% for loc in warehouse.locations.all %}
+              {% if loc.is_default %}
+                {{ loc.name }} ({{ loc.code }})
+              {% endif %}
+            {% empty %}
+              -
+            {% endfor %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5" class="muted">조회 가능한 창고가 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

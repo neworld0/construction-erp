@@ -1,0 +1,130 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}품목 마스터{% endblock %}
+
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    display: inline-block;
+  }
+  .badge.on { background: rgba(34,197,94,0.2); color: #4ade80; }
+  .badge.off { background: rgba(239,68,68,0.2); color: #f87171; }
+</style>
+<style>
+  .filters {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .table-wrap {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+</style>
+
+<div class="card">
+  <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">품목 마스터</div>
+      <div class="hint">재고/구매/현장 투입 기준 품목을 관리합니다.</div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a class="btn" href="/app/hq/master/items/new/">신규 품목</a>
+      <a class="btn btn-outline" href="/app/hq/master/uom/">단위 관리</a>
+      <a class="btn btn-outline" href="/app/hq/master/categories/">카테고리 관리</a>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <form method="get" class="filters">
+    <label>
+      검색
+      <input class="input" type="text" name="q" value="{{ q }}" placeholder="코드/이름/규격/바코드" />
+    </label>
+    <label>
+      카테고리
+      <select class="input" name="category">
+        <option value="">전체</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if category_id == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      활성
+      <select class="input" name="active">
+        <option value="1" {% if active == "1" %}selected{% endif %}>활성</option>
+        <option value="0" {% if active == "0" %}selected{% endif %}>비활성</option>
+        <option value="" {% if active == "" %}selected{% endif %}>전체</option>
+      </select>
+    </label>
+    <button class="btn" type="submit">조회</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>코드</th>
+          <th>품목명</th>
+          <th>규격</th>
+          <th>단위</th>
+          <th>카테고리</th>
+          <th>활성</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.code }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.spec|default:"-" }}</td>
+            <td>{{ item.uom.code }} ({{ item.uom.name }})</td>
+            <td>{{ item.category.name|default:"-" }}</td>
+            <td>
+              {% if item.is_active %}
+                <span class="badge on">활성</span>
+              {% else %}
+                <span class="badge off">비활성</span>
+              {% endif %}
+            </td>
+            <td>
+              <a class="btn btn-outline" href="/app/hq/master/items/{{ item.id }}/edit/">수정</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">조회 결과가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends "app/base_app.html" %}
+{% load utils %}
+
+{% block page_title %}CBS 별칭 관리{% endblock %}
+
+{% block content %}
+<style>
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .notice {
+    background: rgba(14, 116, 144, 0.25);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #bae6fd;
+  }
+  .warning {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fecaca;
+    padding: 12px;
+    border-radius: 10px;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    display: inline-block;
+  }
+  .badge.primary { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  .table-wrap {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+</style>
+
+<div class="card">
+  <h2 style="margin-top:0;">CBS 별칭 관리</h2>
+  <p class="muted">잠긴 CBS는 이름 변경 대신 별칭으로 운영해 주세요.</p>
+
+  {% if notice %}
+    <div class="notice" style="margin-top: 12px;">{{ notice.message }}</div>
+  {% endif %}
+
+  <div class="meta-grid" style="margin-top:12px;">
+    <div>
+      <div class="muted">코드</div>
+      <div>{{ item|get_attribute:mapping.code }}</div>
+    </div>
+    <div>
+      <div class="muted">원래 이름</div>
+      <div>{{ item|get_attribute:mapping.name }}</div>
+    </div>
+    <div>
+      <div class="muted">현재 표시명</div>
+      <div>{{ item.get_display_name }}</div>
+    </div>
+    <div>
+      <div class="muted">비목</div>
+      <div>
+        {% with ct=item|get_attribute:mapping.cost_type %}
+          {{ ct }}
+          {% with ct_label=cost_type_labels|get_item:ct %}
+            {% if ct_label %} · {{ ct_label }}{% endif %}
+          {% endwith %}
+        {% endwith %}
+      </div>
+    </div>
+    <div>
+      <div class="muted">공종</div>
+      <div>
+        {% with wt=item|get_attribute:mapping.work_type|work_code %}
+          {{ wt }}
+          {% with wt_label=work_type_labels|get_item:wt %}
+            {% if wt_label %} · {{ wt_label }}{% endif %}
+          {% endwith %}
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+
+  {% if locked %}
+    <div class="warning" style="margin-top:12px;">
+      잠긴 CBS는 제출/승인된 실적에 사용되어 이름을 변경할 수 없습니다. 별칭으로 관리하세요.
+    </div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <h3 style="margin-top:0;">별칭 목록</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>별칭</th>
+          <th>대표</th>
+          <th>작성자</th>
+          <th>작성일</th>
+          <th>비고</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alias in aliases %}
+          <tr>
+            <td>{{ alias.alias }}</td>
+            <td>
+              {% if alias.is_primary %}
+                <span class="badge primary">대표</span>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ alias.created_by.username|default:"-" }}</td>
+            <td>{{ alias.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ alias.note|default:"-" }}</td>
+            <td>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                {% if not alias.is_primary %}
+                  <form method="post" action="/app/hq/master/cbs/{{ item.pk }}/aliases/{{ alias.pk }}/set-primary/">
+                    {% csrf_token %}
+                    <button class="btn btn-outline" type="submit">대표로 설정</button>
+                  </form>
+                  <form method="post" action="/app/hq/master/cbs/{{ item.pk }}/aliases/{{ alias.pk }}/delete/">
+                    {% csrf_token %}
+                    <button class="btn btn-outline" type="submit">삭제</button>
+                  </form>
+                {% else %}
+                  <span class="muted">-</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">등록된 별칭이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <h3 style="margin-top:0;">별칭 추가</h3>
+  <form method="post" action="/app/hq/master/cbs/{{ item.pk }}/aliases/add/">
+    {% csrf_token %}
+    <label class="form-label">별칭</label>
+    <input class="form-control" type="text" name="alias" required />
+    <label class="form-label" style="margin-top:12px;">비고</label>
+    <input class="form-control" type="text" name="note" />
+    <label style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+      <input type="checkbox" name="is_primary" checked />
+      대표 별칭으로 지정
+    </label>
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button class="btn" type="submit">추가</button>
+      <a class="btn btn-outline" href="/app/hq/master/cbs/">목록으로</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

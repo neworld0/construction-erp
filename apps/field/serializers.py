@@ -3,6 +3,7 @@ from datetime import date
 from rest_framework import serializers
 
 from apps.cost.models import CostItem
+from apps.closing.guards import guard_write
 
 from .models import DailyReport, DailyReportLine, DailyReportStatus
 
@@ -65,12 +66,27 @@ class DailyReportSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         lines_data = validated_data.pop("lines", [])
+        project = validated_data.get("project")
+        report_date = validated_data.get("report_date")
+        if report_date:
+            guard_write(
+                project=project,
+                target_date=report_date,
+                message_context="????? ??????.",
+                exc=serializers.ValidationError,
+            )
         report = DailyReport.objects.create(**validated_data)
         for line_data in lines_data:
             DailyReportLine.objects.create(report=report, **line_data)
         return report
 
     def update(self, instance, validated_data):
+        guard_write(
+            project=instance.project,
+            target_date=instance.report_date,
+            message_context="????? ??????.",
+            exc=serializers.ValidationError,
+        )
         lines_data = validated_data.pop("lines", None)
         for field, value in validated_data.items():
             setattr(instance, field, value)

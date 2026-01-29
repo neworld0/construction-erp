@@ -1,0 +1,96 @@
+﻿{% extends "app/base_app.html" %}
+{% block page_title %}출역부 상세{% endblock %}
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: #04111f;
+    border-color: transparent;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">출역부 상세</h2>
+  <p class="muted">{{ timesheet.project.name }} | {{ timesheet.work_date }} | {{ timesheet.sheet_no }}</p>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>직종</th>
+        <th>인원수</th>
+        <th>시간</th>
+        <th>단가 유형</th>
+        <th>단가</th>
+        <th>금액</th>
+        <th>메모</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in timesheet.lines.all %}
+        <tr>
+          <td>{{ line.labor_role.name }}</td>
+          <td>{{ line.headcount }}</td>
+          <td>{{ line.hours }}</td>
+          <td>{{ line.rate_type }}</td>
+          <td>{{ line.unit_rate }}</td>
+          <td>{{ line.amount }}</td>
+          <td>{{ line.memo }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="muted" style="margin-top:10px;">
+    합계 금액: {{ total_amount }} 원
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <form method="post" action="/app/hq/labor/timesheets/{{ timesheet.id }}/approve/" style="display:inline-block;">
+    {% csrf_token %}
+    <button type="submit" class="btn primary" {% if timesheet.status != "SUBMITTED" %}disabled{% endif %}>승인</button>
+  </form>
+  <form method="post" action="/app/hq/labor/timesheets/{{ timesheet.id }}/reject/" style="display:inline-block; margin-left:8px;">
+    {% csrf_token %}
+    <input type="text" name="reason" class="btn" style="width:240px;" placeholder="반려 사유" />
+    <button type="submit" class="btn" {% if timesheet.status != "SUBMITTED" %}disabled{% endif %}>반려</button>
+  </form>
+  <div class="actions" style="margin-top:12px;">
+    <a class="btn" href="/app/hq/labor/timesheets/">목록</a>
+  </div>
+</div>
+{% endblock %}

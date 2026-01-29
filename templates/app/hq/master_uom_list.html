@@ -1,0 +1,62 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}단위 관리{% endblock %}
+
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+</style>
+<div class="card">
+  <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">단위 관리</div>
+      <div class="hint">품목 기본 단위를 관리합니다.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a class="btn" href="/app/hq/master/uom/new/">신규 단위</a>
+      <a class="btn btn-outline" href="/app/hq/master/items/">품목 목록</a>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>코드</th>
+        <th>이름</th>
+        <th>활성</th>
+        <th>관리</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for uom in uoms %}
+        <tr>
+          <td>{{ uom.code }}</td>
+          <td>{{ uom.name }}</td>
+          <td>{% if uom.is_active %}활성{% else %}비활성{% endif %}</td>
+          <td><a class="btn btn-outline" href="/app/hq/master/uom/{{ uom.id }}/edit/">수정</a></td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4">등록된 단위가 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

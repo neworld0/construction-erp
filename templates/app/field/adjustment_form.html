@@ -1,0 +1,115 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}정정 요청{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom:16px;">
+  <h2 style="margin-top:0;">정정 요청</h2>
+  <p style="color:var(--muted); margin-top:4px;">
+    마감된 월만 정정 요청을 생성할 수 있습니다.
+  </p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-danger{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">{{ form.project.label }}</label>
+      {{ form.project }}
+      {% if form.project.errors %}
+        <div class="alert alert-danger">{{ form.project.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ form.target_type.label }}</label>
+      {{ form.target_type }}
+      {% if form.target_type.errors %}
+        <div class="alert alert-danger">{{ form.target_type.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ form.cbs.label }}</label>
+      {{ form.cbs }}
+      {% if form.cbs.errors %}
+        <div class="alert alert-danger">{{ form.cbs.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ form.period.label }}</label>
+      {{ form.period }}
+      {% if form.period.errors %}
+        <div class="alert alert-danger">{{ form.period.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ form.amount_delta.label }}</label>
+      {{ form.amount_delta }}
+      {% if form.amount_delta.errors %}
+        <div class="alert alert-danger">{{ form.amount_delta.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ form.reason.label }}</label>
+      {{ form.reason }}
+      {% if form.reason.errors %}
+        <div class="alert alert-danger">{{ form.reason.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-outline" type="submit" name="action" value="draft">임시저장</button>
+      <button class="btn" type="submit" name="action" value="submit">제출</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">최근 정정 요청</h3>
+  {% if adjustments %}
+    <div style="overflow:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(148,163,184,0.2);">프로젝트</th>
+            <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(148,163,184,0.2);">대상</th>
+            <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(148,163,184,0.2);">월</th>
+            <th style="text-align:right; padding:8px; border-bottom:1px solid rgba(148,163,184,0.2);">정정 금액</th>
+            <th style="text-align:left; padding:8px; border-bottom:1px solid rgba(148,163,184,0.2);">상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in adjustments %}
+            <tr>
+              <td style="padding:8px; border-bottom:1px solid rgba(148,163,184,0.15);">
+                {{ item.project.name }}
+              </td>
+              <td style="padding:8px; border-bottom:1px solid rgba(148,163,184,0.15);">
+                {{ item.get_target_type_display }}
+              </td>
+              <td style="padding:8px; border-bottom:1px solid rgba(148,163,184,0.15);">
+                {{ item.period_year }}-{{ item.period_month|stringformat:"02d" }}
+              </td>
+              <td style="padding:8px; text-align:right; border-bottom:1px solid rgba(148,163,184,0.15);">
+                {{ item.amount_delta|intcomma }}
+              </td>
+              <td style="padding:8px; border-bottom:1px solid rgba(148,163,184,0.15);">
+                <a class="nav-link" href="/app/field/adjustments/{{ item.id }}/">
+                  {{ item.get_status_display }}
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p style="color:var(--muted);">등록된 정정 요청이 없습니다.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}직종 {% if mode == "edit" %}수정{% else %}등록{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">
+        직종 {% if mode == "edit" %}수정{% else %}등록{% endif %}
+      </div>
+      <div class="hint">출역부/급여 배부의 기준이 되는 직종을 관리합니다.</div>
+    </div>
+    <a class="btn btn-outline" href="/app/hq/master/labor/roles/">목록으로</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  {% if form.non_field_errors %}
+    <div class="alert alert-error">
+      {% for err in form.non_field_errors %}
+        <div>{{ err }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <form method="post" style="display:grid; gap:12px;">
+    {% csrf_token %}
+    <label>
+      코드
+      {{ form.code }}
+      {% if form.code.errors %}<div class="error">{{ form.code.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      직종명
+      {{ form.name }}
+      {% if form.name.errors %}<div class="error">{{ form.name.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      그룹
+      {{ form.role_group }}
+    </label>
+    <label>
+      정렬 순서
+      {{ form.sort_order }}
+    </label>
+    <label>
+      기본 CBS
+      {{ form.default_cbs }}
+    </label>
+    <label>
+      활성
+      {{ form.is_active }}
+    </label>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" type="submit">저장</button>
+      <a class="btn btn-outline" href="/app/hq/master/labor/roles/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -82,7 +82,7 @@
       <label for="cost_item_id">원가 항목</label>
       <select id="cost_item_id" name="cost_item_id" required>
         {% for item in cost_items %}
-        <option value="{{ item.id }}" {% if line and item.id == line.cost_item_id %}selected{% endif %}>{{ item.name }}</option>
+        <option value="{{ item.id }}" {% if line and item.id == line.cost_item_id %}selected{% endif %}>{{ item.code }} - {{ item.get_display_name }}</option>
         {% endfor %}
       </select>
       <div class="inline-grid">

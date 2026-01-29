@@ -1,0 +1,62 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}정정 요청 상세{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0;">정정 요청 상세</h2>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-danger{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div style="display:grid; gap:8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:12px;">
+    <div>
+      <div class="form-label">프로젝트</div>
+      <div>{{ adjustment.project.name }}</div>
+    </div>
+    <div>
+      <div class="form-label">대상</div>
+      <div>{{ adjustment.get_target_type_display }}</div>
+    </div>
+    <div>
+      <div class="form-label">월</div>
+      <div>{{ adjustment.period_year }}-{{ adjustment.period_month|stringformat:"02d" }}</div>
+    </div>
+    <div>
+      <div class="form-label">상태</div>
+      <div>{{ adjustment.get_status_display }}</div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <div class="form-label">정정 금액</div>
+    <div>{{ adjustment.amount_delta|intcomma }}</div>
+  </div>
+  <div class="mb-3">
+    <div class="form-label">사유</div>
+    <div style="white-space:pre-wrap;">{{ adjustment.reason }}</div>
+  </div>
+  <div class="mb-3">
+    <div class="form-label">원본 값(참고)</div>
+    <div>
+      {% if base_amount is not None %}
+        {{ base_amount|intcomma }}
+      {% else %}
+        N/A
+      {% endif %}
+    </div>
+  </div>
+
+  {% if can_submit %}
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn" type="submit">제출</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

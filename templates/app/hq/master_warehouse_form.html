@@ -1,0 +1,52 @@
+﻿{% extends "app/base_app.html" %}
+
+{% block page_title %}창고 관리{% endblock %}
+
+{% block content %}
+<style>
+  .form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .help {
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">{% if mode == "edit" %}창고 수정{% else %}신규 본사 창고{% endif %}</h2>
+  <p class="muted">코드는 유니크하며, 운영 중 변경 시 영향이 있을 수 있습니다.</p>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+      <label>
+        코드
+        {{ form.code }}
+      </label>
+      <label>
+        창고명
+        {{ form.name }}
+      </label>
+    </div>
+    {% if mode == "edit" and warehouse %}
+      <div style="margin-top:12px;" class="help">
+        유형: {{ warehouse.warehouse_type }} / 프로젝트: {% if warehouse.project %}{{ warehouse.project.name }}{% else %}-{% endif %}
+      </div>
+    {% endif %}
+    {% if form.errors %}
+      <div class="notice" style="margin-top:12px;">
+        입력 오류가 있습니다. 항목을 확인해 주세요.
+      </div>
+    {% endif %}
+    <div style="margin-top:16px; display:flex; gap:8px;">
+      <button class="btn" type="submit">저장</button>
+      <a class="btn btn-outline" href="/app/hq/master/warehouses/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}패키지 승인 목록{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>패키지 승인 목록</h2>
+  <div style="margin-bottom:12px;">
+    <a class="btn btn-outline" href="?status=submitted">대기</a>
+    <a class="btn btn-outline" href="?status=approved">승인</a>
+    <a class="btn btn-outline" href="?status=rejected">반려</a>
+  </div>
+  <table style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left; border-bottom:1px solid rgba(148,163,184,0.3); padding:6px;">프로젝트</th>
+        <th style="text-align:left; border-bottom:1px solid rgba(148,163,184,0.3); padding:6px;">제목</th>
+        <th style="text-align:left; border-bottom:1px solid rgba(148,163,184,0.3); padding:6px;">작성자</th>
+        <th style="text-align:left; border-bottom:1px solid rgba(148,163,184,0.3); padding:6px;">상태</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pkg in packages %}
+      <tr>
+        <td style="padding:6px;">{{ pkg.project.name }}</td>
+        <td style="padding:6px;">
+          <a class="nav-link" href="/app/ceo/approval-packages/{{ pkg.id }}/">{{ pkg.title }}</a>
+        </td>
+        <td style="padding:6px;">{{ pkg.created_by }}</td>
+        <td style="padding:6px;">{{ pkg.status }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" style="padding:12px;">대기 중인 패키지가 없습니다.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

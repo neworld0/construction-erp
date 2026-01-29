@@ -1,0 +1,35 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}계약 변경 상세{% endblock %}
+
+{% block content %}
+<div class="container" style="display:grid; gap:16px;">
+  <div class="card">
+    <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+      <div>
+        <div style="font-size:18px; font-weight:700;">계약 변경 상세</div>
+        <div class="hint">{{ change.project.name }} / 변경 #{{ change.change_no }}</div>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/projects/{{ change.project_id }}/">프로젝트 상세</a>
+    </div>
+  </div>
+
+  <div class="card" style="display:grid; gap:12px;">
+    <div class="section-title">기본 정보</div>
+    <div class="muted">상태: {{ change.status|upper }}</div>
+    <div>변경 유형: {{ change.change_type }}</div>
+    <div>사유: {{ change.reason }}</div>
+    <div>계약금액 변경: {{ change.contract_amount_delta|intcomma }}</div>
+    <div>공기 연장(일): {{ change.time_extension_days }}</div>
+  </div>
+
+  <div class="card" style="display:grid; gap:10px;">
+    <div class="section-title">제출/승인 정보</div>
+    <div class="muted">제출자: {{ change.submitted_by.username|default:"-" }}</div>
+    <div class="muted">제출일: {{ change.submitted_at|date:"Y-m-d H:i" }}</div>
+    <div class="muted">승인자: {{ change.approved_by.username|default:"-" }}</div>
+    <div class="muted">승인일: {{ change.approved_at|date:"Y-m-d H:i" }}</div>
+  </div>
+</div>
+{% endblock %}

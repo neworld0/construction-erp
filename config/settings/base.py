@@ -50,6 +50,9 @@ INSTALLED_APPS = [
     "apps.reports",
     "apps.public_site",
     "apps.master",
+    "apps.closing",
+    "apps.inventory",
+    "apps.labor",
 ]
 
 MIDDLEWARE = [

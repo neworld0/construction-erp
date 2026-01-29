@@ -1,5 +1,6 @@
 from django.utils import timezone
 from rest_framework import status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -9,6 +10,7 @@ from .services import approve_contract_change
 from .models import ContractChange, ContractChangeStatus
 from .serializers import ContractChangeSerializer
 from apps.evidence.services.policy import check_evidence_required
+from apps.closing.guards import guard_write
 
 
 class ContractChangeViewSet(viewsets.ModelViewSet):
@@ -18,6 +20,12 @@ class ContractChangeViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        guard_write(
+            project=instance.project,
+            target_date=timezone.localdate(),
+            message_context="계약 변경 기준일입니다.",
+            exc=PermissionDenied,
+        )
         if instance.status == ContractChangeStatus.APPROVED:
             return Response(
                 {"detail": "Approved contract change cannot be modified."},
@@ -27,6 +35,12 @@ class ContractChangeViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
+        guard_write(
+            project=instance.project,
+            target_date=timezone.localdate(),
+            message_context="계약 변경 기준일입니다.",
+            exc=PermissionDenied,
+        )
         if instance.status == ContractChangeStatus.APPROVED:
             return Response(
                 {"detail": "Approved contract change cannot be modified."},
@@ -36,6 +50,12 @@ class ContractChangeViewSet(viewsets.ModelViewSet):
 
     def submit(self, request, *args, **kwargs):
         change = self.get_object()
+        guard_write(
+            project=change.project,
+            target_date=timezone.localdate(),
+            message_context="계약 변경 제출 기준일입니다.",
+            exc=PermissionDenied,
+        )
         if change.status != ContractChangeStatus.DRAFT:
             return Response(
                 {"detail": "Only draft contract changes can be submitted."},

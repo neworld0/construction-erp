@@ -1,0 +1,115 @@
+{% extends "app/base_app.html" %}
+{% load utils %}
+
+{% block page_title %}CBS 이름 변경 요청{% endblock %}
+
+{% block content %}
+<style>
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .warning {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fecaca;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 12px;
+  }
+  .reason-list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
+</style>
+
+<div class="card">
+  <h2 style="margin-top:0;">CBS 이름 변경 요청</h2>
+  <p class="muted">코드 기준으로 이름만 변경됩니다. 코드는 변경되지 않습니다.</p>
+
+  <div class="meta-grid" style="margin-top:12px;">
+    <div>
+      <div class="muted">코드</div>
+      <div>{{ item|get_attribute:mapping.code }}</div>
+    </div>
+    <div>
+      <div class="muted">비목</div>
+      <div>
+        {% with ct=item|get_attribute:mapping.cost_type %}
+          {{ ct }}
+          {% with ct_label=cost_type_labels|get_item:ct %}
+            {% if ct_label %} · {{ ct_label }}{% endif %}
+          {% endwith %}
+        {% endwith %}
+      </div>
+    </div>
+    <div>
+      <div class="muted">공종</div>
+      <div>
+        {% with wt=item|get_attribute:mapping.work_type|work_code %}
+          {{ wt }}
+          {% with wt_label=work_type_labels|get_item:wt %}
+            {% if wt_label %} · {{ wt_label }}{% endif %}
+          {% endwith %}
+        {% endwith %}
+      </div>
+    </div>
+    <div>
+      <div class="muted">활성 상태</div>
+      <div>
+        {% if mapping.active %}
+          {% if item|get_attribute:mapping.active %}활성{% else %}비활성{% endif %}
+        {% else %}
+          N/A
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if locked %}
+    <div class="warning">
+      잠긴 CBS는 제출/승인된 실적에 사용되어 이름을 변경할 수 없습니다.
+      {% if reasons %}
+        <ul class="reason-list">
+          {% for reason in reasons %}
+            <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <div style="margin-top:12px;">
+        <a class="btn btn-outline" href="/app/hq/master/cbs/{{ item.pk }}/aliases/?from=rename_locked">
+          별칭으로 해결하기
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if error_message %}
+    <div class="warning">{{ error_message }}</div>
+  {% endif %}
+
+  <form method="post" style="margin-top:16px;">
+    {% csrf_token %}
+    <label class="form-label">항목명</label>
+    <input
+      class="form-control"
+      type="text"
+      name="name"
+      value="{{ item|get_attribute:mapping.name }}"
+      {% if locked %}disabled{% endif %}
+    />
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      {% if not locked %}
+        <button class="btn" type="submit" name="action" value="save">임시저장</button>
+        <button class="btn btn-outline" type="submit" name="action" value="submit">제출</button>
+      {% endif %}
+      <a class="btn btn-outline" href="/app/hq/master/cbs/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

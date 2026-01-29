@@ -3,193 +3,331 @@
 {% block page_title %}프로젝트 KPI 상세{% endblock %}
 {% block content %}
 <style>
-  .grid { display: grid; gap: 16px; }
-  .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-  .kpi { display: grid; gap: 6px; }
-  .kpi .label { color: var(--muted); font-size: 13px; }
-  .kpi .value { font-size: 20px; font-weight: 700; }
-  .table { display: grid; gap: 8px; }
-  .row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 12px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: rgba(15, 23, 42, 0.6);
+  .page-header {
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
   }
-  .row.header {
-    background: rgba(15, 23, 42, 0.9);
+  .page-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .grid {
+    display: grid;
+    gap: 12px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  .kpi-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .kpi-card .value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
     font-weight: 600;
   }
-  .muted { color: var(--muted); }
-  .badge {
-    padding: 4px 8px;
+  .badge.green { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+  .badge.yellow { background: rgba(234, 179, 8, 0.2); color: #fbbf24; }
+  .badge.red { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
     border-radius: 999px;
     font-size: 12px;
-    display: inline-block;
+    background: rgba(56, 189, 248, 0.2);
+    color: var(--text);
   }
-  .badge.green { background: rgba(34,197,94,0.2); color: #4ade80; }
-  .badge.yellow { background: rgba(234,179,8,0.2); color: #fbbf24; }
-  .badge.red { background: rgba(239,68,68,0.2); color: #f87171; }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .table th,
+  .table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: left;
+  }
+  .table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    z-index: 1;
+  }
+  .table-wrap {
+    max-height: 260px;
+    overflow: auto;
+  }
+  .muted {
+    color: var(--muted);
+  }
 </style>
 
-<div class="grid">
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-      <h2>{{ project.name }} KPI 상세</h2>
-      <a class="btn btn-outline" href="/app/ceo/">대시보드로</a>
-    </div>
-    <form method="get" style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-      <label class="muted">
-        기준일
-        <input type="date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}" class="input" />
-      </label>
-      <label class="muted">
-        <input type="checkbox" name="include_submitted" value="1" {% if include_submitted %}checked{% endif %} />
-        제출 포함
-      </label>
-      <button class="btn" type="submit">조회</button>
-    </form>
+<div class="page-header">
+  <div>
+    <h2 style="margin:0;">{{ project.name }} KPI 상세</h2>
+    <div class="muted" style="margin-top:4px;">기준일: {{ as_of_date|date:"Y-m-d" }}</div>
   </div>
-
-  <div class="card">
-    <h3>요약 지표</h3>
-    <div class="grid kpi-grid" style="margin-top:12px;">
-      <div class="kpi">
-        <div class="label">계약금액</div>
-        <div class="value">{{ kpi.baseline.contract_amount|floatformat:0|intcomma }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">총 예산</div>
-        <div class="value">{{ kpi.baseline.budget_total|floatformat:0|intcomma }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">누적 원가</div>
-        <div class="value">{{ kpi.actual.actual_cost_total|floatformat:0|intcomma }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">기준공정률</div>
-        <div class="value">{{ kpi.baseline.planned_progress_percent|floatformat:1 }}%</div>
-      </div>
-      <div class="kpi">
-        <div class="label">실제진행률</div>
-        <div class="value">{{ kpi.actual.actual_progress_percent|floatformat:1 }}%</div>
-      </div>
-      <div class="kpi">
-        <div class="label">CPI / SPI</div>
-        <div class="value">
-          {{ kpi.CPI|floatformat:2 }} /
-          {{ kpi.SPI|floatformat:2 }}
-        </div>
-      </div>
-      <div class="kpi">
-        <div class="label">EAC</div>
-        <div class="value">{{ kpi.EAC_budget|floatformat:0|intcomma }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">예상 손익</div>
-        <div class="value">{{ kpi.forecast_profit|floatformat:0|intcomma }}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">리스크 점수</div>
-        <div class="value">
-          {{ kpi.risk_score|floatformat:0 }}
-          {% if kpi.risk_band %}
-            <span class="badge {{ kpi.risk_band|lower }}">{{ kpi.risk_band }}</span>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    {% if not kpi.flags.baseline_ready %}
-      <p class="muted" style="margin-top:8px;">기준선 미확정: KPI가 제한적으로 계산됩니다.</p>
-    {% endif %}
+  <div class="page-actions">
+    <a class="btn btn-outline" href="/app/ceo/">대시보드로</a>
   </div>
+</div>
 
-  <div class="card">
-    <h3>예산 vs 실적 (카테고리)</h3>
-    <div class="table">
-      <div class="row header">
-        <div>카테고리</div>
-        <div>예산</div>
-        <div>누적 원가</div>
-        <div>차이</div>
-      </div>
-      {% for row in category_rows %}
-        <div class="row">
-          <div>{{ row.category }}</div>
-          <div>{{ row.budget|floatformat:0|intcomma }}</div>
-          <div>{{ row.actual|floatformat:0|intcomma }}</div>
-          <div>{{ row.diff|floatformat:0|intcomma }}</div>
-        </div>
-      {% empty %}
-        <div class="row">
-          <div>데이터가 없습니다.</div>
-          <div></div><div></div><div></div>
-        </div>
-      {% endfor %}
+<div class="card">
+  <form method="get" class="page-actions">
+    <input class="form-control" type="date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}" />
+    <label class="pill" style="gap:6px;">
+      <input type="checkbox" name="include_submitted" value="1" {% if include_submitted %}checked{% endif %} />
+      제출 포함
+    </label>
+    <button class="btn" type="submit">조회</button>
+  </form>
+</div>
+
+<div class="grid kpi-grid" style="margin-top:12px;">
+  <div class="card kpi-card">
+    <h4>계약 금액</h4>
+    <div class="value">{{ kpi.baseline.contract_amount|floatformat:0|intcomma }}</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>총 예산</h4>
+    <div class="value">{{ kpi.baseline.budget_total|floatformat:0|intcomma }}</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>누적 원가</h4>
+    <div class="value">{{ kpi.actual.actual_cost_total|floatformat:0|intcomma }}</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>인건비(실적)</h4>
+    <div class="value">{{ kpi.actual.labor_cost_total|floatformat:0|intcomma }}</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>계획 공정률</h4>
+    <div class="value">{{ kpi.baseline.planned_progress_percent|floatformat:1 }}%</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>실제 진행률</h4>
+    <div class="value">{{ kpi.actual.actual_progress_percent|floatformat:1 }}%</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>CPI / SPI</h4>
+    <div class="value">
+      {{ kpi.CPI|floatformat:2 }} / {{ kpi.SPI|floatformat:2 }}
     </div>
   </div>
-
-  <div class="card">
-    <h3>WBS 진행 현황</h3>
-    <div class="table">
-      <div class="row header">
-        <div>WBS</div>
-        <div>가중치</div>
-        <div>계획 기간</div>
-        <div>실제 진행률</div>
-      </div>
-      {% for row in wbs_rows %}
-        <div class="row">
-          <div>{{ row.name }}</div>
-          <div>{{ row.weight|floatformat:1 }}</div>
-          <div>{{ row.plan_start }} ~ {{ row.plan_end }}</div>
-          <div>
-            {% if row.actual_progress != None %}
-              {{ row.actual_progress|floatformat:1 }}%
-            {% else %}
-              <span class="muted">-</span>
-            {% endif %}
-          </div>
-        </div>
-      {% empty %}
-        <div class="row">
-          <div>데이터가 없습니다.</div>
-          <div></div><div></div><div></div>
-        </div>
-      {% endfor %}
-    </div>
+  <div class="card kpi-card">
+    <h4>EAC</h4>
+    <div class="value">{{ kpi.EAC_budget|floatformat:0|intcomma }}</div>
   </div>
-
-  <div class="card">
-    <h3>승인 대기 현황</h3>
-    <div class="table">
-      <div class="row header">
-        <div>유형</div>
-        <div>대기 건수</div>
-        <div>링크</div>
-        <div></div>
-      </div>
-      <div class="row">
-        <div>원가</div>
-        <div>{{ pending_breakdown.cost }}</div>
-        <div><a href="/app/hq/">승인 대기 보기</a></div>
-        <div></div>
-      </div>
-      <div class="row">
-        <div>진행</div>
-        <div>{{ pending_breakdown.progress }}</div>
-        <div><a href="/app/hq/">승인 대기 보기</a></div>
-        <div></div>
-      </div>
-      <div class="row">
-        <div>보고서</div>
-        <div>{{ pending_breakdown.report }}</div>
-        <div><a href="/app/hq/">승인 대기 보기</a></div>
-        <div></div>
-      </div>
+  <div class="card kpi-card">
+    <h4>예상 손익</h4>
+    <div class="value">{{ kpi.forecast_profit|floatformat:0|intcomma }}</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>리스크 점수</h4>
+    <div class="value">
+      {{ kpi.risk_score|floatformat:0 }}
+      {% if kpi.risk_band %}
+        <span class="badge {{ kpi.risk_band|lower }}">{{ kpi.risk_band }}</span>
+      {% endif %}
     </div>
   </div>
 </div>
+
+{% if not kpi.flags.baseline_ready %}
+  <div class="alert alert-danger" style="margin-top:12px;">
+    기준선이 확정되지 않아 KPI가 제한적으로 계산됩니다.
+  </div>
+{% endif %}
+
+<div class="card" style="margin-top:12px;">
+  <h3 style="margin-top:0;">예산 vs 실제 (카테고리)</h3>
+  <div style="margin:10px 0 16px 0;">
+    <canvas id="budgetActualChart" height="140"></canvas>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>카테고리</th>
+          <th>예산</th>
+          <th>실제</th>
+          <th>차이</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in category_rows %}
+          <tr>
+            <td>{{ row.category }}</td>
+            <td>{{ row.budget|floatformat:0|intcomma }}</td>
+            <td>{{ row.actual|floatformat:0|intcomma }}</td>
+            <td>{{ row.diff|floatformat:0|intcomma }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="muted">카테고리 데이터가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <h3 style="margin-top:0;">WBS 진행 현황</h3>
+  <div style="margin:10px 0 16px 0;">
+    <canvas id="progressCompareChart" height="120"></canvas>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>WBS</th>
+          <th>가중치</th>
+          <th>계획 기간</th>
+          <th>실제 진행률</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in wbs_rows %}
+          <tr>
+            <td>{{ row.name }}</td>
+            <td>{{ row.weight|floatformat:1 }}</td>
+            <td>{{ row.plan_start }} ~ {{ row.plan_end }}</td>
+            <td>
+              {% if row.actual_progress != None %}
+                {{ row.actual_progress|floatformat:1 }}%
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="muted">WBS 데이터가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <h3 style="margin-top:0;">승인 대기 현황</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>승인 대기</th>
+          <th>승인 목록</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>원가</td>
+          <td>{{ pending_breakdown.cost }}</td>
+          <td><a class="btn btn-outline" href="/app/hq/">승인 대기 화면</a></td>
+        </tr>
+        <tr>
+          <td>진행</td>
+          <td>{{ pending_breakdown.progress }}</td>
+          <td><a class="btn btn-outline" href="/app/hq/">승인 대기 화면</a></td>
+        </tr>
+        <tr>
+          <td>보고서</td>
+          <td>{{ pending_breakdown.report }}</td>
+          <td><a class="btn btn-outline" href="/app/hq/">승인 대기 화면</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{ chart_category_labels|json_script:"chart-category-labels" }}
+{{ chart_category_budget|json_script:"chart-category-budget" }}
+{{ chart_category_actual|json_script:"chart-category-actual" }}
+{{ chart_progress_labels|json_script:"chart-progress-labels" }}
+{{ chart_progress_values|json_script:"chart-progress-values" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    var labels = JSON.parse(document.getElementById("chart-category-labels").textContent || "[]");
+    var budgets = JSON.parse(document.getElementById("chart-category-budget").textContent || "[]");
+    var actuals = JSON.parse(document.getElementById("chart-category-actual").textContent || "[]");
+    var budgetCtx = document.getElementById("budgetActualChart");
+    if (budgetCtx) {
+      new Chart(budgetCtx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "예산",
+              data: budgets,
+              backgroundColor: "rgba(56, 189, 248, 0.55)",
+              borderColor: "rgba(56, 189, 248, 1)",
+              borderWidth: 1
+            },
+            {
+              label: "실제",
+              data: actuals,
+              backgroundColor: "rgba(248, 113, 113, 0.45)",
+              borderColor: "rgba(248, 113, 113, 1)",
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    var progressLabels = JSON.parse(document.getElementById("chart-progress-labels").textContent || "[]");
+    var progressValues = JSON.parse(document.getElementById("chart-progress-values").textContent || "[]");
+    var progressCtx = document.getElementById("progressCompareChart");
+    if (progressCtx) {
+      new Chart(progressCtx, {
+        type: "bar",
+        data: {
+          labels: progressLabels,
+          datasets: [{
+            label: "진행률 %",
+            data: progressValues,
+            backgroundColor: "rgba(34, 197, 94, 0.4)",
+            borderColor: "rgba(34, 197, 94, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, max: 100 }
+          }
+        }
+      });
+    }
+  })();
+</script>
 {% endblock %}

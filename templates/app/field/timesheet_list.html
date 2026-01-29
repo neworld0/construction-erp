@@ -1,0 +1,83 @@
+﻿{% extends "app/base_app.html" %}
+{% block page_title %}출역부{% endblock %}
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: #04111f;
+    border-color: transparent;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">출역부 목록</h2>
+  <p class="muted">현장 출역부를 조회하고 임시저장/제출 현황을 확인합니다.</p>
+  <div class="actions" style="margin-top:12px;">
+    <a class="btn primary" href="/app/field/labor/timesheets/new/">출역부 작성</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>작성일</th>
+        <th>프로젝트</th>
+        <th>번호</th>
+        <th>상태</th>
+        <th>상세</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sheet in timesheets %}
+        <tr>
+          <td>{{ sheet.work_date }}</td>
+          <td>{{ sheet.project.name }}</td>
+          <td>{{ sheet.sheet_no }}</td>
+          <td>{{ sheet.status }}</td>
+          <td>
+            <a class="btn" href="/app/field/labor/timesheets/{{ sheet.id }}/">보기</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5" class="muted">등록된 출역부가 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

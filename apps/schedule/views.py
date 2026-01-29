@@ -1,6 +1,7 @@
 from datetime import date
 
 from rest_framework import status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,6 +16,7 @@ from .services.progress_agg import get_project_progress
 from apps.audit.constants import PLAN_CHANGE_REJECT, PLAN_CHANGE_SUBMIT
 from apps.audit.services.logger import log_action
 from apps.core.rbac.permissions import require_project_access
+from apps.closing.guards import guard_write
 
 
 class DailyProgressViewSet(viewsets.ModelViewSet):
@@ -47,6 +49,12 @@ class DailyProgressViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = self.get_object()
+        guard_write(
+            project=instance.project,
+            target_date=instance.report_date,
+            message_context="??? ??????.",
+            exc=PermissionDenied,
+        )
         prev_progress = instance.progress_percent
         progress = serializer.save()
         delta = (progress.progress_percent or 0) - (prev_progress or 0)

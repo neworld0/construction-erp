@@ -1,0 +1,279 @@
+﻿{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}HQ 대시보드{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:20px; font-weight:700;">HQ 대시보드</div>
+        <div class="hint">승인 대기/리스크 현황을 빠르게 확인하세요.</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a class="btn btn-outline" href="/app/hq/projects/">프로젝트 목록</a>
+        <a class="btn" href="/app/hq/projects/new/">HQ 신규 공사 등록</a>
+        {% if cbs_url %}
+        <a class="btn btn-outline" href="{{ cbs_url }}">CBS 관리</a>
+        {% endif %}
+        <a class="btn btn-outline" href="/app/hq/closing/">월 마감 관리</a>
+        <a class="btn btn-outline" href="/app/hq/master/warehouses/">창고 관리</a>
+        <a class="btn btn-outline" href="/app/hq/master/items/">품목 관리</a>
+        <a class="btn btn-outline" href="/app/hq/master/labor/roles/">직종 관리</a>
+        <a class="btn btn-outline" href="/app/hq/master/labor/rates/">직종 단가표</a>
+        <a class="btn btn-outline" href="/app/hq/labor/timesheets/">출역부 승인</a>
+        <a class="btn btn-outline" href="/app/hq/labor/payroll/">급여 배부</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+      <div style="min-width:240px; flex:1;">
+        <div style="font-size:18px; font-weight:700;">HQ 운영 허브</div>
+        <div class="hint">오늘 처리해야 할 핵심 업무를 요약합니다.</div>
+        <div style="margin-top:12px; display:grid; gap:8px;">
+          {% if todo_all_clear %}
+            <div style="font-weight:600; color:#86efac;">🟢 오늘의 HQ 업무가 모두 정상입니다.</div>
+          {% endif %}
+          {% for item in todo_items %}
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border:1px solid rgba(148,163,184,0.2); border-radius:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span>{{ item.icon }}</span>
+                <span>{{ item.text }}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="muted">{{ item.count }}건</span>
+                {% if item.url %}
+                  <a class="btn btn-outline" style="height:26px;" href="{{ item.url }}">바로가기</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div style="min-width:220px;">
+        <div style="font-weight:600; margin-bottom:8px;">바로가기</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          {% for link in quick_links %}
+            <a class="btn btn-outline" href="{{ link.url }}">{{ link.label }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="font-weight:600; margin-bottom:6px;">최근 승인 처리</div>
+      {% if recent_actions %}
+        <ul class="list">
+          {% for item in recent_actions %}
+            <li>
+              {{ item.action }} /
+              {% if item.project %}{{ item.project.name }}{% else %}{{ item.object_type }} #{{ item.object_id }}{% endif %}
+              <span class="muted">{{ item.created_at|date:"Y-m-d H:i" }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="muted">최근 승인 처리 내역이 없습니다.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="container" style="grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-top:18px;">
+    <div class="card" id="pending-reports" style="scroll-margin-top:80px;">
+      <div class="section-title">승인 대기 일일보고</div>
+      {% if pending_reports %}
+        <ul class="list">
+          {% for item in pending_reports %}
+            <li>
+              {{ item.project.name }} / {{ item.reporter.username }}
+              <span class="muted">{{ item.report_date }}</span>
+              <span class="muted">관리자</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="muted">대기 항목이 없습니다.</div>
+      {% endif %}
+    </div>
+
+    <div class="card" id="pending-costs" style="scroll-margin-top:80px;">
+      <div class="section-title">승인 대기 원가</div>
+      {% if pending_costs %}
+        <ul class="list">
+          {% for item in pending_costs %}
+            <li>
+              {{ item.project.name }}
+              <span class="muted">{{ item.report_date }}</span>
+              <span class="muted">{{ item.total_amount|intcomma }}</span>
+              <span class="muted">관리자</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="muted">대기 항목이 없습니다.</div>
+      {% endif %}
+    </div>
+
+    <div class="card" id="pending-changes" style="scroll-margin-top:80px;">
+      <div class="section-title">승인 대기 변경요청</div>
+      {% if pending_plan_changes or pending_contract_changes %}
+        <ul class="list">
+          {% for item in pending_plan_changes %}
+            <li>
+              {{ item.project.name }} (계획 변경)
+              <span class="muted">{{ item.requested_at|date:"Y-m-d" }}</span>
+              <span class="muted">관리자</span>
+            </li>
+          {% endfor %}
+          {% for item in pending_contract_changes %}
+            <li>
+              {{ item.project.name }} (계약 변경)
+              <span class="muted">{{ item.submitted_at|date:"Y-m-d" }}</span>
+              <span class="muted">관리자</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="muted">대기 항목이 없습니다.</div>
+      {% endif %}
+    </div>
+
+    <div class="card" id="risks" style="scroll-margin-top:80px;">
+      <div class="section-title" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div>리스크</div>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <span class="muted">OPEN {{ risk_summary.open_total|default:0 }}건</span>
+          {% if risk_summary.critical %}
+            <span style="padding:2px 8px; border-radius:999px; background:#7f1d1d; color:#fecaca; font-size:11px;">CRITICAL {{ risk_summary.critical }}</span>
+          {% endif %}
+          {% if risk_summary.high %}
+            <span style="padding:2px 8px; border-radius:999px; background:#78350f; color:#fde68a; font-size:11px;">HIGH {{ risk_summary.high }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if risk_cards %}
+        <div style="display:grid; gap:10px;">
+          {% for item in risk_cards %}
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px; border:1px solid rgba(148,163,184,0.2); border-radius:10px;">
+              <div style="min-width:0;">
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                  <span style="padding:2px 8px; border-radius:999px; background:rgba(59,130,246,0.18); color:#93c5fd; font-size:11px;">{{ item.category_label }}</span>
+                  {% if item.severity == "CRITICAL" %}
+                    <span style="padding:2px 8px; border-radius:999px; background:#7f1d1d; color:#fecaca; font-size:11px;">CRITICAL</span>
+                  {% elif item.severity == "HIGH" %}
+                    <span style="padding:2px 8px; border-radius:999px; background:#78350f; color:#fde68a; font-size:11px;">HIGH</span>
+                  {% elif item.severity == "MED" %}
+                    <span style="padding:2px 8px; border-radius:999px; background:#1e3a8a; color:#bfdbfe; font-size:11px;">MED</span>
+                  {% else %}
+                    <span style="padding:2px 8px; border-radius:999px; background:rgba(148,163,184,0.2); color:#e2e8f0; font-size:11px;">LOW</span>
+                  {% endif %}
+                  {% if item.stale_48h %}
+                    <span style="padding:2px 8px; border-radius:999px; background:rgba(239,68,68,0.18); color:#fca5a5; font-size:11px;">48h+</span>
+                  {% elif item.stale_24h %}
+                    <span style="padding:2px 8px; border-radius:999px; background:rgba(245,158,11,0.18); color:#facc15; font-size:11px;">24h+</span>
+                  {% endif %}
+                </div>
+                <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  {% if item.project_name %}{{ item.project_name }}{% endif %}
+                </div>
+                <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  {{ item.title }}
+                </div>
+                <div class="muted" style="font-size:11px; margin-top:4px;">
+                  {{ item.detected_at|date:"Y-m-d H:i" }}
+                </div>
+              </div>
+              {% if item.detail_url %}
+                <a class="btn btn-outline" style="height:28px;" href="{{ item.detail_url }}">상세</a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="padding:6px 0;">
+          <div style="font-weight:600; color:#86efac;">🟢 현재 OPEN 리스크가 없습니다.</div>
+          <div class="muted">제출·승인·마감 흐름이 정상입니다.</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if evidence_missing %}
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">증빙 누락</div>
+      <ul class="list">
+        {% for item in evidence_missing %}
+          <li>
+            {{ item.project.name }} / {{ item.object_type }} #{{ item.object_id }}
+            <span class="muted">{{ item.reason }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  <style>
+    .anchor-flash {
+      outline: 2px solid rgba(56, 189, 248, 0.9);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+      transition: outline 0.2s ease;
+    }
+  </style>
+  <script>
+    (function () {
+      function flashTarget(el) {
+        el.classList.add("anchor-flash");
+        setTimeout(function () {
+          el.classList.remove("anchor-flash");
+        }, 1200);
+      }
+
+      function scrollToHash() {
+        if (!window.location.hash) return;
+        var targetId = window.location.hash.slice(1);
+        var el = document.getElementById(targetId);
+        if (!el) return;
+        setTimeout(function () {
+          try {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch (err) {
+            var top = el.getBoundingClientRect().top + window.pageYOffset - 12;
+            window.scrollTo({ top: top, behavior: "smooth" });
+          }
+          flashTarget(el);
+        }, 50);
+      }
+      window.addEventListener("hashchange", scrollToHash);
+      scrollToHash();
+
+      document.addEventListener("click", function (event) {
+        var link = event.target.closest("a");
+        if (!link) return;
+        var href = link.getAttribute("href") || "";
+        if (href.indexOf("#") === -1) return;
+        try {
+          var url = new URL(href, window.location.origin);
+          if (url.pathname !== window.location.pathname) return;
+          var targetId = url.hash.slice(1);
+          if (!targetId) return;
+          var el = document.getElementById(targetId);
+          if (!el) return;
+          event.preventDefault();
+          history.replaceState(null, "", url.pathname + url.hash);
+          try {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch (err) {
+            var top = el.getBoundingClientRect().top + window.pageYOffset - 12;
+            window.scrollTo({ top: top, behavior: "smooth" });
+          }
+          flashTarget(el);
+        } catch (err) {
+          return;
+        }
+      });
+    })();
+  </script>
+</div>
+{% endblock %}

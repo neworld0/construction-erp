@@ -1,0 +1,56 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}승인 패키지 생성{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>승인 패키지 생성</h2>
+  <p class="hint">변경계약과 WBS 변경요청을 묶어 CEO 승인으로 제출합니다.</p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">프로젝트</label>
+      <div>{{ project.name }}</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.title.id_for_label }}">패키지 제목</label>
+      {{ form.title }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.reason.id_for_label }}">사유</label>
+      {{ form.reason }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="change_order_id">변경계약 선택</label>
+      <select id="change_order_id" name="change_order_id" class="form-control" required>
+        <option value="">선택하세요</option>
+        {% for item in change_orders %}
+          <option value="{{ item.id }}">
+            #{{ item.change_no }} / {{ item.status }} / {{ item.contract_amount_delta }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="wbs_request_id">WBS 변경요청 선택</label>
+      <select id="wbs_request_id" name="wbs_request_id" class="form-control" required>
+        <option value="">선택하세요</option>
+        {% for item in wbs_requests %}
+          <option value="{{ item.id }}">
+            v{{ item.base_version }} / {{ item.request_type }} / {{ item.status }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" type="submit">패키지 생성</button>
+      <a class="btn btn-outline" href="/app/hq/projects/{{ project.id }}/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

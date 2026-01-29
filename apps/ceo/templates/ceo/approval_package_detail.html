@@ -1,0 +1,69 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}패키지 승인 상세{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>패키지 승인 상세</h2>
+  <div class="mb-3">
+    <strong>{{ package.title }}</strong> ({{ package.status }})
+  </div>
+  <div class="mb-3">
+    <div class="form-label">프로젝트</div>
+    <div>{{ package.project.name }}</div>
+  </div>
+  <div class="mb-3">
+    <div class="form-label">사유</div>
+    <div>{{ package.reason|default:"-" }}</div>
+  </div>
+  <div class="mb-3">
+    <div class="form-label">구성요소</div>
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; border-bottom:1px solid rgba(148,163,184,0.3); padding:6px;">유형</th>
+          <th style="text-align:left; border-bottom:1px solid rgba(148,163,184,0.3); padding:6px;">상태</th>
+          <th style="text-align:left; border-bottom:1px solid rgba(148,163,184,0.3); padding:6px;">요약</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td style="padding:6px;">{{ item.item_type }}</td>
+          <td style="padding:6px;">{{ item.status }}</td>
+          <td style="padding:6px;">{{ item.summary }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if package.status == "submitted" %}
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <form method="post" action="/app/ceo/approval-packages/{{ package.id }}/approve/">
+      {% csrf_token %}
+      <button class="btn" type="submit">승인</button>
+    </form>
+    <form method="post" action="/app/ceo/approval-packages/{{ package.id }}/reject/">
+      {% csrf_token %}
+      <input
+        class="form-control"
+        type="text"
+        name="decision_note"
+        placeholder="반려 사유를 입력하세요"
+        style="min-width:220px;"
+        required
+      />
+      <button class="btn btn-outline" type="submit">반려</button>
+    </form>
+  </div>
+  {% endif %}
+  <div style="margin-top:12px;">
+    <a class="btn btn-outline" href="/app/ceo/approval-packages/">목록으로</a>
+  </div>
+</div>
+{% endblock %}

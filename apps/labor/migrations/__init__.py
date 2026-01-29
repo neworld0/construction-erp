@@ -1,0 +1,1 @@
+"""Labor app migrations."""

@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -15,6 +16,7 @@ from apps.projects.models import (
     BudgetItem,
     Project,
     ProjectContract,
+    ProjectContractStatus,
     ProjectStatus,
     WBSItem,
 )
@@ -29,6 +31,8 @@ class Command(BaseCommand):
         if os.getenv("DEMO_ENABLE", "").strip().lower() != "true":
             self.stdout.write("seed_demo_3sites skipped (DEMO_ENABLE != true).")
             return
+
+        call_command("seed_master_templates")
 
         User = get_user_model()
         _get_or_create_user(User, os.getenv("SEED_CEO_USERNAME", "ceo"), Role.CEO)
@@ -47,6 +51,10 @@ class Command(BaseCommand):
             ("PRJ-BASE-003", "Demo Site C", ProjectStatus.APPROVED),
         ]
 
+        contract_created = 0
+        contract_skipped = 0
+        budget_created = 0
+        budget_skipped = 0
         for code, name, status in project_specs:
             project, _ = Project.objects.get_or_create(
                 code=code,
@@ -65,9 +73,15 @@ class Command(BaseCommand):
                 project=project,
                 defaults={
                     "contract_amount": Decimal("1000000.00"),
+                    "contract_start_date": project.start_date,
+                    "contract_end_date": project.end_date,
+                    "start_date": project.start_date,
+                    "end_date": project.end_date,
+                    "status": "approved",
                 },
             )
             if created:
+                contract_created += 1
                 contract_file = SimpleUploadedFile(
                     f"{code}-contract.txt",
                     b"demo contract",
@@ -76,12 +90,24 @@ class Command(BaseCommand):
                 contract.contract_file = contract_file
                 contract.contract_start_date = project.start_date
                 contract.contract_end_date = project.end_date
+                contract.start_date = project.start_date
+                contract.end_date = project.end_date
                 contract.save()
+            else:
+                contract_skipped += 1
 
             wbs_items = _seed_wbs(project)
-            _seed_budget(project, cost_items)
+            created, skipped = _seed_budget(project, cost_items)
+            budget_created += created
+            budget_skipped += skipped
             _seed_actuals(project, cost_items, wbs_items, field_user, hq_user)
 
+        self.stdout.write(
+            f"ProjectContract seeded: created={contract_created}, skipped={contract_skipped}"
+        )
+        self.stdout.write(
+            f"BudgetItem seeded: created={budget_created}, skipped={budget_skipped}"
+        )
         self.stdout.write("seed_demo_3sites done.")
 
 
@@ -124,29 +150,47 @@ def _seed_wbs(project):
 
 
 def _seed_budget(project, cost_items):
-    if BudgetItem.objects.filter(project=project).count() >= 4:
-        return
-    categories = [
-        BudgetCategory.MATERIAL,
-        BudgetCategory.SUBCON,
-        BudgetCategory.EQUIP,
-        BudgetCategory.LABOR,
-        BudgetCategory.OVERHEAD,
-        BudgetCategory.OTHER,
-    ]
-    for idx, category in enumerate(categories):
-        cost_item = cost_items[idx % len(cost_items)] if cost_items else None
-        name = cost_item.name if cost_item else f"{category} budget"
-        BudgetItem.objects.get_or_create(
+    existing = BudgetItem.objects.filter(project=project).count()
+    if existing >= 10:
+        return 0, 0
+
+    preferred_work_types = {"07", "08", "09", "11", "12"}
+    preferred = [item for item in cost_items if item.work_type in preferred_work_types]
+    fallback = [item for item in cost_items if item not in preferred]
+    candidates = preferred + fallback
+    if not candidates:
+        return 0, 0
+
+    contract = ProjectContract.objects.filter(project=project).first()
+    contract_amount = contract.contract_amount if contract else Decimal("0")
+    target_ratio = Decimal("0.8")
+    target_total = int((contract_amount * target_ratio).to_integral_value())
+    if target_total <= 0:
+        target_total = 100000000
+
+    target_count = min(max(10, len(candidates) // 2), 30, len(candidates))
+    per_item = max(target_total // target_count, 1000000)
+
+    created = 0
+    skipped = 0
+    for idx, cost_item in enumerate(candidates[:target_count]):
+        planned_amount = per_item + (idx % 5) * 500000
+        _, was_created = BudgetItem.objects.get_or_create(
             project=project,
-            category=category,
-            name=name,
+            cost_item=cost_item,
             defaults={
-                "planned_amount": Decimal("150000.00") + Decimal(idx * 75000),
-                "cost_item": cost_item,
-                "notes": "demo budget",
+                "category": BudgetCategory.OTHER,
+                "name": cost_item.name,
+                "planned_amount": planned_amount,
+                "status": ProjectContractStatus.APPROVED,
+                "note": "demo budget",
             },
         )
+        if was_created:
+            created += 1
+        else:
+            skipped += 1
+    return created, skipped
 
 
 def _seed_cost_items():

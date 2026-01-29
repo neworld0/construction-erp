@@ -7,6 +7,7 @@ from apps.cost.models import CostActualLine, CostActualStatus, RevenueRecognitio
 from apps.cost.services.accrual_cost import get_accrual_cost_by_project
 from apps.finance.services.cash_summary import get_cash_summary
 from apps.finance.services.profit_loss import _calculate_margin, get_profit_loss_by_project
+from apps.labor.services import get_labor_totals_for_projects
 from apps.projects.models import Project
 from apps.risk.models import RiskFinding
 from django.utils import timezone
@@ -67,6 +68,9 @@ def get_ceo_projects_list(filters):
 
     progress_map = _bulk_progress(project_ids, filters.get("as_of_date"))
     accrual_map = _bulk_accrual(project_ids)
+    labor_map = get_labor_totals_for_projects(
+        project_ids, as_of_date=filters.get("as_of_date") or timezone.localdate()
+    )
     profit_map = _bulk_profit(project_ids)
     risk_counts = _risk_counts_by_project(project_ids)
     risk_updates = _latest_risk_updated_at(project_ids)
@@ -75,6 +79,12 @@ def get_ceo_projects_list(filters):
     for project in queryset:
         progress = progress_map.get(project.id, {"overall_progress_percent": Decimal("0")})
         accrual = accrual_map.get(project.id, _empty_accrual())
+        labor_summary = labor_map.get(project.id, {})
+        labor_cost = _safe_decimal(labor_summary.get("total"))
+        if "LABOR" not in accrual.get("by_category", {}):
+            accrual["by_category"]["LABOR"] = Decimal("0")
+        accrual["by_category"]["LABOR"] += labor_cost
+        accrual["total_cost"] += labor_cost
         profit_loss = profit_map.get(project.id, _empty_profit(project.id))
         recognized_revenue = _safe_decimal(profit_loss.get("recognized_revenue"))
         accrual_cost = _safe_decimal(accrual.get("total_cost"))
@@ -86,6 +96,7 @@ def get_ceo_projects_list(filters):
             "overall_progress_percent": _safe_decimal(progress.get("overall_progress_percent")),
             "recognized_revenue": recognized_revenue,
             "accrual_cost": accrual_cost,
+            "labor_cost": labor_cost,
             "profit": profit,
             "margin_percent": margin_percent,
             "tasks": progress.get("tasks", []),
@@ -122,6 +133,14 @@ def get_ceo_project_summary(project_id, as_of_date=None):
     progress = get_project_progress(project_id, as_of_date)
     profit_loss = get_profit_loss_by_project(project_id)
     accrual = get_accrual_cost_by_project(project_id)
+    labor_summary = get_labor_totals_for_projects([project_id], as_of_date=as_of_date).get(
+        project_id, {}
+    )
+    labor_cost = _safe_decimal(labor_summary.get("total"))
+    if "LABOR" not in accrual.get("by_category", {}):
+        accrual["by_category"]["LABOR"] = Decimal("0")
+    accrual["by_category"]["LABOR"] += labor_cost
+    accrual["total_cost"] += labor_cost
     cash_summary = get_cash_summary(project_id, period_start, as_of_date)
     risk_findings = list(
         RiskFinding.objects.filter(project_id=project_id)
@@ -144,6 +163,7 @@ def get_ceo_project_summary(project_id, as_of_date=None):
         "tasks": progress.get("tasks", []),
         "recognized_revenue": _safe_decimal(profit_loss.get("recognized_revenue")),
         "accrual_cost": _safe_decimal(accrual.get("total_cost")),
+        "labor_cost": labor_cost,
         "cost_by_category": accrual.get("by_category", {}),
         "profit": _safe_decimal(profit_loss.get("profit")),
         "margin_percent": _safe_decimal(profit_loss.get("margin_percent")),

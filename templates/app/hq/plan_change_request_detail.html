@@ -1,0 +1,45 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}계획 변경 요청 상세{% endblock %}
+
+{% block content %}
+<div class="container" style="display:grid; gap:16px;">
+  <div class="card">
+    <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+      <div>
+        <div style="font-size:18px; font-weight:700;">계획 변경 요청 상세</div>
+        <div class="hint">{{ plan_change.project.name }} / 요청 #{{ plan_change.id }}</div>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/projects/{{ plan_change.project_id }}/">프로젝트 상세</a>
+    </div>
+  </div>
+
+  <div class="card" style="display:grid; gap:12px;">
+    <div class="section-title">기본 정보</div>
+    <div class="muted">상태: {{ plan_change.status|upper }}</div>
+    <div>요청 유형: {{ plan_change.change_type }}</div>
+    <div>사유: {{ plan_change.reason }}</div>
+    <div class="muted">베이스 플랜: {{ plan_change.base_plan.name }} (v{{ plan_change.base_plan.version_no }})</div>
+    {% if plan_change.contract_change_id %}
+      <div>
+        연결 계약 변경:
+        <a class="btn btn-outline" href="/app/hq/contract-changes/{{ plan_change.contract_change_id }}/">상세 보기</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card" style="display:grid; gap:10px;">
+    <div class="section-title">제출/승인 정보</div>
+    <div class="muted">요청자: {{ plan_change.requested_by.username|default:"-" }}</div>
+    <div class="muted">요청일: {{ plan_change.requested_at|date:"Y-m-d H:i" }}</div>
+    <div class="muted">승인자: {{ plan_change.approved_by.username|default:"-" }}</div>
+    <div class="muted">승인일: {{ plan_change.approved_at|date:"Y-m-d H:i" }}</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">제안 내용</div>
+    <pre style="white-space:pre-wrap; margin:0; color:#e2e8f0;">{{ payload_json }}</pre>
+  </div>
+</div>
+{% endblock %}

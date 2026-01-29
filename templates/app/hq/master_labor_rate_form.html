@@ -1,0 +1,83 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}직종 단가 {% if mode == "edit" %}수정{% else %}등록{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">
+        직종 단가 {% if mode == "edit" %}수정{% else %}등록{% endif %}
+      </div>
+      <div class="hint">프로젝트별/회사 공통 단가를 관리합니다.</div>
+    </div>
+    <a class="btn btn-outline" href="/app/hq/master/labor/rates/">목록으로</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <div class="alert" style="margin-bottom:12px;">
+    과거 기간 단가 변경은 마감/정산에 영향을 줄 수 있습니다.
+  </div>
+  {% if form.non_field_errors %}
+    <div class="alert alert-error">
+      {% for err in form.non_field_errors %}
+        <div>{{ err }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <form method="post" style="display:grid; gap:12px;">
+    {% csrf_token %}
+    <label>
+      직종
+      {{ form.labor_role }}
+      {% if form.labor_role.errors %}<div class="error">{{ form.labor_role.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      단가 유형
+      {{ form.rate_type }}
+    </label>
+    <label>
+      단가(원)
+      {{ form.unit_rate }}
+      {% if form.unit_rate.errors %}<div class="error">{{ form.unit_rate.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      통화
+      {{ form.currency }}
+    </label>
+    <label>
+      적용 시작일
+      {{ form.effective_from }}
+      {% if form.effective_from.errors %}<div class="error">{{ form.effective_from.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      적용 종료일
+      {{ form.effective_to }}
+      {% if form.effective_to.errors %}<div class="error">{{ form.effective_to.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      범위
+      {{ form.scope_type }}
+      {% if form.scope_type.errors %}<div class="error">{{ form.scope_type.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      프로젝트
+      {{ form.project }}
+      {% if form.project.errors %}<div class="error">{{ form.project.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      활성
+      {{ form.is_active }}
+    </label>
+    <label>
+      비고
+      {{ form.note }}
+    </label>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" type="submit">저장</button>
+      <a class="btn btn-outline" href="/app/hq/master/labor/rates/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}WBS 변경 요청{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h2 style="margin:0 0 6px 0;">WBS 변경 요청</h2>
+      <div class="muted">기준 버전: {{ base_version }}</div>
+    </div>
+    <a class="btn btn-outline" href="{{ back_url }}">돌아가기</a>
+  </div>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="card" style="margin-top:12px; border-left:4px solid #f59e0b; padding:12px;">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  {% if draft_request %}
+    <input type="hidden" name="request_id" value="{{ draft_request.id }}" />
+  {% endif %}
+
+  <div class="card" style="margin-top:16px;">
+    <h3 style="margin-top:0;">요청 정보</h3>
+    <div class="grid" style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <div>
+        <label>요청 구분</label>
+        {{ form.request_type }}
+        {% if form.request_type.errors %}
+          <div class="hint" style="color:#ef4444;">{{ form.request_type.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+      <div>
+        <label>사유</label>
+        {{ form.reason }}
+        {% if form.reason.errors %}
+          <div class="hint" style="color:#ef4444;">{{ form.reason.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+      {% if form.change_order %}
+      <div>
+        <label>변경요청(선택)</label>
+        {{ form.change_order }}
+        {% if form.change_order.errors %}
+          <div class="hint" style="color:#ef4444;">{{ form.change_order.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3 style="margin-top:0;">현재 기준선</h3>
+    <div class="hint">현재 baseline WBS를 참고하세요.</div>
+    <div style="overflow:auto; margin-top:8px;">
+      <table class="table" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th>순서</th>
+            <th>작업명</th>
+            <th>가중치(%)</th>
+            <th>계획 시작일</th>
+            <th>계획 종료일</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in baseline_items %}
+            <tr>
+              <td>{{ item.sort_order }}</td>
+              <td>{{ item.name }}</td>
+              <td>{{ item.weight }}</td>
+              <td>{{ item.plan_start_date }}</td>
+              <td>{{ item.plan_end_date }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="muted">기준선 WBS가 없습니다.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3 style="margin-top:0;">변경안 입력</h3>
+    <div class="hint">제출 시 가중치 합계는 100%여야 합니다.</div>
+    {{ formset.management_form }}
+    <div id="lines-container" style="margin-top:8px;">
+      {% for line_form in formset %}
+        <div class="card" style="margin-bottom:10px; padding:12px;">
+          <div class="grid" style="display:grid; gap:10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+            <div>
+              <label>작업명</label>
+              {{ line_form.task_name }}
+            </div>
+            <div>
+              <label>가중치(%)</label>
+              {{ line_form.weight }}
+            </div>
+            <div>
+              <label>계획 시작일</label>
+              {{ line_form.planned_start }}
+            </div>
+            <div>
+              <label>계획 종료일</label>
+              {{ line_form.planned_end }}
+            </div>
+            <div>
+              <label>비고</label>
+              {{ line_form.note }}
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+              <label style="margin-right:6px;">삭제</label>
+              {{ line_form.DELETE }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <button type="button" id="add-line" class="btn btn-outline">WBS 행 추가</button>
+  </div>
+
+  <div class="actions-row" style="margin-top:16px; display:flex; gap:10px;">
+    <button type="submit" name="action" value="draft" class="btn" {% if not can_edit %}disabled{% endif %}>임시저장</button>
+    <button type="submit" name="action" value="submit" class="btn btn-primary" {% if not can_edit %}disabled{% endif %}>제출</button>
+  </div>
+</form>
+
+<template id="empty-line-form">
+  <div class="card" style="margin-bottom:10px; padding:12px;">
+    <div class="grid" style="display:grid; gap:10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+      <div>
+        <label>작업명</label>
+        {{ formset.empty_form.task_name }}
+      </div>
+      <div>
+        <label>가중치(%)</label>
+        {{ formset.empty_form.weight }}
+      </div>
+      <div>
+        <label>계획 시작일</label>
+        {{ formset.empty_form.planned_start }}
+      </div>
+      <div>
+        <label>계획 종료일</label>
+        {{ formset.empty_form.planned_end }}
+      </div>
+      <div>
+        <label>비고</label>
+        {{ formset.empty_form.note }}
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <label style="margin-right:6px;">삭제</label>
+        {{ formset.empty_form.DELETE }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  (function () {
+    const addBtn = document.getElementById("add-line");
+    const container = document.getElementById("lines-container");
+    const totalInput = document.getElementById("id_lines-TOTAL_FORMS");
+    const emptyTemplate = document.getElementById("empty-line-form");
+
+    if (!addBtn || !container || !totalInput || !emptyTemplate) {
+      return;
+    }
+
+    addBtn.addEventListener("click", () => {
+      const idx = parseInt(totalInput.value, 10);
+      const html = emptyTemplate.innerHTML.replace(/__prefix__/g, idx);
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = html;
+      container.appendChild(wrapper.firstElementChild);
+      totalInput.value = idx + 1;
+    });
+  })();
+</script>
+{% endblock %}

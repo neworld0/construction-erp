@@ -12,6 +12,8 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from apps.closing.guards import guard_write
+
 from apps.audit.constants import DRAFT_SAVE, EVIDENCE_CREATE, EVIDENCE_FILE_ADD, SUBMIT
 from apps.audit.services.logger import log_action
 from apps.core.models import ApprovalRequest, ApprovalStatus
@@ -22,6 +24,7 @@ from apps.evidence.models import Evidence, EvidenceFile, EvidenceStatus
 from apps.reports.models import FieldReport, FieldReportStatus
 from apps.field.models import DailyReport, DailyReportLine, DailyReportStatus
 from apps.projects.models import Project
+from apps.projects.wbs_change import render_wbs_change_form
 from apps.schedule.models import DailyProgress, SchedulePlan, ScheduleTask
 
 
@@ -164,6 +167,17 @@ def field_cost_edit(request, cost_actual_id):
     require_project_access(request.user, project.id)
 
     role = get_user_role(request.user)
+    try:
+        guard_write(
+            project=cost_actual.project,
+            target_date=cost_actual.report_date,
+            message_context="?? ??????.",
+            exc=PermissionDenied,
+        )
+    except PermissionDenied as exc:
+        messages.error(request, str(exc))
+        return redirect(f"/app/field/?tab=cost&project_id={project.id}")
+
     report = cost_actual.source_daily_report
     if role == Role.FIELD:
         if report is None or report.reporter_id != request.user.id:
@@ -223,8 +237,10 @@ def field_cost_edit(request, cost_actual_id):
                 {
                     "cost_actual": cost_actual,
                     "line": line,
-                    "cost_items": list(CostItem.objects.filter(is_active=True)),
-                    "error": "?? ??? ?????.",
+                    "cost_items": list(
+                        CostItem.objects.filter(is_active=True).prefetch_related("aliases")
+                    ),
+                    "error": "원가 항목을 선택하세요.",
                 },
             )
         if quantity is None or unit_price is None:
@@ -234,8 +250,10 @@ def field_cost_edit(request, cost_actual_id):
                 {
                     "cost_actual": cost_actual,
                     "line": line,
-                    "cost_items": list(CostItem.objects.filter(is_active=True)),
-                    "error": "??/??? ?????.",
+                    "cost_items": list(
+                        CostItem.objects.filter(is_active=True).prefetch_related("aliases")
+                    ),
+                    "error": "수량/단가를 입력하세요.",
                 },
             )
         if line:
@@ -262,7 +280,7 @@ def field_cost_edit(request, cost_actual_id):
                 evidence = Evidence.objects.create(
                     object_type="COST_ACTUAL",
                     object_id=cost_actual.id,
-                    title=f"원가 증빙 - {line.cost_item.name}",
+                    title=f"원가 증빙 - {line.cost_item.get_display_name()}",
                     description=memo,
                     created_by=request.user,
                     status=EvidenceStatus.DRAFT,
@@ -324,7 +342,9 @@ def field_cost_edit(request, cost_actual_id):
             "cost_actual": cost_actual,
             "line": line,
             "evidence": evidence,
-            "cost_items": list(CostItem.objects.filter(is_active=True)),
+            "cost_items": list(
+                CostItem.objects.filter(is_active=True).prefetch_related("aliases")
+            ),
         },
     )
 
@@ -333,9 +353,21 @@ def field_cost_edit(request, cost_actual_id):
 def field_progress_edit(request, progress_id):
     progress = get_object_or_404(DailyProgress, id=progress_id)
     project = progress.project
+    try:
+        guard_write(
+            project=progress.project,
+            target_date=progress.report_date,
+            message_context="??? ??????.",
+            exc=PermissionDenied,
+        )
+    except PermissionDenied as exc:
+        messages.error(request, str(exc))
+        return redirect(f"/app/field/?tab=progress&project_id={project.id}")
+
     require_project_access(request.user, project.id)
 
     role = get_user_role(request.user)
+
     if role == Role.FIELD:
         if progress.reporter_id != request.user.id:
             raise PermissionDenied("Progress edit not allowed.")
@@ -431,6 +463,22 @@ def _handle_progress_submit(request, project, context):
     note = (request.POST.get("note") or "").strip()
     report_date = request.POST.get("report_date") or date.today().isoformat()
 
+    try:
+        report_date_obj = date.fromisoformat(report_date)
+    except ValueError:
+        context["errors"].append("기준일 형식이 올바르지 않습니다.")
+        return
+    try:
+        guard_write(
+            project=project,
+            target_date=report_date_obj,
+            message_context="??? ??????.",
+            exc=PermissionDenied,
+        )
+    except PermissionDenied as exc:
+        context["errors"].append(str(exc))
+        return
+
     if action == "submit":
         progress = None
         if progress_id:
@@ -486,7 +534,7 @@ def _handle_progress_submit(request, project, context):
         return
 
     existing_progress = DailyProgress.objects.filter(
-        task=task, report_date=report_date, reporter=request.user
+        task=task, report_date=report_date_obj, reporter=request.user
     ).first()
     if existing_progress and _is_progress_locked(existing_progress):
         context["errors"].append("Submitted items cannot be edited.")
@@ -494,7 +542,7 @@ def _handle_progress_submit(request, project, context):
 
     progress, _created = DailyProgress.objects.update_or_create(
         task=task,
-        report_date=report_date,
+        report_date=report_date_obj,
         reporter=request.user,
         defaults={
             "project": project,
@@ -666,56 +714,49 @@ def _handle_cost_submit(request, project, context):
     if action != "submit":
         cost_actual_id = None
         if not cost_item_id or quantity is None or unit_price is None:
-            context["errors"].append("원가 항목과 금액을 입력하세요.")
+            context["errors"].append("\uc6d0\uac00 \ud56d\ubaa9/\uc218\ub7c9/\ub2e8\uac00\ub97c \uc785\ub825\ud558\uc138\uc694.")
             return
         if quantity < 0 or unit_price < 0:
-            context["errors"].append("금액은 0 이상이어야 합니다.")
+            context["errors"].append("\uae08\uc561\uc740 0 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.")
             return
         cost_item = CostItem.objects.filter(id=cost_item_id, is_active=True).first()
         if cost_item is None:
-            context["errors"].append("원가 항목을 찾을 수 없습니다.")
+            context["errors"].append("\uc6d0\uac00 \ud56d\ubaa9\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.")
             return
 
-    report_date = date.today()
     try:
         with transaction.atomic():
             if action == "submit":
-                cost_actual = None
-                cost_actual = (
-                    CostActual.objects.filter(id=cost_actual_id, project=project).first()
-                    if cost_actual_id
-                    else None
-                )
+                if not cost_actual_id:
+                    context["errors"].append("\uc784\uc2dc\uc800\uc7a5 \ub0b4\uc5ed\uc774 \uc5c6\uc5b4 \uc81c\ucd9c\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.")
+                    return
+                cost_actual = CostActual.objects.filter(
+                    id=cost_actual_id,
+                    project=project,
+                    source_daily_report__reporter=request.user,
+                ).first()
                 if cost_actual is None:
-                    draft_qs = CostActual.objects.filter(
-                        project=project,
-                        source_daily_report__reporter=request.user,
-                        status=CostActualStatus.DRAFT,
-                    ).order_by("-updated_at")
-                    draft_count = draft_qs.count()
-                    if draft_count > 1:
-                        context["errors"].append("임시저장 건이 여러 건입니다. 목록에서 날짜를 선택해 제출해 주세요.")
-                        return
-                    if draft_count == 1:
-                        cost_actual = draft_qs.first()
-                    if cost_actual is None:
-                        report_qs = DailyReport.objects.filter(
-                            project=project,
-                            reporter=request.user,
-                            status=DailyReportStatus.DRAFT,
-                        ).order_by("-updated_at")
-                        if report_qs.count() > 1:
-                            context["errors"].append("임시저장 건이 여러 건입니다. 목록에서 날짜를 선택해 제출해 주세요.")
-                            return
-                        report = report_qs.first()
-                        cost_actual = getattr(report, "costactual", None) if report else None
-                if cost_actual is None or _is_cost_locked(cost_actual):
-                    context["errors"].append("임시저장 내역이 없어 제출할 수 없습니다.")
+                    context["errors"].append("\uc784\uc2dc\uc800\uc7a5 \ub0b4\uc5ed\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.")
+                    return
+                try:
+                    guard_write(
+            project=cost_actual.project,
+            target_date=cost_actual.report_date,
+            message_context="?? ??????.",
+            exc=PermissionDenied,
+        )
+                except PermissionDenied as exc:
+                    context["errors"].append(str(exc))
+                    return
+                if _is_cost_locked(cost_actual):
+                    context["errors"].append("\uc81c\ucd9c \uc774\ud6c4\uc5d0\ub294 \uc218\uc815\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.")
                     return
                 if str(cost_actual.status).lower() != "draft":
-                    context["errors"].append("Only draft costs can be submitted.")
+                    context["errors"].append("\uc784\uc2dc\uc800\uc7a5 \uc0c1\ud0dc\ub9cc \uc81c\ucd9c\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.")
                     return
+
                 report = cost_actual.source_daily_report
+                report_date = cost_actual.report_date
                 if report and report.status != DailyReportStatus.SUBMITTED:
                     report.status = DailyReportStatus.SUBMITTED
                     report.save(update_fields=["status"])
@@ -739,10 +780,20 @@ def _handle_cost_submit(request, project, context):
                     request=request,
                     after={"status": cost_actual.status, "report_date": str(report_date)},
                 )
-                context["success"] = "원가가 제출되었습니다."
+                context["success"] = "\uc6d0\uac00\uac00 \uc81c\ucd9c\ub418\uc5c8\uc2b5\ub2c8\ub2e4."
                 return
 
-            cost_actual = None
+            report_date = date.today()
+            try:
+                guard_write(
+                project=project,
+                target_date=report_date,
+                message_context="?? ??????.",
+                exc=PermissionDenied,
+            )
+            except PermissionDenied as exc:
+                context["errors"].append(str(exc))
+                return
             report = DailyReport.objects.create(
                 project=project,
                 report_date=report_date,
@@ -751,7 +802,7 @@ def _handle_cost_submit(request, project, context):
                 status=DailyReportStatus.DRAFT,
             )
             if report.status == DailyReportStatus.APPROVED:
-                context["errors"].append("?? ??? ??????.")
+                context["errors"].append("\uc2b9\uc778 \uc644\ub8cc\ub41c \uc77c\uc77c\ubcf4\uace0\uc11c\ub294 \uc218\uc815\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.")
                 return
 
             report_line = report.lines.order_by("id").first()
@@ -770,8 +821,7 @@ def _handle_cost_submit(request, project, context):
                 report_line.unit_price = unit_price
                 report_line.save()
 
-            if cost_actual is None:
-                cost_actual = getattr(report, "costactual", None)
+            cost_actual = getattr(report, "costactual", None)
             if cost_actual is None:
                 cost_actual = CostActual.objects.create(
                     project=project,
@@ -780,7 +830,7 @@ def _handle_cost_submit(request, project, context):
                     status=CostActualStatus.DRAFT,
                 )
             if str(cost_actual.status).upper() in _LOCKED_STATUSES:
-                context["errors"].append("승인 완료 후에는 수정할 수 없습니다.")
+                context["errors"].append("\uc2b9\uc778 \uc644\ub8cc \ud6c4\uc5d0\ub294 \uc218\uc815\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.")
                 return
             if cost_actual.status != CostActualStatus.DRAFT:
                 cost_actual.status = CostActualStatus.DRAFT
@@ -807,7 +857,7 @@ def _handle_cost_submit(request, project, context):
                     object_type="COST_ACTUAL",
                     object_id=cost_actual.id,
                     defaults={
-                        "title": f"원가 증빙 - {cost_item.name}",
+                        "title": f"\uc6d0\uac00 \uc99d\ube59 - {cost_item.get_display_name()}",
                         "description": memo,
                         "created_by": request.user,
                         "status": EvidenceStatus.DRAFT,
@@ -857,7 +907,7 @@ def _handle_cost_submit(request, project, context):
                     },
                 )
     except IntegrityError:
-        context["errors"].append("원가 저장에 실패했습니다.")
+        context["errors"].append("\uc6d0\uac00 \uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.")
         return
 
     log_action(
@@ -869,8 +919,7 @@ def _handle_cost_submit(request, project, context):
         request=request,
         after={"status": cost_actual.status, "report_date": str(report_date)},
     )
-    context["success"] = "원가가 임시저장되었습니다."
-
+    context["success"] = "\uc6d0\uac00\uac00 \uc784\uc2dc\uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4."
 
 def _load_progress_context(project, user, request, context):
     context["tasks"] = []
@@ -950,7 +999,9 @@ def _load_report_context(project, user, request, context):
 
 def _load_cost_context(project, user, request, context):
     context["cost_items"] = list(
-        CostItem.objects.filter(is_active=True).order_by("sort_order", "name")
+        CostItem.objects.filter(is_active=True)
+        .prefetch_related("aliases")
+        .order_by("sort_order", "name")
     )
     context["cost_reports"] = []
     context["cost_page_obj"] = None
@@ -960,7 +1011,7 @@ def _load_cost_context(project, user, request, context):
     cost_qs = (
         CostActual.objects.filter(project=project, source_daily_report__reporter=user)
         .select_related("source_daily_report")
-        .prefetch_related("lines__cost_item")
+        .prefetch_related("lines__cost_item__aliases")
         .order_by("-report_date", "-updated_at")
     )
     cost_paginator = Paginator(cost_qs, 10)
@@ -984,3 +1035,17 @@ def _load_cost_context(project, user, request, context):
         context["cost_draft_line"] = (
             context["cost_draft"].lines.order_by("id").first()
         )
+
+
+@login_required
+def field_wbs_change_new(request, project_id):
+    require_project_access(request.user, project_id)
+    project = get_object_or_404(Project, id=project_id)
+    role = get_user_role(request.user)
+    return render_wbs_change_form(
+        request,
+        project,
+        role,
+        template_name="app/common/wbs_change_form.html",
+        back_url=f"/app/field/?tab=progress&project_id={project.id}",
+    )

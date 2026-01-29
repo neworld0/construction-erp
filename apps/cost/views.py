@@ -2,11 +2,13 @@ from decimal import Decimal
 
 from django.utils import timezone
 from rest_framework import status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.projects.models import Project
+from apps.closing.guards import guard_write
 
 from .models import CostActual, CostActualStatus, CostItem, RevenueRecognition
 from .serializers import (
@@ -23,7 +25,11 @@ from apps.core.rbac.permissions import get_user_role, require_project_access
 
 
 class CostItemViewSet(viewsets.ModelViewSet):
-    queryset = CostItem.objects.filter(is_active=True).order_by("sort_order", "-created_at")
+    queryset = (
+        CostItem.objects.filter(is_active=True)
+        .prefetch_related("aliases")
+        .order_by("sort_order", "-created_at")
+    )
     serializer_class = CostItemSerializer
     # HQ만 생성/수정 허용하도록 RBAC에서 제어 예정
     permission_classes = [IsAuthenticated]
@@ -46,6 +52,12 @@ class CostActualViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        guard_write(
+            project=instance.project,
+            target_date=instance.report_date,
+            message_context="?? ??????.",
+            exc=PermissionDenied,
+        )
         if instance.status == CostActualStatus.CLOSED:
             return Response(
                 {"detail": "Closed cost actual cannot be modified."},
@@ -55,6 +67,12 @@ class CostActualViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
+        guard_write(
+            project=instance.project,
+            target_date=instance.report_date,
+            message_context="?? ??????.",
+            exc=PermissionDenied,
+        )
         if instance.status == CostActualStatus.CLOSED:
             return Response(
                 {"detail": "Closed cost actual cannot be modified."},

@@ -1,0 +1,129 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}마스터 템플릿{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="section-title">마스터 템플릿 {% if mode == "edit" %}편집{% else %}신규{% endif %}</div>
+  <div class="helper">WBS/예산 템플릿을 버전 관리합니다.</div>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="card">
+    <div class="section-title">템플릿 정보</div>
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+      <div>
+        <label class="form-label" for="{{ template_form.name.id_for_label }}">이름</label>
+        {{ template_form.name }}
+      </div>
+      <div>
+        <label class="form-label" for="{{ template_form.category.id_for_label }}">카테고리</label>
+        {{ template_form.category }}
+      </div>
+      <div>
+        <label class="form-label" for="{{ template_form.domain.id_for_label }}">도메인</label>
+        {{ template_form.domain }}
+      </div>
+      <div>
+        <label class="form-label" for="{{ template_form.version.id_for_label }}">버전</label>
+        {{ template_form.version }}
+      </div>
+      <div>
+        <label class="form-label" for="{{ template_form.is_active.id_for_label }}">활성</label>
+        {{ template_form.is_active }}
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="{{ template_form.note.id_for_label }}">메모</label>
+      {{ template_form.note }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">WBS 라인</div>
+    {{ wbs_formset.management_form }}
+    {% if wbs_formset.non_form_errors %}
+      <div class="alert alert-danger">
+        {% for err in wbs_formset.non_form_errors %}
+          <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>순서</th>
+          <th>작업명</th>
+          <th>가중치</th>
+          <th>시작 오프셋</th>
+          <th>기간</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in wbs_formset %}
+          <tr>
+            <td>{{ form.order }}</td>
+            <td>{{ form.task_name }}</td>
+            <td>{{ form.weight }}</td>
+            <td>{{ form.default_offset_start_days }}</td>
+            <td>{{ form.default_duration_days }}</td>
+            <td>{{ form.DELETE }}</td>
+          </tr>
+          {% if form.errors %}
+            <tr><td colspan="6"><div class="input-hint" style="color:#fca5a5;">{{ form.errors|striptags }}</div></td></tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">예산 라인</div>
+    {{ budget_formset.management_form }}
+    {% if budget_formset.non_form_errors %}
+      <div class="alert alert-danger">
+        {% for err in budget_formset.non_form_errors %}
+          <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>순서</th>
+          <th>CBS</th>
+          <th>라벨</th>
+          <th>인건비</th>
+          <th>기본 금액</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in budget_formset %}
+          <tr>
+            <td>{{ form.order }}</td>
+            <td>{{ form.cost_item }}</td>
+            <td>{{ form.label }}</td>
+            <td>{{ form.is_labor }}</td>
+            <td>{{ form.default_amount }}</td>
+            <td>{{ form.DELETE }}</td>
+          </tr>
+          {% if form.errors %}
+            <tr><td colspan="6"><div class="input-hint" style="color:#fca5a5;">{{ form.errors|striptags }}</div></td></tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <button class="btn" type="submit">저장</button>
+    <a class="btn btn-outline" href="/app/hq/master/templates/">취소</a>
+  </div>
+</form>
+{% endblock %}

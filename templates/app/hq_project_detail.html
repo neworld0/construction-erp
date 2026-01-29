@@ -23,30 +23,30 @@
   .row.labor {
     grid-template-columns: 1.6fr 1.6fr 1fr auto;
   }
-      .row.wbs {
-        grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr auto;
-      }
-      .badge.draft {
-        background: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 12px;
-      }
-      .badge.submitted {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 12px;
-      }
-      .badge.approved {
-        background: rgba(34, 197, 94, 0.2);
-        color: #86efac;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 12px;
-      }
+  .row.wbs {
+    grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr auto;
+  }
+  .badge.draft {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .badge.submitted {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .badge.approved {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
   .row.header {
     background: rgba(15, 23, 42, 0.9);
     font-weight: 600;
@@ -55,23 +55,57 @@
     padding: 4px 8px;
     font-size: 12px;
   }
+  .history-wrap {
+    max-height: 240px;
+    overflow: auto;
+  }
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .history-table th,
+  .history-table td {
+    padding: 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: left;
+  }
 </style>
 <div class="card">
   <h3>프로젝트 상세</h3>
   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
     {% if project.status == "draft" %}
-      <span class="badge draft">draft</span>
+      <span class="badge draft">임시저장</span>
     {% elif project.status == "submitted" %}
-      <span class="badge submitted">submitted</span>
+      <span class="badge submitted">제출됨</span>
     {% elif project.status == "approved" %}
-      <span class="badge approved">approved</span>
+      <span class="badge approved">승인됨</span>
     {% endif %}
   </div>
+  {% if wbs_badge %}
+    <div style="margin-top:-6px; margin-bottom:12px;">
+      {% if wbs_badge.show %}
+        <span class="badge approved">{{ wbs_badge.label }}</span>
+      {% else %}
+        <span class="badge draft">기준선 v{{ wbs_badge.current_version|default:1 }}</span>
+      {% endif %}
+      {% if wbs_badge.sub_label %}
+        <div class="muted" style="margin-top:4px;">{{ wbs_badge.sub_label }}</div>
+      {% endif %}
+    </div>
+  {% endif %}
   <div class="mb-3">
     <strong>프로젝트명</strong> {{ project.name }}
   </div>
   <div class="mb-3">
-    <strong>상태:</strong> <span class="badge {{ project.status }}">{{ project.status }}</span>
+    <strong>상태:</strong>
+    {% if project.status == "draft" %}
+      <span class="badge draft">임시저장</span>
+    {% elif project.status == "submitted" %}
+      <span class="badge submitted">제출됨</span>
+    {% elif project.status == "approved" %}
+      <span class="badge approved">승인됨</span>
+    {% endif %}
   </div>
   <div class="mb-3">
     <strong>시작일</strong> {{ project.start_date }}
@@ -80,6 +114,7 @@
     <strong>종료일</strong> {{ project.end_date }}
   </div>
   <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a class="btn btn-outline" href="/app/hq/projects/{{ project.id }}/approval-packages/">패키지 목록</a>
     {% if project.status == "draft" %}
       <form method="post">
         {% csrf_token %}
@@ -100,8 +135,8 @@
   <h3>계약 정보</h3>
   {% if contract %}
     <div class="mb-3"><strong>계약 금액:</strong> {{ contract.contract_amount }}</div>
-    <div class="mb-3"><strong>계약 시작일</strong> {{ contract.contract_start_date }}</div>
-    <div class="mb-3"><strong>계약 종료일</strong> {{ contract.contract_end_date }}</div>
+    <div class="mb-3"><strong>계약 시작일:</strong> {{ contract.contract_start_date }}</div>
+    <div class="mb-3"><strong>계약 종료일:</strong> {{ contract.contract_end_date }}</div>
     <div class="mb-3">
       <strong>계약 파일:</strong>
       {% if contract.contract_file %}
@@ -114,6 +149,38 @@
   {% else %}
     <div>계약 정보가 없습니다.</div>
   {% endif %}
+</div>
+
+<div class="card" style="margin-top: 16px;">
+  <h3>기준선 변경 이력</h3>
+  <div class="history-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>변경일시</th>
+          <th>버전</th>
+          <th>승인자</th>
+          <th>유형</th>
+          <th>사유</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in wbs_history %}
+          <tr>
+            <td>{{ item.approved_at|date:"Y-m-d H:i" }}</td>
+            <td>v{{ item.from_version|default:"?" }} -> v{{ item.to_version }}</td>
+            <td>{{ item.approved_by|default:"-" }}</td>
+            <td>{{ item.request_type_label }}</td>
+            <td>{{ item.reason|default:"-"|truncatechars:80 }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5">아직 기준선 변경 이력이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div class="card" style="margin-top: 16px;">
@@ -200,6 +267,7 @@
 
 <div class="card" style="margin-top: 16px;">
   <h3>프로젝트 예산</h3>
+  <div class="helper">비활성/변경승인대기 CBS는 신규 예산에 사용할 수 없습니다.</div>
   {% if wbs_locked %}
     <div class="alert alert-danger">제출 이후 예산은 수정할 수 없습니다.</div>
   {% endif %}
@@ -211,7 +279,7 @@
     <div class="table">
       <div class="row header budget">
         <div>카테고리</div>
-        <div>원가 항목</div>
+        <div>예산 항목</div>
         <div>명칭</div>
         <div>예산 금액</div>
         <div>삭제</div>
@@ -224,7 +292,7 @@
           <div>{{ form.planned_amount }}</div>
           <div>{{ form.DELETE }}</div>
           <div style="grid-column: 1 / -1;">
-            {{ form.notes }}
+            {{ form.note }}
           </div>
         </div>
       {% endfor %}
@@ -234,7 +302,7 @@
     {{ labor_formset.management_form }}
     <div class="table">
       <div class="row header labor">
-        <div>원가 항목</div>
+        <div>예산 항목</div>
         <div>명칭</div>
         <div>예산 금액</div>
         <div>삭제</div>
@@ -246,7 +314,7 @@
           <div>{{ form.planned_amount }}</div>
           <div>{{ form.DELETE }}</div>
           <div style="grid-column: 1 / -1;">
-            {{ form.notes }}
+            {{ form.note }}
           </div>
         </div>
       {% endfor %}

@@ -1,40 +1,172 @@
 {% extends "app/base_app.html" %}
+{% load humanize %}
 
 {% block page_title %}프로젝트 상세{% endblock %}
 
 {% block content %}
-  <div class="card">
-    <h2 class="card-title">프로젝트 요약</h2>
-    <div class="muted">프로젝트 ID: {{ summary.project_id }}</div>
-    <div class="muted">기준일: {{ summary.as_of_date|default:"-" }}</div>
+<style>
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .summary-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .summary-card .value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .table th,
+  .table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: left;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-critical {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+  }
+  .badge-open {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+  }
+  .badge-baseline {
+    background: rgba(14, 165, 233, 0.2);
+    color: #7dd3fc;
+  }
+  .badge-neutral {
+    background: rgba(148, 163, 184, 0.2);
+    color: var(--text);
+  }
+  .card + .card {
+    margin-top: 12px;
+  }
+  .table-wrap {
+    max-height: 260px;
+    overflow: auto;
+  }
+  .table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    z-index: 1;
+  }
+</style>
 
-    <table>
+<div class="page-header">
+  <div>
+    <h2 style="margin:0;">프로젝트 요약</h2>
+    <div class="muted" style="margin-top:4px;">
+      프로젝트 ID: {{ summary.project_id }} · 기준일 {{ summary.as_of_date|default:"-" }}
+    </div>
+    {% if wbs_badge %}
+      <div style="margin-top:6px;">
+        {% if wbs_badge.show %}
+          <span class="badge badge-baseline">{{ wbs_badge.label }}</span>
+        {% else %}
+          <span class="badge badge-neutral">기준선 v{{ wbs_badge.current_version|default:1 }}</span>
+        {% endif %}
+        {% if wbs_badge.sub_label %}
+          <div class="muted" style="margin-top:4px;">{{ wbs_badge.sub_label }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline" href="/app/ceo/">CEO 대시보드로</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="summary-grid">
+    <div class="summary-card">
+      <h4>진행률</h4>
+      <div class="value">{{ summary.overall_progress_percent|floatformat:2 }}%</div>
+    </div>
+    <div class="summary-card">
+      <h4>매출</h4>
+      <div class="value">{{ summary.recognized_revenue|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="summary-card">
+      <h4>발생원가</h4>
+      <div class="value">{{ summary.accrual_cost|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="summary-card">
+      <h4>손익</h4>
+      <div class="value">{{ summary.profit|floatformat:0|intcomma }}</div>
+      <div class="muted">손익률 {{ summary.margin_percent|floatformat:2 }}%</div>
+    </div>
+    <div class="summary-card">
+      <h4>리스크</h4>
+      <div class="value">OPEN {{ summary.risk_open_count|default:0 }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">기준선 변경 이력</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>변경일시</th>
+          <th>버전</th>
+          <th>승인자</th>
+          <th>유형</th>
+          <th>사유</th>
+        </tr>
+      </thead>
       <tbody>
-        <tr>
-          <th>진행률</th>
-          <td>{{ summary.overall_progress_percent|floatformat:2 }}%</td>
-          <th>매출</th>
-          <td>{{ summary.recognized_revenue|floatformat:2 }}</td>
-        </tr>
-        <tr>
-          <th>발생원가</th>
-          <td>{{ summary.accrual_cost|floatformat:2 }}</td>
-          <th>손익</th>
-          <td>{{ summary.profit|floatformat:2 }}</td>
-        </tr>
-        <tr>
-          <th>손익률</th>
-          <td>{{ summary.margin_percent|floatformat:2 }}%</td>
-          <th>리스크 OPEN</th>
-          <td>{{ summary.risk_open_count|default:0 }}</td>
-        </tr>
+        {% for item in wbs_history %}
+          <tr>
+            <td>{{ item.approved_at|date:"Y-m-d H:i" }}</td>
+            <td>v{{ item.from_version|default:"?" }} -> v{{ item.to_version }}</td>
+            <td>{{ item.approved_by|default:"-" }}</td>
+            <td>{{ item.request_type_label }}</td>
+            <td>{{ item.reason|default:"-"|truncatechars:80 }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="muted">아직 기준선 변경 이력이 없습니다.</td>
+          </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
+</div>
 
-  <div class="card" style="margin-top: 24px;">
-    <h3 class="card-title">태스크</h3>
-    <table>
+<div class="card">
+  <h3 style="margin-top:0;">태스크 진행 현황</h3>
+  <div class="table-wrap">
+    <table class="table">
       <thead>
         <tr>
           <th>태스크</th>
@@ -51,16 +183,18 @@
           </tr>
         {% empty %}
           <tr>
-            <td colspan="3">태스크가 없습니다.</td>
+            <td colspan="3" class="muted">태스크 데이터가 없습니다.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+</div>
 
-  <div class="card" style="margin-top: 24px;">
-    <h3 class="card-title">원가 카테고리</h3>
-    <table>
+<div class="card">
+  <h3 style="margin-top:0;">원가 카테고리</h3>
+  <div class="table-wrap">
+    <table class="table">
       <thead>
         <tr>
           <th>카테고리</th>
@@ -71,20 +205,22 @@
         {% for key, value in summary.cost_by_category.items %}
           <tr>
             <td>{{ key }}</td>
-            <td>{{ value|floatformat:2 }}</td>
+            <td>{{ value|floatformat:0|intcomma }}</td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="2">원가 데이터가 없습니다.</td>
+            <td colspan="2" class="muted">원가 데이터가 없습니다.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+</div>
 
-  <div class="card" style="margin-top: 24px;">
-    <h3 class="card-title">최근 리스크</h3>
-    <table>
+<div class="card">
+  <h3 style="margin-top:0;">최근 리스크</h3>
+  <div class="table-wrap">
+    <table class="table">
       <thead>
         <tr>
           <th>위험도</th>
@@ -107,14 +243,15 @@
             </td>
             <td>{{ risk.title }}</td>
             <td>{{ risk.status|upper }}</td>
-            <td>{{ risk.updated_at|default:"-" }}</td>
+            <td>{{ risk.updated_at|date:"Y-m-d H:i" }}</td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="4">리스크 데이터가 없습니다.</td>
+            <td colspan="4" class="muted">리스크 데이터가 없습니다.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+</div>
 {% endblock %}

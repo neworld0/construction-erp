@@ -2,30 +2,249 @@
 {% load humanize %}
 {% block page_title %}CEO 대시보드{% endblock %}
 {% block content %}
-<div class="card">
-  <h2>CEO 대시보드</h2>
-  <p>프로젝트 포트폴리오 요약</p>
-  <ul>
-    <li>누적 매출: {{ total_revenue|floatformat:0|intcomma }}</li>
-    <li>누적 원가: {{ total_cost|floatformat:0|intcomma }}</li>
-    <li>손익: {{ total_profit|floatformat:0|intcomma }}</li>
-    <li>평균 진행률: {{ avg_progress|floatformat:2 }}%</li>
-  </ul>
-  <a class="btn" href="/app/ceo/projects/">프로젝트 보기</a>
-  <a class="btn btn-outline" href="{{ csv_url }}">CSV 다운로드</a>
+<style>
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .page-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .page-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .kpi-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .kpi-card .value {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .sub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(56, 189, 248, 0.2);
+    color: var(--text);
+  }
+  .pill-warn {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .table th,
+  .table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: left;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  .chart-wrap {
+    min-height: 260px;
+  }
+  .quality-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .quality-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(148, 163, 184, 0.2);
+    color: var(--text);
+  }
+  .quality-ok {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+  }
+  .quality-unknown {
+    background: rgba(14, 165, 233, 0.2);
+    color: #7dd3fc;
+  }
+  .quality-estimated {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+  }
+  .quality-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .quality-legend {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+</style>
+
+<div class="page-header">
+  <div>
+    <h2 style="margin:0;">CEO 대시보드</h2>
+    <div class="muted" style="margin-top:4px;">기준일 {{ as_of_date|date:"Y-m-d" }}</div>
+  </div>
+  <div class="page-header-right">
+    <div class="quality-summary" id="kpi-quality-summary" data-project-id="{{ primary_project_id|default:'' }}">
+      <span class="quality-badge quality-unknown" id="kpi-quality-badge">미정</span>
+      <span
+        class="quality-help"
+        id="kpi-quality-help"
+        title="마감 전 데이터로, 입력/승인에 따라 변동될 수 있습니다."
+      >
+        ?
+      </span>
+    </div>
+    <form method="get" class="page-actions">
+      <input class="form-control" type="date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}" />
+      <label class="pill" style="gap:6px;">
+        <input type="checkbox" name="include_submitted" value="1" {% if include_submitted %}checked{% endif %} />
+        제출 포함
+      </label>
+      <input type="hidden" name="baseline_only" value="0" />
+      <label class="pill" style="gap:6px;">
+        <input type="checkbox" name="baseline_only" value="1" {% if baseline_only %}checked{% endif %} />
+        기준선만
+      </label>
+      <button class="btn" type="submit">조회</button>
+      <a class="btn btn-outline" href="/app/ceo/projects/">프로젝트 보기</a>
+      <a class="btn btn-outline" href="/app/ceo/cbs/">CBS 마스터</a>
+      <a class="btn btn-outline" href="{{ csv_url }}">CSV 내보내기</a>
+    </form>
+  </div>
 </div>
 
-<div class="card">
-  <h3>리스크 요약</h3>
-  <p>OPEN: {{ risk_open_count }}, CRITICAL: {{ risk_critical_count }}</p>
+{% if evidence_missing %}
+  <div class="alert alert-danger">
+    제출용 변경증빙 누락: {{ evidence_missing }}건 있습니다.
+  </div>
+{% endif %}
+
+<div class="kpi-grid">
+  <div class="card kpi-card">
+    <h4>누적 매출</h4>
+    <div class="value">{{ total_revenue|floatformat:0|intcomma }}</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>누적 원가</h4>
+    <div class="value">{{ total_cost|floatformat:0|intcomma }}</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>인건비(실적)</h4>
+    <div class="value">{{ total_labor|floatformat:0|intcomma }}</div>
+    <div class="muted">출역 + 급여 배부</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>이익</h4>
+    <div class="value">{{ total_profit|floatformat:0|intcomma }}</div>
+    <div class="muted">이익률 {{ margin_percent|floatformat:2 }}%</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>평균 진행률</h4>
+    <div class="value">{{ avg_progress|floatformat:2 }}%</div>
+  </div>
+  <div class="card kpi-card">
+    <h4>예정 현금흐름</h4>
+    <div class="value">{{ cash_summary.net_confirmed|floatformat:0|intcomma }}</div>
+    <div class="muted">계획 현금흐름 {{ cash_summary.net_planned|floatformat:0|intcomma }}</div>
+  </div>
 </div>
 
-<div class="card chart-wrap">
-  <h3>프로젝트별 진행률</h3>
-  <canvas id="progressChart" height="140"></canvas>
-  {% if not chart_labels %}
-    <p class="muted" style="margin-top:8px;">데이터가 없습니다. 데모 데이터를 생성하세요.</p>
-  {% endif %}
+<div class="sub-grid">
+  <div class="card">
+    <h3 style="margin-top:0;">승인 대기</h3>
+    <p class="muted" style="margin:0 0 6px 0;">
+      보고서 {{ pending_reports }}건 · 원가 {{ pending_costs }}건 · 계약 {{ pending_contracts }}건 · 일정 {{ pending_plans }}건
+    </p>
+    <span class="pill">총 승인대기 {{ pending_approvals }}건</span>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;">리스크 요약</h3>
+    <p class="muted" style="margin:0 0 6px 0;">OPEN {{ risk_open_count }}건</p>
+    <span class="pill pill-warn">CRITICAL {{ risk_critical_count }}건</span>
+  </div>
+  <div class="card chart-wrap">
+    <h3 style="margin-top:0;">프로젝트별 진행률</h3>
+    <canvas id="progressChart" height="140"></canvas>
+    {% if not chart_labels %}
+      <p class="muted" style="margin-top:8px;">표시할 데이터가 없습니다. 데모 데이터를 생성해 주세요.</p>
+    {% endif %}
+  </div>
+  <div class="card chart-wrap">
+    <h3 style="margin-top:0;">월별 원가 추이</h3>
+    <div class="quality-legend" id="timeline-quality-legend">확정 / 미정 / 추정</div>
+    <canvas id="timelineChart" height="140"></canvas>
+    <p class="muted" style="margin-top:8px;">선택된 프로젝트 기준 월별 KPI 품질을 표시합니다.</p>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <h3 style="margin-top:0;">최근 리스크</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>프로젝트</th>
+        <th>항목</th>
+        <th>위험도</th>
+        <th>상태</th>
+        <th>업데이트</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for finding in risk_open %}
+        <tr>
+          <td>{{ finding.project.name|default:"-" }}</td>
+          <td>{{ finding.title }}</td>
+          <td>{{ finding.severity|upper }}</td>
+          <td>{{ finding.status|upper }}</td>
+          <td>{{ finding.updated_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5" class="muted">열린 리스크가 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 {{ chart_labels|json_script:"chart-labels" }}
@@ -37,31 +256,143 @@
     var labels = JSON.parse(document.getElementById("chart-labels").textContent || "[]");
     var values = JSON.parse(document.getElementById("chart-values").textContent || "[]");
     var ctx = document.getElementById("progressChart");
-    if (!ctx) {
+    if (ctx) {
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "진행률 %",
+            data: values,
+            backgroundColor: "rgba(56, 189, 248, 0.55)",
+            borderColor: "rgba(56, 189, 248, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100
+            }
+          }
+        }
+      });
+    }
+
+    var summaryEl = document.getElementById("kpi-quality-summary");
+    var badgeEl = document.getElementById("kpi-quality-badge");
+    var helpEl = document.getElementById("kpi-quality-help");
+    var timelineCanvas = document.getElementById("timelineChart");
+    var projectId = summaryEl ? summaryEl.dataset.projectId : "";
+
+    function qualityLabel(status) {
+      if (status === "OK") return "확정";
+      if (status === "ESTIMATED") return "추정";
+      return "미정";
+    }
+
+    function qualityHelp(status) {
+      if (status === "OK") {
+        return "마감된 기간의 확정 데이터입니다.";
+      }
+      if (status === "ESTIMATED") {
+        return "일부 데이터가 추정/대체 계산으로 산출되었습니다.";
+      }
+      return "마감 전 데이터로, 입력/승인에 따라 변동될 수 있습니다.";
+    }
+
+    function applyQuality(status) {
+      if (!badgeEl) return;
+      badgeEl.classList.remove("quality-ok", "quality-estimated", "quality-unknown");
+      if (status === "OK") {
+        badgeEl.classList.add("quality-ok");
+      } else if (status === "ESTIMATED") {
+        badgeEl.classList.add("quality-estimated");
+      } else {
+        badgeEl.classList.add("quality-unknown");
+      }
+      badgeEl.textContent = qualityLabel(status);
+      if (helpEl) {
+        helpEl.title = qualityHelp(status);
+      }
+    }
+
+    function formatNumber(value) {
+      if (value === null || value === undefined) return "-";
+      return Number(value).toLocaleString("ko-KR");
+    }
+
+    if (!timelineCanvas || !projectId) {
+      applyQuality("UNSURE");
       return;
     }
-    new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: "진행률 %",
-          data: values,
-          backgroundColor: "rgba(56, 189, 248, 0.55)",
-          borderColor: "rgba(56, 189, 248, 1)",
-          borderWidth: 1,
-        }],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
+
+    fetch("/api/kpi/projects/" + projectId + "/timeline/?granularity=month&metrics=actual_cost")
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("timeline fetch failed");
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        var series = data.series || [];
+        if (!series.length) {
+          applyQuality("UNSURE");
+          return;
+        }
+        var timelineLabels = series.map(function (item) { return item.period_key; });
+        var timelineValues = series.map(function (item) {
+          return item.metrics ? item.metrics.actual_cost : null;
+        });
+        var qualities = series.map(function (item) { return item.data_quality || "UNSURE"; });
+        var latestQuality = qualities[qualities.length - 1] || "UNSURE";
+        applyQuality(latestQuality);
+
+        var pointStyles = qualities.map(function (status) {
+          if (status === "ESTIMATED") return "rectRot";
+          if (status === "UNSURE") return "triangle";
+          return "circle";
+        });
+
+        new Chart(timelineCanvas, {
+          type: "line",
+          data: {
+            labels: timelineLabels,
+            datasets: [{
+              label: "월별 누적 원가",
+              data: timelineValues,
+              borderColor: "rgba(129, 140, 248, 0.85)",
+              backgroundColor: "rgba(129, 140, 248, 0.15)",
+              pointStyle: pointStyles,
+              pointRadius: 4,
+              spanGaps: true
+            }]
           },
-        },
-      },
-    });
+          options: {
+            responsive: true,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    var status = qualities[context.dataIndex] || "UNSURE";
+                    return context.dataset.label + ": " + formatNumber(context.parsed.y) + "원 (" + qualityLabel(status) + ")";
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      })
+      .catch(function () {
+        applyQuality("UNSURE");
+      });
   })();
 </script>
 {% endblock %}

@@ -1,0 +1,135 @@
+﻿{% extends "app/base_app.html" %}
+
+{% block page_title %}창고 관리{% endblock %}
+
+{% block content %}
+<style>
+  .filters {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    display: inline-block;
+  }
+  .badge.on { background: rgba(34,197,94,0.2); color: #4ade80; }
+  .badge.off { background: rgba(239,68,68,0.2); color: #f87171; }
+  .notice {
+    background: rgba(14, 116, 144, 0.25);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #bae6fd;
+  }
+  .table-wrap {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">창고 관리</h2>
+  <p class="muted">본사(HQ) 창고를 생성하고 관리합니다. 삭제는 불가하며 비활성화로 관리하세요.</p>
+  <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+    {% if role == "hq" %}
+      <a class="btn" href="/app/hq/master/warehouses/new/">신규 본사 창고</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <form method="get" class="filters">
+    <label>
+      검색
+      <input class="input" type="text" name="q" value="{{ q }}" placeholder="코드 또는 창고명" />
+    </label>
+    <label>
+      보기
+      <select class="input" name="show_sites">
+        <option value="0" {% if not show_sites %}selected{% endif %}>본사 창고만</option>
+        <option value="1" {% if show_sites %}selected{% endif %}>현장 창고 포함</option>
+      </select>
+    </label>
+    <button class="btn" type="submit">조회</button>
+  </form>
+  <div class="notice" style="margin-top:12px;">
+    비활성화하면 신규 재고 입력/이동에서 선택이 제한될 수 있습니다.
+  </div>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>코드</th>
+          <th>창고명</th>
+          <th>유형</th>
+          <th>연결 프로젝트</th>
+          <th>기본 위치</th>
+          <th>활성</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for warehouse in warehouses %}
+          <tr>
+            <td>{{ warehouse.code }}</td>
+            <td>{{ warehouse.name }}</td>
+            <td>{{ warehouse.warehouse_type }}</td>
+            <td>{% if warehouse.project %}{{ warehouse.project.name }}{% else %}-{% endif %}</td>
+            <td>
+              {% if warehouse.default_location %}
+                {{ warehouse.default_location.name }} ({{ warehouse.default_location.code }})
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+              {% if warehouse.is_active %}
+                <span class="badge on">활성</span>
+              {% else %}
+                <span class="badge off">비활성</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a class="btn btn-outline" href="/app/hq/master/warehouses/{{ warehouse.id }}/edit/">수정</a>
+                {% if role == "hq" %}
+                  <form method="post" action="/app/hq/master/warehouses/{{ warehouse.id }}/toggle/">
+                    {% csrf_token %}
+                    <button class="btn btn-outline" type="submit">활성 토글</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">조회 결과가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

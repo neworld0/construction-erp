@@ -30,6 +30,9 @@ from apps.cost.models import CostActual, CostActualStatus
 from apps.evidence.services.policy import check_evidence_required
 from apps.field.models import DailyReport, DailyReportStatus
 from apps.risk.models import RiskFinding, RiskFindingStatus
+from apps.audit.models import AuditLog
+from .risk_cards import build_risk_cards
+from .todo import build_hq_todos, get_risk_counts
 from apps.schedule.models import PlanChangeRequest, PlanChangeStatus
 
 
@@ -176,6 +179,27 @@ def hq_app_view(request):
         .select_related("project", "rule")
         .order_by("-created_at")[:10]
     )
+    risk_cards = build_risk_cards(risk_open, limit=5)
+    risk_counts = get_risk_counts()
+    todos = build_hq_todos(risk_counts)
+
+    recent_actions = list(
+        AuditLog.objects.filter(
+            action__in=[
+                "APPROVAL_APPROVE",
+                "APPROVAL_REJECT",
+                "CONTRACT_SUBMIT",
+                "CONTRACT_REJECT",
+                "PLAN_CHANGE_SUBMIT",
+                "PLAN_CHANGE_REJECT",
+                "MONTH_CLOSED",
+                "CLOSING_REQUEST_APPROVE",
+                "CLOSING_REQUEST_REJECT",
+            ]
+        )
+        .select_related("actor", "project")
+        .order_by("-created_at")[:3]
+    )
 
     evidence_missing = []
     for change in pending_contract_changes:
@@ -211,10 +235,20 @@ def hq_app_view(request):
         "pending_costs": pending_costs,
         "pending_plan_changes": pending_plan_changes,
         "pending_contract_changes": pending_contract_changes,
-        "risk_open": risk_open,
+        "risk_cards": risk_cards["cards"],
+        "risk_summary": risk_cards["summary"],
+        "todo_items": todos["items"],
+        "todo_all_clear": todos["all_clear"],
+        "recent_actions": recent_actions,
         "evidence_missing": evidence_missing,
         "admin_change_url": admin_change_url,
         "role": get_user_role(request.user),
+        "cbs_url": "/app/hq/master/cbs/",
+        "quick_links": [
+            {"label": "\uc2b9\uc778\ud568 \uc5f4\uae30", "url": "/app/hq/#pending-reports"},
+            {"label": "\uc6d4 \ub9c8\uac10 \uad00\ub9ac", "url": "/app/hq/closing/"},
+            {"label": "\ud504\ub85c\uc81d\ud2b8 \ubaa9\ub85d", "url": "/app/hq/projects/"},
+        ],
     }
     return render(request, "app/hq_home.html", context)
 

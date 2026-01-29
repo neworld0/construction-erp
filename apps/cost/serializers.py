@@ -4,17 +4,22 @@ from django.db import models
 from rest_framework import serializers
 
 from apps.field.models import DailyReport, DailyReportStatus
+from apps.closing.guards import guard_write
 
 from .models import CostActual, CostActualLine, CostItem, RevenueRecognition, _get_active_snapshot
 
 
 class CostItemSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
     class Meta:
         model = CostItem
         fields = [
             "id",
             "code",
             "name",
+            "display_name",
+            "cost_type",
+            "work_type",
             "category",
             "unit",
             "is_direct",
@@ -24,6 +29,9 @@ class CostItemSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_display_name(self, obj):
+        return obj.get_display_name()
 
     def validate_code(self, value):
         if not value or not value.strip():
@@ -96,6 +104,13 @@ class CostActualCreateFromDailyReportSerializer(serializers.Serializer):
             report = DailyReport.objects.get(id=value)
         except DailyReport.DoesNotExist:
             raise serializers.ValidationError("daily_report not found.")
+
+        guard_write(
+            project=report.project,
+            target_date=report.report_date,
+            message_context="?? ??????.",
+            exc=serializers.ValidationError,
+        )
 
         if report.status != DailyReportStatus.SUBMITTED:
             raise serializers.ValidationError("daily_report must be submitted.")

@@ -1,0 +1,343 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}자재 투입{% endblock %}
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .inline-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: #04111f;
+    border-color: transparent;
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .autocomplete {
+    position: relative;
+  }
+  .autocomplete-results {
+    position: absolute;
+    z-index: 10;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 6px;
+    display: none;
+  }
+  .autocomplete-results button {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .autocomplete-results button:hover {
+    background: rgba(56, 123, 248, 0.12);
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">자재 투입</h2>
+  <p class="muted">현장 자재 투입 내역을 등록하고 재고를 차감합니다.</p>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <form method="post">
+    {% csrf_token %}
+    <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <div>
+        <label>프로젝트</label>
+        <select class="inline-input" name="project_id" required>
+          {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>투입일</label>
+        <input class="inline-input" type="date" name="issue_date" required />
+      </div>
+      <div style="grid-column: span 2;">
+        <label>메모</label>
+        <input class="inline-input" type="text" name="note" placeholder="선택 입력" />
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 12px; padding: 12px;">
+      <div class="muted">
+        제출 시 재고 원장(출고)과 원가 실적이 자동 생성됩니다. 마감월에는 제출이 차단됩니다.
+      </div>
+    </div>
+
+    <div style="margin-top: 18px;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>품목</th>
+            <th>CBS</th>
+            <th>수량</th>
+            <th>메모</th>
+          </tr>
+        </thead>
+        <tbody id="issue-lines">
+          {% for idx in "012" %}
+            <tr class="issue-row">
+              <td>
+                <div class="autocomplete">
+                  <input
+                    class="inline-input js-item-search"
+                    type="text"
+                    placeholder="품목 코드/명 검색"
+                    autocomplete="off"
+                  />
+                  <input
+                    type="hidden"
+                    class="js-item-id"
+                    name="lines-{{ forloop.counter0 }}-item_id"
+                  />
+                  <div class="autocomplete-results js-item-results"></div>
+                </div>
+              </td>
+              <td>
+                <div class="autocomplete">
+                  <input
+                    class="inline-input js-cbs-search"
+                    type="text"
+                    placeholder="CBS 코드/명 검색"
+                    autocomplete="off"
+                  />
+                  <input
+                    type="hidden"
+                    class="js-cbs-id"
+                    name="lines-{{ forloop.counter0 }}-cbs_id"
+                  />
+                  <div class="autocomplete-results js-cbs-results"></div>
+                </div>
+              </td>
+              <td>
+                <input class="inline-input" type="number" step="0.001" name="lines-{{ forloop.counter0 }}-qty" placeholder="0" />
+              </td>
+              <td>
+                <input class="inline-input" type="text" name="lines-{{ forloop.counter0 }}-memo" placeholder="선택 입력" />
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="actions">
+        <button type="button" class="btn" id="add-line">행 추가</button>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top: 14px;">
+      <button type="submit" name="action" value="draft" class="btn">임시저장</button>
+      <button type="submit" name="action" value="submit" class="btn primary">제출</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <h3 class="card-title">최근 투입 목록</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>투입일</th>
+        <th>번호</th>
+        <th>프로젝트</th>
+        <th>상태</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for issue in issues %}
+        <tr>
+          <td>{{ issue.issue_date }}</td>
+          <td>{{ issue.issue_no }}</td>
+          <td>{{ issue.project.name }}</td>
+          <td>{{ issue.status }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4" class="muted">등록된 투입 이력이 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  (function () {
+    const itemEndpoint = "/api/inventory/items/";
+    const cbsEndpoint = "/api/master/cbs/search";
+    const debounceMap = new Map();
+
+    function debounce(el, fn, delay) {
+      const prev = debounceMap.get(el);
+      if (prev) {
+        clearTimeout(prev);
+      }
+      const timer = setTimeout(fn, delay);
+      debounceMap.set(el, timer);
+    }
+
+    async function fetchResults(endpoint, query) {
+      const url = new URL(endpoint, window.location.origin);
+      if (query) {
+        url.searchParams.set("q", query);
+      }
+      url.searchParams.set("limit", "20");
+      const response = await fetch(url, { credentials: "same-origin" });
+      if (!response.ok) {
+        throw new Error("fetch_failed");
+      }
+      return response.json();
+    }
+
+    function renderResults(resultsEl, items, onPick) {
+      resultsEl.innerHTML = "";
+      if (!items.length) {
+        resultsEl.style.display = "none";
+        return;
+      }
+      items.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = item.label;
+        btn.addEventListener("click", () => {
+          onPick(item);
+          resultsEl.style.display = "none";
+        });
+        resultsEl.appendChild(btn);
+      });
+      resultsEl.style.display = "block";
+    }
+
+    function setupAutocomplete(row) {
+      const itemInput = row.querySelector(".js-item-search");
+      const itemId = row.querySelector(".js-item-id");
+      const itemResults = row.querySelector(".js-item-results");
+      const cbsInput = row.querySelector(".js-cbs-search");
+      const cbsId = row.querySelector(".js-cbs-id");
+      const cbsResults = row.querySelector(".js-cbs-results");
+
+      if (itemInput) {
+        itemInput.addEventListener("input", () => {
+          const query = itemInput.value.trim();
+          if (!query) {
+            itemResults.style.display = "none";
+            itemId.value = "";
+            return;
+          }
+          debounce(itemInput, async () => {
+            try {
+              const data = await fetchResults(itemEndpoint, query);
+              const items = (data || []).map((entry) => ({
+                id: entry.id,
+                label: entry.display_label || `${entry.code} - ${entry.name}`,
+              }));
+              renderResults(itemResults, items, (picked) => {
+                itemInput.value = picked.label;
+                itemId.value = picked.id;
+              });
+            } catch (_err) {
+              itemResults.style.display = "none";
+            }
+          }, 300);
+        });
+      }
+
+      if (cbsInput) {
+        cbsInput.addEventListener("input", () => {
+          const query = cbsInput.value.trim();
+          if (!query) {
+            cbsResults.style.display = "none";
+            cbsId.value = "";
+            return;
+          }
+          debounce(cbsInput, async () => {
+            try {
+              const data = await fetchResults(cbsEndpoint, query);
+              const items = (data || []).map((entry) => ({
+                id: entry.id,
+                label: entry.display_name
+                  ? `${entry.code} - ${entry.display_name}`
+                  : `${entry.code} - ${entry.name}`,
+              }));
+              renderResults(cbsResults, items, (picked) => {
+                cbsInput.value = picked.label;
+                cbsId.value = picked.id;
+              });
+            } catch (_err) {
+              cbsResults.style.display = "none";
+            }
+          }, 300);
+        });
+      }
+    }
+
+    const addBtn = document.getElementById("add-line");
+    const tbody = document.getElementById("issue-lines");
+    if (!addBtn || !tbody) return;
+    tbody.querySelectorAll(".issue-row").forEach((row) => setupAutocomplete(row));
+    addBtn.addEventListener("click", () => {
+      const rows = tbody.querySelectorAll(".issue-row");
+      const nextIndex = rows.length;
+      const template = rows[0];
+      if (!template) return;
+      const clone = template.cloneNode(true);
+      clone.querySelectorAll("select, input").forEach((el) => {
+        const name = el.getAttribute("name");
+        if (name) {
+          el.setAttribute("name", name.replace(/lines-\\d+-/, `lines-${nextIndex}-`));
+        }
+        el.value = "";
+      });
+      tbody.appendChild(clone);
+      setupAutocomplete(clone);
+    });
+  })();
+</script>
+{% endblock %}

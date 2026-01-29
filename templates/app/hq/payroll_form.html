@@ -1,0 +1,103 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}급여 배부(월){% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:20px; font-weight:700;">급여 배부(월)</div>
+        <div class="hint">총 급여와 배부 합계가 일치해야 제출 가능합니다.</div>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/labor/payroll/">목록</a>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="card" style="margin-bottom:16px;">
+      <div class="section-title">월 배부 정보</div>
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+        <div>
+          <label class="hint">연도</label>
+          {{ form.period_year }}
+        </div>
+        <div>
+          <label class="hint">월</label>
+          {{ form.period_month }}
+        </div>
+        <div>
+          <label class="hint">총 급여</label>
+          {{ form.total_amount }}
+          <div class="hint">원 단위 정수, 천단위 콤마 입력 가능</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="hint">비고</label>
+        {{ form.note }}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="section-title">배부 내역</div>
+      <div class="hint">배부 합계가 총액과 일치해야 합니다.</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>프로젝트</th>
+            <th>CBS</th>
+            <th>금액</th>
+            <th>메모</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in line_rows %}
+            <tr>
+              <td>
+                <select class="input" name="lines-{{ forloop.counter0 }}-project_id" {% if form_disabled %}disabled{% endif %}>
+                  <option value="">선택</option>
+                  {% for project in projects %}
+                    <option value="{{ project.id }}" {% if row.project_id == project.id %}selected{% endif %}>
+                      {{ project.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <select class="input" name="lines-{{ forloop.counter0 }}-cbs_id" {% if form_disabled %}disabled{% endif %}>
+                  <option value="">선택</option>
+                  {% for item in cost_items %}
+                    <option value="{{ item.id }}" {% if row.cbs_id == item.id %}selected{% endif %}>
+                      {{ item.code }} - {{ item.get_display_name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <input class="input" type="text" name="lines-{{ forloop.counter0 }}-amount" value="{{ row.amount }}" {% if form_disabled %}disabled{% endif %} />
+              </td>
+              <td>
+                <input class="input" type="text" name="lines-{{ forloop.counter0 }}-memo" value="{{ row.memo }}" {% if form_disabled %}disabled{% endif %} />
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
+        <div class="muted">배부 합계: {{ sum_lines|intcomma }}</div>
+        <div class="muted">차이: {{ diff|intcomma }}</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-outline" type="submit" name="action" value="save" {% if form_disabled %}disabled{% endif %}>임시저장</button>
+      <button class="btn" type="submit" name="action" value="submit" {% if form_disabled %}disabled{% endif %}>제출</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

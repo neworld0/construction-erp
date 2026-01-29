@@ -1,0 +1,76 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}창고 상세{% endblock %}
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .badge.default {
+    background: rgba(56, 189, 248, 0.2);
+    color: #7dd3fc;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">{{ warehouse.name }}</h2>
+  <p class="muted" style="margin:0;">
+    코드: {{ warehouse.code }} · 구분: {{ warehouse.warehouse_type|upper }} · 프로젝트: {{ warehouse.project.name|default:"-" }}
+  </p>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <h3 style="margin-top:0;">Location 목록</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>이름</th>
+        <th>코드</th>
+        <th>기본</th>
+        <th>활성</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for loc in locations %}
+        <tr>
+          <td>{{ loc.name }}</td>
+          <td>{{ loc.code }}</td>
+          <td>
+            {% if loc.is_default %}
+              <span class="badge default">기본</span>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{{ loc.is_active|yesno:"활성,비활성" }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4" class="muted">등록된 위치가 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div style="margin-top:12px;">
+    <a class="btn btn-outline" href="/app/hq/inventory/warehouses/">목록으로</a>
+  </div>
+</div>
+{% endblock %}

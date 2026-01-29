@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
@@ -33,12 +33,14 @@
         justify-content: space-between;
         gap: 12px;
         flex-wrap: wrap;
+        min-height: 32px;
       }
       .nav-left,
       .nav-right {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
+        height: 32px;
       }
       .brand {
         font-weight: 700;
@@ -47,15 +49,16 @@
         display: inline-flex;
         align-items: center;
         gap: 10px;
+        height: 32px;
       }
       .brand-mark {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 48px;
-        height: 28px;
+        width: 80px;
+        height: 32px;
         border-radius: 8px;
-        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        background: linear-gradient(135deg, #f89e38, #e9a40e);
         box-shadow: 0 6px 16px rgba(15, 118, 110, 0.35);
         color: #0b1220;
         font-weight: 700;
@@ -71,7 +74,12 @@
         color: var(--text);
       }
       .btn {
-        padding: 6px 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        padding: 0 12px;
+        line-height: 32px;
         border-radius: 8px;
         border: 0;
         background: var(--accent);
@@ -79,12 +87,18 @@
         font-weight: 600;
         cursor: pointer;
         text-decoration: none;
-        font-size: 13px;
+        font-size: 12px;
       }
       .btn-outline {
         background: transparent;
         border: 1px solid rgba(148, 163, 184, 0.4);
         color: var(--text);
+      }
+      .nav-right form {
+        display: inline-flex;
+        align-items: center;
+        height: 32px;
+        margin: 0;
       }
       main {
         padding: 20px;
@@ -135,18 +149,18 @@
       <div class="nav">
         <div class="nav-left">
           <a class="brand" href="/app/">
-            <span class="brand-mark" aria-label="ASAN">ASAN</span>
+            <span class="brand-mark" aria-label="ASAN">ASAN ERP</span>
           </a>
         </div>
         <div class="nav-right">
-          <a class="btn btn-outline" href="/">홈페이지로</a>
-          {% if request.user.is_authenticated %}
-          <form method="post" action="/logout/">
-            {% csrf_token %}
-            <button class="btn" type="submit">로그아웃</button>
-          </form>
-          {% endif %}
-        </div>
+  <a class="btn btn-outline" href="/">홈페이지로</a>
+  {% if request.user.is_authenticated %}
+  <form method="post" action="/logout/">
+    {% csrf_token %}
+    <button class="btn" type="submit">로그아웃</button>
+  </form>
+  {% endif %}
+</div>
       </div>
     </header>
     <main>

@@ -107,6 +107,8 @@
       <a class="tab {% if tab == 'progress' %}active{% endif %}" href="/app/field/?tab=progress{% if project %}&project_id={{ project.id }}{% endif %}">진행률</a>
       <a class="tab {% if tab == 'report' %}active{% endif %}" href="/app/field/?tab=report{% if project %}&project_id={{ project.id }}{% endif %}">보고서</a>
       <a class="tab {% if tab == 'cost' %}active{% endif %}" href="/app/field/?tab=cost{% if project %}&project_id={{ project.id }}{% endif %}">원가</a>
+      <a class="tab" href="/app/field/inventory/issues/">자재 투입</a>
+      <a class="tab" href="/app/field/labor/timesheets/">출역부</a>
     </div>
   </div>
 
@@ -305,12 +307,37 @@
       <p class="hint">제출됨(승인 대기) - 수정 불가</p>
       {% endif %}
       {% endif %}
-      <label for="cost_item_id">원가 항목</label>
-      <select id="cost_item_id" name="cost_item_id" required {% if cost_draft and cost_draft.status != "draft" %}disabled{% endif %}>
-        {% for item in cost_items %}
-        <option value="{{ item.id }}" {% if cost_draft_line and item.id == cost_draft_line.cost_item_id %}selected{% endif %}>{{ item.name }}</option>
-        {% endfor %}
-      </select>
+      <label for="cost_item_search">원가 항목(CBS)</label>
+      <input
+        id="cost_item_search"
+        type="text"
+        placeholder="코드 또는 항목명을 입력"
+        autocomplete="off"
+        {% if cost_draft and cost_draft.status != "draft" %}disabled{% endif %}
+      />
+      <input
+        id="cost_item_id"
+        type="hidden"
+        name="cost_item_id"
+        value="{% if cost_draft_line %}{{ cost_draft_line.cost_item_id }}{% endif %}"
+      />
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div id="cost_item_selected" class="hint" style="flex:1;">
+          {% if cost_draft_line %}
+            선택됨: {{ cost_draft_line.cost_item.code }} - {{ cost_draft_line.cost_item.get_display_name }}
+          {% else %}
+            선택된 항목이 없습니다.
+          {% endif %}
+        </div>
+        <button type="button" id="cost_item_fav_toggle" class="btn btn-outline" style="white-space:nowrap;">★ 즐겨찾기</button>
+      </div>
+      <div id="cost_item_results" class="card" style="display:none; padding:12px; margin-top:8px;"></div>
+
+      <div style="margin-top:12px;">
+        <div class="hint" style="margin-bottom:6px;">즐겨찾기</div>
+        <div id="cost_item_favorites" class="actions-row"></div>
+        <div id="cost_item_favorites_error" class="hint" style="display:none;">즐겨찾기 로딩 실패</div>
+      </div>
       <div class="inline-grid">
         <div>
           <label for="quantity">수량</label>
@@ -390,6 +417,211 @@
   </div>
   {% endif %}
 </div>
+
+<script>
+  (function () {
+    var searchInput = document.getElementById("cost_item_search");
+    var selectedInput = document.getElementById("cost_item_id");
+    var selectedLabel = document.getElementById("cost_item_selected");
+    var resultsBox = document.getElementById("cost_item_results");
+    var favoritesBox = document.getElementById("cost_item_favorites");
+    var favoritesError = document.getElementById("cost_item_favorites_error");
+    var favoriteToggle = document.getElementById("cost_item_fav_toggle");
+    var projectId = "{{ project.id|default:'' }}";
+
+    if (!searchInput || !selectedInput || !resultsBox || !favoritesBox) {
+      return;
+    }
+
+    function getCookie(name) {
+      var value = "; " + document.cookie;
+      var parts = value.split("; " + name + "=");
+      if (parts.length === 2) {
+        return parts.pop().split(";").shift();
+      }
+      return "";
+    }
+
+    function setSelected(item) {
+      if (!item || !item.id) {
+        selectedInput.value = "";
+        selectedLabel.textContent = "선택된 항목이 없습니다.";
+        if (favoriteToggle) {
+          favoriteToggle.disabled = true;
+          favoriteToggle.removeAttribute("data-item-id");
+        }
+        return;
+      }
+      selectedInput.value = item.id || "";
+      selectedLabel.textContent = "선택됨: " + item.code + " - " + item.display_name;
+      if (favoriteToggle) {
+        favoriteToggle.disabled = false;
+        favoriteToggle.setAttribute("data-item-id", item.id);
+      }
+      resultsBox.style.display = "none";
+      resultsBox.innerHTML = "";
+    }
+
+    function renderResults(items) {
+      if (!items.length) {
+        resultsBox.style.display = "none";
+        resultsBox.innerHTML = "";
+        return;
+      }
+      resultsBox.style.display = "block";
+      resultsBox.innerHTML = items
+        .map(function (item) {
+          var label = item.display_name || item.name || "";
+          return (
+            '<button type="button" class="btn btn-outline" data-id="' +
+            item.id +
+            '" data-label="' +
+            item.code +
+            ' - ' +
+            label +
+            '" style="margin:4px;">' +
+            item.code +
+            ' - ' +
+            label +
+            "</button>"
+          );
+        })
+        .join("");
+    }
+
+    function fetchResults(query) {
+      var url = "/api/master/cbs/search?q=" + encodeURIComponent(query) + "&limit=20";
+      fetch(url, { credentials: "same-origin" })
+        .then(function (resp) {
+          if (!resp.ok) {
+            throw new Error("search failed");
+          }
+          return resp.json();
+        })
+        .then(function (data) {
+          renderResults(data || []);
+        })
+        .catch(function () {
+          resultsBox.style.display = "block";
+          resultsBox.innerHTML = '<div class="hint">?? ?? ??</div>';
+        });
+    }
+
+    function fetchFavorites() {
+      var url = "/api/master/cbs/favorites";
+      if (projectId) {
+        url += "?project_id=" + encodeURIComponent(projectId);
+      }
+      fetch(url, { credentials: "same-origin" })
+        .then(function (resp) {
+          if (!resp.ok) {
+            throw new Error("favorites failed");
+          }
+          return resp.json();
+        })
+        .then(function (data) {
+          favoritesError.style.display = "none";
+          favoritesBox.innerHTML = (data || [])
+            .map(function (item) {
+              return (
+                '<button type="button" class="btn btn-outline" data-id="' +
+                item.id +
+                '" data-label="' +
+                item.code +
+                ' - ' +
+                item.display_name +
+                '" style="margin:4px;">' +
+                item.code +
+                ' - ' +
+                item.display_name +
+                "</button>"
+              );
+            })
+            .join("");
+        })
+        .catch(function () {
+          favoritesError.style.display = "block";
+        });
+    }
+
+    function toggleFavorite(costItemId) {
+      fetch("/api/master/cbs/favorites/toggle", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+          cost_item_id: costItemId,
+          project_id: projectId || null,
+        }),
+      })
+        .then(function (resp) {
+          if (!resp.ok) {
+            throw new Error("toggle failed");
+          }
+          return resp.json();
+        })
+        .then(function () {
+          fetchFavorites();
+        })
+        .catch(function () {});
+    }
+
+    var debounceTimer = null;
+    searchInput.addEventListener("input", function () {
+      var query = searchInput.value.trim();
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(function () {
+        fetchResults(query);
+      }, 300);
+    });
+
+    resultsBox.addEventListener("click", function (event) {
+      var target = event.target;
+      if (target.tagName !== "BUTTON") {
+        return;
+      }
+      var label = target.getAttribute("data-label") || "";
+      var parts = label.split(" - ");
+      setSelected({
+        id: target.getAttribute("data-id"),
+        code: parts[0] || "",
+        display_name: parts.slice(1).join(" - "),
+      });
+    });
+
+    favoritesBox.addEventListener("click", function (event) {
+      var target = event.target;
+      if (target.tagName !== "BUTTON") {
+        return;
+      }
+      var label = target.getAttribute("data-label") || "";
+      var parts = label.split(" - ");
+      setSelected({
+        id: target.getAttribute("data-id"),
+        code: parts[0] || "",
+        display_name: parts.slice(1).join(" - "),
+      });
+    });
+
+    if (favoriteToggle) {
+      favoriteToggle.disabled = !selectedInput.value;
+      favoriteToggle.addEventListener("click", function () {
+        var costItemId = favoriteToggle.getAttribute("data-item-id") || selectedInput.value;
+        if (!costItemId) {
+          return;
+        }
+        toggleFavorite(costItemId);
+      });
+    }
+
+    fetchFavorites();
+  })();
+</script>
 
 <script>
   (function () {

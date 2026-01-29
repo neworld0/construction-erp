@@ -1,0 +1,114 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}WBS 변경 요청 상세{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h2 style="margin:0 0 6px 0;">WBS 변경 요청 상세</h2>
+      <div class="muted">{{ project.name }} / 기준 버전 v{{ change_request.base_version }}</div>
+    </div>
+    <a class="btn btn-outline" href="/app/ceo/wbs-change/requests/">목록으로</a>
+  </div>
+</div>
+
+{% if error %}
+  <div class="card" style="margin-top:12px; border-left:4px solid #ef4444; padding:12px;">
+    {{ error }}
+  </div>
+{% endif %}
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin-top:0;">요청 정보</h3>
+  <div>요청 구분: {{ change_request.request_type }}</div>
+  <div>요청자: {{ change_request.requested_by.username }}</div>
+  <div>사유: {{ change_request.reason }}</div>
+  {% if change_request.change_order %}
+    <div>변경요청: {{ change_request.change_order }}</div>
+  {% endif %}
+  <div>상태: {{ change_request.status }}</div>
+  <div>가중치 합계: {{ weight_sum }}%</div>
+  {% if weight_valid %}
+    <div class="muted">가중치 합계가 100%입니다.</div>
+  {% else %}
+    <div style="color:#ef4444;">가중치 합계가 100%가 아닙니다.</div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin-top:0;">현재 기준선</h3>
+  <div style="overflow:auto;">
+    <table class="table" style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th>순서</th>
+          <th>작업명</th>
+          <th>가중치(%)</th>
+          <th>계획 시작일</th>
+          <th>계획 종료일</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in baseline_items %}
+          <tr>
+            <td>{{ item.sort_order }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.weight }}</td>
+            <td>{{ item.plan_start_date }}</td>
+            <td>{{ item.plan_end_date }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="muted">기준선이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin-top:0;">변경안</h3>
+  <div style="overflow:auto;">
+    <table class="table" style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th>순서</th>
+          <th>작업명</th>
+          <th>가중치(%)</th>
+          <th>계획 시작일</th>
+          <th>계획 종료일</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in request_lines %}
+          <tr>
+            <td>{{ line.order }}</td>
+            <td>{{ line.task_name }}</td>
+            <td>{{ line.weight }}</td>
+            <td>{{ line.planned_start }}</td>
+            <td>{{ line.planned_end }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="muted">변경 라인이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if change_request.status == "submitted" %}
+  <div class="card" style="margin-top:16px;">
+    <form method="post" action="/app/ceo/wbs-change/requests/{{ change_request.id }}/approve/" style="display:inline;">
+      {% csrf_token %}
+      <button class="btn btn-primary" type="submit">승인</button>
+    </form>
+    <form method="post" action="/app/ceo/wbs-change/requests/{{ change_request.id }}/reject/" style="display:inline; margin-left:8px;">
+      {% csrf_token %}
+      <input type="text" name="decision_note" placeholder="반려 사유" style="min-width:260px;" />
+      <button class="btn btn-outline" type="submit">반려</button>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

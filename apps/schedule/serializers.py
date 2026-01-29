@@ -2,6 +2,8 @@ from datetime import date
 
 from rest_framework import serializers
 
+from apps.closing.guards import guard_write
+
 from .models import (
     DailyProgress,
     PlanChangeRequest,
@@ -34,9 +36,20 @@ class DailyProgressSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("progress_percent must be 0~100.")
         return value
 
+    def validate_report_date(self, value):
+        return value
+
     def validate(self, attrs):
         project = attrs.get("project")
         task = attrs.get("task")
+        report_date = attrs.get("report_date")
+        if project and report_date:
+            guard_write(
+                project=project,
+                target_date=report_date,
+                message_context="??? ??????.",
+                exc=serializers.ValidationError,
+            )
 
         if task and project and task.plan.project_id != project.id:
             raise serializers.ValidationError({"task": "task must belong to project plan."})

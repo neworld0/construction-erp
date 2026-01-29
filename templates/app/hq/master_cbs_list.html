@@ -1,0 +1,207 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% load utils %}
+
+{% block page_title %}CBS 마스터{% endblock %}
+
+{% block content %}
+<style>
+  .filters {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    display: inline-block;
+  }
+  .badge.on { background: rgba(34,197,94,0.2); color: #4ade80; }
+  .badge.off { background: rgba(239,68,68,0.2); color: #f87171; }
+  .notice {
+    background: rgba(14, 116, 144, 0.25);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #bae6fd;
+  }
+  .table-wrap {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+</style>
+
+<div class="card">
+  <h2 class="card-title">CBS 마스터</h2>
+  <p class="muted">
+    CBS는 원가항목 기준 코드입니다. 현장 입력의 기준점이므로 신중히 관리하세요.
+  </p>
+  {% if active_notice %}
+    <div class="notice" style="margin-top: 12px;">{{ active_notice }}</div>
+  {% endif %}
+  {% if notice %}
+    <div class="notice" style="margin-top: 12px;">{{ notice.message }}</div>
+  {% endif %}
+  <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+    {% if role == "hq" %}
+      <a class="btn" href="/app/hq/master/cbs/new/">CBS 신규 요청</a>
+      <a class="btn btn-outline" href="/app/hq/master/cbs/requests/">요청 목록</a>
+    {% elif role == "ceo" %}
+      <a class="btn btn-outline" href="/app/ceo/cbs/requests/">요청 목록</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <form method="get" class="filters">
+    <label>
+      검색
+      <input class="input" type="text" name="q" value="{{ q }}" placeholder="코드 또는 항목명" />
+    </label>
+    <label>
+      비목
+      <select class="input" name="cost_type">
+        <option value="">전체</option>
+        {% for opt in cost_type_options %}
+          <option value="{{ opt.code }}" {% if cost_type == opt.code %}selected{% endif %}>
+            {{ opt.code }}{% if opt.label %} · {{ opt.label }}{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      공종
+      <select class="input" name="work_type">
+        <option value="">전체</option>
+        {% for opt in work_type_options %}
+          <option value="{{ opt.code }}" {% if work_type == opt.code %}selected{% endif %}>
+            {{ opt.code }}{% if opt.label %} · {{ opt.label }}{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      활성 상태
+      <select class="input" name="active">
+        <option value="">전체</option>
+        <option value="active" {% if active_filter == "active" %}selected{% endif %}>활성</option>
+        <option value="inactive" {% if active_filter == "inactive" %}selected{% endif %}>비활성</option>
+      </select>
+    </label>
+    <label>
+      페이지 크기
+      <input class="input" type="number" name="page_size" min="10" max="200" value="{{ page_size }}" />
+    </label>
+    <button class="btn" type="submit">조회</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>코드</th>
+          <th>항목명</th>
+          <th>비목</th>
+          <th>공종</th>
+          <th>활성</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in page_obj %}
+          <tr>
+            <td>{{ item|get_attribute:mapping.code }}</td>
+            <td>
+              <div>{{ item.get_display_name }}</div>
+              {% if item.get_display_name != item|get_attribute:mapping.name %}
+                <div class="muted" style="font-size:12px;">
+                  {{ item|get_attribute:mapping.name }}
+                </div>
+              {% endif %}
+            </td>
+            <td>
+              {% with ct=item|get_attribute:mapping.cost_type %}
+                {{ ct }}
+                {% with ct_label=cost_type_labels|get_item:ct %}
+                  {% if ct_label %} · {{ ct_label }}{% endif %}
+                {% endwith %}
+              {% endwith %}
+            </td>
+            <td>
+              {% with wt=item|get_attribute:mapping.work_type|work_code %}
+                {{ wt }}
+                {% with wt_label=work_type_labels|get_item:wt %}
+                  {% if wt_label %} · {{ wt_label }}{% endif %}
+                {% endwith %}
+              {% endwith %}
+            </td>
+            <td>
+              {% if active_supported %}
+                {% if item|get_attribute:mapping.active %}
+                  <span class="badge on">활성</span>
+                {% else %}
+                  <span class="badge off">비활성</span>
+                {% endif %}
+              {% else %}
+                <span class="muted">N/A</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if role == "hq" %}
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <a class="btn btn-outline" href="/app/hq/master/cbs/{{ item.pk }}/edit/">
+                    변경 요청
+                  </a>
+                  <a class="btn btn-outline" href="/app/hq/master/cbs/{{ item.pk }}/edit-name/">
+                    이름 변경 요청
+                  </a>
+                  {% if active_supported %}
+                    <form method="post" action="/app/hq/master/cbs/{{ item.pk }}/toggle-active/">
+                      {% csrf_token %}
+                      <button class="btn btn-outline" type="submit">활성 토글</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">조회 결과가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top: 12px; display:flex; gap:8px; align-items:center;">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-outline" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&cost_type={{ cost_type }}&work_type={{ work_type }}&active={{ active_filter }}&page_size={{ page_size }}">이전</a>
+    {% endif %}
+    <span class="muted">페이지 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn btn-outline" href="?page={{ page_obj.next_page_number }}&q={{ q }}&cost_type={{ cost_type }}&work_type={{ work_type }}&active={{ active_filter }}&page_size={{ page_size }}">다음</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
