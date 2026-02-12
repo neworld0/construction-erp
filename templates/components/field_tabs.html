@@ -1,0 +1,8 @@
+﻿<div class="tabs">
+  <a class="tab {% if active_tab == 'progress' %}active{% endif %}" href="/app/field/?tab=progress{% if project_id %}&project_id={{ project_id }}{% endif %}">진행률</a>
+  <a class="tab {% if active_tab == 'report' %}active{% endif %}" href="/app/field/?tab=report{% if project_id %}&project_id={{ project_id }}{% endif %}">보고서</a>
+  <a class="tab {% if active_tab == 'cost' %}active{% endif %}" href="/app/field/?tab=cost{% if project_id %}&project_id={{ project_id }}{% endif %}">원가</a>
+  <a class="tab {% if active_tab == 'inventory' %}active{% endif %}" href="/app/field/inventory/issues/{% if project_id %}?project_id={{ project_id }}{% endif %}">자재 투입</a>
+  <a class="tab {% if active_tab == 'timesheet' %}active{% endif %}" href="/app/field/labor/timesheets/{% if project_id %}?project_id={{ project_id }}{% endif %}">출역부</a>
+  <a class="tab {% if active_tab == 'approved' %}active{% endif %}" href="/app/field/approved/{% if project_id %}?project_id={{ project_id }}{% endif %}">승인완료</a>
+</div>

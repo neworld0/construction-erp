@@ -1,0 +1,193 @@
+﻿{% extends "app/base_app.html" %}
+{% block page_title %}승인 완료 목록{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --card: #101a2b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --border: rgba(148, 163, 184, 0.2);
+  }
+  .container { display: grid; gap: 16px; }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+    background: transparent;
+  }
+  .tab.active {
+    background: var(--primary);
+    color: #0b1220;
+    border-color: var(--primary);
+  }
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    align-items: end;
+  }
+  .label {
+    font-size: 12px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .input, .select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .btn {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-weight: 700;
+    background: var(--primary);
+    color: #0b1220;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .hint {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .nav-right .btn-outline {
+    background: transparent !important;
+    border: 1px solid rgba(148, 163, 184, 0.4) !important;
+    color: #f8fafc !important;
+  }
+  .nav-right form .btn {
+    background: #38bdf8 !important;
+    border: 1px solid transparent !important;
+    color: #0b1220 !important;
+  }
+</style>
+
+<div class="container">
+  <div class="card">
+    {% include "components/field_tabs.html" with active_tab="approved" project_id=filters.project_id %}
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 10px 0;">승인 완료 목록</h3>
+    <p class="hint" style="margin:0;">Field 할당 프로젝트 기준으로 승인 완료된 항목을 조회합니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <a class="tab {% if filters.type == 'all' %}active{% endif %}" href="/app/field/approved/?type=all{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}{% if filters.project_id %}&project_id={{ filters.project_id }}{% endif %}">전체</a>
+      <a class="tab {% if filters.type == 'progress' %}active{% endif %}" href="/app/field/approved/?type=progress{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}{% if filters.project_id %}&project_id={{ filters.project_id }}{% endif %}">진행률</a>
+      <a class="tab {% if filters.type == 'report' %}active{% endif %}" href="/app/field/approved/?type=report{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}{% if filters.project_id %}&project_id={{ filters.project_id }}{% endif %}">보고서</a>
+      <a class="tab {% if filters.type == 'cost' %}active{% endif %}" href="/app/field/approved/?type=cost{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}{% if filters.project_id %}&project_id={{ filters.project_id }}{% endif %}">원가</a>
+      <a class="tab" href="/app/field/?tab=progress">현장 화면</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="get" action="/app/field/approved/" class="filters">
+      <div>
+        <label class="label" for="type">유형</label>
+        <select id="type" name="type" class="select">
+          <option value="all" {% if filters.type == 'all' %}selected{% endif %}>전체</option>
+          <option value="progress" {% if filters.type == 'progress' %}selected{% endif %}>진행률</option>
+          <option value="report" {% if filters.type == 'report' %}selected{% endif %}>보고서</option>
+          <option value="cost" {% if filters.type == 'cost' %}selected{% endif %}>원가</option>
+        </select>
+      </div>
+      <div>
+        <label class="label" for="from">기간 시작</label>
+        <input id="from" name="from" type="date" value="{{ filters.from }}" class="input" />
+      </div>
+      <div>
+        <label class="label" for="to">기간 종료</label>
+        <input id="to" name="to" type="date" value="{{ filters.to }}" class="input" />
+      </div>
+      <div>
+        <label class="label" for="project_id">프로젝트</label>
+        <select id="project_id" name="project_id" class="select">
+          <option value="">전체</option>
+          {% for p in projects %}
+            <option value="{{ p.id }}" {% if filters.project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button class="btn" type="submit">조회</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div style="margin-bottom:8px;" class="hint">총 {{ count }}건</div>
+    <table>
+      <thead>
+        <tr>
+          <th>승인일</th>
+          <th>프로젝트</th>
+          <th>요약</th>
+          <th>첨부</th>
+          <th>상세</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.approved_at_display }}</td>
+            <td>{{ item.project_name }}</td>
+            <td>
+              <div>{{ item.type }} / {{ item.summary }}</div>
+              {% if item.date %}<div class="hint">{{ item.date }}</div>{% endif %}
+            </td>
+            <td>{% include "components/attachment_badge.html" with attachments=item.attachments %}</td>
+            <td>
+              {% if item.object_type == "COST_ACTUAL" and item.project_id %}
+                <a class="tab" href="/app/field/?tab=cost&project_id={{ item.project_id }}&cost_id={{ item.object_id }}">상세보기</a>
+              {% else %}
+                <a class="tab" href="{{ item.detail_url }}">상세보기</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5">조건에 맞는 승인 완료 항목이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

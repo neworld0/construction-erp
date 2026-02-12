@@ -1,0 +1,19 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="/static/app/css/field_mobile.css" />
+{% endblock %}
+{% block content %}
+<div class="mobile-wrap">
+  <section class="mobile-card">
+    <h1 class="mobile-title">{{ title }}</h1>
+    <p class="mobile-sub">{{ subtitle }}</p>
+  </section>
+
+  <section class="mobile-card mobile-grid">
+    <a class="btn mobile-cta" href="{{ primary_url }}">{{ primary_label }}</a>
+    <a class="btn btn-outline mobile-cta" href="{{ secondary_url }}">{{ secondary_label }}</a>
+    <a class="btn btn-outline mobile-cta" href="/app/field/mobile/">모바일 홈으로</a>
+  </section>
+</div>
+{% endblock %}

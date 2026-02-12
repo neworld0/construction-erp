@@ -10,9 +10,14 @@ from apps.core.models import ApprovalRequest, ApprovalStatus
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import get_user_role, require_project_access
 from apps.cost.models import CostActual
+from apps.evidence.attachment_policy import can_edit_attachments
 from apps.contracts.models import ContractChange
 from apps.evidence.models import Evidence, EvidenceFile, EvidenceStatus
-from apps.evidence.services.resolve import resolve_project_for_evidence
+from apps.evidence.services.resolve import (
+    is_project_or_month_locked,
+    resolve_project_for_evidence,
+    resolve_target_date_for_evidence,
+)
 from apps.field.models import DailyReport
 from apps.schedule.models import PlanChangeRequest
 
@@ -34,7 +39,10 @@ def _get_target_object(evidence):
 
 
 def _is_locked_for_field(evidence) -> bool:
-    if evidence.status != EvidenceStatus.DRAFT:
+    target_date = resolve_target_date_for_evidence(evidence)
+    project = resolve_project_for_evidence(evidence)
+    is_closed_locked = is_project_or_month_locked(project=project, target_date=target_date)
+    if not can_edit_attachments(status=evidence.status, is_closed_locked=is_closed_locked):
         return True
     target = _get_target_object(evidence)
     if target is None or not hasattr(target, "status"):
@@ -75,6 +83,8 @@ def _dedupe_project_evidence(evidence):
 def evidence_edit(request, pk):
     evidence = get_object_or_404(Evidence, pk=pk)
     project = resolve_project_for_evidence(evidence)
+    target_date = resolve_target_date_for_evidence(evidence)
+    is_closed_locked = is_project_or_month_locked(project=project, target_date=target_date)
     if project is not None:
         require_project_access(request.user, project.id)
 
@@ -84,6 +94,8 @@ def evidence_edit(request, pk):
             raise PermissionDenied("Evidence edit not allowed.")
         if _is_locked_for_field(evidence):
             raise PermissionDenied("Evidence is locked after approval.")
+    elif not can_edit_attachments(status=evidence.status, is_closed_locked=is_closed_locked):
+        raise PermissionDenied("현재 상태에서는 첨부를 수정할 수 없습니다.")
 
     if request.method == "POST":
         title = (request.POST.get("title") or "").strip()

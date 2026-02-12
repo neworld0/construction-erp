@@ -7,12 +7,11 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from apps.closing.models import ClosingPeriod, ClosingStatus
-from apps.contracts.models import ContractChange, ContractChangeStatus
 from apps.core.models import ApprovalRequest, ApprovalStatus
 from apps.cost.models import CostActual, CostActualStatus
 from apps.field.models import DailyReport, DailyReportStatus
 from apps.risk.models import RiskFinding, RiskFindingStatus
-from apps.schedule.models import DailyProgress, PlanChangeRequest, PlanChangeStatus
+from apps.schedule.models import DailyProgress
 
 ICON_RED = "\U0001F534"
 ICON_ORANGE = "\U0001F7E0"
@@ -42,7 +41,7 @@ def build_hq_todos(risk_counts: dict) -> dict:
             icon=_status_icon(approval_total, warn_threshold=1, critical_threshold=5),
             text="\uc2b9\uc778 \ub300\uae30 \ucc98\ub9ac",
             count=approval_total,
-            url="/app/hq/#pending-reports",
+            url="/app/hq/inbox/",
         )
     ]
 
@@ -57,7 +56,7 @@ def build_hq_todos(risk_counts: dict) -> dict:
             icon=risk_icon,
             text="CRITICAL/HIGH \ub9ac\uc2a4\ud06c \ud655\uc778",
             count=risk_count,
-            url="/app/hq/#risks",
+            url="/app/hq/risks/",
         )
     )
 
@@ -75,7 +74,7 @@ def build_hq_todos(risk_counts: dict) -> dict:
             icon=ICON_ORANGE if missing_today > 0 else ICON_GREEN,
             text="\uc624\ub298 \ub204\ub77d \uc810\uac80",
             count=missing_today,
-            url="/app/hq/projects/",
+            url="/app/hq/missing/",
         )
     )
 
@@ -85,7 +84,7 @@ def build_hq_todos(risk_counts: dict) -> dict:
                 icon=ICON_RED if delayed_48h > 0 else ICON_GREEN,
                 text="48\uc2dc\uac04+ \uc2b9\uc778 \uc9c0\uc5f0",
                 count=delayed_48h,
-                url="/app/hq/#pending-reports",
+                url="/app/hq/inbox/",
             )
         )
 
@@ -116,14 +115,49 @@ def _icon_rank(icon: str) -> int:
 
 
 def _approval_pending_count() -> int:
-    approvals = ApprovalRequest.objects.filter(status=ApprovalStatus.SUBMITTED).count()
-    daily_reports = DailyReport.objects.filter(status=DailyReportStatus.SUBMITTED).count()
-    costs = CostActual.objects.filter(status=CostActualStatus.SUBMITTED).count()
-    plan_changes = PlanChangeRequest.objects.filter(status=PlanChangeStatus.SUBMITTED).count()
-    contract_changes = ContractChange.objects.filter(
-        status=ContractChangeStatus.SUBMITTED
-    ).count()
-    return approvals + daily_reports + costs + plan_changes + contract_changes
+    approvals = list(
+        ApprovalRequest.objects.filter(status=ApprovalStatus.SUBMITTED).only(
+            "id", "object_type", "object_id"
+        )
+    )
+    approval_by_id = {approval.id: approval for approval in approvals}
+
+    def _normalize_object_type(object_type: str) -> str:
+        normalized = (object_type or "").upper().strip()
+        aliases = {
+            "COST": "COST_ACTUAL",
+            "COSTACTUAL": "COST_ACTUAL",
+            "DAILYPROGRESS": "DAILY_PROGRESS",
+            "FIELDREPORT": "FIELD_REPORT",
+            "DAILYREPORT": "DAILY_REPORT",
+        }
+        return aliases.get(normalized, normalized)
+
+    def _resolved_key(approval_obj):
+        object_type = _normalize_object_type(getattr(approval_obj, "object_type", ""))
+        object_id = getattr(approval_obj, "object_id", None)
+        visited = set()
+        while object_type == "APPROVAL_REQUEST" and object_id and object_id not in visited:
+            visited.add(object_id)
+            nested = approval_by_id.get(object_id)
+            if nested is None:
+                nested = ApprovalRequest.objects.filter(id=object_id).only(
+                    "id", "object_type", "object_id"
+                ).first()
+                if nested is not None:
+                    approval_by_id[nested.id] = nested
+            if nested is None:
+                break
+            object_type = _normalize_object_type(nested.object_type)
+            object_id = nested.object_id
+        return object_type, object_id
+
+    unique_keys = set()
+    for approval in approvals:
+        key = _resolved_key(approval)
+        if key[0] and key[1]:
+            unique_keys.add(key)
+    return len(unique_keys)
 
 
 def _approval_delayed_48h_count() -> int:

@@ -1,0 +1,77 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}리스크 목록{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:20px; font-weight:700;">리스크 목록</div>
+        <div class="hint">OPEN 리스크를 등급/카테고리 기준으로 확인합니다.</div>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/">HQ 대시보드</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div>OPEN 리스크</div>
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+        <span class="muted">OPEN {{ risk_summary.open_total|default:0 }}건</span>
+        {% if risk_summary.critical %}
+          <span style="padding:2px 8px; border-radius:999px; background:#7f1d1d; color:#fecaca; font-size:11px;">CRITICAL {{ risk_summary.critical }}</span>
+        {% endif %}
+        {% if risk_summary.high %}
+          <span style="padding:2px 8px; border-radius:999px; background:#78350f; color:#fde68a; font-size:11px;">HIGH {{ risk_summary.high }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if risk_cards %}
+      <div style="display:grid; gap:12px; margin-top:10px;">
+        {% for item in risk_cards %}
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px; border:1px solid rgba(148,163,184,0.2); border-radius:12px;">
+            <div style="min-width:0;">
+              <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                <span style="padding:2px 8px; border-radius:999px; background:rgba(59,130,246,0.18); color:#93c5fd; font-size:11px;">{{ item.category_label }}</span>
+                {% if item.severity == "CRITICAL" %}
+                  <span style="padding:2px 8px; border-radius:999px; background:#7f1d1d; color:#fecaca; font-size:11px;">CRITICAL</span>
+                {% elif item.severity == "HIGH" %}
+                  <span style="padding:2px 8px; border-radius:999px; background:#78350f; color:#fde68a; font-size:11px;">HIGH</span>
+                {% elif item.severity == "MED" %}
+                  <span style="padding:2px 8px; border-radius:999px; background:#1e3a8a; color:#bfdbfe; font-size:11px;">MED</span>
+                {% else %}
+                  <span style="padding:2px 8px; border-radius:999px; background:rgba(148,163,184,0.2); color:#e2e8f0; font-size:11px;">LOW</span>
+                {% endif %}
+                {% if item.stale_48h %}
+                  <span style="padding:2px 8px; border-radius:999px; background:rgba(239,68,68,0.18); color:#fca5a5; font-size:11px;">48h+</span>
+                {% elif item.stale_24h %}
+                  <span style="padding:2px 8px; border-radius:999px; background:rgba(245,158,11,0.18); color:#facc15; font-size:11px;">24h+</span>
+                {% endif %}
+              </div>
+              <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {% if item.project_name %}{{ item.project_name }}{% endif %}
+              </div>
+              <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{ item.title }}
+              </div>
+              <div class="muted" style="font-size:11px; margin-top:4px;">
+                {{ item.detected_at|date:"Y-m-d H:i" }}
+              </div>
+            </div>
+            {% if item.detail_url %}
+              <a class="btn btn-outline" style="height:28px;" href="{{ item.detail_url }}">상세</a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="padding:6px 0;">
+        <div style="font-weight:600; color:#86efac;">🟢 현재 OPEN 리스크가 없습니다.</div>
+        <div class="muted">제출·승인·마감 흐름이 정상입니다.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

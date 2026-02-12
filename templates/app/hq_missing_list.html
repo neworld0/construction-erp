@@ -1,0 +1,71 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}오늘 누락 점검{% endblock %}
+
+{% block content %}
+<div class="container" style="display:grid; gap:16px;">
+  <div class="card">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:20px; font-weight:700;">오늘 누락 점검</div>
+        <div class="hint">{{ today|date:"Y-m-d" }} 기준 임시저장 상태를 확인합니다.</div>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/">HQ 대시보드</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">임시저장 일일보고</div>
+    {% if pending_reports %}
+      <ul class="list">
+        {% for item in pending_reports %}
+          <li>
+            {{ item.project.name }} / {{ item.reporter.username }}
+            <span class="muted">{{ item.report_date }}</span>
+            <a class="btn btn-outline" style="height:26px;" href="/app/hq/reports/{{ item.id }}/">상세</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="muted">누락된 일일보고가 없습니다.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="section-title">임시저장 원가</div>
+    {% if pending_costs %}
+      <ul class="list">
+        {% for item in pending_costs %}
+          <li>
+            {{ item.project.name }}
+            <span class="muted">{{ item.report_date }}</span>
+            <span class="muted">{{ item.total_amount|intcomma }}</span>
+            <a class="btn btn-outline" style="height:26px;" href="/app/hq/costs/{{ item.id }}/">상세</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="muted">누락된 원가 항목이 없습니다.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="section-title">임시저장 진행률</div>
+    {% if pending_progress %}
+      <ul class="list">
+        {% for item in pending_progress %}
+          <li>
+            {{ item.project.name }} / {{ item.task.name }}
+            <span class="muted">{{ item.report_date }}</span>
+            <span class="muted">{{ item.reporter.username }}</span>
+            <span class="muted">{{ item.progress_percent|floatformat:1 }}%</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="muted">누락된 진행률 항목이 없습니다.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

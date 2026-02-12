@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.exceptions import ValidationError
 
 from apps.contracts.models import ContractChange
@@ -5,6 +7,9 @@ from apps.evidence.models import Evidence, EvidenceFile
 from apps.projects.models import Project
 from apps.schedule.models import PlanChangeRequest
 from apps.cost.models import CostActual
+from apps.field.models import DailyReport
+from apps.reports.models import FieldReport
+from apps.schedule.models import DailyProgress
 
 
 def resolve_project_for_evidence(evidence):
@@ -23,6 +28,34 @@ def resolve_project_for_evidence(evidence):
         return cost_actual.project if cost_actual else None
     # TODO: extend for other object types.
     return None
+
+
+def resolve_target_date_for_evidence(evidence):
+    if evidence is None:
+        return None
+    if evidence.object_type == "DAILY_PROGRESS":
+        obj = DailyProgress.objects.filter(id=evidence.object_id).only("report_date").first()
+        return getattr(obj, "report_date", None)
+    if evidence.object_type == "DAILY_REPORT":
+        obj = DailyReport.objects.filter(id=evidence.object_id).only("report_date").first()
+        return getattr(obj, "report_date", None)
+    if evidence.object_type == "FIELD_REPORT":
+        obj = FieldReport.objects.filter(id=evidence.object_id).only("report_date").first()
+        return getattr(obj, "report_date", None)
+    if evidence.object_type == "COST_ACTUAL":
+        obj = CostActual.objects.filter(id=evidence.object_id).only("report_date").first()
+        return getattr(obj, "report_date", None)
+    return None
+
+
+def is_project_or_month_locked(*, project, target_date: date | None) -> bool:
+    if project is not None and getattr(getattr(project, "close", None), "status", None) == "CLOSED":
+        return True
+    if target_date is not None:
+        from apps.closing.services import is_month_closed
+
+        return is_month_closed(target_date)
+    return False
 
 
 def resolve_project_for_evidence_file(file_id):

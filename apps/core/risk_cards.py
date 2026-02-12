@@ -105,7 +105,9 @@ def build_risk_cards(findings: Iterable[RiskFinding], limit: int = 5) -> dict:
         reason_code = ""
         if finding.rule_id and finding.rule:
             reason_code = (finding.rule.key or "").upper()
-        category = _resolve_category(reason_code, finding.object_type, finding.title, finding.details)
+        category = _resolve_category(
+            reason_code, finding.object_type, finding.title, finding.details
+        )
         severity = _resolve_severity(
             finding,
             category,

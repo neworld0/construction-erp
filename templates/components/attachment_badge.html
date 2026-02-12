@@ -1,0 +1,19 @@
+﻿{% comment %}
+목록용 첨부 배지
+입력:
+- attachments: list/queryset[file-like object]
+{% endcomment %}
+
+{% if attachments %}
+  {% with total=attachments|length %}
+    {% if total > 0 %}
+      {% with first_name=attachments.0.original_name|default:attachments.0.file.name|lower %}
+        {% if ".jpg" in first_name or ".jpeg" in first_name or ".png" in first_name or ".gif" in first_name or ".webp" in first_name %}
+          <span class="badge badge-info" aria-label="이미지 첨부 {{ total }}개">🖼 {{ total }}</span>
+        {% else %}
+          <span class="badge badge-secondary" aria-label="첨부 {{ total }}개">📎 {{ total }}</span>
+        {% endif %}
+      {% endwith %}
+    {% endif %}
+  {% endwith %}
+{% endif %}

@@ -1,4 +1,4 @@
-{% extends "app/base_app.html" %}
+﻿{% extends "app/base_app.html" %}
 {% block page_title %}보고서 목록{% endblock %}
 {% block content %}
 <style>
@@ -91,6 +91,15 @@
     background: rgba(22, 163, 74, 0.2);
     color: #22c55e;
   }
+  .badge.REJECTED {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+  }
+  .reject-reason {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #fca5a5;
+  }
   .success {
     padding: 10px 12px;
     border-radius: 8px;
@@ -133,8 +142,10 @@
   <div class="card">
     <div class="tabs">
       <a class="tab" href="/app/field/?tab=progress{% if project_id %}&project_id={{ project_id }}{% endif %}">진행률</a>
-      <a class="tab active" href="/app/reports/{% if project_id %}?project_id={{ project_id }}{% endif %}">보고서</a>
+      <a class="tab active" href="/app/field/?tab=report{% if project_id %}&project_id={{ project_id }}{% endif %}">보고서</a>
       <a class="tab" href="/app/field/?tab=cost{% if project_id %}&project_id={{ project_id }}{% endif %}">원가</a>
+      <a class="tab" href="/app/field/inventory/issues/">자재 투입</a>
+      <a class="tab" href="/app/field/labor/timesheets/">출역부</a>
     </div>
   </div>
   <div class="card filter-card">
@@ -165,7 +176,7 @@
           <th>날짜</th>
           <th>제목</th>
           <th>상태</th>
-          <th>첨부 수</th>
+          <th>첨부 파일</th>
           <th>작성자</th>
           <th>작성일</th>
         </tr>
@@ -175,13 +186,20 @@
         <tr>
           <td>{{ report.report_date }}</td>
           <td>
-            {% if report.status == "DRAFT" and role == "field" %}
+            {% if role == "field" and report.status == "DRAFT" or role == "field" and report.status == "REJECTED" %}
             <a href="/app/reports/{{ report.id }}/edit/">{{ report.title }}</a>
             {% else %}
             <a href="/app/reports/{{ report.id }}/">{{ report.title }}</a>
             {% endif %}
           </td>
-          <td><span class="badge {{ report.status }}">{{ report.status }}</span></td>
+          <td>
+            <span class="badge {{ report.status }}">
+              {% if report.status == "DRAFT" %}임시저장{% elif report.status == "SUBMITTED" %}제출{% elif report.status == "APPROVED" %}승인{% elif report.status == "REJECTED" %}반려{% else %}{{ report.status }}{% endif %}
+            </span>
+            {% if report.status == "REJECTED" and report.reject_reason %}
+            <div class="reject-reason">반려 사유: {{ report.reject_reason }}</div>
+            {% endif %}
+          </td>
           <td>{{ report.files.count }}</td>
           <td>{{ report.created_by }}</td>
           <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>

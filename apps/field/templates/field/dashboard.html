@@ -1,4 +1,4 @@
-{% extends "app/base_app.html" %}
+﻿{% extends "app/base_app.html" %}
 {% load humanize %}
 {% block page_title %}현장 일일 업무{% endblock %}
 {% block content %}
@@ -44,6 +44,18 @@
     background: transparent;
     color: var(--text);
   }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    cursor: pointer;
+  }
+  input[type="date"] {
+    color-scheme: dark;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><path d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 8H5v10h14V10zM5 8h14V6H5v2z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px 16px;
+    padding-right: 38px;
+  }
   button {
     background: var(--primary);
     color: #0b1220;
@@ -86,6 +98,7 @@
   .badge.DRAFT, .badge.draft { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
   .badge.SUBMITTED, .badge.submitted { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
   .badge.APPROVED, .badge.approved { background: rgba(22, 163, 74, 0.2); color: #22c55e; }
+  .badge.REJECTED, .badge.rejected { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
   .hint { font-size: 12px; color: var(--muted); }
   .form-actions {
     display: grid;
@@ -99,6 +112,49 @@
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 10px;
   }
+  .input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .input-suffix {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 14px;
+    min-width: 40px;
+    text-align: center;
+  }
+  .badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+  }
+  .badge-status.draft { background: rgba(148, 163, 184, 0.2); color: #cbd5f5; }
+  .badge-status.submitted { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+  .badge-status.approved { background: rgba(22, 163, 74, 0.2); color: #22c55e; }
+  .badge-status.rejected { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+  .progress-mini {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .progress-mini__bar {
+    flex: 1;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.18);
+    overflow: hidden;
+  }
+  .progress-mini__fill {
+    height: 100%;
+    background: var(--primary);
+  }
 </style>
 
 <div class="container">
@@ -109,6 +165,7 @@
       <a class="tab {% if tab == 'cost' %}active{% endif %}" href="/app/field/?tab=cost{% if project %}&project_id={{ project.id }}{% endif %}">원가</a>
       <a class="tab" href="/app/field/inventory/issues/">자재 투입</a>
       <a class="tab" href="/app/field/labor/timesheets/">출역부</a>
+      <a class="tab" href="/app/field/approved/{% if project %}?project_id={{ project.id }}{% endif %}">승인완료</a>
     </div>
   </div>
 
@@ -122,7 +179,7 @@
         <option value="{{ p.id }}" {% if project and p.id == project.id %}selected{% endif %}>{{ p.name }}</option>
         {% endfor %}
       </select>
-      <button type="submit">로드</button>
+      <button type="submit" id="project_load_btn">로드</button>
     </form>
   </div>
 
@@ -143,35 +200,111 @@
   {% endif %}
 
   {% if tab == "progress" %}
+  {% if show_today_progress_banner %}
+  <div class="card notice">
+    ⚠️ 오늘 진행률이 아직 제출되지 않았습니다.
+    <div class="hint" style="margin-top:4px;">임시저장 내역을 확인하고 제출하세요.</div>
+  </div>
+  {% endif %}
+  {% if not progress_focus_mode %}
   <div class="card">
     <h3>오늘 진행률 입력</h3>
-    <form method="post">
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button type="button" id="progress_copy_yesterday" class="tab" style="padding:6px 10px;">어제 값 복사</button>
+      <span class="hint">전일 값이 있으면 진행률·메모가 자동으로 채워집니다. 필요 시 수정하세요.</span>
+    </div>
+    <div id="progress_copy_message" class="hint" style="margin-top:6px;"></div>
+    <form method="post" enctype="multipart/form-data" id="progress_form">
       {% csrf_token %}
       <input type="hidden" name="tab" value="progress" />
       <input type="hidden" name="project_id" value="{{ project.id }}" />
+      <input type="hidden" id="progress_action" name="action" value="draft" />
       {% if progress_draft %}
       <input type="hidden" name="progress_id" value="{{ progress_draft.id }}" />
+      {% if progress_editing %}
+      <p class="hint">선택한 임시저장 항목을 수정 중입니다.</p>
+      {% else %}
       <p class="hint">임시저장된 항목이 있습니다. 아래 목록에서 날짜를 클릭해 수정하세요.</p>
       {% endif %}
-      <label for="task_id">태스크</label>
-      <select id="task_id" name="task_id" required {% if progress_draft %}disabled{% endif %}>
-        {% for task in tasks %}
-        <option value="{{ task.id }}">{{ task.name }}</option>
-        {% endfor %}
-      </select>
-      <label for="progress_percent">진행률(%)</label>
-      <input id="progress_percent" name="progress_percent" type="number" step="0.001" min="0" max="100" required {% if progress_draft %}disabled{% endif %} />
-      <label for="report_date">작성일</label>
-      <input id="report_date" name="report_date" type="date" value="{{ now|default:'' }}" {% if progress_draft %}disabled{% endif %} />
+      {% endif %}
+      <div class="inline-grid">
+        <div>
+          <label for="report_date">작성일</label>
+          <input
+            id="report_date"
+            name="report_date"
+            type="date"
+            value="{% if progress_draft %}{{ progress_draft.report_date|date:'Y-m-d' }}{% else %}{{ now|default:'' }}{% endif %}"
+            min="{{ progress_min_date }}"
+            max="{{ progress_max_date }}"
+          />
+          <div class="hint">오늘/어제만 입력 가능합니다. 소급 입력은 HQ 요청이 필요합니다.</div>
+        </div>
+        <div>
+          <label for="task_id">작업</label>
+          <select id="task_id" name="task_id" required>
+            {% for task in tasks %}
+            <option value="{{ task.id }}" {% if progress_draft and task.id == progress_draft.task_id %}selected{% endif %}>{{ task.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="progress_percent">진행률(%)</label>
+          <div class="input-group">
+            <input
+              id="progress_percent"
+              name="progress_percent"
+              type="number"
+              inputmode="decimal"
+              step="0.1"
+              min="0"
+              max="100"
+              placeholder="0.0"
+              required
+              value="{% if progress_draft %}{{ progress_draft.progress_percent|floatformat:1 }}{% endif %}"
+            />
+            <span class="input-suffix">%</span>
+          </div>
+          <div id="progress_error" class="hint" style="color: var(--warning); display:none;">
+            진행률은 0~100 사이 숫자여야 합니다. (예: 9.0)
+          </div>
+        </div>
+      </div>
       <label for="note">메모</label>
-      <textarea id="note" name="note" rows="2" {% if progress_draft %}disabled{% endif %}></textarea>
+      <textarea id="note" name="note" rows="2">{% if progress_draft %}{{ progress_draft.note }}{% endif %}</textarea>
+      <label for="progress_photo">현장 사진(선택)</label>
+      <input
+        id="progress_photo"
+        name="progress_photo"
+        type="file"
+        multiple
+        accept="image/*"
+        capture="environment"
+      />
+      <div class="hint">모바일에서는 카메라 촬영 후 바로 업로드할 수 있습니다. 여러 장 선택도 가능합니다.</div>
       <div class="form-actions">
-        <button type="submit" name="action" value="draft" {% if progress_draft %}disabled{% endif %}>임시저장</button>
-        <button type="submit" name="action" value="submit" {% if not progress_draft %}disabled{% endif %}>제출</button>
+        <button type="button" id="progress_draft_btn">임시저장</button>
+        <button type="button" id="progress_submit_btn" {% if not progress_draft %}disabled{% endif %}>제출</button>
       </div>
     </form>
+    <div id="progress_submit_modal" class="card" style="display:none; margin-top:12px; border:1px solid var(--border);">
+      <h4>제출 확인</h4>
+      <p class="hint">이 진행률은 제출 후 수정할 수 없습니다.</p>
+      <div class="inline-grid" style="margin-top:8px;">
+        <div><strong>작업</strong><div id="progress_modal_task" class="hint"></div></div>
+        <div><strong>진행률</strong><div id="progress_modal_percent" class="hint"></div></div>
+        <div><strong>작성일</strong><div id="progress_modal_date" class="hint"></div></div>
+      </div>
+      <div class="form-actions" style="margin-top:12px;">
+        <button type="button" id="progress_modal_cancel" class="btn btn-outline">취소</button>
+        <button type="button" id="progress_modal_confirm">제출</button>
+      </div>
+    </div>
+    {% include "components/attachments_panel.html" with attachments=progress_existing_files can_edit=progress_can_edit_attachments upload_url=progress_attachment_upload_url delete_url=progress_attachment_delete_url hidden_fields=progress_attachment_hidden_fields file_input_name="progress_photo" object_label="진행률" help_text=progress_attachment_help_text %}
   </div>
+  {% endif %}
   <div class="card">
+    {% if not progress_focus_mode %}
     <h3>진행률 목록</h3>
     <table>
       <thead>
@@ -187,22 +320,73 @@
         {% for entry in progress_entries %}
         <tr>
           <td>
-            {% if entry.status == "draft" %}
+            {% if entry.status|lower == "draft" or entry.status|lower == "rejected" %}
             <a href="/app/field/progress/{{ entry.id }}/edit/">{{ entry.report_date }}</a>
             {% else %}
             {{ entry.report_date }}
             {% endif %}
           </td>
           <td>{{ entry.task.name }}</td>
-          <td>{{ entry.progress_percent }}%</td>
+          <td>
+            {% if entry.progress_percent is not None %}
+            <div class="progress-mini" aria-label="진행률 {{ entry.progress_percent|floatformat:1 }}퍼센트">
+              <div class="progress-mini__bar">
+                <div class="progress-mini__fill" style="width: {{ entry.progress_percent|floatformat:1 }}%;"></div>
+              </div>
+              <span class="hint">{{ entry.progress_percent|floatformat:1 }}%</span>
+            </div>
+            {% else %}
+            -
+            {% endif %}
+          </td>
           <td>{{ entry.note }}</td>
-          <td><span class="badge {{ entry.status }}">{{ entry.status }}</span></td>
+          <td>
+            {% include "components/attachment_badge.html" with attachments=entry.attachments %}
+            <div style="margin-top:4px;">
+            {% if entry.status == "draft" %}
+            <span class="badge-status draft">📝 임시저장</span>
+            {% elif entry.status == "submitted" %}
+            <span class="badge-status submitted">📤 제출</span>
+            {% elif entry.status == "approved" %}
+            <span class="badge-status approved">✅ 승인</span>
+            {% elif entry.status == "rejected" %}
+            <span class="badge-status rejected">❌ 반려</span>
+            {% if entry.reject_reason %}
+            <div class="hint" style="margin-top:4px; color:#fca5a5;">사유: {{ entry.reject_reason }}</div>
+            {% endif %}
+            {% else %}
+            <span class="badge-status">{{ entry.status }}</span>
+            {% endif %}
+            </div>
+          </td>
         </tr>
         {% empty %}
         <tr><td colspan="5">입력 내역이 없습니다.</td></tr>
         {% endfor %}
       </tbody>
     </table>
+    {% endif %}
+    {% if progress_selected %}
+    <div style="{% if not progress_focus_mode %}margin-top:12px; border-top:1px solid var(--border); padding-top:12px;{% endif %}">
+      <div class="actions-row" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="margin:0;">선택한 진행률 상세</h4>
+        {% if progress_approved_back_url %}
+        <a class="tab" href="{{ progress_approved_back_url }}">승인완료 목록</a>
+        {% endif %}
+      </div>
+      <div class="hint" style="margin-bottom:8px;">
+        작성일 {{ progress_selected.report_date }} / 작업 {{ progress_selected.task.name }} / 진행률 {{ progress_selected.progress_percent|floatformat:1 }}%
+      </div>
+      {% if progress_selected.note %}
+      <div style="margin-bottom:8px;">{{ progress_selected.note }}</div>
+      {% endif %}
+      {% if progress_selected.status|lower == "rejected" and progress_selected.reject_reason %}
+      <div class="hint" style="margin-bottom:8px; color:#fca5a5;">반려 사유: {{ progress_selected.reject_reason }}</div>
+      {% endif %}
+      {% include "components/attachments_panel.html" with attachments=progress_selected.attachments can_edit=False upload_url=None delete_url=None object_label="진행률" help_text="제출/승인 상태의 첨부는 조회만 가능합니다." %}
+    </div>
+    {% endif %}
+    {% if not progress_focus_mode %}
     {% if progress_page_obj and progress_page_obj.paginator.num_pages > 1 %}
     <div class="actions-row" style="margin-top: 12px; align-items: center;">
       {% if progress_page_obj.has_previous %}
@@ -220,6 +404,7 @@
       <a class="tab" href="/app/field/?tab=progress&project_id={{ project.id }}&progress_page={{ progress_page_obj.next_page_number }}">다음</a>
       {% endif %}
     </div>
+    {% endif %}
     {% endif %}
   </div>
   {% endif %}
@@ -243,7 +428,7 @@
           <th>날짜</th>
           <th>제목</th>
           <th>상태</th>
-          <th>첨부 수</th>
+          <th>첨부</th>
           <th>작성자</th>
           <th>작성일</th>
         </tr>
@@ -253,14 +438,21 @@
         <tr>
           <td>{{ report.report_date }}</td>
           <td>
-            {% if report.status == "DRAFT" and role == "field" %}
+            {% if role == "field" and report.display_status == "DRAFT" or role == "field" and report.display_status == "REJECTED" %}
             <a href="/app/reports/{{ report.id }}/edit/">{{ report.title }}</a>
             {% else %}
             <a href="/app/reports/{{ report.id }}/">{{ report.title }}</a>
             {% endif %}
           </td>
-          <td><span class="badge {{ report.status }}">{{ report.status }}</span></td>
-          <td>{{ report.files.count }}</td>
+          <td>
+            <span class="badge {{ report.display_status }}">{{ report.display_status }}</span>
+            {% if report.display_status == "REJECTED" and report.reject_reason %}
+            <div class="hint" style="margin-top:4px; color:#fca5a5;">반려 사유: {{ report.reject_reason }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% include "components/attachment_badge.html" with attachments=report.files.all %}
+          </td>
           <td>{{ report.created_by }}</td>
           <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>
         </tr>
@@ -291,6 +483,7 @@
   {% endif %}
 
   {% if tab == "cost" %}
+  {% if not cost_focus_mode %}
   <div class="card">
     <h3>원가 입력</h3>
     <form method="post" enctype="multipart/form-data">
@@ -298,11 +491,12 @@
       <input type="hidden" name="tab" value="cost" />
       <input type="hidden" name="project_id" value="{{ project.id }}" />
       {% if cost_drafts_count|default:0 > 1 %}
-      <p class="hint">임시저장 항목이 {{ cost_drafts_count }}건 있습니다. 아래 목록에서 날짜를 클릭해 수정/제출하세요.</p>
-      {% elif cost_draft %}
+      <p class="hint">임시저장 항목이 {{ cost_drafts_count }}건 있습니다. 최신 항목이 기본 선택됩니다. 다른 항목은 아래 목록 날짜를 눌러 선택하세요.</p>
+      {% endif %}
+      {% if cost_draft %}
       <input type="hidden" name="cost_actual_id" value="{{ cost_draft.id }}" />
-      {% if cost_draft.status == "draft" %}
-      <p class="hint">임시저장된 항목이 있습니다. 제출 버튼을 눌러 완료하세요.</p>
+      {% if cost_draft.status == "draft" or cost_draft.status == "rejected" %}
+      <p class="hint">임시저장/반려 항목이 있습니다. 제출 버튼을 눌러 완료하세요.</p>
       {% else %}
       <p class="hint">제출됨(승인 대기) - 수정 불가</p>
       {% endif %}
@@ -313,7 +507,7 @@
         type="text"
         placeholder="코드 또는 항목명을 입력"
         autocomplete="off"
-        {% if cost_draft and cost_draft.status != "draft" %}disabled{% endif %}
+        {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %}
       />
       <input
         id="cost_item_id"
@@ -341,11 +535,11 @@
       <div class="inline-grid">
         <div>
           <label for="quantity">수량</label>
-          <input id="quantity" name="quantity" type="text" inputmode="decimal" autocomplete="off" value="{% if cost_draft_line %}{{ cost_draft_line.quantity|floatformat:3 }}{% endif %}" required {% if cost_draft and cost_draft.status != "draft" %}disabled{% endif %} />
+          <input id="quantity" name="quantity" type="text" inputmode="decimal" autocomplete="off" value="{% if cost_draft_line %}{{ cost_draft_line.quantity|floatformat:3 }}{% endif %}" required {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %} />
         </div>
         <div>
           <label for="unit_price">단가</label>
-          <input id="unit_price" name="unit_price" type="text" inputmode="numeric" autocomplete="off" value="{% if cost_draft_line %}{{ cost_draft_line.unit_price|floatformat:0|intcomma }}{% endif %}" required {% if cost_draft and cost_draft.status != "draft" %}disabled{% endif %} />
+          <input id="unit_price" name="unit_price" type="text" inputmode="numeric" autocomplete="off" value="{% if cost_draft_line %}{{ cost_draft_line.unit_price|floatformat:0|intcomma }}{% endif %}" required {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %} />
         </div>
         <div>
           <label for="amount">금액</label>
@@ -353,16 +547,66 @@
         </div>
       </div>
       <label for="memo">메모</label>
-      <textarea id="memo" name="memo" rows="2" {% if cost_draft and cost_draft.status != "draft" %}disabled{% endif %}>{% if cost_draft_line %}{{ cost_draft_line.description }}{% endif %}</textarea>
+      <textarea id="memo" name="memo" rows="2" {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %}>{% if cost_draft_line %}{{ cost_draft_line.description }}{% endif %}</textarea>
       <label for="evidence_file">증빙 파일(선택)</label>
-      <input id="evidence_file" type="file" name="evidence_file" {% if cost_draft and cost_draft.status != "draft" %}disabled{% endif %} />
+      <input id="evidence_file" type="file" name="evidence_file" {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %} />
+      {% if cost_existing_files %}
+      <div class="hint">기존 첨부 파일(새 파일을 추가하지 않아도 제출 가능합니다)</div>
+      <ul class="hint" style="margin:0; padding-left:18px;">
+        {% for file in cost_existing_files %}
+        <li>{{ file.original_name }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
       <div class="form-actions">
         <button type="submit" name="action" value="draft">임시저장</button>
-        <button type="submit" name="action" value="submit" {% if not cost_draft or cost_draft.status != "draft" %}disabled{% endif %}>제출</button>
+        <button type="submit" name="action" value="submit" {% if not cost_draft or cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %}>제출</button>
       </div>
     </form>
   </div>
+  {% endif %}
   <div class="card">
+    {% if cost_selected %}
+    <div style="margin-bottom:12px;">
+      <div class="actions-row" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="margin:0;">선택한 원가 상세</h4>
+        {% if cost_approved_back_url %}
+        <a class="tab" href="{{ cost_approved_back_url }}">승인완료 목록</a>
+        {% endif %}
+      </div>
+      <div class="hint" style="margin-bottom:8px;">
+        작성일 {{ cost_selected.report_date }} /
+        항목
+        {% with first_line=cost_selected.lines.all|first %}
+          {% if first_line %}
+            {{ first_line.cost_item.name }}
+          {% else %}
+            -
+          {% endif %}
+        {% endwith %}
+        /
+        금액
+        {% with first_line=cost_selected.lines.all|first %}
+          {% if first_line %}
+            {{ first_line.amount|floatformat:0|intcomma }}
+          {% else %}
+            -
+          {% endif %}
+        {% endwith %}
+      </div>
+      {% with first_line=cost_selected.lines.all|first %}
+        {% if first_line and first_line.description %}
+        <div style="margin-bottom:8px;">{{ first_line.description }}</div>
+        {% endif %}
+      {% endwith %}
+      {% if cost_selected.status|lower == "rejected" and cost_selected.reject_reason %}
+      <div class="hint" style="margin-bottom:8px; color:#fca5a5;">반려 사유: {{ cost_selected.reject_reason }}</div>
+      {% endif %}
+      {% include "components/attachments_panel.html" with attachments=cost_selected.attachments can_edit=False upload_url=None delete_url=None object_label="원가" help_text="제출/승인 상태의 첨부는 조회만 가능합니다." %}
+    </div>
+    {% endif %}
+
+    {% if not cost_focus_mode %}
     <h3>원가 목록</h3>
     <table>
       <thead>
@@ -370,6 +614,7 @@
           <th>날짜</th>
           <th>항목</th>
           <th>금액</th>
+          <th>첨부</th>
           <th>상태</th>
         </tr>
       </thead>
@@ -378,7 +623,7 @@
         {% for line in report.lines.all %}
         <tr>
           <td>
-            {% if role != "field" or report.status == "draft" %}
+            {% if role != "field" or report.status == "draft" or report.status == "rejected" %}
             <a href="/app/field/cost/{{ report.id }}/edit/">{{ report.report_date }}</a>
             {% else %}
             {{ report.report_date }}
@@ -386,13 +631,21 @@
           </td>
           <td>{{ line.cost_item.name }}</td>
           <td>{{ line.amount|floatformat:0|intcomma }}</td>
-          <td><span class="badge {{ report.status }}">{{ report.status }}</span></td>
+          <td>
+            {% include "components/attachment_badge.html" with attachments=report.attachments %}
+          </td>
+          <td>
+            <span class="badge {{ report.status }}">{{ report.status }}</span>
+            {% if report.status == "rejected" and report.reject_reason %}
+            <div class="hint" style="margin-top:4px; color:#fca5a5;">반려 사유: {{ report.reject_reason }}</div>
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
-        <tr><td colspan="4">입력 내역이 없습니다.</td></tr>
+        <tr><td colspan="5">입력 내역이 없습니다.</td></tr>
         {% endfor %}
         {% empty %}
-        <tr><td colspan="4">입력 내역이 없습니다.</td></tr>
+        <tr><td colspan="5">입력 내역이 없습니다.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -414,9 +667,217 @@
       {% endif %}
     </div>
     {% endif %}
+    {% endif %}
   </div>
   {% endif %}
 </div>
+
+<script>
+  (function () {
+    var projectSelect = document.getElementById("project_id");
+    var loadBtn = document.getElementById("project_load_btn");
+    var tabValue = "{{ tab }}";
+    function hasProjectOption(selectEl, value) {
+      if (!selectEl || !value) return false;
+      for (var i = 0; i < selectEl.options.length; i++) {
+        if (String(selectEl.options[i].value) === String(value)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    if (projectSelect) {
+      var currentId = projectSelect.value;
+      try {
+        var lastProject = window.localStorage.getItem("field_last_project_id");
+        var params = new URLSearchParams(window.location.search || "");
+        var urlProjectId = params.get("project_id");
+        if (!currentId && lastProject && hasProjectOption(projectSelect, lastProject) && String(urlProjectId || "") !== String(lastProject)) {
+          window.location = "/app/field/?tab=" + tabValue + "&project_id=" + encodeURIComponent(lastProject);
+        } else if (lastProject && !hasProjectOption(projectSelect, lastProject)) {
+          window.localStorage.removeItem("field_last_project_id");
+        }
+      } catch (err) {}
+      projectSelect.addEventListener("change", function () {
+        var value = projectSelect.value;
+        try {
+          if (value) {
+            window.localStorage.setItem("field_last_project_id", value);
+          }
+        } catch (err) {}
+        if (value) {
+          window.location = "/app/field/?tab=" + tabValue + "&project_id=" + encodeURIComponent(value);
+        }
+      });
+    }
+    if (loadBtn && projectSelect) {
+      loadBtn.addEventListener("click", function () {
+        if (projectSelect.value) {
+          try {
+            window.localStorage.setItem("field_last_project_id", projectSelect.value);
+          } catch (err) {}
+        }
+      });
+    }
+  })();
+</script>
+
+<script>
+  (function () {
+    var form = document.getElementById("progress_form");
+    var progressInput = document.getElementById("progress_percent");
+    var errorBox = document.getElementById("progress_error");
+    var submitBtn = document.getElementById("progress_submit_btn");
+    var draftBtn = document.getElementById("progress_draft_btn");
+    var actionInput = document.getElementById("progress_action");
+    var modal = document.getElementById("progress_submit_modal");
+    var modalCancel = document.getElementById("progress_modal_cancel");
+    var modalConfirm = document.getElementById("progress_modal_confirm");
+    var modalTask = document.getElementById("progress_modal_task");
+    var modalPercent = document.getElementById("progress_modal_percent");
+    var modalDate = document.getElementById("progress_modal_date");
+    var taskSelect = document.getElementById("task_id");
+    var reportDateInput = document.getElementById("report_date");
+    var copyBtn = document.getElementById("progress_copy_yesterday");
+    var copyMessage = document.getElementById("progress_copy_message");
+
+    if (!form || !progressInput || !errorBox) {
+      return;
+    }
+
+    function showError(show) {
+      if (!errorBox) return;
+      errorBox.style.display = show ? "block" : "none";
+    }
+
+    function normalizeProgress() {
+      var raw = (progressInput.value || "").trim();
+      if (!raw) {
+        showError(false);
+        return true;
+      }
+      var value = parseFloat(raw);
+      if (Number.isNaN(value) || value < 0 || value > 100) {
+        showError(true);
+        return false;
+      }
+      progressInput.value = value.toFixed(1);
+      showError(false);
+      return true;
+    }
+
+    progressInput.addEventListener("blur", normalizeProgress);
+
+    function submitForm(actionValue) {
+      if (!actionInput) {
+        return;
+      }
+      actionInput.value = actionValue;
+      form.submit();
+    }
+
+    if (draftBtn) {
+      draftBtn.addEventListener("click", function () {
+        var isValid = normalizeProgress();
+        if (!isValid) {
+          progressInput.focus();
+          return;
+        }
+        submitForm("draft");
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener("click", function () {
+        var isValid = normalizeProgress();
+        if (!isValid) {
+          progressInput.focus();
+          return;
+        }
+        if (!modal) {
+          submitForm("submit");
+          return;
+        }
+        if (modalTask && taskSelect) {
+          modalTask.textContent = taskSelect.options[taskSelect.selectedIndex]?.text || "-";
+        }
+        if (modalPercent) {
+          modalPercent.textContent = progressInput.value ? progressInput.value + "%" : "-";
+        }
+        if (modalDate && reportDateInput) {
+          modalDate.textContent = reportDateInput.value || "-";
+        }
+        modal.style.display = "block";
+      });
+    }
+
+    if (modalCancel) {
+      modalCancel.addEventListener("click", function () {
+        if (modal) {
+          modal.style.display = "none";
+        }
+      });
+    }
+
+    if (modalConfirm) {
+      modalConfirm.addEventListener("click", function () {
+        modalConfirm.disabled = true;
+        if (modal) {
+          modal.style.display = "none";
+        }
+        submitForm("submit");
+      });
+    }
+
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        if (!taskSelect || !reportDateInput) {
+          return;
+        }
+        var projectId = "{{ project.id|default:'' }}";
+        var taskId = taskSelect.value;
+        var dateValue = reportDateInput.value;
+        if (!projectId || !taskId || !dateValue) {
+          if (copyMessage) {
+            copyMessage.textContent = "프로젝트와 작업을 먼저 선택하세요.";
+          }
+          return;
+        }
+        fetch(
+          "/app/field/progress/yesterday/?project_id=" +
+            encodeURIComponent(projectId) +
+            "&task_id=" +
+            encodeURIComponent(taskId) +
+            "&date=" +
+            encodeURIComponent(dateValue),
+          { credentials: "same-origin" }
+        )
+          .then(function (resp) {
+            return resp.json();
+          })
+          .then(function (data) {
+            if (data && data.ok) {
+              progressInput.value = data.progress;
+              document.getElementById("note").value = data.memo || "";
+              normalizeProgress();
+              if (copyMessage) {
+                copyMessage.textContent = "어제 값이 복사되었습니다. 진행률을 확인 후 제출하세요.";
+              }
+            } else {
+              if (copyMessage) {
+                copyMessage.textContent = (data && data.message) || "어제 입력값이 없습니다.";
+              }
+            }
+          })
+          .catch(function () {
+            if (copyMessage) {
+              copyMessage.textContent = "어제 입력값을 불러오지 못했습니다.";
+            }
+          });
+      });
+    }
+  })();
+</script>
 
 <script>
   (function () {
@@ -503,7 +964,7 @@
         })
         .catch(function () {
           resultsBox.style.display = "block";
-          resultsBox.innerHTML = '<div class="hint">?? ?? ??</div>';
+          resultsBox.innerHTML = '<div class="hint">검색 실패</div>';
         });
     }
 

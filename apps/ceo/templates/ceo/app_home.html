@@ -1,5 +1,6 @@
-{% extends "app/base_app.html" %}
+﻿{% extends "app/base_app.html" %}
 {% load humanize %}
+{% load ceo_format %}
 {% block page_title %}CEO 대시보드{% endblock %}
 {% block content %}
 <style>
@@ -36,6 +37,20 @@
   .kpi-card .value {
     font-size: 20px;
     font-weight: 700;
+  }
+  .trend-line {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .trend-up {
+    color: #34d399;
+  }
+  .trend-down {
+    color: #f87171;
+  }
+  .trend-flat {
+    color: var(--muted);
   }
   .sub-grid {
     display: grid;
@@ -136,6 +151,10 @@
     </div>
     <form method="get" class="page-actions">
       <input class="form-control" type="date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}" />
+      <select class="form-control" name="compare">
+        <option value="month" {% if compare_mode == "month" %}selected{% endif %}>전월 대비</option>
+        <option value="week" {% if compare_mode == "week" %}selected{% endif %}>전주 대비</option>
+      </select>
       <label class="pill" style="gap:6px;">
         <input type="checkbox" name="include_submitted" value="1" {% if include_submitted %}checked{% endif %} />
         제출 포함
@@ -148,59 +167,175 @@
       <button class="btn" type="submit">조회</button>
       <a class="btn btn-outline" href="/app/ceo/projects/">프로젝트 보기</a>
       <a class="btn btn-outline" href="/app/ceo/cbs/">CBS 마스터</a>
-      <a class="btn btn-outline" href="{{ csv_url }}">CSV 내보내기</a>
+      <a class="btn btn-outline" href="{{ csv_url }}">CSV 내려받기</a>
     </form>
   </div>
 </div>
 
 {% if evidence_missing %}
   <div class="alert alert-danger">
-    제출용 변경증빙 누락: {{ evidence_missing }}건 있습니다.
+    제출 변경 증빙 파일 누락: {{ evidence_missing }}건 있습니다.
   </div>
 {% endif %}
 
 <div class="kpi-grid">
   <div class="card kpi-card">
-    <h4>누적 매출</h4>
+    <h4>&#45572;&#51201; &#47588;&#52636;</h4>
     <div class="value">{{ total_revenue|floatformat:0|intcomma }}</div>
+    {% with trend=kpi_trends.revenue %}
+      {% if trend.has_data and trend.delta is not None %}
+        <div class="trend-line trend-{% if trend.trend == 'up' %}up{% elif trend.trend == 'down' %}down{% else %}flat{% endif %}">
+          {% if trend.trend == 'up' %}&#9650;{% elif trend.trend == 'down' %}&#9660;{% else %}&#8212;{% endif %}
+          {{ trend.delta|floatformat:0|intcomma }} ({{ compare_label }})
+        </div>
+      {% else %}
+        <div class="trend-line">&#8212; ({{ compare_label }})</div>
+      {% endif %}
+    {% endwith %}
   </div>
   <div class="card kpi-card">
-    <h4>누적 원가</h4>
+    <h4>&#45572;&#51201; &#50896;&#44032;</h4>
     <div class="value">{{ total_cost|floatformat:0|intcomma }}</div>
+    {% with trend=kpi_trends.cost %}
+      {% if trend.has_data and trend.delta is not None %}
+        <div class="trend-line trend-{% if trend.trend == 'up' %}up{% elif trend.trend == 'down' %}down{% else %}flat{% endif %}">
+          {% if trend.trend == 'up' %}&#9650;{% elif trend.trend == 'down' %}&#9660;{% else %}&#8212;{% endif %}
+          {{ trend.delta|floatformat:0|intcomma }} ({{ compare_label }})
+        </div>
+      {% else %}
+        <div class="trend-line">&#8212; ({{ compare_label }})</div>
+      {% endif %}
+    {% endwith %}
   </div>
   <div class="card kpi-card">
-    <h4>인건비(실적)</h4>
+    <h4>&#51064;&#44148;&#48708;(&#49892;&#51201;)</h4>
     <div class="value">{{ total_labor|floatformat:0|intcomma }}</div>
-    <div class="muted">출역 + 급여 배부</div>
+    <div class="muted">&#52636;&#50669; + &#44553;&#50668; &#48176;&#48512;</div>
   </div>
   <div class="card kpi-card">
-    <h4>이익</h4>
+    <h4>&#51060;&#51061;</h4>
     <div class="value">{{ total_profit|floatformat:0|intcomma }}</div>
-    <div class="muted">이익률 {{ margin_percent|floatformat:2 }}%</div>
+    <div class="muted">&#51060;&#51061;&#47456; {{ margin_percent|floatformat:2 }}%</div>
+    {% with trend=kpi_trends.margin %}
+      {% if trend.has_data and trend.delta is not None %}
+        <div class="trend-line trend-{% if trend.trend == 'up' %}up{% elif trend.trend == 'down' %}down{% else %}flat{% endif %}">
+          {% if trend.trend == 'up' %}&#9650;{% elif trend.trend == 'down' %}&#9660;{% else %}&#8212;{% endif %}
+          {{ trend.delta|floatformat:1 }}%p ({{ compare_label }})
+        </div>
+      {% else %}
+        <div class="trend-line">&#8212; ({{ compare_label }})</div>
+      {% endif %}
+    {% endwith %}
   </div>
   <div class="card kpi-card">
-    <h4>평균 진행률</h4>
+    <h4>&#54217;&#44512; &#51652;&#54665;&#47456;</h4>
     <div class="value">{{ avg_progress|floatformat:2 }}%</div>
+    <div class="muted">
+      &#44228;&#50557; &#44221;&#44284;
+      {% if schedule_vs_progress.elapsed_percent is not None %}
+        {{ schedule_vs_progress.elapsed_percent|floatformat:1 }}%
+      {% else %}
+        &#8212;
+      {% endif %}
+    </div>
+    <div class="trend-line {{ schedule_vs_progress.status_class }}">
+      &#49345;&#53468; {{ schedule_vs_progress.status_emoji }} {{ schedule_vs_progress.status_label }}
+      {% if schedule_vs_progress.gap_percent is not None %}
+        ({{ schedule_vs_progress.gap_percent|floatformat:1 }}%p)
+      {% endif %}
+    </div>
   </div>
   <div class="card kpi-card">
-    <h4>예정 현금흐름</h4>
-    <div class="value">{{ cash_summary.net_confirmed|floatformat:0|intcomma }}</div>
-    <div class="muted">계획 현금흐름 {{ cash_summary.net_planned|floatformat:0|intcomma }}</div>
+    <h4>&#50696;&#51221; &#54788;&#44552;&#55120;&#47492;</h4>
+    <div class="value">{{ cash_summary.net_planned|floatformat:0|intcomma }}</div>
+    <div class="muted">&#54869;&#51221; &#54788;&#44552;&#55120;&#47492; {{ cash_summary.net_confirmed|floatformat:0|intcomma }}</div>
+    {% with trend=kpi_trends.cashflow %}
+      {% if trend.has_data and trend.delta is not None %}
+        <div class="trend-line trend-{% if trend.trend == 'up' %}up{% elif trend.trend == 'down' %}down{% else %}flat{% endif %}">
+          {% if trend.trend == 'up' %}&#9650;{% elif trend.trend == 'down' %}&#9660;{% else %}&#8212;{% endif %}
+          {{ trend.delta|floatformat:0|intcomma }} ({{ compare_label }})
+        </div>
+      {% else %}
+        <div class="trend-line">&#8212; ({{ compare_label }})</div>
+      {% endif %}
+    {% endwith %}
   </div>
 </div>
 
 <div class="sub-grid">
-  <div class="card">
-    <h3 style="margin-top:0;">승인 대기</h3>
-    <p class="muted" style="margin:0 0 6px 0;">
-      보고서 {{ pending_reports }}건 · 원가 {{ pending_costs }}건 · 계약 {{ pending_contracts }}건 · 일정 {{ pending_plans }}건
+  <div class="card" id="ceo-approvals-inbox">
+    <h3 style="margin-top:0;">&#49849;&#51064; &#45824;&#44592;</h3>
+    <p class="muted" style="margin:0 0 8px 0;">
+      &#52509; &#49849;&#51064;&#45824;&#44592; {{ approvals_pending_count|default:0 }}&#44148;
     </p>
-    <span class="pill">총 승인대기 {{ pending_approvals }}건</span>
+    {% if approvals_inbox %}
+      <div style="display:grid; gap:8px;">
+        {% for item in approvals_inbox %}
+          <div style="padding:10px; border:1px solid rgba(148, 163, 184, 0.2); border-radius:10px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <div style="font-weight:600;">{{ item.type_label }} / {{ item.project_name }}</div>
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                {% if item.risk_critical %}
+                  <span class="pill pill-warn">CRITICAL</span>
+                {% elif item.risk_high %}
+                  <span class="pill pill-warn">HIGH</span>
+                {% endif %}
+                {% if item.is_overdue_48h %}
+                  <span class="pill pill-warn">48h+</span>
+                {% elif item.is_overdue_24h %}
+                  <span class="pill">24h+</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="muted" style="margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.title }}</div>
+            {% if item.detail_summary_display|default:item.detail_summary %}
+              <div class="muted" style="margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.detail_summary_display|default:item.detail_summary }}</div>
+            {% endif %}
+            <div class="muted" style="margin-top:4px; font-size:12px;">
+              {{ item.submitted_by_name }} / {{ item.submitted_at|date:"Y-m-d H:i" }}
+            </div>
+            {% if item.block_message %}
+              <div class="muted" style="margin-top:4px; color:#fbbf24; font-size:12px;">{{ item.block_message }}</div>
+            {% endif %}
+            <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+              {% if item.detail_url %}
+                <a class="btn btn-outline" style="height:28px;" href="{{ item.detail_url }}">&#49345;&#49464;</a>
+              {% endif %}
+              <form method="post" action="/app/ceo/approvals/approve/">
+                {% csrf_token %}
+                <input type="hidden" name="object_type" value="{{ item.object_type }}" />
+                <input type="hidden" name="object_id" value="{{ item.object_id }}" />
+                <button class="btn" style="height:28px;" type="submit" {% if not item.can_approve %}disabled{% endif %}>&#49849;&#51064;</button>
+              </form>
+              <form method="post" action="/app/ceo/approvals/reject/" class="ceo-reject-form">
+                {% csrf_token %}
+                <input type="hidden" name="object_type" value="{{ item.object_type }}" />
+                <input type="hidden" name="object_id" value="{{ item.object_id }}" />
+                <input type="hidden" name="reason" value="" />
+                <button class="btn btn-outline" style="height:28px;" type="submit" {% if not item.can_reject %}disabled{% endif %}>&#48152;&#47140;</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% if approvals_inbox_has_more %}
+        <div class="muted" style="margin-top:8px;">
+          &#45908; &#47566;&#51008; &#49849;&#51064; &#45824;&#44592; &#54637;&#47785;&#51008; HQ &#49849;&#51064;&#54632;&#50640;&#49436; &#54869;&#51064;&#54616;&#49464;&#50836;.
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="muted">&#49849;&#51064; &#45824;&#44592; &#54637;&#47785;&#51060; &#50630;&#49845;&#45768;&#45796;.</div>
+    {% endif %}
   </div>
   <div class="card">
     <h3 style="margin-top:0;">리스크 요약</h3>
     <p class="muted" style="margin:0 0 6px 0;">OPEN {{ risk_open_count }}건</p>
-    <span class="pill pill-warn">CRITICAL {{ risk_critical_count }}건</span>
+    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      <span class="pill pill-warn">CRITICAL {{ risk_critical_count }}건</span>
+      <span class="pill">HIGH {{ risk_high_count|default:0 }}건</span>
+    </div>
+    <div style="margin-top:10px; font-weight:600;">{{ risk_summary.summary_text }}</div>
+    <div class="muted" style="margin-top:4px;">{{ risk_summary.sub_text }}</div>
   </div>
   <div class="card chart-wrap">
     <h3 style="margin-top:0;">프로젝트별 진행률</h3>
@@ -213,7 +348,7 @@
     <h3 style="margin-top:0;">월별 원가 추이</h3>
     <div class="quality-legend" id="timeline-quality-legend">확정 / 미정 / 추정</div>
     <canvas id="timelineChart" height="140"></canvas>
-    <p class="muted" style="margin-top:8px;">선택된 프로젝트 기준 월별 KPI 품질을 표시합니다.</p>
+    <p class="muted" style="margin-top:8px;">선택된 프로젝트 기준 월별 KPI 추이를 표시합니다.</p>
   </div>
 </div>
 
@@ -223,7 +358,7 @@
     <thead>
       <tr>
         <th>프로젝트</th>
-        <th>항목</th>
+        <th>제목</th>
         <th>위험도</th>
         <th>상태</th>
         <th>업데이트</th>
@@ -247,6 +382,39 @@
   </table>
 </div>
 
+<div class="card" id="ceo-approvals-recent" style="margin-top:12px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+    <h3 style="margin:0;">&#52572;&#44540; &#49849;&#51064; &#50756;&#47308;</h3>
+    {% if recent_approvals_total and recent_approvals_total >= 10 %}
+      <a class="btn btn-outline" style="height:28px;" href="/app/ceo/inbox/?scope=approved">&#51204;&#52404; &#48372;&#44592;</a>
+    {% endif %}
+  </div>
+  <p class="muted" style="margin:8px 0 10px 0;">&#52572;&#44540; &#49849;&#51064; &#50756;&#47308; &#45236;&#50669;&#51077;&#45768;&#45796;.</p>
+  {% if recent_approvals %}
+    <div style="display:grid; gap:8px;">
+      {% for item in recent_approvals %}
+        <div style="padding:10px; border:1px solid rgba(148, 163, 184, 0.2); border-radius:10px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <div style="font-weight:600;">{{ item.type_label }} / {{ item.project_name }}</div>
+            {% include "components/attachment_badge.html" with attachments=item.attachments %}
+          </div>
+          <div class="muted" style="margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.title }}</div>
+          {% if item.detail_summary_display|default:item.detail_summary %}
+            <div class="muted" style="margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.detail_summary_display|default:item.detail_summary }}</div>
+          {% endif %}
+          <div class="muted" style="margin-top:4px; font-size:12px;">{{ item.approved_by_name }} / {{ item.approved_at|date:"Y-m-d H:i" }}</div>
+          {% if item.detail_url %}
+            <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+              <a class="btn btn-outline" style="height:28px;" href="{{ item.detail_url }}">&#49345;&#49464;</a>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="muted">&#49849;&#51064; &#50756;&#47308; &#45236;&#50669;&#51060; &#50630;&#49845;&#45768;&#45796;.</div>
+  {% endif %}
+</div>
 {{ chart_labels|json_script:"chart-labels" }}
 {{ chart_values|json_script:"chart-values" }}
 
@@ -361,7 +529,7 @@
           data: {
             labels: timelineLabels,
             datasets: [{
-              label: "월별 누적 원가",
+              label: "월별 실적 원가",
               data: timelineValues,
               borderColor: "rgba(129, 140, 248, 0.85)",
               backgroundColor: "rgba(129, 140, 248, 0.15)",
@@ -393,6 +561,28 @@
       .catch(function () {
         applyQuality("UNSURE");
       });
+
+
+    document.querySelectorAll(".ceo-reject-form").forEach(function (form) {
+      form.addEventListener("submit", function (event) {
+        var reasonField = form.querySelector('input[name="reason"]');
+        if (!reasonField) return;
+        var reason = window.prompt("\ubc18\ub824 \uc0ac\uc720\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694.", "");
+        if (reason === null) {
+          event.preventDefault();
+          return;
+        }
+        reason = reason.trim();
+        if (!reason) {
+          event.preventDefault();
+          window.alert("\ubc18\ub824 \uc0ac\uc720\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694.");
+          return;
+        }
+        reasonField.value = reason;
+      });
+    });
   })();
 </script>
 {% endblock %}
+
+

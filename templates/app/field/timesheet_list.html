@@ -2,6 +2,16 @@
 {% block page_title %}출역부{% endblock %}
 {% block content %}
 <style>
+  .nav-right .btn-outline {
+    background: transparent !important;
+    border: 1px solid rgba(148, 163, 184, 0.4) !important;
+    color: #f8fafc !important;
+  }
+  .nav-right form .btn {
+    background: #38bdf8 !important;
+    border: 1px solid transparent !important;
+    color: #0b1220 !important;
+  }
   .table {
     width: 100%;
     border-collapse: collapse;
@@ -27,7 +37,7 @@
     cursor: pointer;
   }
   .btn.primary {
-    background: var(--primary);
+    background: var(--accent);
     color: #04111f;
     border-color: transparent;
   }
@@ -40,7 +50,37 @@
     color: var(--muted);
     font-size: 12px;
   }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    min-height: 34px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #6b7280;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #04111f;
+    border-color: transparent;
+  }
 </style>
+
+<div class="card" style="margin-bottom: 12px;">
+  {% include "components/field_tabs.html" with active_tab="timesheet" project_id=request.GET.project_id %}
+</div>
 
 <div class="card">
   <h2 class="card-title">출역부 목록</h2>
@@ -57,6 +97,7 @@
         <th>작성일</th>
         <th>프로젝트</th>
         <th>번호</th>
+        <th>첨부</th>
         <th>상태</th>
         <th>상세</th>
       </tr>
@@ -67,6 +108,9 @@
           <td>{{ sheet.work_date }}</td>
           <td>{{ sheet.project.name }}</td>
           <td>{{ sheet.sheet_no }}</td>
+          <td>
+            {% include "components/attachment_badge.html" with attachments=sheet.attachments %}
+          </td>
           <td>{{ sheet.status }}</td>
           <td>
             <a class="btn" href="/app/field/labor/timesheets/{{ sheet.id }}/">보기</a>
@@ -74,10 +118,11 @@
         </tr>
       {% empty %}
         <tr>
-          <td colspan="5" class="muted">등록된 출역부가 없습니다.</td>
+          <td colspan="6" class="muted">등록된 출역부가 없습니다.</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 {% endblock %}
+

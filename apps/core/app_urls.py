@@ -26,7 +26,19 @@ from apps.closing.web_views import (
     ceo_closing_approve,
     ceo_closing_reject,
 )
-from .views import app_entry, hq_app_view
+from .views import (
+    app_entry,
+    hq_app_view,
+    hq_inbox_view,
+    hq_risk_list_view,
+    hq_missing_list_view,
+    hq_daily_report_detail,
+    hq_daily_progress_detail,
+    hq_field_report_detail,
+    hq_cost_actual_detail,
+    hq_approval_detail,
+    evidence_file_open,
+)
 
 urlpatterns = [
     path("", app_entry),
@@ -34,6 +46,14 @@ urlpatterns = [
     path("hq/master/", include("apps.master.web_urls")),
     path("hq/master/", include("apps.labor.web_urls")),
     path("hq/", hq_app_view),
+    path("hq/inbox/", hq_inbox_view),
+    path("hq/risks/", hq_risk_list_view),
+    path("hq/missing/", hq_missing_list_view),
+    path("hq/reports/<int:report_id>/", hq_daily_report_detail),
+    path("hq/progress/<int:progress_id>/", hq_daily_progress_detail),
+    path("hq/field-reports/<int:field_report_id>/", hq_field_report_detail),
+    path("hq/costs/<int:cost_actual_id>/", hq_cost_actual_detail),
+    path("hq/approvals/<int:approval_id>/", hq_approval_detail),
     path("hq/", include(contract_web_urls)),
     path("hq/", include(schedule_web_urls)),
     path("hq/projects/", hq_project_list),
@@ -69,4 +89,5 @@ urlpatterns = [
     path("field/labor/", include("apps.labor.web_urls_field")),
     path("reports/", include("apps.reports.web_urls")),
     path("evidence/<int:pk>/edit/", evidence_edit),
+    path("evidence-files/<int:file_id>/open/", evidence_file_open, name="evidence-file-open"),
 ]

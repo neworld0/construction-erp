@@ -1,182 +1,94 @@
 {% extends "app/base_app.html" %}
-{% load humanize %}
 {% block page_title %}원가 수정{% endblock %}
 {% block content %}
 <style>
-  :root {
-    --card: #101a2b;
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --primary: #38bdf8;
-    --border: rgba(148, 163, 184, 0.2);
-    --warning: #f59e0b;
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
   }
-  .container {
-    display: grid;
-    gap: 16px;
-  }
-  .card {
-    background: var(--card);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-  }
-  form {
-    display: grid;
-    gap: 12px;
-  }
-  label {
-    font-size: 13px;
-    color: var(--muted);
-  }
-  input,
-  textarea,
-  button {
-    padding: 10px 12px;
-    border-radius: 8px;
+  .tab {
+    padding: 8px 12px;
+    border-radius: 999px;
     border: 1px solid var(--border);
-    font-size: 14px;
-    width: 100%;
-    background: transparent;
+    text-decoration: none;
     color: var(--text);
+    font-size: 13px;
   }
-  button {
+  .tab.active {
     background: var(--primary);
     color: #0b1220;
-    border: 0;
-    cursor: pointer;
-    font-weight: 600;
+    border-color: var(--primary);
   }
-  button[disabled] { cursor: not-allowed; opacity: 0.6; }
-  .hint {
-    font-size: 12px;
-    color: var(--muted);
+  .grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
-  .notice {
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #facc15;
+    border-radius: 10px;
     padding: 10px 12px;
-    border-radius: 8px;
-    background: rgba(245, 158, 11, 0.2);
-    color: #f59e0b;
+    margin-bottom: 12px;
     font-size: 13px;
-  }
-  .form-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 8px;
-  }
-  .inline-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
   }
 </style>
 
-<div class="container">
-  <div class="card">
-    <h3>원가 수정</h3>
-    {% if error %}
-    <div class="notice">{{ error }}</div>
-    {% endif %}
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <label for="cost_item_id">원가 항목</label>
-      <select id="cost_item_id" name="cost_item_id" required>
-        {% for item in cost_items %}
-        <option value="{{ item.id }}" {% if line and item.id == line.cost_item_id %}selected{% endif %}>{{ item.code }} - {{ item.get_display_name }}</option>
-        {% endfor %}
-      </select>
-      <div class="inline-grid">
-        <div>
-          <label for="quantity">수량</label>
-          <input
-            id="quantity"
-            name="quantity"
-            type="text"
-            inputmode="decimal"
-            autocomplete="off"
-            value="{% if line %}{{ line.quantity|floatformat:3 }}{% endif %}"
-            required
-          />
-        </div>
-        <div>
-          <label for="unit_price">단가</label>
-          <input
-            id="unit_price"
-            name="unit_price"
-            type="text"
-            inputmode="numeric"
-            autocomplete="off"
-            value="{% if line %}{{ line.unit_price|floatformat:0|intcomma }}{% endif %}"
-            required
-          />
-        </div>
-        <div>
-          <label for="amount">금액</label>
-          <input
-            id="amount"
-            name="amount"
-            type="text"
-            readonly
-            value="{% if line %}{{ line.amount|floatformat:0|intcomma }}{% endif %}"
-          />
-        </div>
-      </div>
-      <p class="hint">금액은 수량 × 단가로 자동 계산됩니다.</p>
-      <label for="memo">메모</label>
-      <textarea id="memo" name="memo" rows="3">{% if line %}{{ line.description }}{% endif %}</textarea>
-      <label for="evidence_file">증빙 파일 추가</label>
-      <input id="evidence_file" type="file" name="evidence_file" />
-      <div class="form-actions">
-        <button type="submit" name="action" value="draft">임시저장</button>
-        <button type="submit" name="action" value="submit" {% if cost_actual.status != "draft" %}disabled{% endif %}>제출</button>
-      </div>
-    </form>
+<div class="card">
+  <div class="tabs">
+    <a class="tab" href="/app/field/?tab=progress&project_id={{ cost_actual.project_id }}">진행률</a>
+    <a class="tab" href="/app/reports/?project_id={{ cost_actual.project_id }}">보고서</a>
+    <a class="tab active" href="/app/field/?tab=cost&project_id={{ cost_actual.project_id }}">원가</a>
   </div>
 </div>
-<script>
-  (function () {
-    var quantityInput = document.getElementById("quantity");
-    var unitPriceInput = document.getElementById("unit_price");
-    var amountInput = document.getElementById("amount");
 
-    if (!quantityInput || !unitPriceInput || !amountInput) {
-      return;
-    }
+<div class="card" style="margin-top:12px;">
+  <h2 class="card-title">원가 수정</h2>
+  {% if error %}
+    <div class="warning">{{ error }}</div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="grid">
+      <div class="field">
+        <label for="cost_item_id">원가 항목</label>
+        <select id="cost_item_id" name="cost_item_id" required>
+          <option value="">선택하세요</option>
+          {% for item in cost_items %}
+            <option value="{{ item.id }}" {% if line and line.cost_item_id == item.id %}selected{% endif %}>
+              {{ item.code }} - {{ item.get_display_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="quantity">수량</label>
+        <input id="quantity" name="quantity" type="number" step="0.001" min="0" value="{% if line %}{{ line.quantity }}{% endif %}" required>
+      </div>
+      <div class="field">
+        <label for="unit_price">단가</label>
+        <input id="unit_price" name="unit_price" type="number" step="1" min="0" value="{% if line %}{{ line.unit_price }}{% endif %}" required>
+      </div>
+      <div class="field" style="grid-column: 1 / -1;">
+        <label for="memo">메모</label>
+        <textarea id="memo" name="memo" rows="4">{% if line %}{{ line.description }}{% endif %}</textarea>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+      <button type="submit" name="action" value="draft" class="btn btn-primary">임시저장</button>
+      <button type="submit" name="action" value="submit" class="btn btn-outline">제출</button>
+      <a href="/app/field/?tab=cost&project_id={{ cost_actual.project_id }}" class="btn btn-outline">목록</a>
+    </div>
+  </form>
 
-    function toNumber(value, allowDecimal) {
-      var cleaned = value.replace(/[^0-9.]/g, "");
-      if (!allowDecimal) {
-        cleaned = cleaned.replace(/\\./g, "");
-      }
-      return cleaned;
-    }
-
-    function formatNumber(value) {
-      var digits = value.replace(/\\D/g, "");
-      if (!digits) {
-        return "";
-      }
-      return digits.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",");
-    }
-
-    function updateAmount() {
-      var qty = parseFloat(toNumber(quantityInput.value, true) || "0");
-      var price = parseFloat(toNumber(unitPriceInput.value, false) || "0");
-      var total = Math.round(qty * price);
-      amountInput.value = total ? formatNumber(String(total)) : "";
-    }
-
-    quantityInput.addEventListener("input", function () {
-      quantityInput.value = toNumber(quantityInput.value, true);
-      updateAmount();
-    });
-
-    unitPriceInput.addEventListener("input", function () {
-      unitPriceInput.value = formatNumber(unitPriceInput.value);
-      updateAmount();
-    });
-
-    updateAmount();
-  })();
-</script>
+  {% include "components/attachments_panel.html" with attachments=cost_existing_files can_edit=cost_can_edit_attachments upload_url=cost_attachment_upload_url delete_url=cost_attachment_delete_url object_label="원가" help_text=cost_attachment_help_text %}
+</div>
 {% endblock %}

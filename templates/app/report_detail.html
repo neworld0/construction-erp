@@ -1,38 +1,7 @@
-{% extends "app/base_app.html" %}
+﻿{% extends "app/base_app.html" %}
 {% block page_title %}보고서 상세{% endblock %}
 {% block content %}
 <style>
-  :root {
-    --card: #101a2b;
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --border: rgba(148, 163, 184, 0.2);
-  }
-  .card {
-    background: var(--card);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-  }
-  .meta {
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
-  .files li {
-    margin-bottom: 6px;
-  }
-  a {
-    color: var(--text);
-  }
-  .success {
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: rgba(22, 163, 74, 0.2);
-    color: #22c55e;
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
   .tabs {
     display: flex;
     gap: 8px;
@@ -48,42 +17,41 @@
     font-size: 13px;
   }
   .tab.active {
-    background: var(--primary);
+    background: var(--accent);
     color: #0b1220;
-    border-color: var(--primary);
+    border-color: var(--accent);
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 10px;
   }
 </style>
 
 <div class="card">
   <div class="tabs">
     <a class="tab" href="/app/field/?tab=progress&project_id={{ report.project.id }}">진행률</a>
-    <a class="tab active" href="/app/reports/?project_id={{ report.project.id }}">보고서</a>
+    <a class="tab active" href="/app/field/?tab=report&project_id={{ report.project.id }}">보고서</a>
     <a class="tab" href="/app/field/?tab=cost&project_id={{ report.project.id }}">원가</a>
+    <a class="tab" href="/app/field/?tab=inventory_issue&project_id={{ report.project.id }}">자재 투입</a>
+    <a class="tab" href="/app/field/?tab=timesheet&project_id={{ report.project.id }}">출역부</a>
   </div>
 </div>
 
-{% if messages %}
-<div class="card success">
-  {% for message in messages %}
-  <div>{{ message }}</div>
-  {% endfor %}
-</div>
-{% endif %}
-
-<div class="card">
-  <h3>{{ report.title }}</h3>
+<div class="card" style="margin-top:12px;">
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+    {% if report_approved_back_url %}
+      <a class="btn btn-outline" href="{{ report_approved_back_url }}">승인완료 목록</a>
+    {% endif %}
+  </div>
+  <h2 class="card-title" style="margin:0;">{{ report.title }}</h2>
   <div class="meta">
-    {{ report.project.name }} · {{ report.report_date }} · {{ report.created_by }}
+    {{ report.project.name }} / {{ report.report_date|date:"Y-m-d" }} / {{ report.created_by.username }}
   </div>
-  <p>{{ report.content }}</p>
   <div class="meta">상태: {{ report.status }}</div>
-  <h4>첨부 파일</h4>
-  <ul class="files">
-    {% for file in report.files.all %}
-    <li><a href="{{ file.file.url }}" target="_blank" rel="noopener noreferrer">{{ file.original_name }}</a></li>
-    {% empty %}
-    <li>첨부 파일이 없습니다.</li>
-    {% endfor %}
-  </ul>
+  <p style="white-space:pre-wrap;">{{ report.content }}</p>
+
+  {% include "components/attachments_panel.html" with attachments=report_existing_files can_edit=report_can_edit_attachments upload_url=report_attachment_upload_url delete_url=report_attachment_delete_url object_label="보고서" help_text=report_attachment_help_text %}
 </div>
 {% endblock %}
+

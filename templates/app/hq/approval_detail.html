@@ -1,0 +1,45 @@
+﻿{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}승인 요청 상세{% endblock %}
+
+{% block content %}
+<div class="container" style="display:grid; gap:16px;">
+  <div class="card">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:18px; font-weight:700;">승인 요청 상세</div>
+        <div class="hint">{{ approval.object_type }} #{{ approval.object_id }}</div>
+      </div>
+      <a class="btn btn-outline" href="{{ inbox_url|default:'/app/hq/inbox/' }}">승인함으로</a>
+    </div>
+  </div>
+
+  <div class="card" style="display:grid; gap:8px;">
+    <div class="section-title">요청 정보</div>
+    <div>상태: {{ approval.status|upper }}</div>
+    <div>요청자: {{ approval.submitted_by.username|default:"-" }}</div>
+    <div>요청일시: {{ approval.submitted_at|date:"Y-m-d H:i" }}</div>
+    {% if approval.comment %}
+      <div>요청 코멘트: {{ approval.comment }}</div>
+    {% endif %}
+    {% if approval.reject_reason %}
+      <div>반려 사유: {{ approval.reject_reason }}</div>
+    {% endif %}
+  </div>
+
+  <div class="card" style="display:grid; gap:8px;">
+    <div class="section-title">승인 처리</div>
+    <div>승인자: {{ approval.approved_by.username|default:"-" }}</div>
+    <div>승인일시: {{ approval.approved_at|date:"Y-m-d H:i" }}</div>
+    {% if object_detail_url %}
+      <div>
+        <a class="btn btn-outline" href="{{ object_detail_url }}">관련 상세 보기</a>
+      </div>
+    {% else %}
+      <div class="muted">관련 상세 링크가 없습니다.</div>
+    {% endif %}
+  </div>
+  {% include "components/attachments_panel.html" with attachments=attachments can_edit=False upload_url=None delete_url=None object_label=attachment_object_label help_text=attachment_help_text %}
+</div>
+{% endblock %}

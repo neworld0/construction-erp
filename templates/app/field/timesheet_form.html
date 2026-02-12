@@ -143,5 +143,7 @@
       <a class="btn" href="/app/field/labor/timesheets/">목록</a>
     </div>
   </form>
+
+  {% include "components/attachments_panel.html" with attachments=timesheet_existing_files can_edit=timesheet_can_edit_attachments upload_url=timesheet_attachment_upload_url delete_url=timesheet_attachment_delete_url object_label="출역부" help_text=timesheet_attachment_help_text %}
 </div>
 {% endblock %}

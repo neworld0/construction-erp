@@ -1,0 +1,206 @@
+﻿{% extends "app/base_app.html" %}
+{% block page_title %}紐⑤컮??吏꾪뻾瑜??낅젰{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="/static/app/css/field_mobile.css" />
+{% endblock %}
+{% block content %}
+<div class="mobile-wrap">
+  <section class="mobile-card">
+    <h1 class="mobile-title">吏꾪뻾瑜??낅젰</h1>
+    <p class="mobile-sub">{{ project.name }} / ?ㅻ뒛쨌?댁젣留??낅젰 媛??/p>
+  </section>
+
+  {% if errors %}
+  <section class="mobile-alert">
+    {% for err in errors %}
+    <div>{{ err }}</div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if messages %}
+    {% for message in messages %}
+    <section class="mobile-alert mobile-alert-success">{{ message }}</section>
+    {% endfor %}
+  {% elif success %}
+    <section class="mobile-alert mobile-alert-success">{{ success }}</section>
+  {% endif %}
+
+  {% if show_today_progress_banner %}
+  <section class="mobile-alert">?좑툘 ?ㅻ뒛 吏꾪뻾瑜좎씠 ?꾩쭅 ?쒖텧?섏? ?딆븯?듬땲??</section>
+  {% endif %}
+
+  <section class="mobile-card">
+    <button type="button" class="btn mobile-cta" id="copy_yesterday_btn">?댁젣 媛?蹂듭궗</button>
+    <p id="copy_result" class="mobile-note" style="margin-top:8px;"></p>
+    <form method="post" id="progress_form" class="mobile-grid" style="margin-top:8px;">
+      {% csrf_token %}
+      <input type="hidden" name="tab" value="progress" />
+      <input type="hidden" name="project_id" value="{{ project.id }}" />
+      <input type="hidden" name="action" id="progress_action" value="draft" />
+      {% if progress_draft %}
+      <input type="hidden" name="progress_id" value="{{ progress_draft.id }}" />
+      {% endif %}
+
+      <div class="mobile-field">
+        <label class="mobile-label" for="report_date">?묒꽦??/label>
+        <input id="report_date" class="form-control" name="report_date" type="date" min="{{ progress_min_date }}" max="{{ progress_max_date }}" required value="{% if progress_draft %}{{ progress_draft.report_date|date:'Y-m-d' }}{% else %}{{ now }}{% endif %}" />
+        <div class="mobile-note">?ㅻ뒛/?댁젣留??낅젰 媛?ν빀?덈떎. ?뚭툒 ?낅젰? HQ ?붿껌???꾩슂?⑸땲??</div>
+      </div>
+
+
+      <div class="mobile-field">
+        <label class="mobile-label" for="task_id">?묒뾽</label>
+        <select id="task_id" class="form-control" name="task_id" required>
+          {% for task in tasks %}
+          <option value="{{ task.id }}" {% if progress_draft and task.id == progress_draft.task_id %}selected{% endif %}>{{ task.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+
+      <div class="mobile-field">
+        <label class="mobile-label" for="progress_percent">吏꾪뻾瑜?%)</label>
+        <div class="mobile-input-group">
+          <input id="progress_percent" class="form-control" name="progress_percent" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="0.0" required value="{% if progress_draft %}{{ progress_draft.progress_percent|floatformat:1 }}{% endif %}" />
+          <span class="mobile-suffix">%</span>
+        </div>
+        <div id="progress_error" class="mobile-note" style="display:none;color:#f59e0b;">吏꾪뻾瑜좎? 0~100 ?ъ씠 ?レ옄?ъ빞 ?⑸땲?? (?? 9.0)</div>
+      </div>
+
+      <div class="mobile-field">
+        <label class="mobile-label" for="note">硫붾え</label>
+        <textarea id="note" class="form-control" name="note" rows="3">{% if progress_draft %}{{ progress_draft.note }}{% endif %}</textarea>
+      </div>
+
+      <div class="mobile-bottom-cta">
+        <button type="button" class="btn" id="save_draft_btn">?꾩떆???/button>
+        <button type="button" class="btn" id="submit_open_btn" {% if progress_draft and progress_draft.status != "draft" %}disabled{% endif %}>?쒖텧</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="mobile-card">
+    <h3 style="margin-top:0;">理쒓렐 ?낅젰</h3>
+    <div class="mobile-grid">
+      {% for row in progress_entries %}
+      <div class="mobile-status">
+        <div style="display:flex; justify-content:space-between; gap:8px;">
+          <strong>{{ row.report_date|date:"Y-m-d" }}</strong>
+          <span class="mobile-note">{{ row.status }}</span>
+        </div>
+        <div class="mobile-note">{{ row.task.name }}</div>
+        {% if row.progress_percent != None %}
+        <div style="margin-top:6px;">
+          <div style="height:8px; background:rgba(148,163,184,.22); border-radius:999px; overflow:hidden;">
+            <div style="height:8px; background:#38bdf8; width: {{ row.progress_percent|floatformat:1 }}%;"></div>
+          </div>
+          <div class="mobile-note" style="margin-top:4px;">{{ row.progress_percent|floatformat:1 }}%</div>
+        </div>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="mobile-note">?낅젰 ?댁뿭???놁뒿?덈떎.</div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div id="submit_confirm_modal" class="mobile-card" style="display:none; position:fixed; inset:auto 12px 12px 12px; z-index:1000;">
+  <h3 style="margin-top:0;">?쒖텧 ?뺤씤</h3>
+  <p class="mobile-note">?쒖텧 ?꾩뿉???섏젙?????놁뒿?덈떎.</p>
+  <div class="mobile-note" id="submit_summary"></div>
+  <div class="mobile-grid-2" style="margin-top:10px;">
+    <button type="button" class="btn btn-outline mobile-cta" id="submit_cancel_btn">痍⑥냼</button>
+    <button type="button" class="btn mobile-cta" id="submit_confirm_btn">?쒖텧</button>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const form = document.getElementById("progress_form");
+    const progressInput = document.getElementById("progress_percent");
+    const actionInput = document.getElementById("progress_action");
+    const errorBox = document.getElementById("progress_error");
+    const submitOpenBtn = document.getElementById("submit_open_btn");
+    const saveDraftBtn = document.getElementById("save_draft_btn");
+    const reportDateInput = document.getElementById("report_date");
+    const taskSelect = document.getElementById("task_id");
+    const noteInput = document.getElementById("note");
+    const copyBtn = document.getElementById("copy_yesterday_btn");
+    const copyResult = document.getElementById("copy_result");
+    const modal = document.getElementById("submit_confirm_modal");
+    const submitSummary = document.getElementById("submit_summary");
+    const submitCancelBtn = document.getElementById("submit_cancel_btn");
+    const submitConfirmBtn = document.getElementById("submit_confirm_btn");
+
+    function validProgress() {
+      const raw = progressInput.value;
+      if (raw === "") {
+        errorBox.style.display = "block";
+        return false;
+      }
+      const value = Number(raw);
+      if (!Number.isFinite(value) || value < 0 || value > 100) {
+        errorBox.style.display = "block";
+        return false;
+      }
+      progressInput.value = value.toFixed(1);
+      errorBox.style.display = "none";
+      return true;
+    }
+
+    progressInput.addEventListener("blur", validProgress);
+
+    saveDraftBtn.addEventListener("click", function () {
+      if (!validProgress()) return;
+      actionInput.value = "draft";
+      form.submit();
+    });
+
+    submitOpenBtn.addEventListener("click", function () {
+      if (!validProgress()) return;
+      const taskName = taskSelect.options[taskSelect.selectedIndex]?.text || "-";
+      submitSummary.textContent = `?묒뾽: ${taskName} / 吏꾪뻾瑜? ${progressInput.value}% / ?좎쭨: ${reportDateInput.value}`;
+      modal.style.display = "block";
+    });
+
+    submitCancelBtn.addEventListener("click", function () {
+      modal.style.display = "none";
+    });
+
+    submitConfirmBtn.addEventListener("click", function () {
+      submitConfirmBtn.disabled = true;
+      actionInput.value = "submit";
+      form.submit();
+    });
+
+    copyBtn.addEventListener("click", async function () {
+      const projectId = "{{ project.id }}";
+      const taskId = taskSelect.value;
+      if (!taskId) {
+        copyResult.textContent = "?묒뾽??癒쇱? ?좏깮??二쇱꽭??";
+        return;
+      }
+      const query = new URLSearchParams({
+        project_id: projectId,
+        task_id: taskId,
+        date: reportDateInput.value || "{{ now }}",
+      });
+      try {
+        const response = await fetch(`/app/field/progress/yesterday/?${query.toString()}`);
+        const data = await response.json();
+        if (!data.ok) {
+          copyResult.textContent = data.message || "?댁젣 ?낅젰媛믪씠 ?놁뒿?덈떎.";
+          return;
+        }
+        progressInput.value = data.progress;
+        noteInput.value = data.memo || "";
+        copyResult.textContent = "?댁젣 媛믪씠 蹂듭궗?섏뿀?듬땲?? ?꾩슂 ???섏젙 ???쒖텧?섏꽭??";
+      } catch (e) {
+        copyResult.textContent = "蹂듭궗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.";
+      }
+    });
+  })();
+</script>
+{% endblock %}

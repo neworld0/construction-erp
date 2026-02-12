@@ -8,6 +8,9 @@ from django.db import models
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from apps.evidence.attachment_policy import can_edit_attachments
+from apps.evidence.models import Evidence
+from apps.evidence.services.resolve import is_project_or_month_locked
 from apps.core.rbac.models import ProjectAssignment, Role
 from apps.core.rbac.permissions import get_user_role, require_project_access, require_role
 from apps.cost.models import CostItem
@@ -279,6 +282,23 @@ def field_timesheet_list(request):
         .filter(created_by=request.user, project__in=projects)
         .order_by("-work_date", "-id")[:50]
     )
+    attachments_map = {}
+    timesheet_ids = [sheet.id for sheet in timesheets]
+    if timesheet_ids:
+        evidences = (
+            Evidence.objects.filter(
+                object_type="TIMESHEET",
+                object_id__in=timesheet_ids,
+            )
+            .prefetch_related("files")
+            .order_by("-created_at")
+        )
+        for evidence in evidences:
+            attachments_map.setdefault(evidence.object_id, []).extend(
+                list(evidence.files.all().order_by("-created_at"))
+            )
+    for sheet in timesheets:
+        sheet.attachments = attachments_map.get(sheet.id, [])
     return render(
         request,
         "app/field/timesheet_list.html",
@@ -362,6 +382,35 @@ def field_timesheet_form(request, timesheet_id=None):
         TimesheetStatus.SUBMITTED,
         TimesheetStatus.APPROVED,
     )
+    timesheet_attachments = []
+    timesheet_can_edit_attachments = False
+    timesheet_attachment_help_text = "출역부 첨부는 읽기 전용으로 표시됩니다."
+    if timesheet is not None:
+        evidences = list(
+            Evidence.objects.filter(
+                object_type="TIMESHEET",
+                object_id=timesheet.id,
+            )
+            .prefetch_related("files")
+            .order_by("-created_at")
+        )
+        for evidence in evidences:
+            timesheet_attachments.extend(evidence.files.all().order_by("-created_at"))
+        timesheet_can_edit_attachments = can_edit_attachments(
+            status=timesheet.status,
+            is_closed_locked=is_project_or_month_locked(
+                project=timesheet.project,
+                target_date=timesheet.work_date,
+            ),
+        )
+        if timesheet_can_edit_attachments:
+            timesheet_attachment_help_text = (
+                "임시저장/반려 상태입니다. 출역부 첨부 업로드는 현재 지원 예정입니다."
+            )
+        else:
+            timesheet_attachment_help_text = (
+                "제출/승인/마감 상태에서는 첨부를 수정할 수 없습니다."
+            )
     return render(
         request,
         "app/field/timesheet_form.html",
@@ -371,6 +420,11 @@ def field_timesheet_form(request, timesheet_id=None):
             "roles": roles,
             "line_rows": line_rows,
             "form_disabled": form_disabled,
+            "timesheet_existing_files": timesheet_attachments,
+            "timesheet_can_edit_attachments": timesheet_can_edit_attachments,
+            "timesheet_attachment_upload_url": None,
+            "timesheet_attachment_delete_url": None,
+            "timesheet_attachment_help_text": timesheet_attachment_help_text,
         },
     )
 

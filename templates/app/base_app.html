@@ -127,6 +127,19 @@
         color: var(--text);
         width: 100%;
       }
+      input[type="date"] {
+        color-scheme: dark;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><path d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 8H5v10h14V10zM5 8h14V6H5v2z'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 16px 16px;
+        padding-right: 38px;
+        cursor: pointer;
+      }
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        opacity: 0;
+        cursor: pointer;
+      }
       select,
       option {
         background: #0f172a;
@@ -166,5 +179,14 @@
     <main>
       {% block content %}{% endblock %}
     </main>
+    <script>
+      document.querySelectorAll('input[type="date"]').forEach(function (input) {
+        input.addEventListener("click", function () {
+          if (typeof input.showPicker === "function") {
+            input.showPicker();
+          }
+        });
+      });
+    </script>
   </body>
 </html>

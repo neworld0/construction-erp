@@ -1,0 +1,87 @@
+﻿{% extends "app/base_app.html" %}
+
+{% block page_title %}진행률 상세{% endblock %}
+
+{% block content %}
+<style>
+  .approval-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .approval-actions form {
+    margin: 0;
+  }
+  .approval-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+</style>
+<div class="container" style="display:grid; gap:16px;">
+  <div class="card">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:18px; font-weight:700;">진행률 상세</div>
+        <div class="hint">{{ progress.project.name }} / {{ progress.report_date }}</div>
+      </div>
+      <div class="approval-actions">
+        {% if can_ceo_approve and ceo_approval_request_id %}
+          <form method="post" action="{{ ceo_approve_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="object_type" value="APPROVAL_REQUEST">
+            <input type="hidden" name="object_id" value="{{ ceo_approval_request_id }}">
+            <input type="hidden" name="next" value="{{ return_url }}">
+            <button type="submit" class="btn btn-primary">승인</button>
+          </form>
+          <button type="button" class="btn btn-outline" onclick="openCeoRejectPrompt()">반려</button>
+
+          <form id="ceoRejectForm" method="post" action="/app/ceo/approvals/reject/" style="display:none;">
+            {% csrf_token %}
+            <input type="hidden" name="object_type" value="APPROVAL_REQUEST">
+            <input type="hidden" name="object_id" value="{{ ceo_approval_request_id }}">
+            <input type="hidden" name="next" value="{{ return_url }}">
+            <input type="hidden" name="reason" id="ceoRejectReasonInput">
+          </form>
+        {% endif %}
+        <a class="btn btn-outline" href="{{ inbox_url|default:'/app/hq/inbox/' }}">{{ inbox_label|default:'승인함으로' }}</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="display:grid; gap:8px;">
+    <div class="section-title">기본 정보</div>
+    <div>상태: {{ progress.status|upper }}</div>
+    <div>작업: {{ progress.task.name }}</div>
+    <div>진행률: {{ progress.progress_percent|floatformat:1 }}%</div>
+    <div>작성자: {{ progress.reporter.username }}</div>
+    {% if progress.note %}
+      <div>메모: {{ progress.note }}</div>
+    {% endif %}
+    <div class="muted">생성일시: {{ progress.created_at|date:"Y-m-d H:i" }}</div>
+    <div class="muted">수정일시: {{ progress.updated_at|date:"Y-m-d H:i" }}</div>
+  </div>
+
+  {% include "components/attachments_panel.html" with attachments=evidence_files can_edit=False upload_url=None delete_url=None object_label="진행률" help_text="제출/승인/마감 상태에서는 첨부를 수정할 수 없습니다." %}
+</div>
+
+<script>
+function openCeoRejectPrompt() {
+  const reason = window.prompt("반려 사유를 입력하세요.");
+  if (reason === null) return;
+  const trimmed = reason.trim();
+  if (!trimmed) {
+    window.alert("반려 사유를 입력하세요.");
+    return;
+  }
+  const reasonInput = document.getElementById("ceoRejectReasonInput");
+  const form = document.getElementById("ceoRejectForm");
+  if (!reasonInput || !form) return;
+  reasonInput.value = trimmed;
+  form.submit();
+}
+</script>
+{% endblock %}

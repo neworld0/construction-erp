@@ -110,10 +110,10 @@ TIME_ZONE = os.getenv("DJANGO_TIME_ZONE", "Asia/Seoul")
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 REST_FRAMEWORK = {
@@ -137,14 +137,29 @@ LOGGING = {
         },
     },
     "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
         "django.request": {
             "handlers": ["console"],
-            "level": "ERROR",
+            "level": LOG_LEVEL,
             "propagate": False,
         },
         "django.security": {
             "handlers": ["console"],
             "level": "WARNING",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_SQL_LOG_LEVEL", "WARNING"),
             "propagate": False,
         },
     },

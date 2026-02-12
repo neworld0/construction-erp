@@ -11,9 +11,15 @@ from apps.audit.constants import EVIDENCE_CREATE, EVIDENCE_FILE_ADD, FILE_DOWNLO
 from apps.audit.services.logger import log_action
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import get_user_role, require_project_access
+from apps.evidence.attachment_policy import can_edit_attachments
 from .models import Evidence, EvidenceFile
 from .serializers import EvidenceFileSerializer, EvidenceSerializer
-from .services.resolve import resolve_project_for_evidence, resolve_project_for_evidence_file
+from .services.resolve import (
+    is_project_or_month_locked,
+    resolve_project_for_evidence,
+    resolve_project_for_evidence_file,
+    resolve_target_date_for_evidence,
+)
 
 
 class EvidenceListCreateView(ListCreateAPIView):
@@ -85,6 +91,13 @@ class EvidenceFileUploadView(APIView):
             return Response({"detail": "Project access denied."}, status=status.HTTP_403_FORBIDDEN)
         if project is not None:
             require_project_access(request.user, project.id)
+        target_date = resolve_target_date_for_evidence(evidence)
+        is_closed_locked = is_project_or_month_locked(project=project, target_date=target_date)
+        if not can_edit_attachments(status=evidence.status, is_closed_locked=is_closed_locked):
+            return Response(
+                {"detail": "현재 상태에서는 첨부 파일을 수정할 수 없습니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = EvidenceFileSerializer(
             data={"evidence": evidence.id, "file": request.FILES.get("file")},

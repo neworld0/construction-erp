@@ -1,0 +1,92 @@
+﻿{% comment %}
+공통 첨부 패널
+입력:
+- attachments: list/queryset[file-like object]
+- can_edit: bool
+- upload_url: str | None
+- delete_url: str | None
+- object_label: str | None
+- help_text: str | None
+- file_input_name: str | None (default: files)
+- hidden_fields: dict | None
+{% endcomment %}
+
+{% if attachments or can_edit %}
+  <section class="card" style="padding:16px; margin-top:12px;">
+    <div class="section-title" style="margin-bottom:8px;">
+      첨부 파일{% if object_label %} ({{ object_label }}){% endif %}
+    </div>
+
+    {% if help_text %}
+      <div class="hint" style="margin-bottom:8px;">{{ help_text }}</div>
+    {% elif can_edit %}
+      <div class="hint" style="margin-bottom:8px;">임시저장/반려 상태에서는 제출 전까지 첨부를 수정할 수 있습니다.</div>
+    {% else %}
+      <div class="hint" style="margin-bottom:8px;">제출/승인/마감 상태에서는 첨부를 수정할 수 없습니다.</div>
+    {% endif %}
+
+    {% if attachments %}
+      <div style="display:grid; gap:10px;">
+        {% for f in attachments %}
+          {% with file_name=f.original_name|default:f.file.name %}
+          {% with lower_name=file_name|lower %}
+          {% with open_href=f.open_url|default:f.file.url %}
+          <article class="card" style="padding:10px;">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+              <div style="font-weight:600; overflow-wrap:anywhere;">{{ file_name }}</div>
+              <div style="display:flex; gap:8px; align-items:flex-start;">
+                <a class="btn btn-outline" style="min-width:64px; text-align:center; white-space:nowrap;" href="{{ open_href }}" target="_blank" rel="noopener">열기</a>
+                {% if can_edit and delete_url %}
+                  <form method="post" action="{{ delete_url }}" style="display:inline-flex; align-items:flex-start; margin:0;">
+                    {% csrf_token %}
+                    {% if hidden_fields %}
+                      {% for key, value in hidden_fields.items %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                      {% endfor %}
+                    {% endif %}
+                    <input type="hidden" name="action" value="attachment_delete">
+                    <input type="hidden" name="file_id" value="{{ f.id }}">
+                    <button class="btn btn-outline" style="min-width:64px; text-align:center; white-space:nowrap;" type="submit">삭제</button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if ".jpg" in lower_name or ".jpeg" in lower_name or ".png" in lower_name or ".gif" in lower_name or ".webp" in lower_name %}
+              <div style="margin-top:8px;">
+                <img
+                  src="{{ open_href }}"
+                  alt="{{ file_name }}"
+                  style="max-width:100%; height:auto; border-radius:8px; border:1px solid rgba(255,255,255,.12);"
+                  loading="lazy"
+                >
+              </div>
+            {% endif %}
+          </article>
+          {% endwith %}
+          {% endwith %}
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="hint">첨부 파일이 없습니다.</div>
+    {% endif %}
+
+    {% if can_edit and upload_url %}
+      <form method="post" enctype="multipart/form-data" action="{{ upload_url }}" style="margin-top:12px;">
+        {% csrf_token %}
+        {% if hidden_fields %}
+          {% for key, value in hidden_fields.items %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+          {% endfor %}
+        {% endif %}
+        <input type="hidden" name="action" value="attachment_upload">
+        <label for="attachment_files" class="hint">파일 추가/교체</label>
+        <input id="attachment_files" type="file" name="{{ file_input_name|default:'files' }}" multiple>
+        <div style="margin-top:8px;">
+          <button type="submit" class="btn btn-primary">첨부 업로드</button>
+        </div>
+      </form>
+    {% endif %}
+  </section>
+{% endif %}

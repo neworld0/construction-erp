@@ -72,3 +72,35 @@ if _is_pytest or os.getenv("PYTEST_CURRENT_TEST"):
             "NAME": BASE_DIR / "db_test.sqlite3",
         }
     }
+
+
+# Ensure request/server/app logs are always visible in local runserver consoles.
+LOGGING = LOGGING.copy()  # noqa: F405
+LOGGING["disable_existing_loggers"] = False
+LOGGING["handlers"] = LOGGING.get("handlers", {}).copy()
+LOGGING["handlers"]["console"] = {
+    "class": "logging.StreamHandler",
+    "formatter": "standard",
+    # Use stdout so request logs are visible in terminals/IDEs that hide stderr.
+    "stream": sys.stdout,
+}
+
+_default_level = os.getenv("DJANGO_LOG_LEVEL", "INFO").upper()
+LOGGING["loggers"] = LOGGING.get("loggers", {}).copy()
+for _name, _level in (
+    ("django", _default_level),
+    ("django.server", "INFO"),
+    ("django.request", "INFO"),
+    ("django.db.backends", os.getenv("DJANGO_SQL_LOG_LEVEL", "WARNING").upper()),
+    ("apps", _default_level),
+):
+    _logger_cfg = LOGGING["loggers"].get(_name, {}).copy()
+    _logger_cfg["handlers"] = ["console"]
+    _logger_cfg["level"] = _level
+    _logger_cfg["propagate"] = False
+    LOGGING["loggers"][_name] = _logger_cfg
+
+LOGGING["root"] = {
+    "handlers": ["console"],
+    "level": _default_level,
+}

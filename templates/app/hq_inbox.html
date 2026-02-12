@@ -1,0 +1,64 @@
+﻿{% extends "app/base_app.html" %}
+
+{% block page_title %}승인함{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:20px; font-weight:700;">승인함</div>
+        <div class="hint">{{ inbox_subtitle|default:"승인 대기 항목을 빠르게 확인합니다." }}</div>
+      </div>
+      <a class="btn btn-outline" href="{{ dashboard_home_url|default:'/app/hq/' }}">{{ dashboard_home_label|default:'HQ 대시보드' }}</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">{{ inbox_title|default:"승인 대기 목록" }}</div>
+    {% if scope == "approved" %}
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 14px;">
+        <a class="btn {% if approved_kind == 'all' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=all">전체 {{ approved_counts.all|default:0 }}</a>
+        <a class="btn {% if approved_kind == 'progress' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=progress">진행률 {{ approved_counts.progress|default:0 }}</a>
+        <a class="btn {% if approved_kind == 'report' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=report">보고서 {{ approved_counts.report|default:0 }}</a>
+        <a class="btn {% if approved_kind == 'cost' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=cost">원가 {{ approved_counts.cost|default:0 }}</a>
+      </div>
+    {% endif %}
+    {% if items %}
+      <div style="overflow:auto;">
+        <table class="table" style="width:100%; min-width:720px;">
+          <thead>
+            <tr>
+              <th>{{ inbox_time_label|default:"제출일시" }}</th>
+              <th>유형</th>
+              <th>프로젝트</th>
+              <th>작성자</th>
+              <th>상세</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+              <tr>
+                <td>{{ item.submitted_at_display|default:"-" }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.project }}</td>
+                <td>{{ item.submitted_by }}</td>
+                <td>
+                  {% if item.detail_url %}
+                    {% include "components/attachment_badge.html" with attachments=item.attachments %}
+                    <a class="btn btn-outline" href="{{ item.detail_url }}">상세</a>
+                  {% else %}
+                    <span class="muted">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="muted">{{ inbox_empty_message|default:"승인 대기 항목이 없습니다." }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

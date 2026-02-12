@@ -1,0 +1,60 @@
+﻿{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}일일 보고{% endblock %}
+
+{% block content %}
+<div class="container" style="display:grid; gap:16px;">
+  <div class="card">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:18px; font-weight:700;">일일 보고</div>
+        <div class="hint">{{ report.project.name }} / {{ report.report_date }}</div>
+      </div>
+      <a class="btn btn-outline" href="{{ inbox_url|default:'/app/hq/inbox/' }}">{{ inbox_label|default:'승인함으로' }}</a>
+    </div>
+  </div>
+
+  <div class="card" style="display:grid; gap:8px;">
+    <div class="section-title">기본 정보</div>
+    <div>상태: {{ report.status|upper }}</div>
+    <div>작성자: {{ report.reporter.username }}</div>
+    <div class="muted">작성일: {{ report.created_at|date:"Y-m-d H:i" }}</div>
+    {% if report.note %}
+      <div>비고: {{ report.note }}</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="section-title">원가 내역</div>
+    {% if lines %}
+      <table class="table" style="width:100%;">
+        <thead>
+          <tr>
+            <th>원가 항목</th>
+            <th>설명</th>
+            <th style="text-align:right;">수량</th>
+            <th style="text-align:right;">단가</th>
+            <th style="text-align:right;">금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in lines %}
+            <tr>
+              <td>{{ line.cost_item.code }} - {{ line.cost_item.get_display_name }}</td>
+              <td>{{ line.description }}</td>
+              <td style="text-align:right;">{{ line.quantity|floatformat:3 }}</td>
+              <td style="text-align:right;">{{ line.unit_price|intcomma }}</td>
+              <td style="text-align:right;">{{ line.amount|intcomma }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="muted">내역이 없습니다.</div>
+    {% endif %}
+  </div>
+
+  {% include "components/attachments_panel.html" with attachments=attachments can_edit=False upload_url=None delete_url=None object_label="일일 보고" help_text="승인 상세에서는 첨부를 조회할 수 있습니다." %}
+</div>
+{% endblock %}

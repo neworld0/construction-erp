@@ -14,8 +14,14 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
+import sys
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import include, path, re_path
+from django.views.static import serve
 from two_factor import urls as two_factor_urls
 
 from apps.core.views import healthz_view
@@ -47,3 +53,24 @@ urlpatterns = [
     path("api/inventory/", include("apps.inventory.urls")),
     path("api/labor/", include("apps.labor.urls")),
 ]
+
+serve_media = str(os.getenv("DJANGO_SERVE_MEDIA", "")).strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+is_runserver = any(arg == "runserver" for arg in sys.argv)
+is_local_settings = os.getenv("DJANGO_SETTINGS_MODULE") == "config.settings.local"
+should_serve_media = settings.DEBUG or is_local_settings or serve_media or is_runserver
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += staticfiles_urlpatterns()
+elif is_local_settings:
+    urlpatterns += staticfiles_urlpatterns()
+
+if should_serve_media:
+    urlpatterns += [
+        re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+    ]

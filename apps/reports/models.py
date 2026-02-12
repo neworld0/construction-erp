@@ -8,6 +8,7 @@ class FieldReportStatus(models.TextChoices):
     DRAFT = "DRAFT", "Draft"
     SUBMITTED = "SUBMITTED", "Submitted"
     APPROVED = "APPROVED", "Approved"
+    REJECTED = "REJECTED", "Rejected"
 
 
 class FieldReport(models.Model):

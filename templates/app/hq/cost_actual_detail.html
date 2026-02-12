@@ -1,0 +1,116 @@
+﻿{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}{{ labels.page_title }}{% endblock %}
+
+{% block content %}
+<style>
+  .approval-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .approval-actions form {
+    margin: 0;
+  }
+  .approval-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+</style>
+<div class="container" style="display:grid; gap:16px;">
+  <div class="card">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:18px; font-weight:700;">{{ labels.page_title }}</div>
+        <div class="hint">{{ cost_actual.project.name }} / {{ cost_actual.report_date }}</div>
+      </div>
+      <div class="approval-actions">
+        {% if can_ceo_approve and ceo_approval_request_id %}
+          <form method="post" action="{{ ceo_approve_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="object_type" value="APPROVAL_REQUEST">
+            <input type="hidden" name="object_id" value="{{ ceo_approval_request_id }}">
+            <input type="hidden" name="next" value="{{ return_url }}">
+            <button type="submit" class="btn btn-primary">{{ labels.approve }}</button>
+          </form>
+          <button type="button" class="btn btn-outline" onclick="openCeoRejectPrompt()">{{ labels.reject }}</button>
+
+          <form id="ceoRejectForm" method="post" action="/app/ceo/approvals/reject/" style="display:none;">
+            {% csrf_token %}
+            <input type="hidden" name="object_type" value="APPROVAL_REQUEST">
+            <input type="hidden" name="object_id" value="{{ ceo_approval_request_id }}">
+            <input type="hidden" name="next" value="{{ return_url }}">
+            <input type="hidden" name="reason" id="ceoRejectReasonInput">
+          </form>
+        {% endif %}
+        <a class="btn btn-outline" href="{{ inbox_url|default:'/app/hq/inbox/' }}">{{ labels.inbox }}</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="display:grid; gap:8px;">
+    <div class="section-title">{{ labels.basic }}</div>
+    <div>{{ labels.status }}: {{ cost_actual.status|upper }}</div>
+    <div>{{ labels.total }}: {{ cost_actual.total_amount|intcomma }}</div>
+    <div class="muted">{{ labels.created_at }}: {{ cost_actual.created_at|date:"Y-m-d H:i" }}</div>
+    {% if cost_actual.approved_by %}
+      <div class="muted">{{ labels.approved_by }}: {{ cost_actual.approved_by.username }}</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="section-title">{{ labels.lines }}</div>
+    {% if lines %}
+      <table class="table" style="width:100%;">
+        <thead>
+          <tr>
+            <th>{{ labels.item }}</th>
+            <th>{{ labels.description }}</th>
+            <th style="text-align:right;">{{ labels.quantity }}</th>
+            <th style="text-align:right;">{{ labels.unit_price }}</th>
+            <th style="text-align:right;">{{ labels.amount }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in lines %}
+            <tr>
+              <td>{{ line.cost_item.code }} - {{ line.cost_item.get_display_name }}</td>
+              <td>{{ line.description }}</td>
+              <td style="text-align:right;">{{ line.quantity|floatformat:3 }}</td>
+              <td style="text-align:right;">{{ line.unit_price|intcomma }}</td>
+              <td style="text-align:right;">{{ line.amount|intcomma }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="muted">{{ labels.empty }}</div>
+    {% endif %}
+  </div>
+
+  {% include "components/attachments_panel.html" with attachments=attachments can_edit=False upload_url=None delete_url=None object_label=labels.attachment_object help_text=labels.attachment_help %}
+</div>
+
+<script>
+function openCeoRejectPrompt() {
+  const reason = window.prompt("{{ labels.reject_prompt }}");
+  if (reason === null) return;
+  const trimmed = reason.trim();
+  if (!trimmed) {
+    window.alert("{{ labels.reject_prompt_empty }}");
+    return;
+  }
+  const reasonInput = document.getElementById("ceoRejectReasonInput");
+  const form = document.getElementById("ceoRejectForm");
+  if (!reasonInput || !form) return;
+  reasonInput.value = trimmed;
+  form.submit();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}FIELD 모바일 홈{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="/static/app/css/field_mobile.css" />
+{% endblock %}
+{% block content %}
+<div class="mobile-wrap">
+  <section class="mobile-card">
+    <h1 class="mobile-title">모바일 작업 허브</h1>
+    <p class="mobile-sub">오늘 해야 할 입력을 한 손으로 빠르게 처리하세요.</p>
+  </section>
+
+  <section class="mobile-card">
+    <form method="get" action="/app/field/mobile/" class="mobile-grid">
+      <div class="mobile-field">
+        <label class="mobile-label" for="project_id">프로젝트</label>
+        <select id="project_id" class="form-control" name="project_id" required>
+          {% for p in projects %}
+          <option value="{{ p.id }}" {% if project and p.id == project.id %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn mobile-cta" type="submit">프로젝트 적용</button>
+    </form>
+    <p class="mobile-note" style="margin-top:8px;">오늘: {{ today|date:"Y-m-d" }}</p>
+  </section>
+
+  <section class="mobile-card">
+    <h3 style="margin-top:0;">오늘 상태</h3>
+    <div class="mobile-grid-2">
+      <div class="mobile-status">
+        <p class="mobile-status__label">진행률</p>
+        <div class="mobile-status__value">{{ progress_status }}</div>
+      </div>
+      <div class="mobile-status">
+        <p class="mobile-status__label">보고서</p>
+        <div class="mobile-status__value">{{ report_status }}</div>
+      </div>
+      <div class="mobile-status" style="grid-column: 1 / -1;">
+        <p class="mobile-status__label">원가</p>
+        <div class="mobile-status__value">{{ cost_status }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mobile-card mobile-quicklinks">
+    {% if project %}
+    <a class="btn mobile-cta" href="/app/field/mobile/progress/?project_id={{ project.id }}">진행률 입력</a>
+    <a class="btn mobile-cta" href="/app/field/mobile/reports/?project_id={{ project.id }}">보고서 작성</a>
+    <a class="btn mobile-cta" href="/app/field/mobile/costs/?project_id={{ project.id }}">원가 입력</a>
+    <a class="btn mobile-cta" href="/app/field/mobile/inventory/issue?project_id={{ project.id }}">자재 투입</a>
+    <a class="btn mobile-cta" href="/app/field/mobile/labor/timesheet?project_id={{ project.id }}">출역부 입력</a>
+    {% else %}
+    <div class="mobile-alert">배정된 프로젝트가 없습니다. 관리자에게 문의하세요.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
