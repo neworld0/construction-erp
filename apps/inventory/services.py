@@ -880,7 +880,7 @@ def update_issue_to_work(
         raise PermissionDenied("Only creator can update draft issue.")
     if not isinstance(issue_date, date):
         raise ValidationError({"issue_date": "issue_date must be a date."})
-    assert_project_open(issue.project, message_context="?? ??????.", exc=PermissionDenied)
+    assert_project_open(issue.project, message_context="자재 투입 수정 기준입니다.", exc=PermissionDenied)
     if is_month_closed(issue_date):
         raise PermissionDenied(_issue_closed_message(issue_date))
     lines = _build_issue_lines(lines_payload, actor=actor)
