@@ -46,7 +46,7 @@ urlpatterns = [
     path("payroll-allocation/<int:batch_id>/", hq_payroll_detail),
     path(
         "payroll/",
-        RedirectView.as_view(url="/app/hq/labor/monthly-payroll/", permanent=False),
+        RedirectView.as_view(url="/app/hq/labor/payroll-allocation/", permanent=False),
     ),
     path(
         "payroll/new/",
