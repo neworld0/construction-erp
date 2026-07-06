@@ -164,5 +164,5 @@ def test_sensitive_keys_masked(db):
         object_id=1,
         meta={"token": "abc", "nested": {"password": "secret"}},
     )
-    assert log.meta_json["token"] == "***"
-    assert log.meta_json["nested"]["password"] == "***"
+    assert log.meta_json["token"] == "[REDACTED]"
+    assert log.meta_json["nested"]["password"] == "[REDACTED]"

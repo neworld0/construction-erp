@@ -4,7 +4,6 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
-from apps.audit.models import AuditLog
 from apps.audit.services.logger import log_action
 
 from apps.contracts.models import ContractChange, ContractChangeStatus
@@ -50,12 +49,12 @@ def close_month(year: int, month: int, actor, note: str | None = None) -> Closin
         if note is not None:
             period.note = note
         period.save()
-        AuditLog.objects.create(
+        log_action(
             actor=actor,
             action="MONTH_CLOSED",
             object_type="ClosingPeriod",
             object_id=period.id,
-            meta_json={"year": year, "month": month},
+            meta={"year": year, "month": month},
         )
         return period
 
