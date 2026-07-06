@@ -1,21 +1,45 @@
 import logging
+import hashlib
 from datetime import date as date_type, timedelta
 from decimal import Decimal, ROUND_HALF_UP
+from io import BytesIO
+import re
+from calendar import monthrange
 
+from django.core.files.base import ContentFile
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.utils import timezone
+from openpyxl import load_workbook
 
 from apps.audit.services.logger import log_action
 from apps.closing.guards import guard_write
 from apps.closing.services import is_month_closed
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import require_project_access, require_role
-from apps.cost.models import CostItem, CostItemCategory
+from apps.cost.models import CostActual, CostItem, CostItemCategory
 from apps.projects.models import Project
 
 from .models import (
+    ElectronicCardImportBatch,
+    ElectronicCardImportBatchStatus,
+    ElectronicCardMatchStatus,
+    LaborExcelExportBatch,
+    LaborExcelExportStatus,
+    LaborExcelExportType,
+    LaborConfirmedWorkDay,
+    LaborConfirmedWorkSourceBasis,
+    ElectronicCardWorkDay,
+    ElectronicCardWorkRaw,
+    LaborReconciliationResolution,
+    LaborReconciliationResult,
+    LaborReconciliationStatus,
+    LaborMonthlyPayroll,
+    LaborMonthlyPayrollPaymentStatus,
+    LaborWorkLedger,
+    LaborWorkLedgerSource,
+    LaborWorkLedgerStatus,
     LaborRateScope,
     LaborRateTable,
     LaborRateType,
@@ -28,6 +52,8 @@ from .models import (
     TimesheetLine,
     TimesheetNumberSequence,
     TimesheetStatus,
+    WorkerMaster,
+    _protect_sensitive_value,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,6 +65,56 @@ logger = logging.getLogger(__name__)
 
 FALLBACK_LABOR_CBS_CODE = "LABOR-GENERAL"
 FALLBACK_LABOR_CBS_NAME = "인건비(공통)"
+ELECTRONIC_CARD_IMPORT_UPLOAD = "LABOR_ECARD_IMPORT_UPLOAD"
+ELECTRONIC_CARD_IMPORT_PARSE = "LABOR_ECARD_IMPORT_PARSE"
+ELECTRONIC_CARD_RECONCILE = "LABOR_ECARD_RECONCILE"
+LABOR_RECONCILIATION_RESOLVE = "LABOR_RECONCILIATION_RESOLVE"
+LABOR_RECONCILIATION_BULK_RESOLVE = "LABOR_RECONCILIATION_BULK_RESOLVE"
+LABOR_RECONCILIATION_WORKER_MATCH = "LABOR_RECONCILIATION_WORKER_MATCH"
+LABOR_CONFIRMED_WORKDAY_GENERATE = "LABOR_CONFIRMED_WORKDAY_GENERATE"
+LABOR_ECARD_RECONCILIATION_CONFIRM = "LABOR_ECARD_RECONCILIATION_CONFIRM"
+LABOR_EXCEL_EXPORT_GENERATE = "LABOR_EXCEL_EXPORT_GENERATE"
+LABOR_EXCEL_EXPORT_DOWNLOAD = "LABOR_EXCEL_EXPORT_DOWNLOAD"
+LABOR_WORKER_DELETE = "LABOR_WORKER_DELETE"
+LABOR_WORKER_DEACTIVATE = "LABOR_WORKER_DEACTIVATE"
+LABOR_WORKER_ALREADY_INACTIVE = "LABOR_WORKER_ALREADY_INACTIVE"
+
+E_CARD_HEADER_LABELS = {
+    "row_no": ("No", "번호"),
+    "year_month": ("근로년월", "근로연월", "근로월", "연월", "귀속연월"),
+    "work_history_status": ("근로내역상태", "근로내역 상태"),
+    "report_status": ("신고상태", "신고 상태"),
+    "project_name": ("공사명", "현장명", "프로젝트명"),
+    "deduction_join_no": ("공제가입번호", "공제 가입번호"),
+    "company_name": ("업체명", "회사명", "사업장명"),
+    "job_type": ("직종", "직무"),
+    "worker_name": ("성명", "근로자명", "이름"),
+    "card_issued": ("전자카드발급여부", "전자카드 발급여부"),
+    "resident_no": ("주민등록번호", "주민번호", "생년월일"),
+    "phone": ("연락처", "휴대전화", "전화번호"),
+    "retirement_deduction": ("퇴직공제여부", "퇴직공제 여부"),
+    "exclusion_reason": ("비퇴직사유", "제외사유"),
+    "error_message": ("오류확인내역", "오류/확인내역", "오류내역"),
+    "auto_work_days": ("자동집계", "자동 출역일수"),
+    "reported_days": ("신고일수",),
+    "declaration_days": ("이월예정일수", "이월 예정일수", "예정일수"),
+    "confirmed_days": ("확정일수",),
+    "note": ("비고",),
+}
+E_CARD_ESSENTIAL_FIELDS = {
+    "year_month",
+    "project_name",
+    "job_type",
+    "worker_name",
+    "resident_no",
+}
+E_CARD_HEADER_LABELS["exclusion_reason"] = (
+    "비대상사유",
+    "비대상 사유",
+    "비퇴직사유",
+    "제외사유",
+)
+E_CARD_OPTIONAL_FIELDS = set(E_CARD_HEADER_LABELS.keys()) - E_CARD_ESSENTIAL_FIELDS
 
 
 def _log_action_safe(*, actor, action, object_id, summary, metadata, object_type):
@@ -70,6 +146,131 @@ def _resolve_project(value):
     if isinstance(value, Project):
         return value
     return Project.objects.filter(id=value).first()
+
+
+def _resolve_worker(value):
+    if not value:
+        return None
+    if isinstance(value, WorkerMaster):
+        return value
+    return WorkerMaster.objects.filter(id=value).first()
+
+
+def _resolve_timesheet(value):
+    if not value:
+        return None
+    if isinstance(value, Timesheet):
+        return value
+    return Timesheet.objects.filter(id=value).first()
+
+
+def _resolve_cost_actual(value):
+    if not value:
+        return None
+    if isinstance(value, CostActual):
+        return value
+    return CostActual.objects.filter(id=value).first()
+
+
+def _normalize_identity_value(raw_value: str) -> str:
+    return "".join(ch for ch in str(raw_value or "") if ch.isdigit())
+
+
+def _mask_rrn_value(raw_value: str) -> str:
+    normalized = _normalize_identity_value(raw_value)
+    if len(normalized) >= 7:
+        return f"{normalized[:6]}-{normalized[6]}******"
+    if not normalized:
+        return ""
+    return f"{normalized[:1]}***"
+
+
+def _mask_account_number_value(raw_value: str) -> str:
+    value = str(raw_value or "").strip()
+    if not value:
+        return ""
+    visible = value[-4:] if len(value) > 4 else value
+    return f"***{visible}"
+
+
+def _build_identity_hash(raw_value: str) -> str:
+    normalized = _normalize_identity_value(raw_value)
+    if not normalized:
+        return ""
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _store_sensitive_value(raw_value: str) -> str:
+    value = str(raw_value or "").strip()
+    if not value:
+        return ""
+    # TODO(LABPAY-1): replace isolated plaintext storage with shared encryption util.
+    return value
+
+
+def _worker_audit_snapshot(worker: WorkerMaster) -> dict:
+    return {
+        "name": worker.name,
+        "rrn_masked": worker.rrn_masked,
+        "phone": worker.phone,
+        "bank_name": worker.bank_name,
+        "bank_code": worker.bank_code,
+        "account_number_masked": worker.account_number_masked,
+        "account_holder": worker.account_holder,
+        "nationality_code": worker.nationality_code,
+        "visa_code": worker.visa_code,
+        "comwel_job_code": worker.comwel_job_code,
+        "cwma_job_name": worker.cwma_job_name,
+        "default_labor_role_id": worker.default_labor_role_id,
+        "retirement_deduction_eligible": worker.retirement_deduction_eligible,
+        "active": worker.active,
+        "identity_hash": worker.identity_hash,
+    }
+
+
+def _labor_work_ledger_snapshot(ledger: LaborWorkLedger) -> dict:
+    return {
+        "work_date": str(ledger.work_date),
+        "work_month": str(ledger.work_month),
+        "worker_id": ledger.worker_id,
+        "actual_project_id": ledger.actual_project_id,
+        "report_project_id": ledger.report_project_id,
+        "labor_role_id": ledger.labor_role_id,
+        "work_unit": str(ledger.work_unit),
+        "work_hours": str(ledger.work_hours),
+        "unit_wage": ledger.unit_wage,
+        "gross_wage": ledger.gross_wage,
+        "income_tax": ledger.income_tax,
+        "local_tax": ledger.local_tax,
+        "employment_insurance": ledger.employment_insurance,
+        "pension": ledger.pension,
+        "health_insurance": ledger.health_insurance,
+        "net_pay": ledger.net_pay,
+        "detail_work_type": ledger.detail_work_type,
+        "source": ledger.source,
+        "status": ledger.status,
+        "timesheet_ref_id": ledger.timesheet_ref_id,
+        "cost_ref_id": ledger.cost_ref_id,
+    }
+
+
+def _labor_monthly_payroll_snapshot(payroll: LaborMonthlyPayroll) -> dict:
+    return {
+        "year_month": str(payroll.year_month),
+        "worker_id": payroll.worker_id,
+        "project_id": payroll.project_id,
+        "report_project_id": payroll.report_project_id,
+        "total_work_unit": str(payroll.total_work_unit),
+        "gross_wage": payroll.gross_wage,
+        "income_tax": payroll.income_tax,
+        "local_tax": payroll.local_tax,
+        "insurance_deductions": payroll.insurance_deductions,
+        "net_pay": payroll.net_pay,
+        "bank_name": payroll.bank_name,
+        "account_number_masked": payroll.account_number_masked,
+        "payment_status": payroll.payment_status,
+        "paid_at": payroll.paid_at.isoformat() if payroll.paid_at else "",
+    }
 
 
 def _overlap_q(start, end):
@@ -370,6 +571,1982 @@ def update_labor_role(role: LaborRole, data, *, actor):
         object_type="LaborRole",
     )
     return role
+
+
+def create_worker_master(data, *, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    name = str(data.get("name") or "").strip()
+    rrn = str(data.get("rrn") or "").strip()
+    if not name:
+        raise ValidationError({"name": "성명을 입력해 주세요."})
+    if not rrn:
+        raise ValidationError({"rrn": "주민등록번호를 입력해 주세요."})
+    default_labor_role = data.get("default_labor_role")
+    if default_labor_role and not isinstance(default_labor_role, LaborRole):
+        default_labor_role = LaborRole.objects.filter(id=default_labor_role).first()
+    worker = WorkerMaster.objects.create(
+        name=name,
+        rrn_encrypted=_store_sensitive_value(rrn),
+        rrn_masked=_mask_rrn_value(rrn),
+        identity_hash=_build_identity_hash(rrn),
+        phone=str(data.get("phone") or "").strip(),
+        address=str(data.get("address") or "").strip(),
+        bank_name=str(data.get("bank_name") or "").strip(),
+        bank_code=str(data.get("bank_code") or "").strip(),
+        account_number_encrypted=_store_sensitive_value(data.get("account_number") or ""),
+        account_holder=str(data.get("account_holder") or "").strip(),
+        nationality_code=str(data.get("nationality_code") or "").strip().upper(),
+        visa_code=str(data.get("visa_code") or "").strip().upper(),
+        comwel_job_code=str(data.get("comwel_job_code") or "").strip().upper(),
+        cwma_job_name=str(data.get("cwma_job_name") or "").strip(),
+        default_labor_role=default_labor_role,
+        retirement_deduction_eligible=bool(data.get("retirement_deduction_eligible")),
+        active=bool(data.get("active", True)),
+    )
+    try:
+        log_action(
+            actor=actor,
+            action="LABOR_WORKER_CREATE",
+            object_type="WorkerMaster",
+            object_id=worker.id,
+            after=_worker_audit_snapshot(worker),
+            meta={"worker_id": worker.id, "worker_name": worker.name},
+        )
+    except Exception:
+        logger.warning("AuditLog failed for LABOR_WORKER_CREATE snapshot.", exc_info=True)
+    return worker
+
+
+def update_worker_master(worker: WorkerMaster, data, *, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    before = _worker_audit_snapshot(worker)
+    worker.name = str(data.get("name") or worker.name or "").strip()
+    worker.phone = str(data.get("phone") or "").strip()
+    worker.address = str(data.get("address") or "").strip()
+    worker.bank_name = str(data.get("bank_name") or "").strip()
+    worker.bank_code = str(data.get("bank_code") or "").strip()
+    worker.account_holder = str(data.get("account_holder") or "").strip()
+    worker.nationality_code = str(data.get("nationality_code") or "").strip().upper()
+    worker.visa_code = str(data.get("visa_code") or "").strip().upper()
+    worker.comwel_job_code = str(data.get("comwel_job_code") or "").strip().upper()
+    worker.cwma_job_name = str(data.get("cwma_job_name") or "").strip()
+    worker.retirement_deduction_eligible = bool(data.get("retirement_deduction_eligible"))
+    worker.active = bool(data.get("active", True))
+    default_labor_role = data.get("default_labor_role")
+    if default_labor_role and not isinstance(default_labor_role, LaborRole):
+        default_labor_role = LaborRole.objects.filter(id=default_labor_role).first()
+    worker.default_labor_role = default_labor_role
+
+    rrn = str(data.get("rrn") or "").strip()
+    if rrn:
+        worker.rrn_encrypted = _store_sensitive_value(rrn)
+        worker.rrn_masked = _mask_rrn_value(rrn)
+        worker.identity_hash = _build_identity_hash(rrn)
+
+    account_number = str(data.get("account_number") or "").strip()
+    if account_number:
+        worker.account_number_encrypted = _store_sensitive_value(account_number)
+
+    if not worker.name:
+        raise ValidationError({"name": "성명을 입력해 주세요."})
+    if not worker.rrn_encrypted:
+        raise ValidationError({"rrn": "주민등록번호를 입력해 주세요."})
+
+    worker.save()
+    after = _worker_audit_snapshot(worker)
+    try:
+        log_action(
+            actor=actor,
+            action="LABOR_WORKER_UPDATE",
+            object_type="WorkerMaster",
+            object_id=worker.id,
+            before=before,
+            after=after,
+            meta={"worker_id": worker.id, "worker_name": worker.name},
+        )
+    except Exception:
+        logger.warning("AuditLog failed for LABOR_WORKER_UPDATE snapshot.", exc_info=True)
+    return worker
+
+
+def _worker_usage_breakdown(worker: WorkerMaster) -> dict:
+    return {
+        "work_ledgers": LaborWorkLedger.objects.filter(worker=worker).count(),
+        "electronic_card_raw_rows": ElectronicCardWorkRaw.objects.filter(matched_worker=worker).count(),
+        "electronic_card_day_rows": ElectronicCardWorkDay.objects.filter(worker=worker).count(),
+        "reconciliation_results": LaborReconciliationResult.objects.filter(worker=worker).count(),
+        "confirmed_work_days": LaborConfirmedWorkDay.objects.filter(worker=worker).count(),
+        "monthly_payrolls": LaborMonthlyPayroll.objects.filter(worker=worker).count(),
+    }
+
+
+def _worker_usage_total(worker: WorkerMaster) -> int:
+    return sum(_worker_usage_breakdown(worker).values())
+
+
+def delete_or_deactivate_worker_master(worker: WorkerMaster, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    before = _worker_audit_snapshot(worker)
+    usage_breakdown = _worker_usage_breakdown(worker)
+    usage_count = sum(usage_breakdown.values())
+
+    if not worker.active:
+        _log_action_safe(
+            actor=actor,
+            action=LABOR_WORKER_ALREADY_INACTIVE,
+            object_id=worker.id,
+            summary=f"WorkerMaster already inactive: {worker.id}",
+            metadata={
+                "worker_id": worker.id,
+                "worker_name": worker.name,
+                "rrn_masked": worker.rrn_masked,
+                "active_before": before["active"],
+                "active_after": worker.active,
+                "usage_count": usage_count,
+                "usage_breakdown": usage_breakdown,
+            },
+            object_type="WorkerMaster",
+        )
+        return {"action": "already_inactive", "usage_count": usage_count}
+
+    if usage_count == 0:
+        worker_id = worker.id
+        worker_name = worker.name
+        rrn_masked = worker.rrn_masked
+        worker.delete()
+        _log_action_safe(
+            actor=actor,
+            action=LABOR_WORKER_DELETE,
+            object_id=worker_id,
+            summary=f"WorkerMaster delete: {worker_id}",
+            metadata={
+                "worker_id": worker_id,
+                "worker_name": worker_name,
+                "rrn_masked": rrn_masked,
+                "active_before": before["active"],
+                "active_after": None,
+                "usage_count": 0,
+                "usage_breakdown": usage_breakdown,
+                "deleted": True,
+            },
+            object_type="WorkerMaster",
+        )
+        return {"action": "deleted", "usage_count": 0}
+
+    worker.active = False
+    worker.save(update_fields=["active", "updated_at"])
+    after = _worker_audit_snapshot(worker)
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_WORKER_DEACTIVATE,
+        object_id=worker.id,
+        summary=f"WorkerMaster deactivate: {worker.id}",
+        metadata={
+            "worker_id": worker.id,
+            "worker_name": worker.name,
+            "rrn_masked": worker.rrn_masked,
+            "active_before": before["active"],
+            "active_after": after["active"],
+            "usage_count": usage_count,
+            "usage_breakdown": usage_breakdown,
+            "deactivated": True,
+        },
+        object_type="WorkerMaster",
+    )
+    return {"action": "deactivated", "usage_count": usage_count}
+
+
+def _coerce_decimal(value, *, field_name: str):
+    if value in (None, ""):
+        return Decimal("0")
+    try:
+        return Decimal(str(value))
+    except Exception as exc:
+        raise ValidationError({field_name: f"{field_name} 값이 올바르지 않습니다."}) from exc
+
+
+def _coerce_int(value, *, field_name: str):
+    if value in (None, ""):
+        return 0
+    try:
+        return int(value)
+    except Exception as exc:
+        raise ValidationError({field_name: f"{field_name} 값이 올바르지 않습니다."}) from exc
+
+
+def _normalize_e_card_header(value) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return re.sub(r"[\s\r\n\t()\-_/]+", "", text).lower()
+
+
+def _parse_year_month_value(value):
+    text = str(value or "").strip()
+    if not text:
+        return None
+    digits = "".join(ch for ch in text if ch.isdigit())
+    if len(digits) < 6:
+        return None
+    year = int(digits[:4])
+    month = int(digits[4:6])
+    if 1 <= month <= 12:
+        return date_type(year, month, 1)
+    return None
+
+
+def _resolve_header_field(header_value):
+    normalized = _normalize_e_card_header(header_value)
+    if not normalized:
+        return None
+    for field_name, candidates in E_CARD_HEADER_LABELS.items():
+        if normalized in {_normalize_e_card_header(candidate) for candidate in candidates}:
+            return field_name
+    return None
+
+
+def _resolve_day_column(header_value):
+    normalized = _normalize_e_card_header(header_value)
+    if not normalized:
+        return None
+    if normalized.isdigit():
+        day = int(normalized)
+        if 1 <= day <= 31:
+            return day
+    match = re.fullmatch(r"(\d{1,2})일", normalized)
+    if match:
+        day = int(match.group(1))
+        if 1 <= day <= 31:
+            return day
+    return None
+
+
+def _resolve_header_map(header_row):
+    field_map = {}
+    day_columns = {}
+    for col_index, value in enumerate(header_row):
+        field_name = _resolve_header_field(value)
+        if field_name and field_name not in field_map:
+            field_map[field_name] = col_index
+        day_value = _resolve_day_column(value)
+        if day_value and day_value not in day_columns:
+            day_columns[day_value] = col_index
+    return field_map, day_columns
+
+
+def _first_visible_sheet(workbook):
+    active = workbook.active
+    if getattr(active, "sheet_state", "visible") == "visible":
+        return active
+    for sheet in workbook.worksheets:
+        if getattr(sheet, "sheet_state", "visible") == "visible":
+            return sheet
+    return workbook.worksheets[0]
+
+
+def _build_e_card_header_summary(uploaded_file, *, selected_month):
+    uploaded_file.seek(0)
+    workbook = load_workbook(uploaded_file, read_only=True, data_only=True)
+    sheet = _first_visible_sheet(workbook)
+    rows = list(sheet.iter_rows(min_row=1, max_row=200, values_only=True))
+
+    header_row_index = None
+    header_field_map = {}
+    day_columns = {}
+    header_samples = []
+    best_score = -1
+
+    for row_index, row in enumerate(rows[:20], start=1):
+        field_map = {}
+        local_day_columns = {}
+        for col_index, value in enumerate(row):
+            field_name = _resolve_header_field(value)
+            if field_name and field_name not in field_map:
+                field_map[field_name] = col_index
+            day_value = _resolve_day_column(value)
+            if day_value and day_value not in local_day_columns:
+                local_day_columns[day_value] = col_index
+        score = len(field_map) + len(local_day_columns)
+        if score > best_score:
+            best_score = score
+            header_row_index = row_index
+            header_field_map = field_map
+            day_columns = local_day_columns
+            header_samples = [str(cell or "").strip() for cell in row if str(cell or "").strip()]
+
+    if not header_row_index or best_score <= 0:
+        raise ValidationError("전자카드 파일에서 헤더 행을 찾지 못했습니다.")
+
+    missing_essential = [
+        field_name for field_name in sorted(E_CARD_ESSENTIAL_FIELDS) if field_name not in header_field_map
+    ]
+    if missing_essential:
+        missing_labels = [
+            E_CARD_HEADER_LABELS[field_name][0] for field_name in missing_essential
+        ]
+        raise ValidationError(
+            f"필수 헤더가 누락되었습니다: {', '.join(missing_labels)}"
+        )
+
+    warnings = []
+    missing_optional = [
+        field_name for field_name in sorted(E_CARD_OPTIONAL_FIELDS) if field_name not in header_field_map
+    ]
+    if missing_optional:
+        missing_labels = [
+            E_CARD_HEADER_LABELS[field_name][0] for field_name in missing_optional
+        ]
+        warnings.append(
+            f"선택 헤더가 누락되었습니다: {', '.join(missing_labels)}"
+        )
+    if len(day_columns) < 28:
+        warnings.append("일자 컬럼(1일~31일) 구성이 불완전합니다. 원본 파일 형식을 확인해 주세요.")
+
+    workbook_months = []
+    if "year_month" in header_field_map:
+        month_col = header_field_map["year_month"]
+        seen = set()
+        for row in rows[header_row_index:]:
+            if month_col >= len(row):
+                continue
+            parsed_month = _parse_year_month_value(row[month_col])
+            if parsed_month and parsed_month not in seen:
+                seen.add(parsed_month)
+                workbook_months.append(parsed_month)
+        workbook_months = sorted(workbook_months)
+
+    if workbook_months:
+        if len(workbook_months) == 1 and workbook_months[0] != selected_month:
+            raise ValidationError(
+                f"파일의 근로연월({workbook_months[0]:%Y-%m})이 선택한 기준월({selected_month:%Y-%m})과 다릅니다."
+            )
+        if selected_month not in workbook_months:
+            warnings.append(
+                "파일 안의 근로연월 값이 선택한 기준월과 완전히 일치하지 않습니다."
+            )
+
+    def _first_data_value(field_name):
+        col_index = header_field_map.get(field_name)
+        if col_index is None:
+            return ""
+        for row in rows[header_row_index:]:
+            if col_index >= len(row):
+                continue
+            value = str(row[col_index] or "").strip()
+            if value:
+                return value
+        return ""
+
+    return {
+        "sheet_name": sheet.title,
+        "header_row_index": header_row_index,
+        "detected_headers": {
+            field_name: E_CARD_HEADER_LABELS[field_name][0]
+            for field_name in header_field_map.keys()
+        },
+        "missing_optional_headers": [
+            E_CARD_HEADER_LABELS[field_name][0] for field_name in missing_optional
+        ],
+        "day_column_count": len(day_columns),
+        "day_columns": sorted(day_columns.keys()),
+        "warnings": warnings,
+        "header_samples": header_samples[:12],
+        "workbook_months": [value.strftime("%Y-%m") for value in workbook_months],
+        "cwma_project_name": _first_data_value("project_name"),
+        "deduction_join_no": _first_data_value("deduction_join_no"),
+        "company_name": _first_data_value("company_name"),
+    }
+
+
+def _parse_decimal_or_zero(value):
+    text = str(value or "").strip().replace(",", "")
+    if not text:
+        return Decimal("0")
+    try:
+        return Decimal(text)
+    except Exception:
+        return Decimal("0")
+
+
+def _normalize_phone(value):
+    return "".join(ch for ch in str(value or "") if ch.isdigit())
+
+
+def _normalize_worker_name(value):
+    return "".join(str(value or "").split())
+
+
+def _coerce_cell_text(value):
+    return str(value or "").strip()
+
+
+def _resolve_card_value(value):
+    text = _coerce_cell_text(value)
+    if not text:
+        return Decimal("0"), ""
+    numeric = _parse_decimal_or_zero(text)
+    if numeric > 0:
+        return numeric, ""
+    normalized = text.upper()
+    if normalized in {"Y", "O", "○", "출", "근무", "1"}:
+        return Decimal("1"), ""
+    return Decimal("0"), f"일자값 해석 불가: {text}"
+
+
+def _find_worker_match(*, identity_hash, worker_name, phone):
+    if identity_hash:
+        worker = WorkerMaster.objects.filter(identity_hash=identity_hash, active=True).first()
+        if worker:
+            return worker, "identity"
+    normalized_name = _normalize_worker_name(worker_name)
+    if normalized_name:
+        normalized_phone = _normalize_phone(phone)
+        candidates = WorkerMaster.objects.filter(active=True).order_by("id")
+        for candidate in candidates:
+            if _normalize_worker_name(candidate.name) != normalized_name:
+                continue
+            candidate_phone = _normalize_phone(candidate.phone)
+            if normalized_phone and candidate_phone == normalized_phone:
+                return candidate, "name_phone"
+    return None, ""
+
+
+def _row_has_parse_target(row, field_map):
+    for field_name in ("worker_name", "resident_no", "project_name", "phone", "job_type"):
+        col_index = field_map.get(field_name)
+        if col_index is None or col_index >= len(row):
+            continue
+        if _coerce_cell_text(row[col_index]):
+            return True
+    return False
+
+
+def parse_electronic_card_import_batch(batch, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(batch, ElectronicCardImportBatch):
+        batch = ElectronicCardImportBatch.objects.filter(id=batch).first()
+    if batch is None:
+        raise ValidationError("전자카드 업로드 배치를 찾을 수 없습니다.")
+    if batch.status in {
+        ElectronicCardImportBatchStatus.CONFIRMED,
+        ElectronicCardImportBatchStatus.DISCARDED,
+    }:
+        raise ValidationError("확정 또는 폐기된 배치는 다시 파싱할 수 없습니다.")
+    if not batch.source_file:
+        raise ValidationError("원본 파일이 없어 파싱할 수 없습니다.")
+
+    batch.source_file.open("rb")
+    try:
+        workbook = load_workbook(batch.source_file, read_only=True, data_only=True)
+    except Exception as exc:
+        logger.exception("Failed to open electronic card workbook for parse.")
+        raise ValidationError("전자카드 원본 파일을 열지 못했습니다.") from exc
+
+    sheet = _first_visible_sheet(workbook)
+    rows = list(sheet.iter_rows(min_row=1, max_row=5000, values_only=True))
+    summary = batch.header_check_summary or {}
+    header_row_index = int(summary.get("header_row_index") or 0)
+    if header_row_index <= 0 or header_row_index > len(rows):
+        _, _, _, header_row_index = None, None, None, 0
+        best_score = -1
+        for row_index, row in enumerate(rows[:30], start=1):
+            field_map, day_columns = _resolve_header_map(row)
+            score = len(field_map) + len(day_columns)
+            if score > best_score:
+                best_score = score
+                header_row_index = row_index
+    if header_row_index <= 0:
+        raise ValidationError("전자카드 헤더 행을 찾지 못했습니다.")
+
+    header_row = rows[header_row_index - 1]
+    field_map, day_columns = _resolve_header_map(header_row)
+    missing_essential = [
+        field_name for field_name in sorted(E_CARD_ESSENTIAL_FIELDS) if field_name not in field_map
+    ]
+    if missing_essential:
+        labels = [E_CARD_HEADER_LABELS[name][0] for name in missing_essential]
+        raise ValidationError(f"필수 헤더가 누락되었습니다: {', '.join(labels)}")
+
+    raw_rows_to_create = []
+    day_rows_to_create = []
+    matched_worker_count = 0
+    unmatched_worker_count = 0
+    matched_by_identity_count = 0
+    matched_by_name_phone_count = 0
+    unmatched_preview = []
+
+    for excel_row_no, row in enumerate(rows[header_row_index:], start=header_row_index + 1):
+        if not _row_has_parse_target(row, field_map):
+            continue
+
+        work_month = batch.year_month
+        month_col = field_map.get("year_month")
+        if month_col is not None and month_col < len(row):
+            parsed_month = _parse_year_month_value(row[month_col])
+            if parsed_month:
+                work_month = parsed_month
+
+        worker_name_raw = _coerce_cell_text(row[field_map["worker_name"]]) if field_map.get("worker_name") is not None and field_map["worker_name"] < len(row) else ""
+        rrn_raw = _coerce_cell_text(row[field_map["resident_no"]]) if field_map.get("resident_no") is not None and field_map["resident_no"] < len(row) else ""
+        phone = _coerce_cell_text(row[field_map["phone"]]) if field_map.get("phone") is not None and field_map["phone"] < len(row) else ""
+        identity_hash = WorkerMaster.make_identity_hash(rrn_raw) if rrn_raw else ""
+        rrn_masked = WorkerMaster.mask_rrn(rrn_raw) if rrn_raw else ""
+        rrn_encrypted = _protect_sensitive_value(rrn_raw, "rrn") if rrn_raw else ""
+        matched_worker, matched_by = _find_worker_match(
+            identity_hash=identity_hash,
+            worker_name=worker_name_raw,
+            phone=phone,
+        )
+        match_status = (
+            ElectronicCardMatchStatus.MATCHED
+            if matched_worker
+            else ElectronicCardMatchStatus.UNMATCHED
+        )
+        if matched_worker:
+            matched_worker_count += 1
+            if matched_by == "identity":
+                matched_by_identity_count += 1
+            elif matched_by == "name_phone":
+                matched_by_name_phone_count += 1
+        else:
+            unmatched_worker_count += 1
+            if len(unmatched_preview) < 10:
+                unmatched_preview.append(
+                    {
+                        "row_no": excel_row_no,
+                        "worker_name_raw": worker_name_raw,
+                        "rrn_masked": rrn_masked,
+                        "phone": phone,
+                    }
+                )
+
+        day_values = {}
+        day_notes = []
+        for day in range(1, 32):
+            col_index = day_columns.get(day)
+            cell_value = row[col_index] if col_index is not None and col_index < len(row) else ""
+            cell_text = _coerce_cell_text(cell_value)
+            day_values[f"day_{day:02d}"] = cell_text
+
+        raw = ElectronicCardWorkRaw(
+            batch=batch,
+            row_no=excel_row_no,
+            work_month=work_month,
+            project_name_raw=_coerce_cell_text(row[field_map["project_name"]]) if field_map.get("project_name") is not None and field_map["project_name"] < len(row) else "",
+            deduction_join_no=_coerce_cell_text(row[field_map["deduction_join_no"]]) if field_map.get("deduction_join_no") is not None and field_map["deduction_join_no"] < len(row) else "",
+            company_name=_coerce_cell_text(row[field_map["company_name"]]) if field_map.get("company_name") is not None and field_map["company_name"] < len(row) else "",
+            worker_name_raw=worker_name_raw,
+            rrn_encrypted=rrn_encrypted,
+            rrn_masked=rrn_masked,
+            identity_hash=identity_hash,
+            phone=phone,
+            job_name_raw=_coerce_cell_text(row[field_map["job_type"]]) if field_map.get("job_type") is not None and field_map["job_type"] < len(row) else "",
+            card_issued=_coerce_cell_text(row[field_map["card_issued"]]) if field_map.get("card_issued") is not None and field_map["card_issued"] < len(row) else "",
+            retirement_target=_coerce_cell_text(row[field_map["retirement_deduction"]]) if field_map.get("retirement_deduction") is not None and field_map["retirement_deduction"] < len(row) else "",
+            exclusion_reason=_coerce_cell_text(row[field_map["exclusion_reason"]]) if field_map.get("exclusion_reason") is not None and field_map["exclusion_reason"] < len(row) else "",
+            work_status=_coerce_cell_text(row[field_map["work_history_status"]]) if field_map.get("work_history_status") is not None and field_map["work_history_status"] < len(row) else "",
+            report_status=_coerce_cell_text(row[field_map["report_status"]]) if field_map.get("report_status") is not None and field_map["report_status"] < len(row) else "",
+            error_message=_coerce_cell_text(row[field_map["error_message"]]) if field_map.get("error_message") is not None and field_map["error_message"] < len(row) else "",
+            auto_work_days=_coerce_cell_text(row[field_map["auto_work_days"]]) if field_map.get("auto_work_days") is not None and field_map["auto_work_days"] < len(row) else "",
+            reported_days=_coerce_cell_text(row[field_map["reported_days"]]) if field_map.get("reported_days") is not None and field_map["reported_days"] < len(row) else "",
+            declaration_days=_coerce_cell_text(row[field_map["declaration_days"]]) if field_map.get("declaration_days") is not None and field_map["declaration_days"] < len(row) else "",
+            confirmed_days=_coerce_cell_text(row[field_map["confirmed_days"]]) if field_map.get("confirmed_days") is not None and field_map["confirmed_days"] < len(row) else "",
+            note=_coerce_cell_text(row[field_map["note"]]) if field_map.get("note") is not None and field_map["note"] < len(row) else "",
+            matched_worker=matched_worker,
+            match_status=match_status,
+            **day_values,
+        )
+        raw_rows_to_create.append(raw)
+
+    with transaction.atomic():
+        batch.day_rows.all().delete()
+        batch.raw_rows.all().delete()
+        created_raws = ElectronicCardWorkRaw.objects.bulk_create(raw_rows_to_create)
+        created_day_count = 0
+        for raw in created_raws:
+            last_day = monthrange(raw.work_month.year, raw.work_month.month)[1]
+            for day in range(1, last_day + 1):
+                raw_value = getattr(raw, f"day_{day:02d}")
+                card_value, note = _resolve_card_value(raw_value)
+                day_rows_to_create.append(
+                    ElectronicCardWorkDay(
+                        raw=raw,
+                        batch=batch,
+                        worker=raw.matched_worker,
+                        work_date=date_type(raw.work_month.year, raw.work_month.month, day),
+                        card_value=card_value,
+                        is_worked=card_value > 0,
+                        card_project=batch.project,
+                        match_status=raw.match_status,
+                        note=note,
+                    )
+                )
+            created_day_count += last_day
+        ElectronicCardWorkDay.objects.bulk_create(day_rows_to_create)
+        parsed_worked_day_count = 0
+        parsed_zero_day_count = 0
+        parsed_unreadable_day_count = 0
+        worked_day_preview = []
+        for day_row in day_rows_to_create:
+            if day_row.note and "해석 불가" in day_row.note:
+                parsed_unreadable_day_count += 1
+            if day_row.card_value > 0:
+                parsed_worked_day_count += 1
+                if len(worked_day_preview) < 10:
+                    worked_day_preview.append(
+                        {
+                            "work_date": day_row.work_date.isoformat(),
+                            "worker_name_raw": day_row.raw.worker_name_raw,
+                            "card_value": str(day_row.card_value),
+                            "match_status": day_row.match_status,
+                        }
+                    )
+            elif day_row.card_value == 0:
+                parsed_zero_day_count += 1
+
+        parse_summary = {
+            "parsed_raw_count": len(created_raws),
+            "parsed_day_count": len(day_rows_to_create),
+            "parsed_worked_day_count": parsed_worked_day_count,
+            "parsed_zero_day_count": parsed_zero_day_count,
+            "parsed_unreadable_day_count": parsed_unreadable_day_count,
+            "worked_day_preview": worked_day_preview,
+            "matched_worker_count": matched_worker_count,
+            "matched_by_identity_count": matched_by_identity_count,
+            "matched_by_name_phone_count": matched_by_name_phone_count,
+            "unmatched_worker_count": unmatched_worker_count,
+            "unmatched_preview": unmatched_preview,
+            "parsed_at": timezone.now().isoformat(),
+        }
+        updated_summary = {**summary, **parse_summary}
+        batch.header_check_summary = updated_summary
+        batch.status = ElectronicCardImportBatchStatus.PARSE_READY
+        batch.save(update_fields=["header_check_summary", "status", "updated_at"])
+
+        _log_action_safe(
+            actor=actor,
+            action=ELECTRONIC_CARD_IMPORT_PARSE,
+            object_id=batch.id,
+            summary=f"ElectronicCardImportBatch parse: {batch.id}",
+            metadata={
+                "batch_id": batch.id,
+                "year_month": batch.year_month.isoformat(),
+                "project_id": batch.project_id,
+                "raw_count": len(created_raws),
+                "day_count": len(day_rows_to_create),
+                "matched_worker_count": matched_worker_count,
+                "unmatched_worker_count": unmatched_worker_count,
+            },
+            object_type="ElectronicCardImportBatch",
+        )
+    return batch
+
+
+def _ledger_key(worker_id, work_date):
+    return worker_id, work_date
+
+
+def reconcile_electronic_card_import_batch(batch, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(batch, ElectronicCardImportBatch):
+        batch = ElectronicCardImportBatch.objects.filter(id=batch).first()
+    if batch is None:
+        raise ValidationError("전자카드 업로드 배치를 찾을 수 없습니다.")
+    if batch.status in {
+        ElectronicCardImportBatchStatus.CONFIRMED,
+        ElectronicCardImportBatchStatus.DISCARDED,
+    }:
+        raise ValidationError("확정 또는 폐기된 배치는 대사할 수 없습니다.")
+    if not batch.day_rows.exists():
+        raise ValidationError("먼저 파싱을 실행해 주세요.")
+
+    card_days = list(
+        batch.day_rows.select_related("worker", "card_project", "raw").order_by("work_date", "id")
+    )
+    reconcile_card_worked_day_count = sum(1 for row in card_days if Decimal(row.card_value or 0) > 0)
+
+    report_rows = (
+        LaborWorkLedger.objects.filter(
+            work_month=batch.year_month,
+            report_project=batch.project,
+        )
+        .values("worker_id", "work_date")
+        .annotate(total=Sum("work_unit"))
+    )
+    reconcile_erp_ledger_count = len(report_rows)
+    actual_rows = (
+        LaborWorkLedger.objects.filter(
+            work_month=batch.year_month,
+            actual_project=batch.project,
+        )
+        .values("worker_id", "work_date")
+        .annotate(total=Sum("work_unit"))
+    )
+    report_map = {
+        _ledger_key(row["worker_id"], row["work_date"]): Decimal(row["total"] or 0)
+        for row in report_rows
+        if row["worker_id"] and Decimal(row["total"] or 0) > 0
+    }
+    actual_map = {
+        _ledger_key(row["worker_id"], row["work_date"]): Decimal(row["total"] or 0)
+        for row in actual_rows
+        if row["worker_id"] and Decimal(row["total"] or 0) > 0
+    }
+    reconcile_erp_worked_count = len(set(report_map.keys()) | set(actual_map.keys()))
+
+    results = []
+    status_counts = {
+        LaborReconciliationStatus.MATCH: 0,
+        LaborReconciliationStatus.ERP_ONLY: 0,
+        LaborReconciliationStatus.CARD_ONLY: 0,
+        LaborReconciliationStatus.DIFF: 0,
+        LaborReconciliationStatus.UNMATCHED: 0,
+    }
+
+    def register_result(**kwargs):
+        status = kwargs["status"]
+        status_counts[status] = status_counts.get(status, 0) + 1
+        results.append(LaborReconciliationResult(**kwargs))
+
+    for card_day in card_days:
+        card_unit = Decimal(card_day.card_value or 0)
+        if card_day.worker_id is None or card_day.match_status == ElectronicCardMatchStatus.UNMATCHED:
+            if card_unit <= 0:
+                continue
+            register_result(
+                batch=batch,
+                year_month=batch.year_month,
+                project=batch.project,
+                worker=None,
+                work_date=card_day.work_date,
+                erp_work_unit=Decimal("0"),
+                card_work_unit=card_unit,
+                difference=Decimal("0") - card_unit,
+                status=LaborReconciliationStatus.UNMATCHED,
+                resolution="",
+                final_work_unit=None,
+                export_included=True,
+                export_value=None,
+                card_day=card_day,
+                export_note="",
+            )
+            continue
+
+        key = _ledger_key(card_day.worker_id, card_day.work_date)
+        erp_unit = report_map.pop(key, None)
+        if erp_unit is None:
+            erp_unit = actual_map.pop(key, Decimal("0"))
+        else:
+            actual_map.pop(key, None)
+
+        if card_unit <= 0 and erp_unit <= 0:
+            continue
+        if card_unit > 0 and erp_unit > 0:
+            status = (
+                LaborReconciliationStatus.MATCH
+                if erp_unit == card_unit
+                else LaborReconciliationStatus.DIFF
+            )
+        elif erp_unit > 0:
+            status = LaborReconciliationStatus.ERP_ONLY
+        else:
+            status = LaborReconciliationStatus.CARD_ONLY
+
+        register_result(
+            batch=batch,
+            year_month=batch.year_month,
+            project=batch.project,
+            worker=card_day.worker,
+            work_date=card_day.work_date,
+            erp_work_unit=erp_unit,
+            card_work_unit=card_unit,
+            difference=erp_unit - card_unit,
+            status=status,
+            resolution=(
+                LaborReconciliationResolution.ERP
+                if status == LaborReconciliationStatus.MATCH
+                else ""
+            ),
+            final_work_unit=erp_unit if status == LaborReconciliationStatus.MATCH else None,
+            export_included=True,
+            export_value=erp_unit if status == LaborReconciliationStatus.MATCH else None,
+            export_note="",
+            card_day=card_day,
+        )
+
+    remaining_keys = set(report_map.keys()) | set(actual_map.keys())
+    workers = {
+        worker.id: worker
+        for worker in WorkerMaster.objects.filter(id__in=[key[0] for key in remaining_keys if key[0]])
+    }
+    for key in sorted(remaining_keys, key=lambda item: (item[1], item[0] or 0)):
+        erp_unit = report_map.get(key)
+        if erp_unit is None:
+            erp_unit = actual_map.get(key, Decimal("0"))
+        if erp_unit <= 0:
+            continue
+        worker_id, work_date = key
+        register_result(
+            batch=batch,
+            year_month=batch.year_month,
+            project=batch.project,
+            worker=workers.get(worker_id),
+            work_date=work_date,
+            erp_work_unit=erp_unit,
+            card_work_unit=Decimal("0"),
+            difference=erp_unit,
+            status=LaborReconciliationStatus.ERP_ONLY,
+            resolution="",
+            final_work_unit=None,
+            export_included=True,
+            export_value=None,
+            export_note="",
+            card_day=None,
+        )
+
+    with transaction.atomic():
+        batch.reconciliation_results.all().delete()
+        LaborReconciliationResult.objects.bulk_create(results)
+        no_result_reason = ""
+        if not results:
+            if reconcile_card_worked_day_count == 0 and reconcile_erp_worked_count == 0:
+                no_result_reason = "전자카드 출역값과 ERP 원장이 모두 없습니다."
+            elif reconcile_card_worked_day_count > 0 and reconcile_erp_worked_count == 0:
+                no_result_reason = "전자카드 출역값은 있으나 대사 결과가 생성되지 않았습니다. 점검 필요."
+            elif reconcile_card_worked_day_count == 0 and reconcile_erp_worked_count > 0:
+                no_result_reason = "ERP 원장은 있으나 대사 결과가 생성되지 않았습니다. 점검 필요."
+
+        updated_summary = {
+            **(batch.header_check_summary or {}),
+            "reconcile_card_worked_day_count": reconcile_card_worked_day_count,
+            "reconcile_erp_ledger_count": reconcile_erp_ledger_count,
+            "reconcile_erp_worked_count": reconcile_erp_worked_count,
+            "reconciliation_total_count": len(results),
+            "reconciliation_match_count": status_counts[LaborReconciliationStatus.MATCH],
+            "reconciliation_erp_only_count": status_counts[LaborReconciliationStatus.ERP_ONLY],
+            "reconciliation_card_only_count": status_counts[LaborReconciliationStatus.CARD_ONLY],
+            "reconciliation_diff_count": status_counts[LaborReconciliationStatus.DIFF],
+            "reconciliation_unmatched_count": status_counts[LaborReconciliationStatus.UNMATCHED],
+            "reconciliation_no_result_reason": no_result_reason,
+            "reconciled_at": timezone.now().isoformat(),
+        }
+        batch.header_check_summary = updated_summary
+        batch.save(update_fields=["header_check_summary", "updated_at"])
+        _log_action_safe(
+            actor=actor,
+            action=ELECTRONIC_CARD_RECONCILE,
+            object_id=batch.id,
+            summary=f"ElectronicCardImportBatch reconcile: {batch.id}",
+            metadata={
+                "batch_id": batch.id,
+                "year_month": batch.year_month.isoformat(),
+                "project_id": batch.project_id,
+                "total_count": len(results),
+                "match_count": status_counts[LaborReconciliationStatus.MATCH],
+                "erp_only_count": status_counts[LaborReconciliationStatus.ERP_ONLY],
+                "card_only_count": status_counts[LaborReconciliationStatus.CARD_ONLY],
+                "diff_count": status_counts[LaborReconciliationStatus.DIFF],
+                "unmatched_count": status_counts[LaborReconciliationStatus.UNMATCHED],
+            },
+            object_type="ElectronicCardImportBatch",
+        )
+    return batch
+
+
+def _resolve_reconciliation_action(action):
+    value = str(action or "").strip().upper()
+    mapping = {
+        "USE_ERP": LaborReconciliationResolution.ERP,
+        "ERP": LaborReconciliationResolution.ERP,
+        "USE_CARD": LaborReconciliationResolution.CARD,
+        "CARD": LaborReconciliationResolution.CARD,
+        "MANUAL": LaborReconciliationResolution.MANUAL,
+        "EXCLUDE": LaborReconciliationResolution.EXCLUDED,
+        "EXCLUDED": LaborReconciliationResolution.EXCLUDED,
+    }
+    return mapping.get(value, value)
+
+
+def _ensure_reconciliation_batch_editable(batch):
+    if batch.status in {
+        ElectronicCardImportBatchStatus.CONFIRMED,
+        ElectronicCardImportBatchStatus.DISCARDED,
+    }:
+        raise ValidationError("확정 또는 폐기된 배치는 수정할 수 없습니다.")
+
+
+def resolve_labor_reconciliation_result(
+    result,
+    action,
+    actor,
+    final_work_unit=None,
+    comment="",
+    export_note="",
+):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(result, LaborReconciliationResult):
+        result = LaborReconciliationResult.objects.select_related("batch").filter(id=result).first()
+    if result is None:
+        raise ValidationError("대사 결과를 찾을 수 없습니다.")
+    _ensure_reconciliation_batch_editable(result.batch)
+
+    resolution = _resolve_reconciliation_action(action)
+    comment = str(comment or "").strip()
+    export_note = str(export_note or "").strip()
+    original_status = result.status
+    requires_comment = original_status in {
+        LaborReconciliationStatus.ERP_ONLY,
+        LaborReconciliationStatus.CARD_ONLY,
+        LaborReconciliationStatus.DIFF,
+        LaborReconciliationStatus.UNMATCHED,
+    }
+    if requires_comment and not comment:
+        raise ValidationError("비일치 대사 결과는 HQ 의견을 입력해 주세요.")
+
+    new_final_work_unit = None
+    export_included = True
+    export_value = None
+    if resolution == LaborReconciliationResolution.ERP:
+        new_final_work_unit = result.erp_work_unit
+        export_value = result.erp_work_unit
+    elif resolution == LaborReconciliationResolution.CARD:
+        new_final_work_unit = result.card_work_unit
+        export_value = result.card_work_unit
+    elif resolution == LaborReconciliationResolution.MANUAL:
+        if final_work_unit in (None, ""):
+            raise ValidationError("수동 조정은 최종 공수를 입력해 주세요.")
+        new_final_work_unit = Decimal(str(final_work_unit))
+        if new_final_work_unit < 0:
+            raise ValidationError("최종 공수는 0 이상이어야 합니다.")
+        export_value = new_final_work_unit
+    elif resolution == LaborReconciliationResolution.EXCLUDED:
+        if not comment:
+            raise ValidationError("제외 처리 사유를 입력해 주세요.")
+        new_final_work_unit = Decimal("0")
+        export_included = False
+        export_value = Decimal("0")
+    else:
+        raise ValidationError("처리 방식을 확인해 주세요.")
+
+    result.resolution = resolution
+    result.final_work_unit = new_final_work_unit
+    result.export_included = export_included
+    result.export_value = export_value
+    result.export_note = export_note
+    result.hq_comment = comment
+    result.resolved_by = actor
+    result.resolved_at = timezone.now()
+    if original_status != LaborReconciliationStatus.MATCH:
+        result.status = LaborReconciliationStatus.RESOLVED
+    result.save(
+        update_fields=[
+            "status",
+            "resolution",
+            "final_work_unit",
+            "hq_comment",
+            "resolved_by",
+            "resolved_at",
+            "export_included",
+            "export_value",
+            "export_note",
+            "updated_at",
+        ]
+    )
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_RECONCILIATION_RESOLVE,
+        object_id=result.id,
+        summary=f"Labor reconciliation resolve: {result.id}",
+        metadata={
+            "result_id": result.id,
+            "batch_id": result.batch_id,
+            "old_status": original_status,
+            "new_status": result.status,
+            "resolution": result.resolution,
+            "erp_work_unit": str(result.erp_work_unit),
+            "card_work_unit": str(result.card_work_unit),
+            "final_work_unit": str(result.final_work_unit or ""),
+            "export_included": result.export_included,
+        },
+        object_type="LaborReconciliationResult",
+    )
+    return result
+
+
+def bulk_resolve_labor_reconciliation_results(
+    result_ids,
+    action,
+    actor,
+    comment,
+    final_work_unit=None,
+):
+    require_role(actor, [Role.HQ, Role.CEO])
+    results = list(LaborReconciliationResult.objects.filter(id__in=result_ids).select_related("batch"))
+    if not results:
+        raise ValidationError("선택한 대사 결과가 없습니다.")
+    with transaction.atomic():
+        for result in results:
+            resolve_labor_reconciliation_result(
+                result,
+                action,
+                actor,
+                final_work_unit=final_work_unit,
+                comment=comment,
+            )
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_RECONCILIATION_BULK_RESOLVE,
+        object_id=results[0].batch_id,
+        summary=f"Labor reconciliation bulk resolve: {results[0].batch_id}",
+        metadata={
+            "batch_id": results[0].batch_id,
+            "result_count": len(results),
+            "resolution": _resolve_reconciliation_action(action),
+        },
+        object_type="ElectronicCardImportBatch",
+    )
+    return len(results)
+
+
+def match_reconciliation_worker(result, worker, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(result, LaborReconciliationResult):
+        result = (
+            LaborReconciliationResult.objects.select_related("batch", "card_day__raw")
+            .filter(id=result)
+            .first()
+        )
+    if result is None:
+        raise ValidationError("대사 결과를 찾을 수 없습니다.")
+    _ensure_reconciliation_batch_editable(result.batch)
+    if result.status != LaborReconciliationStatus.UNMATCHED or result.card_day is None:
+        raise ValidationError("근로자 매칭은 미매칭 전자카드 행에서만 처리할 수 있습니다.")
+    if not isinstance(worker, WorkerMaster):
+        worker = WorkerMaster.objects.filter(id=worker).first()
+    if worker is None:
+        raise ValidationError("매칭할 근로자를 선택해 주세요.")
+    if result.batch.reconciliation_results.exclude(id=result.id).filter(resolution__gt="").exists():
+        raise ValidationError("이미 처리된 대사 결과가 있어 근로자 매칭 전에 안전하게 다시 정리할 수 없습니다.")
+
+    raw = result.card_day.raw
+    raw.matched_worker = worker
+    raw.match_status = ElectronicCardMatchStatus.MATCHED
+    raw.save(update_fields=["matched_worker", "match_status", "updated_at"])
+    raw.days.update(worker=worker, match_status=ElectronicCardMatchStatus.MATCHED)
+    reconcile_electronic_card_import_batch(result.batch, actor)
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_RECONCILIATION_WORKER_MATCH,
+        object_id=result.id,
+        summary=f"Labor reconciliation worker match: {result.id}",
+        metadata={
+            "result_id": result.id,
+            "batch_id": result.batch_id,
+            "worker_id": worker.id,
+        },
+        object_type="LaborReconciliationResult",
+    )
+    return result.batch
+
+
+def _get_confirmed_row_payload(result, actor):
+    resolution = result.resolution or ""
+    if result.status == LaborReconciliationStatus.MATCH:
+        source_basis = LaborConfirmedWorkSourceBasis.ERP
+        final_work_unit = result.final_work_unit or result.erp_work_unit
+        export_included = True
+        export_value = (
+            result.export_value if result.export_value is not None else final_work_unit
+        )
+    elif resolution == LaborReconciliationResolution.ERP:
+        source_basis = LaborConfirmedWorkSourceBasis.ERP
+        final_work_unit = (
+            result.final_work_unit
+            if result.final_work_unit is not None
+            else result.erp_work_unit
+        )
+        export_included = result.export_included
+        export_value = (
+            result.export_value if result.export_value is not None else final_work_unit
+        )
+    elif resolution == LaborReconciliationResolution.CARD:
+        source_basis = LaborConfirmedWorkSourceBasis.CARD
+        final_work_unit = (
+            result.final_work_unit
+            if result.final_work_unit is not None
+            else result.card_work_unit
+        )
+        export_included = result.export_included
+        export_value = (
+            result.export_value if result.export_value is not None else final_work_unit
+        )
+    elif resolution == LaborReconciliationResolution.MANUAL:
+        source_basis = LaborConfirmedWorkSourceBasis.MANUAL
+        final_work_unit = result.final_work_unit
+        export_included = result.export_included
+        export_value = (
+            result.export_value if result.export_value is not None else final_work_unit
+        )
+    elif resolution == LaborReconciliationResolution.EXCLUDED:
+        source_basis = LaborConfirmedWorkSourceBasis.EXCLUDED
+        final_work_unit = Decimal("0")
+        export_included = False
+        export_value = Decimal("0")
+    else:
+        raise ValidationError("미해결 대사 결과가 남아 있어 확정할 수 없습니다.")
+
+    if source_basis != LaborConfirmedWorkSourceBasis.EXCLUDED:
+        if result.worker_id is None:
+            raise ValidationError("근로자 미매칭 결과가 남아 있어 확정할 수 없습니다.")
+        if final_work_unit is None:
+            raise ValidationError("최종 공수가 확정되지 않은 결과가 있어 확정할 수 없습니다.")
+
+    ledger = None
+    if result.worker_id:
+        ledger = (
+            LaborWorkLedger.objects.filter(
+                worker_id=result.worker_id,
+                work_date=result.work_date,
+                report_project=result.project,
+            )
+            .select_related("actual_project")
+            .order_by("id")
+            .first()
+        )
+    actual_project = (
+        ledger.actual_project if ledger and ledger.actual_project_id else result.project
+    )
+    if result.card_day_id and result.card_day and result.card_day.card_project_id:
+        card_project = result.card_day.card_project
+    else:
+        card_project = result.batch.project if result.batch.project_id else None
+
+    return {
+        "batch": result.batch,
+        "year_month": result.year_month,
+        "worker_id": result.worker_id,
+        "actual_project": actual_project,
+        "report_project": result.project,
+        "card_project": card_project,
+        "work_date": result.work_date,
+        "final_work_unit": Decimal(str(final_work_unit or 0)),
+        "source_basis": source_basis,
+        "reconciliation_result": result,
+        "export_included": export_included,
+        "export_value": Decimal(str(export_value or 0)),
+        "export_note": result.export_note or "",
+        "confirmed_by": actor,
+    }
+
+
+def generate_labor_confirmed_work_days(batch, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(batch, ElectronicCardImportBatch):
+        batch = (
+            ElectronicCardImportBatch.objects.select_related("project")
+            .filter(id=batch)
+            .first()
+        )
+    if batch is None:
+        raise ValidationError("전자카드 업로드 배치를 찾을 수 없습니다.")
+    _ensure_reconciliation_batch_editable(batch)
+    if batch.confirmed_work_days.exists():
+        raise ValidationError("이미 확정 근로내역이 생성되었습니다.")
+
+    results = list(
+        batch.reconciliation_results.select_related(
+            "worker",
+            "project",
+            "card_day__card_project",
+            "batch",
+        ).order_by("work_date", "id")
+    )
+    if not results:
+        raise ValidationError("대사 결과가 없어 확정할 수 없습니다.")
+
+    unresolved_exists = any(
+        item.status
+        in {
+            LaborReconciliationStatus.ERP_ONLY,
+            LaborReconciliationStatus.CARD_ONLY,
+            LaborReconciliationStatus.DIFF,
+            LaborReconciliationStatus.UNMATCHED,
+        }
+        and not item.resolution
+        and item.final_work_unit is None
+        for item in results
+    )
+    if unresolved_exists:
+        raise ValidationError("미해결 대사 결과가 남아 있어 확정할 수 없습니다.")
+
+    _assert_month_open(
+        batch.project,
+        batch.year_month,
+        message_prefix="마감된 월은 확정 근로내역을 생성할 수 없습니다.",
+    )
+    confirmed_at = timezone.now()
+    confirmed_rows = []
+    for result in results:
+        _assert_month_open(
+            result.project,
+            result.work_date,
+            message_prefix="마감된 월은 확정 근로내역을 생성할 수 없습니다.",
+        )
+        payload = _get_confirmed_row_payload(result, actor)
+        payload["confirmed_at"] = confirmed_at
+        confirmed_rows.append(LaborConfirmedWorkDay(**payload))
+
+    LaborConfirmedWorkDay.objects.bulk_create(confirmed_rows)
+    included_count = sum(1 for row in confirmed_rows if row.export_included)
+    excluded_count = len(confirmed_rows) - included_count
+    total_final_work_unit = sum(
+        (row.final_work_unit or Decimal("0")) for row in confirmed_rows
+    )
+    batch.header_check_summary = {
+        **(batch.header_check_summary or {}),
+        "confirmed_work_day_count": len(confirmed_rows),
+        "confirmed_included_count": included_count,
+        "confirmed_excluded_count": excluded_count,
+        "confirmed_total_final_work_unit": str(total_final_work_unit),
+        "confirmed_generated_at": confirmed_at.isoformat(),
+    }
+    batch.save(update_fields=["header_check_summary", "updated_at"])
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_CONFIRMED_WORKDAY_GENERATE,
+        object_id=batch.id,
+        summary=f"LaborConfirmedWorkDay generate: {batch.id}",
+        metadata={
+            "batch_id": batch.id,
+            "year_month": batch.year_month.isoformat(),
+            "project_id": batch.project_id,
+            "created_count": len(confirmed_rows),
+            "included_count": included_count,
+            "excluded_count": excluded_count,
+            "total_final_work_unit": str(total_final_work_unit),
+            "confirmed_by_id": actor.id if actor else None,
+        },
+        object_type="ElectronicCardImportBatch",
+    )
+    return {
+        "created_count": len(confirmed_rows),
+        "included_count": included_count,
+        "excluded_count": excluded_count,
+        "total_final_work_unit": total_final_work_unit,
+    }
+
+
+def confirm_electronic_card_reconciliation_batch(batch, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(batch, ElectronicCardImportBatch):
+        batch = (
+            ElectronicCardImportBatch.objects.select_related("project")
+            .filter(id=batch)
+            .first()
+        )
+    if batch is None:
+        raise ValidationError("전자카드 업로드 배치를 찾을 수 없습니다.")
+    _ensure_reconciliation_batch_editable(batch)
+
+    with transaction.atomic():
+        generation = generate_labor_confirmed_work_days(batch, actor)
+        batch.status = ElectronicCardImportBatchStatus.CONFIRMED
+        batch.confirmed_by = actor
+        batch.confirmed_at = timezone.now()
+        batch.save(update_fields=["status", "confirmed_by", "confirmed_at", "updated_at"])
+
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_ECARD_RECONCILIATION_CONFIRM,
+        object_id=batch.id,
+        summary=f"ElectronicCardImportBatch reconciliation confirm: {batch.id}",
+        metadata={
+            "batch_id": batch.id,
+            "year_month": batch.year_month.isoformat(),
+            "project_id": batch.project_id,
+            "result_count": batch.reconciliation_results.count(),
+            "created_count": generation["created_count"],
+        },
+        object_type="ElectronicCardImportBatch",
+    )
+    return batch
+
+
+def _format_export_cell_value(value):
+    amount = Decimal(str(value or 0)).quantize(Decimal("0.01"))
+    if amount <= 0:
+        return None
+    if amount == amount.quantize(Decimal("1")):
+        return int(amount)
+    return float(amount)
+
+
+def _normalize_excel_compare_value(value):
+    if value in (None, ""):
+        return ""
+    if isinstance(value, Decimal):
+        return str(value.quantize(Decimal("0.01")).normalize())
+    if isinstance(value, (int, float)):
+        return str(Decimal(str(value)).quantize(Decimal("0.01")).normalize())
+    return str(value).strip()
+
+
+def _set_excel_cell_value(cell, new_value, *, force_write=False):
+    current = _normalize_excel_compare_value(cell.value)
+    incoming = _normalize_excel_compare_value(new_value)
+    if current == incoming and not force_write:
+        return False
+    previous = cell.value
+    cell.value = new_value
+    return previous != new_value
+
+
+def _build_export_note_summary(confirmed_rows):
+    notes = []
+    for row in confirmed_rows:
+        note = str(row.export_note or "").strip()
+        if note and note not in notes:
+            notes.append(note)
+    if not confirmed_rows:
+        return "", ""
+    excluded_rows = [row for row in confirmed_rows if not row.export_included]
+    exclusion_reason = ""
+    remark_parts = []
+    if excluded_rows and len(excluded_rows) == len(confirmed_rows):
+        exclusion_reason = notes[0] if notes else "신고 제외"
+    elif excluded_rows:
+        remark_parts.append("일부 일자 신고 제외")
+    if notes:
+        remark_parts.append("; ".join(notes[:3]))
+    return exclusion_reason, " / ".join(remark_parts)
+
+
+def _build_cwma_export_filename(batch):
+    project_part = (batch.project.code or "").strip() or str(batch.project_id)
+    return f"cwma_card_reupload_{batch.year_month.strftime('%Y%m')}_{project_part}_{batch.id}.xlsx"
+
+
+def generate_cwma_card_reupload_excel(source_batch, actor, note=""):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(source_batch, ElectronicCardImportBatch):
+        source_batch = (
+            ElectronicCardImportBatch.objects.select_related("project")
+            .filter(id=source_batch)
+            .first()
+        )
+    if source_batch is None:
+        raise ValidationError("전자카드 업로드 배치를 찾을 수 없습니다.")
+    if source_batch.status != ElectronicCardImportBatchStatus.CONFIRMED:
+        raise ValidationError("확정된 배치만 재업로드 엑셀을 생성할 수 있습니다.")
+    if not source_batch.source_file:
+        raise ValidationError("원본 전자카드 파일이 없어 재업로드 엑셀을 생성할 수 없습니다.")
+
+    confirmed_rows = list(
+        source_batch.confirmed_work_days.select_related(
+            "worker",
+            "reconciliation_result__card_day__raw",
+        ).order_by("work_date", "id")
+    )
+    if not confirmed_rows:
+        raise ValidationError("확정 근로내역이 없어 재업로드용 엑셀을 생성할 수 없습니다.")
+
+    source_batch.source_file.open("rb")
+    try:
+        workbook = load_workbook(source_batch.source_file, read_only=False, data_only=False)
+    except Exception as exc:
+        logger.exception("Failed to open source workbook for CWMA reupload export.")
+        raise ValidationError("원본 전자카드 파일을 다시 열지 못했습니다.") from exc
+
+    sheet = _first_visible_sheet(workbook)
+    summary = source_batch.header_check_summary or {}
+    header_row_index = int(summary.get("header_row_index") or 0)
+    if header_row_index <= 0 or header_row_index > sheet.max_row:
+        best_score = -1
+        for row_index in range(1, min(sheet.max_row, 30) + 1):
+            row_values = [sheet.cell(row=row_index, column=col).value for col in range(1, sheet.max_column + 1)]
+            field_map, day_columns = _resolve_header_map(row_values)
+            score = len(field_map) + len(day_columns)
+            if score > best_score:
+                best_score = score
+                header_row_index = row_index
+    if header_row_index <= 0:
+        raise ValidationError("원본 전자카드 파일의 헤더 행을 찾지 못했습니다.")
+
+    header_values = [sheet.cell(row=header_row_index, column=col).value for col in range(1, sheet.max_column + 1)]
+    field_map, day_columns = _resolve_header_map(header_values)
+
+    raw_rows = list(
+        source_batch.raw_rows.select_related("matched_worker").order_by("row_no", "id")
+    )
+    confirmed_by_raw_id = {}
+    for row in confirmed_rows:
+        raw_id = None
+        if row.reconciliation_result_id and row.reconciliation_result and row.reconciliation_result.card_day_id:
+            raw_id = row.reconciliation_result.card_day.raw_id
+        if raw_id:
+            confirmed_by_raw_id.setdefault(raw_id, []).append(row)
+
+    included_count = sum(1 for row in confirmed_rows if row.export_included)
+    excluded_count = len(confirmed_rows) - included_count
+    total_export_work_unit = sum(
+        (
+            row.export_value
+            if row.export_included and row.export_value is not None
+            else row.final_work_unit
+            if row.export_included
+            else Decimal("0")
+        )
+        for row in confirmed_rows
+    )
+
+    changed_count = 0
+    for raw in raw_rows:
+        if raw.row_no <= 0 or raw.row_no > sheet.max_row:
+            continue
+        row_confirmed = confirmed_by_raw_id.get(raw.id, [])
+        if not row_confirmed:
+            continue
+        by_day = {item.work_date.day: item for item in row_confirmed}
+        last_day = monthrange(raw.work_month.year, raw.work_month.month)[1]
+        for day in range(1, 32):
+            col_index = day_columns.get(day)
+            if col_index is None:
+                continue
+            cell = sheet.cell(row=raw.row_no, column=col_index + 1)
+            confirmed = by_day.get(day)
+            if day > last_day:
+                continue
+            if confirmed:
+                export_value = (
+                    confirmed.export_value
+                    if confirmed.export_value is not None
+                    else confirmed.final_work_unit
+                )
+                new_value = (
+                    _format_export_cell_value(export_value)
+                    if confirmed.export_included
+                    else None
+                )
+            elif raw.matched_worker_id:
+                new_value = None
+            else:
+                new_value = cell.value
+            if _set_excel_cell_value(cell, new_value, force_write=confirmed is not None):
+                changed_count += 1
+
+        included_work_days = [
+            item for item in row_confirmed if item.export_included and Decimal(str(item.export_value if item.export_value is not None else item.final_work_unit or 0)) > 0
+        ]
+        day_count_value = len(included_work_days)
+        exclusion_reason, note_summary = _build_export_note_summary(row_confirmed)
+        if "reported_days" in field_map:
+            if _set_excel_cell_value(
+                sheet.cell(row=raw.row_no, column=field_map["reported_days"] + 1),
+                day_count_value if day_count_value > 0 else None,
+            ):
+                changed_count += 1
+        if "confirmed_days" in field_map:
+            if _set_excel_cell_value(
+                sheet.cell(row=raw.row_no, column=field_map["confirmed_days"] + 1),
+                day_count_value if day_count_value > 0 else None,
+            ):
+                changed_count += 1
+        if "exclusion_reason" in field_map:
+            if _set_excel_cell_value(
+                sheet.cell(row=raw.row_no, column=field_map["exclusion_reason"] + 1),
+                exclusion_reason or None,
+            ):
+                changed_count += 1
+        if "note" in field_map:
+            if _set_excel_cell_value(
+                sheet.cell(row=raw.row_no, column=field_map["note"] + 1),
+                note_summary or None,
+            ):
+                changed_count += 1
+
+    generated_filename = _build_cwma_export_filename(source_batch)
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    with transaction.atomic():
+        export_batch = LaborExcelExportBatch.objects.create(
+            export_type=LaborExcelExportType.CWMA_CARD_REUPLOAD,
+            year_month=source_batch.year_month,
+            project=source_batch.project,
+            source_batch=source_batch,
+            generated_file=ContentFile(output.getvalue(), name=generated_filename),
+            original_filename=source_batch.original_filename,
+            generated_filename=generated_filename,
+            generated_by=actor,
+            status=LaborExcelExportStatus.GENERATED,
+            changed_count=changed_count,
+            included_count=included_count,
+            excluded_count=excluded_count,
+            total_export_work_unit=total_export_work_unit,
+            note=str(note or "").strip(),
+        )
+
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_EXCEL_EXPORT_GENERATE,
+        object_id=export_batch.id,
+        summary=f"LaborExcelExportBatch generate: {export_batch.id}",
+        metadata={
+            "export_type": export_batch.export_type,
+            "export_id": export_batch.id,
+            "source_batch_id": source_batch.id,
+            "year_month": source_batch.year_month.isoformat(),
+            "project_id": source_batch.project_id,
+            "generated_filename": export_batch.generated_filename,
+            "changed_count": changed_count,
+            "included_count": included_count,
+            "excluded_count": excluded_count,
+            "total_export_work_unit": str(total_export_work_unit),
+        },
+        object_type="LaborExcelExportBatch",
+    )
+    return export_batch
+
+
+def register_labor_excel_export_download(export_batch, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not isinstance(export_batch, LaborExcelExportBatch):
+        export_batch = LaborExcelExportBatch.objects.select_related("source_batch", "project").filter(id=export_batch).first()
+    if export_batch is None:
+        raise ValidationError("엑셀 내보내기 배치를 찾을 수 없습니다.")
+    if not export_batch.generated_file:
+        raise ValidationError("생성된 엑셀 파일이 없습니다.")
+    download_time = timezone.now()
+    export_batch.status = LaborExcelExportStatus.DOWNLOADED
+    export_batch.downloaded_by = actor
+    export_batch.downloaded_at = download_time
+    export_batch.save(update_fields=["status", "downloaded_by", "downloaded_at", "updated_at"])
+    _log_action_safe(
+        actor=actor,
+        action=LABOR_EXCEL_EXPORT_DOWNLOAD,
+        object_id=export_batch.id,
+        summary=f"LaborExcelExportBatch download: {export_batch.id}",
+        metadata={
+            "export_type": export_batch.export_type,
+            "export_id": export_batch.id,
+            "source_batch_id": export_batch.source_batch_id,
+            "downloaded_by_id": actor.id if actor else None,
+            "downloaded_at": download_time.isoformat(),
+        },
+        object_type="LaborExcelExportBatch",
+    )
+    return export_batch
+
+
+def create_electronic_card_import_batch(data, file, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    project = _resolve_project(data.get("project"))
+    if project is None:
+        raise ValidationError({"project": "현장을 선택해 주세요."})
+
+    year_month = _parse_year_month_value(data.get("year_month"))
+    if year_month is None:
+        raise ValidationError({"year_month": "기준월 형식은 YYYY-MM 이어야 합니다."})
+
+    original_filename = str(getattr(file, "name", "") or "").strip()
+    if not original_filename.lower().endswith(".xlsx"):
+        raise ValidationError({"source_file": "전자카드 Excel은 .xlsx 파일만 업로드할 수 있습니다."})
+
+    try:
+        header_summary = _build_e_card_header_summary(file, selected_month=year_month)
+    except ValidationError:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to read electronic card workbook header.")
+        raise ValidationError("전자카드 파일 헤더를 확인하지 못했습니다. 파일 형식을 확인해 주세요.") from exc
+
+    file.seek(0)
+    with transaction.atomic():
+        batch = ElectronicCardImportBatch.objects.create(
+            year_month=year_month,
+            project=project,
+            cwma_project_name=header_summary.get("cwma_project_name", ""),
+            deduction_join_no=header_summary.get("deduction_join_no", ""),
+            company_name=header_summary.get("company_name", ""),
+            source_file=file,
+            original_filename=original_filename,
+            status=ElectronicCardImportBatchStatus.PARSE_READY,
+            uploaded_by=actor,
+            header_check_summary=header_summary,
+        )
+        _log_action_safe(
+            actor=actor,
+            action=ELECTRONIC_CARD_IMPORT_UPLOAD,
+            object_id=batch.id,
+            summary=f"ElectronicCardImportBatch upload: {batch.id}",
+            metadata={
+                "batch_id": batch.id,
+                "year_month": batch.year_month.isoformat(),
+                "project_id": batch.project_id,
+                "original_filename": batch.original_filename,
+                "status": batch.status,
+                "header_check_summary": {
+                    "sheet_name": header_summary.get("sheet_name", ""),
+                    "header_row_index": header_summary.get("header_row_index", 0),
+                    "detected_headers": sorted(header_summary.get("detected_headers", {}).values()),
+                    "missing_optional_headers": header_summary.get("missing_optional_headers", []),
+                    "day_column_count": header_summary.get("day_column_count", 0),
+                    "warnings": header_summary.get("warnings", []),
+                    "workbook_months": header_summary.get("workbook_months", []),
+                },
+            },
+            object_type="ElectronicCardImportBatch",
+        )
+    return batch
+
+
+def _assert_labor_work_ledger_open(*, actual_project, report_project, work_date, message_prefix: str):
+    _assert_month_open(actual_project, work_date, message_prefix=message_prefix)
+    if report_project and report_project != actual_project:
+        _assert_month_open(report_project, work_date, message_prefix=message_prefix)
+
+
+def _prepare_labor_work_ledger_data(data: dict) -> dict:
+    worker = _resolve_worker(data.get("worker"))
+    actual_project = _resolve_project(data.get("actual_project"))
+    report_project = _resolve_project(data.get("report_project")) or actual_project
+    labor_role = data.get("labor_role")
+    if labor_role and not isinstance(labor_role, LaborRole):
+        labor_role = LaborRole.objects.filter(id=labor_role).first()
+    timesheet_ref = _resolve_timesheet(data.get("timesheet_ref"))
+    cost_ref = _resolve_cost_actual(data.get("cost_ref"))
+    work_date = data.get("work_date")
+
+    if timesheet_ref is not None:
+        if work_date is None:
+            work_date = timesheet_ref.work_date
+        if actual_project is None:
+            actual_project = timesheet_ref.project
+        if report_project is None:
+            report_project = actual_project
+        if labor_role is None:
+            line = timesheet_ref.lines.select_related("labor_role").first()
+            if line is not None:
+                labor_role = line.labor_role
+
+    if cost_ref is not None:
+        if work_date is None:
+            work_date = cost_ref.report_date
+        if actual_project is None:
+            actual_project = cost_ref.project
+        if report_project is None:
+            report_project = actual_project
+
+    if worker is None:
+        raise ValidationError({"worker": "근로자를 선택해 주세요."})
+    if work_date is None:
+        raise ValidationError({"work_date": "근무일을 입력해 주세요."})
+    if actual_project is None:
+        raise ValidationError({"actual_project": "실제 근무 프로젝트를 선택해 주세요."})
+    if report_project is None:
+        report_project = actual_project
+    if labor_role is None:
+        raise ValidationError({"labor_role": "노무 역할을 선택해 주세요."})
+
+    source = str(data.get("source") or "").strip() or LaborWorkLedgerSource.MANUAL
+    if source == LaborWorkLedgerSource.MANUAL and timesheet_ref is not None:
+        source = LaborWorkLedgerSource.TIMESHEET
+    elif source == LaborWorkLedgerSource.MANUAL and cost_ref is not None:
+        source = LaborWorkLedgerSource.COST
+
+    status = str(data.get("status") or "").strip() or LaborWorkLedgerStatus.DRAFT
+    work_unit = _coerce_decimal(data.get("work_unit"), field_name="work_unit")
+    work_hours = _coerce_decimal(data.get("work_hours"), field_name="work_hours")
+    unit_wage = _coerce_int(data.get("unit_wage"), field_name="unit_wage")
+    income_tax = _coerce_int(data.get("income_tax"), field_name="income_tax")
+    local_tax = _coerce_int(data.get("local_tax"), field_name="local_tax")
+    employment_insurance = _coerce_int(
+        data.get("employment_insurance"), field_name="employment_insurance"
+    )
+    pension = _coerce_int(data.get("pension"), field_name="pension")
+    health_insurance = _coerce_int(
+        data.get("health_insurance"), field_name="health_insurance"
+    )
+
+    return {
+        "worker": worker,
+        "work_date": work_date,
+        "actual_project": actual_project,
+        "report_project": report_project,
+        "labor_role": labor_role,
+        "work_unit": work_unit,
+        "work_hours": work_hours,
+        "unit_wage": unit_wage,
+        "income_tax": income_tax,
+        "local_tax": local_tax,
+        "employment_insurance": employment_insurance,
+        "pension": pension,
+        "health_insurance": health_insurance,
+        "detail_work_type": str(data.get("detail_work_type") or "").strip(),
+        "source": source,
+        "status": status,
+        "timesheet_ref": timesheet_ref,
+        "cost_ref": cost_ref,
+    }
+
+
+def create_labor_work_ledger(data, *, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    payload = _prepare_labor_work_ledger_data(data)
+    _assert_labor_work_ledger_open(
+        actual_project=payload["actual_project"],
+        report_project=payload["report_project"],
+        work_date=payload["work_date"],
+        message_prefix="노무 작업 원장 등록은 불가합니다.",
+    )
+    ledger = LaborWorkLedger.objects.create(**payload)
+    try:
+        log_action(
+            actor=actor,
+            action="LABOR_WORK_LEDGER_CREATE",
+            object_type="LaborWorkLedger",
+            object_id=ledger.id,
+            after=_labor_work_ledger_snapshot(ledger),
+            meta={"ledger_id": ledger.id, "worker_id": ledger.worker_id},
+        )
+    except Exception:
+        logger.warning("AuditLog failed for LABOR_WORK_LEDGER_CREATE.", exc_info=True)
+    return ledger
+
+
+def update_labor_work_ledger(ledger: LaborWorkLedger, data, *, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    before = _labor_work_ledger_snapshot(ledger)
+    _assert_labor_work_ledger_open(
+        actual_project=ledger.actual_project,
+        report_project=ledger.report_project,
+        work_date=ledger.work_date,
+        message_prefix="노무 작업 원장 수정은 불가합니다.",
+    )
+    payload = _prepare_labor_work_ledger_data(data)
+    _assert_labor_work_ledger_open(
+        actual_project=payload["actual_project"],
+        report_project=payload["report_project"],
+        work_date=payload["work_date"],
+        message_prefix="노무 작업 원장 수정은 불가합니다.",
+    )
+    for field_name, value in payload.items():
+        setattr(ledger, field_name, value)
+    ledger.save()
+    after = _labor_work_ledger_snapshot(ledger)
+    try:
+        log_action(
+            actor=actor,
+            action="LABOR_WORK_LEDGER_UPDATE",
+            object_type="LaborWorkLedger",
+            object_id=ledger.id,
+            before=before,
+            after=after,
+            meta={"ledger_id": ledger.id, "worker_id": ledger.worker_id},
+        )
+    except Exception:
+        logger.warning("AuditLog failed for LABOR_WORK_LEDGER_UPDATE.", exc_info=True)
+    return ledger
+
+
+def update_labor_reporting_project(ledger_ids, report_project, reason, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    if not ledger_ids:
+        raise ValidationError("변경할 원장을 선택해 주세요.")
+    new_report_project = _resolve_project(report_project)
+    if new_report_project is None:
+        raise ValidationError({"report_project": "신고용 현장을 선택해 주세요."})
+
+    reason = str(reason or "").strip()
+    ledgers = list(
+        LaborWorkLedger.objects.select_related(
+            "worker",
+            "actual_project",
+            "report_project",
+            "labor_role",
+        ).filter(id__in=ledger_ids)
+    )
+    if len(ledgers) != len(set(int(ledger_id) for ledger_id in ledger_ids)):
+        raise ValidationError("선택한 원장 중 일부를 찾을 수 없습니다.")
+
+    updated = []
+    with transaction.atomic():
+        for ledger in ledgers:
+            if ledger.status == LaborWorkLedgerStatus.CONFIRMED:
+                raise ValidationError("확정된 원장은 신고용 현장을 수정할 수 없습니다.")
+            if new_report_project != ledger.actual_project and not reason:
+                raise ValidationError("실제 현장과 다른 신고용 현장으로 변경할 때는 사유가 필요합니다.")
+            try:
+                _assert_labor_work_ledger_open(
+                    actual_project=ledger.actual_project,
+                    report_project=ledger.report_project,
+                    work_date=ledger.work_date,
+                    message_prefix="마감된 월은 수정할 수 없습니다. 정정으로 처리하세요.",
+                )
+                _assert_labor_work_ledger_open(
+                    actual_project=ledger.actual_project,
+                    report_project=new_report_project,
+                    work_date=ledger.work_date,
+                    message_prefix="마감된 월은 수정할 수 없습니다. 정정으로 처리하세요.",
+                )
+            except PermissionDenied as exc:
+                raise PermissionDenied("마감된 월은 수정할 수 없습니다. 정정으로 처리하세요.") from exc
+
+            old_report_project_id = ledger.report_project_id
+            if old_report_project_id == new_report_project.id:
+                continue
+            before = _labor_work_ledger_snapshot(ledger)
+            ledger.report_project = new_report_project
+            ledger.save()
+            after = _labor_work_ledger_snapshot(ledger)
+            try:
+                log_action(
+                    actor=actor,
+                    action="LABOR_REPORTING_PROJECT_UPDATE",
+                    object_type="LaborWorkLedger",
+                    object_id=ledger.id,
+                    before=before,
+                    after=after,
+                    meta={
+                        "ledger_id": ledger.id,
+                        "worker_id": ledger.worker_id,
+                        "work_date": str(ledger.work_date),
+                        "actual_project_id": ledger.actual_project_id,
+                        "old_report_project_id": old_report_project_id,
+                        "new_report_project_id": new_report_project.id,
+                        "reason": reason,
+                    },
+                )
+            except Exception:
+                logger.warning(
+                    "AuditLog failed for LABOR_REPORTING_PROJECT_UPDATE.",
+                    exc_info=True,
+                )
+            updated.append(ledger)
+    return updated
+
+
+def generate_labor_monthly_payroll(*, year: int, month: int, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    period = date_type(int(year), int(month), 1)
+    _assert_month_open(None, period, message_prefix="월 급여 집계 생성은 불가합니다.")
+
+    source_qs = LaborWorkLedger.objects.filter(
+        work_month=period,
+        status=LaborWorkLedgerStatus.CONFIRMED,
+    )
+    project_ids = set(
+        source_qs.values_list("actual_project_id", flat=True)
+    ) | set(source_qs.values_list("report_project_id", flat=True))
+    project_ids.discard(None)
+    if project_ids:
+        for project in Project.objects.filter(id__in=project_ids):
+            _assert_month_open(
+                project,
+                period,
+                message_prefix="월 급여 집계 생성은 불가합니다.",
+            )
+
+    aggregates = list(
+        source_qs.values("worker_id", "actual_project_id", "report_project_id").annotate(
+            total_work_unit=Sum("work_unit"),
+            gross_wage=Sum("gross_wage"),
+            income_tax=Sum("income_tax"),
+            local_tax=Sum("local_tax"),
+            employment_insurance=Sum("employment_insurance"),
+            pension=Sum("pension"),
+            health_insurance=Sum("health_insurance"),
+            net_pay=Sum("net_pay"),
+        )
+    )
+    worker_ids = [row["worker_id"] for row in aggregates]
+    workers = {
+        worker.id: worker
+        for worker in WorkerMaster.objects.filter(id__in=worker_ids).order_by("id")
+    }
+    existing = {
+        (
+            payroll.worker_id,
+            payroll.project_id,
+            payroll.report_project_id,
+        ): payroll
+        for payroll in LaborMonthlyPayroll.objects.filter(year_month=period)
+    }
+    created_count = 0
+    updated_count = 0
+    with transaction.atomic():
+        seen_keys = set()
+        for row in aggregates:
+            key = (
+                row["worker_id"],
+                row["actual_project_id"],
+                row["report_project_id"],
+            )
+            seen_keys.add(key)
+            payroll = existing.get(key)
+            worker = workers.get(row["worker_id"])
+            if payroll is None:
+                payroll = LaborMonthlyPayroll(
+                    year_month=period,
+                    worker_id=row["worker_id"],
+                    project_id=row["actual_project_id"],
+                    report_project_id=row["report_project_id"],
+                    payment_status=LaborMonthlyPayrollPaymentStatus.PENDING,
+                )
+                created_count += 1
+            else:
+                updated_count += 1
+            insurance_deductions = sum(
+                int(row.get(field_name) or 0)
+                for field_name in ("employment_insurance", "pension", "health_insurance")
+            )
+            payroll.total_work_unit = row["total_work_unit"] or Decimal("0")
+            payroll.gross_wage = int(row["gross_wage"] or 0)
+            payroll.income_tax = int(row["income_tax"] or 0)
+            payroll.local_tax = int(row["local_tax"] or 0)
+            payroll.insurance_deductions = insurance_deductions
+            payroll.net_pay = int(row["net_pay"] or 0)
+            payroll.bank_name = worker.bank_name if worker else ""
+            payroll.account_number_masked = (
+                worker.account_number_masked if worker else ""
+            )
+            payroll.save()
+        stale_qs = LaborMonthlyPayroll.objects.filter(year_month=period)
+        if seen_keys:
+            keep_q = Q()
+            for worker_id, project_id, report_project_id in seen_keys:
+                keep_q |= Q(
+                    worker_id=worker_id,
+                    project_id=project_id,
+                    report_project_id=report_project_id,
+                )
+            stale_qs = stale_qs.exclude(keep_q)
+        deleted_count = stale_qs.count()
+        if deleted_count:
+            stale_qs.delete()
+    _log_action_safe(
+        actor=actor,
+        action="LABOR_MONTHLY_PAYROLL_GENERATE",
+        object_id=0,
+        summary=f"LaborMonthlyPayroll generate: {period:%Y-%m}",
+        metadata={
+            "year": int(year),
+            "month": int(month),
+            "created_count": created_count,
+            "updated_count": updated_count,
+            "deleted_count": deleted_count,
+            "row_count": len(aggregates),
+        },
+        object_type="LaborMonthlyPayroll",
+    )
+    return {
+        "year_month": period,
+        "created_count": created_count,
+        "updated_count": updated_count,
+        "deleted_count": deleted_count,
+        "row_count": len(aggregates),
+    }
 
 
 def create_rate(data, *, actor):

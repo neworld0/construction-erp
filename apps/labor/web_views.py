@@ -4,6 +4,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import FileResponse
 from django.db import models
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,8 +17,27 @@ from apps.core.rbac.permissions import get_user_role, require_project_access, re
 from apps.cost.models import CostItem
 from apps.projects.models import Project
 
-from .forms import LaborRateForm, LaborRoleForm, PayrollBatchForm
+from .forms import (
+    ElectronicCardImportBatchFilterForm,
+    ElectronicCardImportBatchUploadForm,
+    LaborRateForm,
+    LaborRoleForm,
+    PayrollBatchForm,
+    WorkerMasterForm,
+    LaborWorkLedgerForm,
+)
 from .models import (
+    ElectronicCardImportBatch,
+    ElectronicCardImportBatchStatus,
+    LaborExcelExportBatch,
+    LaborConfirmedWorkDay,
+    LaborConfirmedWorkSourceBasis,
+    LaborReconciliationResult,
+    LaborReconciliationStatus,
+    LaborMonthlyPayroll,
+    LaborMonthlyPayrollPaymentStatus,
+    LaborWorkLedger,
+    LaborWorkLedgerStatus,
     LaborRateTable,
     LaborRole,
     PayrollAllocationBatch,
@@ -25,17 +45,34 @@ from .models import (
     PayrollAllocationStatus,
     Timesheet,
     TimesheetStatus,
+    WorkerMaster,
 )
 from .services import (
     approve_timesheet,
+    create_electronic_card_import_batch,
+    confirm_electronic_card_reconciliation_batch,
+    delete_or_deactivate_worker_master,
+    generate_cwma_card_reupload_excel,
+    generate_labor_monthly_payroll,
+    bulk_resolve_labor_reconciliation_results,
+    match_reconciliation_worker,
     create_labor_role,
+    create_labor_work_ledger,
     create_rate,
     create_timesheet,
     create_payroll_batch,
+    create_worker_master,
     reject_timesheet,
     submit_timesheet,
+    parse_electronic_card_import_batch,
+    reconcile_electronic_card_import_batch,
+    register_labor_excel_export_download,
+    resolve_labor_reconciliation_result,
     update_labor_role,
+    update_labor_reporting_project,
+    update_labor_work_ledger,
     update_rate,
+    update_worker_master,
     upsert_timesheet_lines,
     submit_payroll_batch,
     update_payroll_batch,
@@ -44,6 +81,589 @@ from .services import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@login_required
+def hq_e_card_import_batch_list(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+
+    filter_form = ElectronicCardImportBatchFilterForm(request.GET or None)
+    upload_form = ElectronicCardImportBatchUploadForm()
+    if request.method == "POST":
+        action = (request.POST.get("action") or "upload").strip().lower()
+        if action == "parse":
+            batch_id = request.POST.get("batch_id")
+            batch = get_object_or_404(ElectronicCardImportBatch, id=batch_id)
+            try:
+                parse_electronic_card_import_batch(batch, request.user)
+                messages.success(request, "전자카드 파일을 파싱했습니다.")
+                return redirect("/app/hq/labor/e-card-imports/")
+            except ValidationError as exc:
+                messages.error(request, str(exc))
+        elif action == "reconcile":
+            batch_id = request.POST.get("batch_id")
+            batch = get_object_or_404(ElectronicCardImportBatch, id=batch_id)
+            try:
+                reconcile_electronic_card_import_batch(batch, request.user)
+                messages.success(request, "전자카드와 ERP 출역 대사를 완료했습니다.")
+                return redirect("/app/hq/labor/e-card-imports/")
+            except ValidationError as exc:
+                messages.error(request, str(exc))
+        else:
+            upload_form = ElectronicCardImportBatchUploadForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                try:
+                    create_electronic_card_import_batch(
+                        upload_form.cleaned_data,
+                        request.FILES["source_file"],
+                        request.user,
+                    )
+                    messages.success(request, "전자카드 업로드 배치가 등록되었습니다.")
+                    return redirect("/app/hq/labor/e-card-imports/")
+                except ValidationError as exc:
+                    if hasattr(exc, "message_dict"):
+                        for field_name, errors in exc.message_dict.items():
+                            for error in errors:
+                                upload_form.add_error(field_name, error)
+                    else:
+                        upload_form.add_error(None, str(exc))
+                    messages.error(request, "업로드 입력값을 확인해 주세요.")
+            else:
+                messages.error(request, "업로드 입력값을 확인해 주세요.")
+
+    batches = (
+        ElectronicCardImportBatch.objects.select_related("project", "uploaded_by")
+        .annotate(
+            raw_count=models.Count("raw_rows", distinct=True),
+            day_count=models.Count("day_rows", distinct=True),
+            reconciliation_count=models.Count("reconciliation_results", distinct=True),
+        )
+        .order_by("-uploaded_at", "-id")
+    )
+    if filter_form.is_valid():
+        month = (filter_form.cleaned_data.get("month") or "").strip()
+        project = filter_form.cleaned_data.get("project")
+        status = filter_form.cleaned_data.get("status") or ""
+        if month:
+            try:
+                year, month_no = month.split("-", 1)
+                batches = batches.filter(year_month__year=int(year), year_month__month=int(month_no))
+            except ValueError:
+                messages.error(request, "월 필터 형식은 YYYY-MM 이어야 합니다.")
+        if project:
+            batches = batches.filter(project=project)
+        if status:
+            batches = batches.filter(status=status)
+
+    return render(
+        request,
+        "app/hq/e_card_imports.html",
+        {
+            "upload_form": upload_form,
+            "filter_form": filter_form,
+            "batches": batches[:50],
+            "status_choices": ElectronicCardImportBatchStatus.choices,
+        },
+    )
+
+
+def _build_e_card_detail_redirect(batch_id, request):
+    query = (request.POST.get("next_query") or request.GET.urlencode() or "").strip()
+    base = f"/app/hq/labor/e-card-imports/{batch_id}/"
+    return f"{base}?{query}" if query else base
+
+
+def _filter_reconciliation_results(request, batch):
+    status = (request.GET.get("status") or "").strip()
+    resolution = (request.GET.get("resolution") or "").strip()
+    worker_id = (request.GET.get("worker") or "").strip()
+    only_unresolved = (request.GET.get("only_unresolved") or "").strip()
+    q = (request.GET.get("q") or "").strip()
+
+    qs = (
+        batch.reconciliation_results.select_related(
+            "worker",
+            "card_day__raw",
+            "resolved_by",
+        )
+        .order_by("work_date", "id")
+    )
+    if status:
+        qs = qs.filter(status=status)
+    if resolution:
+        qs = qs.filter(resolution=resolution)
+    if worker_id:
+        qs = qs.filter(worker_id=worker_id)
+    if only_unresolved == "1":
+        qs = qs.filter(
+            status__in=[
+                LaborReconciliationStatus.ERP_ONLY,
+                LaborReconciliationStatus.CARD_ONLY,
+                LaborReconciliationStatus.DIFF,
+                LaborReconciliationStatus.UNMATCHED,
+            ],
+            resolution="",
+            final_work_unit__isnull=True,
+        )
+    if q:
+        qs = qs.filter(
+            Q(worker__name__icontains=q)
+            | Q(card_day__raw__worker_name_raw__icontains=q)
+            | Q(card_day__raw__phone__icontains=q)
+            | Q(card_day__raw__rrn_masked__icontains=q)
+        )
+    return qs, {
+        "status": status,
+        "resolution": resolution,
+        "worker_id": worker_id,
+        "only_unresolved": only_unresolved,
+        "q": q,
+    }
+
+
+@login_required
+def hq_e_card_import_batch_detail(request, batch_id):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    batch = get_object_or_404(
+        ElectronicCardImportBatch.objects.select_related("project", "uploaded_by", "confirmed_by"),
+        id=batch_id,
+    )
+
+    if request.method == "POST":
+        try:
+            if request.POST.get("resolve_result_id"):
+                result_id = request.POST.get("resolve_result_id")
+                action = request.POST.get(f"row_resolution__{result_id}")
+                comment = request.POST.get(f"row_comment__{result_id}") or ""
+                final_work_unit = request.POST.get(f"row_final_work_unit__{result_id}") or None
+                export_note = request.POST.get(f"row_export_note__{result_id}") or ""
+                resolve_labor_reconciliation_result(
+                    result_id,
+                    action,
+                    request.user,
+                    final_work_unit=final_work_unit,
+                    comment=comment,
+                    export_note=export_note,
+                )
+                messages.success(request, "대사 결과를 처리했습니다.")
+                return redirect(_build_e_card_detail_redirect(batch.id, request))
+            if request.POST.get("match_result_id"):
+                result_id = request.POST.get("match_result_id")
+                worker_id = request.POST.get(f"row_worker_id__{result_id}")
+                match_reconciliation_worker(result_id, worker_id, request.user)
+                messages.success(request, "근로자 매칭을 반영하고 대사를 다시 실행했습니다.")
+                return redirect(_build_e_card_detail_redirect(batch.id, request))
+
+            action = (request.POST.get("action") or "").strip().lower()
+            if action == "resolve_bulk":
+                selected_ids = request.POST.getlist("selected_result_ids")
+                bulk_action = request.POST.get("bulk_resolution")
+                bulk_comment = request.POST.get("bulk_comment") or ""
+                bulk_final = request.POST.get("bulk_final_work_unit") or None
+                count = bulk_resolve_labor_reconciliation_results(
+                    selected_ids,
+                    bulk_action,
+                    request.user,
+                    bulk_comment,
+                    final_work_unit=bulk_final,
+                )
+                messages.success(request, f"대사 결과 {count}건을 일괄 처리했습니다.")
+                return redirect(_build_e_card_detail_redirect(batch.id, request))
+            if action == "confirm_batch":
+                confirm_electronic_card_reconciliation_batch(batch, request.user)
+                messages.success(request, "대사 결과를 확정했습니다.")
+                return redirect(_build_e_card_detail_redirect(batch.id, request))
+            if action == "generate_cwma_reupload":
+                generate_cwma_card_reupload_excel(
+                    batch,
+                    request.user,
+                    note=request.POST.get("export_note") or "",
+                )
+                messages.success(request, "CWMA 전자카드 재업로드용 엑셀을 생성했습니다.")
+                return redirect(_build_e_card_detail_redirect(batch.id, request))
+            if action == "reconcile_again":
+                reconcile_electronic_card_import_batch(batch, request.user)
+                messages.success(request, "전자카드와 ERP 출역 대사를 다시 실행했습니다.")
+                return redirect(_build_e_card_detail_redirect(batch.id, request))
+        except ValidationError as exc:
+            messages.error(request, str(exc))
+
+    result_qs, filter_values = _filter_reconciliation_results(request, batch)
+    summary = batch.header_check_summary or {}
+    unresolved_count = batch.reconciliation_results.filter(
+        status__in=[
+            LaborReconciliationStatus.ERP_ONLY,
+            LaborReconciliationStatus.CARD_ONLY,
+            LaborReconciliationStatus.DIFF,
+            LaborReconciliationStatus.UNMATCHED,
+        ],
+        resolution="",
+        final_work_unit__isnull=True,
+    ).count()
+    return render(
+        request,
+        "app/hq/e_card_import_detail.html",
+        {
+            "batch": batch,
+            "summary": summary,
+            "results": result_qs[:200],
+            "filter_values": filter_values,
+            "workers": WorkerMaster.objects.order_by("name", "id")[:300],
+            "unresolved_count": unresolved_count,
+            "current_query": request.GET.urlencode(),
+            "status_choices": LaborReconciliationStatus.choices,
+            "confirmed_work_days_count": batch.confirmed_work_days.count(),
+            "excel_exports": batch.excel_exports.select_related("generated_by", "downloaded_by").order_by("-generated_at", "-id")[:20],
+        },
+    )
+
+
+@login_required
+def hq_labor_excel_export_download(request, export_id):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    export_batch = get_object_or_404(
+        LaborExcelExportBatch.objects.select_related("source_batch", "project"),
+        id=export_id,
+    )
+    try:
+        register_labor_excel_export_download(export_batch, request.user)
+    except ValidationError as exc:
+        messages.error(request, str(exc))
+        return redirect(f"/app/hq/labor/e-card-imports/{export_batch.source_batch_id}/")
+
+    export_batch.generated_file.open("rb")
+    return FileResponse(
+        export_batch.generated_file,
+        as_attachment=True,
+        filename=export_batch.generated_filename
+        or export_batch.original_filename
+        or "cwma_card_reupload.xlsx",
+    )
+
+
+@login_required
+def hq_confirmed_work_day_list(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    qs = (
+        LaborConfirmedWorkDay.objects.select_related(
+            "batch",
+            "worker",
+            "actual_project",
+            "report_project",
+            "card_project",
+            "confirmed_by",
+        )
+        .order_by("-work_date", "-id")
+    )
+    month = (request.GET.get("month") or "").strip()
+    project_id = (request.GET.get("project") or "").strip()
+    worker_id = (request.GET.get("worker") or "").strip()
+    batch_id = (request.GET.get("batch_id") or "").strip()
+    source_basis = (request.GET.get("source_basis") or "").strip()
+    export_included = (request.GET.get("export_included") or "").strip()
+
+    if month:
+        try:
+            year_str, month_str = month.split("-", 1)
+            qs = qs.filter(year_month__year=int(year_str), year_month__month=int(month_str))
+        except ValueError:
+            messages.error(request, "기준월 형식은 YYYY-MM 이어야 합니다.")
+    if project_id:
+        qs = qs.filter(report_project_id=project_id)
+    if worker_id:
+        qs = qs.filter(worker_id=worker_id)
+    if batch_id:
+        qs = qs.filter(batch_id=batch_id)
+    if source_basis:
+        qs = qs.filter(source_basis=source_basis)
+    if export_included in {"0", "1"}:
+        qs = qs.filter(export_included=export_included == "1")
+
+    return render(
+        request,
+        "app/hq/e_card_confirmed_work_days.html",
+        {
+            "rows": qs[:300],
+            "month": month,
+            "project_id": project_id,
+            "worker_id": worker_id,
+            "batch_id": batch_id,
+            "source_basis": source_basis,
+            "export_included": export_included,
+            "projects": Project.objects.order_by("name"),
+            "workers": WorkerMaster.objects.order_by("name", "id")[:300],
+            "batches": ElectronicCardImportBatch.objects.order_by("-uploaded_at", "-id")[:100],
+            "source_basis_choices": LaborConfirmedWorkSourceBasis.choices,
+        },
+    )
+
+
+@login_required
+def hq_worker_master_list(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    q = (request.GET.get("q") or "").strip()
+    active = request.GET.get("active")
+    qs = WorkerMaster.objects.select_related("default_labor_role").order_by("name", "id")
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q)
+            | Q(phone__icontains=q)
+            | Q(rrn_masked__icontains=q)
+            | Q(account_holder__icontains=q)
+            | Q(cwma_job_name__icontains=q)
+            | Q(comwel_job_code__icontains=q)
+        )
+    if active in ("0", "1"):
+        qs = qs.filter(active=active == "1")
+    workers = list(qs[:100])
+    for worker in workers:
+        worker.usage_count = (
+            worker.work_ledgers.count()
+            + worker.electronic_card_raw_rows.count()
+            + worker.electronic_card_day_rows.count()
+            + worker.labor_reconciliation_results.count()
+            + worker.confirmed_work_days.count()
+            + worker.monthly_payrolls.count()
+        )
+    return render(
+        request,
+        "app/hq/labor_worker_list.html",
+        {
+            "workers": workers,
+            "q": q,
+            "active": active or "",
+            "role": get_user_role(request.user),
+        },
+    )
+
+
+@login_required
+def hq_worker_master_new(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    if request.method == "POST":
+        form = WorkerMasterForm(request.POST)
+        if form.is_valid():
+            try:
+                create_worker_master(form.cleaned_data, actor=request.user)
+                messages.success(request, "근로자 마스터가 등록되었습니다.")
+                return redirect("/app/hq/labor/workers/")
+            except ValidationError as exc:
+                form.add_error(None, str(exc))
+        else:
+            messages.error(request, "입력 오류가 있습니다. 아래 항목을 확인해 주세요.")
+    else:
+        form = WorkerMasterForm()
+    return render(
+        request,
+        "app/hq/labor_worker_form.html",
+        {"form": form, "mode": "create"},
+    )
+
+
+@login_required
+def hq_worker_master_edit(request, worker_id):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    worker = get_object_or_404(WorkerMaster, id=worker_id)
+    if request.method == "POST":
+        form = WorkerMasterForm(request.POST, instance=worker)
+        if form.is_valid():
+            try:
+                update_worker_master(worker, form.cleaned_data, actor=request.user)
+                messages.success(request, "근로자 마스터가 수정되었습니다.")
+                return redirect("/app/hq/labor/workers/")
+            except ValidationError as exc:
+                form.add_error(None, str(exc))
+        else:
+            messages.error(request, "입력 오류가 있습니다. 아래 항목을 확인해 주세요.")
+    else:
+        form = WorkerMasterForm(instance=worker)
+    return render(
+        request,
+        "app/hq/labor_worker_form.html",
+        {"form": form, "mode": "edit", "worker": worker},
+    )
+
+
+@login_required
+def hq_worker_master_delete(request, worker_id):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    if request.method != "POST":
+        raise PermissionDenied
+    worker = get_object_or_404(WorkerMaster, id=worker_id)
+    try:
+        result = delete_or_deactivate_worker_master(worker, request.user)
+    except ValidationError as exc:
+        messages.error(request, str(exc))
+        return redirect("/app/hq/labor/workers/")
+
+    if result["action"] == "deleted":
+        messages.success(request, "근로자 마스터를 삭제했습니다.")
+    elif result["action"] == "deactivated":
+        messages.warning(
+            request,
+            f"이 근로자는 사용 이력 {result['usage_count']}건이 있어 삭제할 수 없으며 비활성 처리되었습니다.",
+        )
+    else:
+        messages.info(request, "이미 비활성 처리된 근로자입니다.")
+    return redirect("/app/hq/labor/workers/")
+
+
+@login_required
+def hq_labor_work_ledger_list(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    month = (request.GET.get("month") or "").strip()
+    project_id = (request.GET.get("project") or "").strip()
+    worker_id = (request.GET.get("worker") or "").strip()
+    qs = (
+        LaborWorkLedger.objects.select_related(
+            "worker",
+            "actual_project",
+            "report_project",
+            "labor_role",
+            "timesheet_ref",
+            "cost_ref",
+        )
+        .order_by("-work_date", "-id")
+    )
+    if month:
+        try:
+            year_str, month_str = month.split("-", 1)
+            qs = qs.filter(work_month__year=int(year_str), work_month__month=int(month_str))
+        except ValueError:
+            messages.error(request, "월 필터 형식이 올바르지 않습니다.")
+    if project_id:
+        qs = qs.filter(Q(actual_project_id=project_id) | Q(report_project_id=project_id))
+    if worker_id:
+        qs = qs.filter(worker_id=worker_id)
+    return render(
+        request,
+        "app/hq/labor_work_ledger_list.html",
+        {
+            "ledgers": qs[:100],
+            "month": month,
+            "project_id": project_id,
+            "worker_id": worker_id,
+            "projects": Project.objects.order_by("name"),
+            "workers": WorkerMaster.objects.order_by("name", "id"),
+        },
+    )
+
+
+@login_required
+def hq_labor_work_ledger_form(request, ledger_id=None):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    ledger = None
+    if ledger_id is not None:
+        ledger = get_object_or_404(
+            LaborWorkLedger.objects.select_related(
+                "worker",
+                "actual_project",
+                "report_project",
+                "labor_role",
+                "timesheet_ref",
+                "cost_ref",
+            ),
+            id=ledger_id,
+        )
+    if request.method == "POST":
+        form = LaborWorkLedgerForm(request.POST, instance=ledger)
+        if form.is_valid():
+            try:
+                if ledger is None:
+                    ledger = create_labor_work_ledger(form.cleaned_data, actor=request.user)
+                    messages.success(request, "노무 작업 원장이 등록되었습니다.")
+                else:
+                    ledger = update_labor_work_ledger(ledger, form.cleaned_data, actor=request.user)
+                    messages.success(request, "노무 작업 원장이 수정되었습니다.")
+                return redirect(f"/app/hq/labor/work-ledger/{ledger.id}/")
+            except (PermissionDenied, ValidationError) as exc:
+                form.add_error(None, str(exc))
+        else:
+            messages.error(request, "입력 오류가 있습니다. 아래 항목을 확인해 주세요.")
+    else:
+        form = LaborWorkLedgerForm(instance=ledger)
+    return render(
+        request,
+        "app/hq/labor_work_ledger_form.html",
+        {"form": form, "ledger": ledger, "mode": "edit" if ledger else "create"},
+    )
+
+
+@login_required
+def hq_labor_reporting_map(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    params = request.POST if request.method == "POST" else request.GET
+    month = (params.get("month") or date.today().strftime("%Y-%m")).strip()
+    actual_project_id = (params.get("actual_project") or "").strip()
+    report_project_id = (params.get("report_project") or "").strip()
+    worker_id = (params.get("worker") or "").strip()
+    only_different = "1" if (params.get("only_different") or "") == "1" else ""
+    status = (params.get("status") or "").strip()
+
+    if request.method == "POST":
+        ledger_ids = request.POST.getlist("ledger_ids")
+        target_report_project = (request.POST.get("target_report_project") or "").strip()
+        reason = (request.POST.get("reason") or "").strip()
+        if not ledger_ids:
+            messages.error(request, "변경할 원장을 하나 이상 선택해 주세요.")
+        elif not target_report_project:
+            messages.error(request, "신고용 현장을 선택해 주세요.")
+        else:
+            try:
+                updated = update_labor_reporting_project(
+                    ledger_ids=ledger_ids,
+                    report_project=target_report_project,
+                    reason=reason,
+                    actor=request.user,
+                )
+                messages.success(request, f"신고용 현장 {len(updated)}건을 변경했습니다.")
+                return redirect(f"/app/hq/labor/reporting-map/?month={month}")
+            except (PermissionDenied, ValidationError) as exc:
+                messages.error(request, str(exc))
+
+    qs = (
+        LaborWorkLedger.objects.select_related(
+            "worker",
+            "actual_project",
+            "report_project",
+            "labor_role",
+        )
+        .order_by("-work_date", "-id")
+    )
+    try:
+        year_str, month_str = month.split("-", 1)
+        qs = qs.filter(work_month__year=int(year_str), work_month__month=int(month_str))
+    except ValueError:
+        messages.error(request, "월 형식은 YYYY-MM 이어야 합니다.")
+        month = date.today().strftime("%Y-%m")
+        year_str, month_str = month.split("-", 1)
+        qs = qs.filter(work_month__year=int(year_str), work_month__month=int(month_str))
+    if actual_project_id:
+        qs = qs.filter(actual_project_id=actual_project_id)
+    if report_project_id:
+        qs = qs.filter(report_project_id=report_project_id)
+    if worker_id:
+        qs = qs.filter(worker_id=worker_id)
+    if status:
+        qs = qs.filter(status=status)
+    if only_different:
+        qs = qs.exclude(actual_project_id=models.F("report_project_id"))
+    return render(
+        request,
+        "app/hq/labor_reporting_map.html",
+        {
+            "ledgers": qs[:200],
+            "month": month,
+            "actual_project_id": actual_project_id,
+            "report_project_id": report_project_id,
+            "worker_id": worker_id,
+            "only_different": only_different,
+            "status": status,
+            "projects": Project.objects.order_by("name"),
+            "workers": WorkerMaster.objects.order_by("name", "id"),
+            "status_choices": LaborWorkLedgerStatus.choices,
+        },
+    )
 
 
 @login_required
@@ -530,6 +1150,64 @@ def _build_payroll_line_rows(lines, max_rows=12):
 @login_required
 def hq_payroll_list(request):
     require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    month = (request.GET.get("month") or "").strip()
+    project_id = (request.GET.get("project") or "").strip()
+    worker_id = (request.GET.get("worker") or "").strip()
+    payment_status = (request.GET.get("payment_status") or "").strip()
+    if request.method == "POST":
+        generate_month = (request.POST.get("month") or "").strip()
+        if not generate_month:
+            messages.error(request, "집계할 월을 선택해 주세요.")
+        else:
+            try:
+                year_str, month_str = generate_month.split("-", 1)
+                result = generate_labor_monthly_payroll(
+                    year=int(year_str),
+                    month=int(month_str),
+                    actor=request.user,
+                )
+                messages.success(
+                    request,
+                    f"{result['year_month']:%Y-%m} 급여 요약 {result['row_count']}건을 생성했습니다.",
+                )
+                return redirect(f"/app/hq/labor/monthly-payroll/?month={generate_month}")
+            except (PermissionDenied, ValidationError, ValueError) as exc:
+                messages.error(request, str(exc))
+    qs = (
+        LaborMonthlyPayroll.objects.select_related("worker", "project", "report_project")
+        .order_by("-year_month", "worker__name", "project__name", "id")
+    )
+    if month:
+        try:
+            year_str, month_str = month.split("-", 1)
+            qs = qs.filter(year_month__year=int(year_str), year_month__month=int(month_str))
+        except ValueError:
+            messages.error(request, "월 형식은 YYYY-MM 이어야 합니다.")
+    if project_id:
+        qs = qs.filter(Q(project_id=project_id) | Q(report_project_id=project_id))
+    if worker_id:
+        qs = qs.filter(worker_id=worker_id)
+    if payment_status:
+        qs = qs.filter(payment_status=payment_status)
+    return render(
+        request,
+        "app/hq/payroll_list.html",
+        {
+            "month": month,
+            "project_id": project_id,
+            "worker_id": worker_id,
+            "payment_status": payment_status,
+            "rows": qs[:200],
+            "projects": Project.objects.order_by("name"),
+            "workers": WorkerMaster.objects.order_by("name", "id"),
+            "payment_statuses": LaborMonthlyPayrollPaymentStatus.choices,
+        },
+    )
+
+
+@login_required
+def hq_payroll_allocation_list(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
     year = request.GET.get("year") or ""
     month = request.GET.get("month") or ""
     status = request.GET.get("status") or ""
@@ -558,7 +1236,7 @@ def hq_payroll_list(request):
         )
     return render(
         request,
-        "app/hq/payroll_list.html",
+        "app/hq/payroll_allocation_list.html",
         {
             "batches": batches,
             "year": year,
@@ -583,7 +1261,7 @@ def hq_payroll_new(request):
                     note=form.cleaned_data.get("note") or "",
                 )
                 messages.success(request, "급여 배부 배치가 생성되었습니다.")
-                return redirect(f"/app/hq/labor/payroll/{batch.id}/")
+                return redirect(f"/app/hq/labor/payroll-allocation/{batch.id}/")
             except ValidationError as exc:
                 form.add_error(None, str(exc))
         else:
@@ -631,7 +1309,7 @@ def hq_payroll_detail(request, batch_id):
                     messages.success(request, "급여 배부가 제출되었습니다.")
                 else:
                     messages.success(request, "급여 배부가 임시저장되었습니다.")
-                return redirect(f"/app/hq/labor/payroll/{batch.id}/")
+                return redirect(f"/app/hq/labor/payroll-allocation/{batch.id}/")
             except ValidationError as exc:
                 form.add_error(None, str(exc))
             except PermissionDenied as exc:

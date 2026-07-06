@@ -26,16 +26,19 @@ class Command(BaseCommand):
             return
 
         ceo_username = os.getenv("SEED_CEO_USERNAME", "ceo")
+        ceo_password = os.getenv("SEED_CEO_PASSWORD", "change-me")
         hq_username = os.getenv("SEED_HQ_USERNAME", "hq")
+        hq_password = os.getenv("SEED_HQ_PASSWORD", "change-me")
         field_username = os.getenv("SEED_FIELD_USERNAME", "field1")
+        field_password = os.getenv("SEED_FIELD_PASSWORD", "change-me")
 
         project_code = os.getenv("SEED_PROJECT_CODE", "PRJ-DEMO-001")
         project_name = os.getenv("SEED_PROJECT_NAME", "Demo Project")
 
         User = get_user_model()
-        ceo_user = _get_or_create_user(User, ceo_username, Role.CEO)
-        hq_user = _get_or_create_user(User, hq_username, Role.HQ)
-        field_user = _get_or_create_user(User, field_username, Role.FIELD)
+        ceo_user = _get_or_create_user(User, ceo_username, ceo_password, Role.CEO)
+        hq_user = _get_or_create_user(User, hq_username, hq_password, Role.HQ)
+        field_user = _get_or_create_user(User, field_username, field_password, Role.FIELD)
 
         project, project_created = Project.objects.get_or_create(
             code=project_code, defaults={"name": project_name}
@@ -230,8 +233,11 @@ class Command(BaseCommand):
             )
 
 
-def _get_or_create_user(user_model, username, role):
+def _get_or_create_user(user_model, username, password, role):
     user, created = user_model.objects.get_or_create(username=username)
+    if created or password:
+        user.set_password(password)
+        user.save(update_fields=["password"])
     profile, _ = UserProfile.objects.get_or_create(user=user, defaults={"role": role})
     if profile.role != role:
         profile.role = role

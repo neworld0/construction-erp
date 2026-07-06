@@ -5,7 +5,7 @@ Goal: show that ERP enforces control, evidence, risk, and reporting end‑to‑e
 ## 0) Pre‑check (1 min)
 - Confirm demo data seeded: `python manage.py seed_initial` and `python manage.py seed_demo_flow`
 - Open admin: `/admin/`
-- Accounts (examples): ceo / example‑password, hq / example‑password, field1 / example‑password
+- Accounts (examples): ceo / ChangeMe!1234, hq / ChangeMe!1234, field1 / ChangeMe!1234
 
 ## 1) FIELD: Daily report & cost input (2 min)
 Login as **field1**.

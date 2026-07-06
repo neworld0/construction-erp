@@ -1,0 +1,232 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}전자카드 근로내역 업로드{% endblock %}
+
+{% block content %}
+<style>
+  .summary-box {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: rgba(15, 23, 42, 0.24);
+  }
+  .filters,
+  .upload-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.16);
+    color: #bae6fd;
+    font-size: 12px;
+  }
+  .warning-list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    color: #fcd34d;
+  }
+  .meta-list {
+    display: grid;
+    gap: 6px;
+  }
+  .meta-label {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .action-row {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+</style>
+
+<div class="card">
+  <div class="card-title">전자카드 근로내역 업로드</div>
+  <p class="muted">
+    원본 Excel 파일을 보관하고 헤더와 기준월을 확인합니다. 업로드 후 파싱, ERP 대사, 대사 검토까지 이 화면에서 이어서 진행할 수 있습니다.
+  </p>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <div class="card-title">업로드</div>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="upload-grid">
+      <label>
+        {{ upload_form.year_month.label }}
+        {{ upload_form.year_month }}
+        {% for error in upload_form.year_month.errors %}
+          <div class="errorlist">{{ error }}</div>
+        {% endfor %}
+      </label>
+      <label>
+        {{ upload_form.project.label }}
+        {{ upload_form.project }}
+        {% for error in upload_form.project.errors %}
+          <div class="errorlist">{{ error }}</div>
+        {% endfor %}
+      </label>
+      <label>
+        {{ upload_form.source_file.label }}
+        {{ upload_form.source_file }}
+        {% for error in upload_form.source_file.errors %}
+          <div class="errorlist">{{ error }}</div>
+        {% endfor %}
+      </label>
+    </div>
+    {% for error in upload_form.non_field_errors %}
+      <div class="errorlist" style="margin-top: 10px;">{{ error }}</div>
+    {% endfor %}
+    <div style="margin-top: 14px;">
+      <button class="btn" type="submit">업로드</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <div class="card-title">업로드 이력</div>
+  <form method="get" class="filters" style="margin-bottom: 16px;">
+    <label>
+      {{ filter_form.month.label }}
+      {{ filter_form.month }}
+    </label>
+    <label>
+      {{ filter_form.project.label }}
+      {{ filter_form.project }}
+    </label>
+    <label>
+      {{ filter_form.status.label }}
+      {{ filter_form.status }}
+    </label>
+    <div style="display:flex; align-items:end;">
+      <button class="btn" type="submit">조회</button>
+    </div>
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>기준월</th>
+        <th>현장</th>
+        <th>상태</th>
+        <th>원본 파일</th>
+        <th>헤더 체크 결과</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for batch in batches %}
+        <tr>
+          <td>{{ batch.year_month|date:"Y-m" }}</td>
+          <td>
+            <div>{{ batch.project.name }}</div>
+            {% if batch.cwma_project_name %}
+              <div class="muted" style="font-size: 12px;">전자카드 현장명: {{ batch.cwma_project_name }}</div>
+            {% endif %}
+          </td>
+          <td><span class="status-badge">{{ batch.get_status_display }}</span></td>
+          <td>
+            <div>{{ batch.original_filename }}</div>
+            <div class="muted" style="font-size: 12px;">{{ batch.uploaded_at|date:"Y-m-d H:i" }}</div>
+          </td>
+          <td>
+            <div class="summary-box">
+              <div class="meta-list">
+                <div><span class="meta-label">시트</span> {{ batch.header_check_summary.sheet_name|default:"-" }}</div>
+                <div><span class="meta-label">헤더 행</span> {{ batch.header_check_summary.header_row_index|default:"-" }}</div>
+                <div><span class="meta-label">일자 컬럼</span> {{ batch.header_check_summary.day_column_count|default:0 }}개</div>
+                <div><span class="meta-label">근로년월</span> {{ batch.header_check_summary.workbook_months|join:", "|default:"-" }}</div>
+                <div><span class="meta-label">공제가입번호</span> {{ batch.deduction_join_no|default:"-" }}</div>
+                <div><span class="meta-label">업체명</span> {{ batch.company_name|default:"-" }}</div>
+                <div><span class="meta-label">Raw 건수</span> {{ batch.raw_count|default:0 }}건</div>
+                <div><span class="meta-label">일별 건수</span> {{ batch.day_count|default:0 }}건</div>
+                <div><span class="meta-label">전자카드 출역일수</span> {{ batch.header_check_summary.parsed_worked_day_count|default:0 }}건</div>
+                <div><span class="meta-label">전자카드 0값 일수</span> {{ batch.header_check_summary.parsed_zero_day_count|default:0 }}건</div>
+                <div><span class="meta-label">일자 해석 불가</span> {{ batch.header_check_summary.parsed_unreadable_day_count|default:0 }}건</div>
+                <div>
+                  <span class="meta-label">근로자 매칭</span>
+                  {{ batch.header_check_summary.matched_worker_count|default:0 }}건 / 미매칭 {{ batch.header_check_summary.unmatched_worker_count|default:0 }}건
+                </div>
+                <div><span class="meta-label">ERP 원장 건수</span> {{ batch.header_check_summary.reconcile_erp_ledger_count|default:0 }}건</div>
+                <div><span class="meta-label">ERP 출역 건수</span> {{ batch.header_check_summary.reconcile_erp_worked_count|default:0 }}건</div>
+                <div>
+                  <span class="meta-label">대사 결과 요약</span>
+                  일치 {{ batch.header_check_summary.reconciliation_match_count|default:0 }}건 /
+                  ERP만 있음 {{ batch.header_check_summary.reconciliation_erp_only_count|default:0 }}건 /
+                  전자카드만 있음 {{ batch.header_check_summary.reconciliation_card_only_count|default:0 }}건 /
+                  공수 차이 {{ batch.header_check_summary.reconciliation_diff_count|default:0 }}건 /
+                  미매칭 {{ batch.header_check_summary.reconciliation_unmatched_count|default:0 }}건
+                </div>
+              </div>
+              {% if batch.header_check_summary.reconciliation_total_count == 0 and batch.header_check_summary.reconciled_at %}
+                <div class="muted" style="margin-top: 8px; font-size: 12px;">
+                  {{ batch.header_check_summary.reconciliation_no_result_reason|default:"대사 결과가 없습니다." }}
+                </div>
+              {% endif %}
+              {% if batch.header_check_summary.warnings %}
+                <ul class="warning-list">
+                  {% for warning in batch.header_check_summary.warnings %}
+                    <li>{{ warning }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              <div class="action-row">
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="parse" />
+                  <input type="hidden" name="batch_id" value="{{ batch.id }}" />
+                  <button class="btn btn-outline" type="submit">
+                    {% if batch.raw_count %}재파싱{% else %}파싱{% endif %}
+                  </button>
+                </form>
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="reconcile" />
+                  <input type="hidden" name="batch_id" value="{{ batch.id }}" />
+                  <button class="btn btn-outline" type="submit" {% if not batch.day_count %}disabled{% endif %}>
+                    {% if batch.reconciliation_count %}대사 재실행{% else %}대사 실행{% endif %}
+                  </button>
+                </form>
+                {% if batch.reconciliation_count %}
+                  <a class="btn btn-outline" href="/app/hq/labor/e-card-imports/{{ batch.id }}/">대사 검토</a>
+                {% endif %}
+              </div>
+              {% if not batch.day_count %}
+                <div class="muted" style="margin-top: 8px; font-size: 12px;">먼저 파싱을 실행해 주세요.</div>
+              {% endif %}
+              <div class="muted" style="margin-top: 8px; font-size: 12px;">
+                근로자는 자동 생성하지 않습니다. 미매칭 근로자는 WorkerMaster에서 등록 또는 보정한 뒤 다시 파싱해 주세요.
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">등록된 전자카드 업로드 배치가 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

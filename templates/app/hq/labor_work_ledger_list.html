@@ -1,0 +1,129 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}노무 작업 원장{% endblock %}
+
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .table thead th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .table-wrap {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+  }
+  .filters {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    align-items: end;
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">노무 작업 원장</div>
+      <div class="muted">실제 근무지와 보고 프로젝트를 분리하여 일자별 노무 실적을 관리합니다.</div>
+    </div>
+    <a class="btn" href="/app/hq/labor/work-ledger/new/">원장 등록</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <form method="get" class="filters">
+    <label>
+      <span class="form-label">월</span>
+      <input class="form-control" type="month" name="month" value="{{ month }}" />
+    </label>
+    <label>
+      <span class="form-label">프로젝트</span>
+      <select class="form-control" name="project">
+        <option value="">전체</option>
+        {% for project in projects %}
+          <option value="{{ project.id }}" {% if project_id == project.id|stringformat:"s" %}selected{% endif %}>
+            {{ project.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="form-label">근로자</span>
+      <select class="form-control" name="worker">
+        <option value="">전체</option>
+        {% for worker in workers %}
+          <option value="{{ worker.id }}" {% if worker_id == worker.id|stringformat:"s" %}selected{% endif %}>
+            {{ worker.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <button class="btn" type="submit">조회</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>근무일</th>
+          <th>근로자</th>
+          <th>실제/보고 프로젝트</th>
+          <th>노무 역할</th>
+          <th>공수/시간</th>
+          <th>총액/실지급</th>
+          <th>출처/상태</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ledger in ledgers %}
+          <tr>
+            <td>{{ ledger.work_date }}</td>
+            <td>{{ ledger.worker.name }}</td>
+            <td>
+              <div>실제: {{ ledger.actual_project.name }}</div>
+              <div class="muted">보고: {{ ledger.report_project.name }}</div>
+            </td>
+            <td>
+              <div>{{ ledger.labor_role.name }}</div>
+              {% if ledger.detail_work_type %}
+                <div class="muted">{{ ledger.detail_work_type }}</div>
+              {% endif %}
+            </td>
+            <td>{{ ledger.work_unit }} / {{ ledger.work_hours }}</td>
+            <td>{{ ledger.gross_wage }} / {{ ledger.net_pay }}</td>
+            <td>
+              <div>{{ ledger.get_source_display }}</div>
+              <div class="muted">{{ ledger.get_status_display }}</div>
+            </td>
+            <td><a class="btn btn-outline" href="/app/hq/labor/work-ledger/{{ ledger.id }}/">상세/수정</a></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8">등록된 노무 작업 원장이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

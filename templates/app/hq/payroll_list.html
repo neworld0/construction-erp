@@ -1,38 +1,61 @@
 {% extends "app/base_app.html" %}
 {% load humanize %}
 
-{% block page_title %}급여 배부(월) 목록{% endblock %}
+{% block page_title %}노무 월 급여 요약{% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="card" style="margin-bottom:16px;">
-    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <div class="card-title" style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
-        <div style="font-size:20px; font-weight:700;">급여 배부(월)</div>
-        <div class="hint">월별 급여 총액을 프로젝트로 배부합니다.</div>
+        <div style="font-size:20px; font-weight:700;">노무 월 급여 요약</div>
+        <div class="hint">확정된 노무 작업 원장을 기준으로 월별 지급 행을 생성합니다.</div>
       </div>
-      <a class="btn" href="/app/hq/labor/payroll/new/">신규 월 배부 생성</a>
+      <div style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+        <form method="post" style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+          {% csrf_token %}
+          <div>
+            <label class="hint">집계 월</label>
+            <input class="input" type="month" name="month" value="{{ month }}" required />
+          </div>
+          <button class="btn" type="submit">월 급여 생성</button>
+        </form>
+        <a class="btn btn-outline" href="/app/hq/labor/payroll-allocation/">급여 배부 보기</a>
+      </div>
     </div>
   </div>
 
   <div class="card" style="margin-bottom:16px;">
     <form method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
       <div>
-        <label class="hint">연도</label>
-        <input class="input" type="number" name="year" value="{{ year }}" placeholder="2026" />
-      </div>
-      <div>
         <label class="hint">월</label>
-        <input class="input" type="number" name="month" value="{{ month }}" placeholder="1" min="1" max="12" />
+        <input class="input" type="month" name="month" value="{{ month }}" />
       </div>
       <div>
-        <label class="hint">상태</label>
-        <select class="input" name="status">
+        <label class="hint">프로젝트</label>
+        <select class="input" name="project">
           <option value="">전체</option>
-          <option value="DRAFT" {% if status == "DRAFT" %}selected{% endif %}>임시저장</option>
-          <option value="SUBMITTED" {% if status == "SUBMITTED" %}selected{% endif %}>제출됨</option>
-          <option value="APPROVED" {% if status == "APPROVED" %}selected{% endif %}>승인됨</option>
-          <option value="REJECTED" {% if status == "REJECTED" %}selected{% endif %}>반려됨</option>
+          {% for project in projects %}
+            <option value="{{ project.id }}" {% if project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="hint">근로자</label>
+        <select class="input" name="worker">
+          <option value="">전체</option>
+          {% for worker in workers %}
+            <option value="{{ worker.id }}" {% if worker_id == worker.id|stringformat:"s" %}selected{% endif %}>{{ worker.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="hint">지급 상태</label>
+        <select class="input" name="payment_status">
+          <option value="">전체</option>
+          {% for value, label in payment_statuses %}
+            <option value="{{ value }}" {% if payment_status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
         </select>
       </div>
       <button class="btn btn-outline" type="submit">조회</button>
@@ -40,33 +63,47 @@
   </div>
 
   <div class="card">
-    <div class="section-title">배부 목록</div>
+    <div class="section-title">월 급여 행</div>
     <table class="table">
       <thead>
         <tr>
-          <th>연/월</th>
-          <th>배치번호</th>
+          <th>월</th>
+          <th>근로자</th>
+          <th>실제 프로젝트</th>
+          <th>보고 프로젝트</th>
+          <th>공수</th>
           <th>총액</th>
-          <th>배부합계</th>
-          <th>차이</th>
-          <th>상태</th>
-          <th></th>
+          <th>소득세</th>
+          <th>지방세</th>
+          <th>보험 공제</th>
+          <th>실지급액</th>
+          <th>은행</th>
+          <th>계좌</th>
+          <th>지급 상태</th>
+          <th>지급일시</th>
         </tr>
       </thead>
       <tbody>
-        {% for item in batches %}
+        {% for row in rows %}
           <tr>
-            <td>{{ item.obj.period_year }}-{{ item.obj.period_month|stringformat:"02d" }}</td>
-            <td>{{ item.obj.batch_no }}</td>
-            <td>{{ item.obj.total_amount|intcomma }}</td>
-            <td>{{ item.sum_lines|intcomma }}</td>
-            <td>{{ item.diff|intcomma }}</td>
-            <td>{{ item.obj.status }}</td>
-            <td><a class="btn btn-outline" href="/app/hq/labor/payroll/{{ item.obj.id }}/">상세</a></td>
+            <td>{{ row.year_month|date:"Y-m" }}</td>
+            <td>{{ row.worker.name }}</td>
+            <td>{{ row.project.name }}</td>
+            <td>{{ row.report_project.name }}</td>
+            <td>{{ row.total_work_unit }}</td>
+            <td>{{ row.gross_wage|intcomma }}</td>
+            <td>{{ row.income_tax|intcomma }}</td>
+            <td>{{ row.local_tax|intcomma }}</td>
+            <td>{{ row.insurance_deductions|intcomma }}</td>
+            <td>{{ row.net_pay|intcomma }}</td>
+            <td>{{ row.bank_name|default:"-" }}</td>
+            <td>{{ row.account_number_masked|default:"-" }}</td>
+            <td>{{ row.get_payment_status_display }}</td>
+            <td>{{ row.paid_at|date:"Y-m-d H:i"|default:"-" }}</td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="7" class="muted">배부 내역이 없습니다.</td>
+            <td colspan="14" class="muted">조회된 월 급여 요약이 없습니다.</td>
           </tr>
         {% endfor %}
       </tbody>

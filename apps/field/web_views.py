@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db import IntegrityError, transaction
+from django.db import DataError, IntegrityError, transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -26,7 +26,7 @@ from apps.evidence.models import Evidence, EvidenceFile, EvidenceStatus
 from apps.evidence.services.resolve import is_project_or_month_locked
 from apps.reports.models import FieldReport, FieldReportStatus
 from apps.field.models import DailyReport, DailyReportLine, DailyReportStatus
-from apps.projects.models import Project
+from apps.projects.models import Project, WBSItem
 from apps.projects.wbs_change import render_wbs_change_form
 from apps.schedule.models import DailyProgress, SchedulePlan, ScheduleTask
 
@@ -67,6 +67,98 @@ def _can_edit_progress(user, project):
         projectassignment__user=user,
         projectassignment__is_active=True,
     ).exists()
+
+
+def _get_progress_wbs_queryset(project):
+    if project is None:
+        return WBSItem.objects.none()
+    qs = WBSItem.objects.filter(project=project, is_baseline=True).order_by(
+        "sort_order", "id"
+    )
+    if qs.exists():
+        return qs
+    return WBSItem.objects.filter(project=project).order_by("sort_order", "id")
+
+
+def _format_progress_task_label(task):
+    prefix = f"{task.sort_order}. " if getattr(task, "sort_order", 0) else ""
+    weight = getattr(task, "weight_percent", None)
+    if weight not in (None, ""):
+        return f"{prefix}{task.name} / {weight}%"
+    return f"{prefix}{task.name}"
+
+
+def _decorate_progress_tasks(tasks):
+    for task in tasks:
+        task.display_name = _format_progress_task_label(task)
+    return tasks
+
+
+def _ensure_progress_tasks_for_project(project):
+    if project is None:
+        return None, []
+
+    plan = SchedulePlan.objects.filter(project=project, is_active=True).first()
+    if plan is not None:
+        active_tasks = list(
+            ScheduleTask.objects.filter(plan=plan, is_active=True).order_by(
+                "sort_order", "id"
+            )
+        )
+        if active_tasks:
+            return plan, _decorate_progress_tasks(active_tasks)
+
+    wbs_items = list(_get_progress_wbs_queryset(project))
+    if not wbs_items:
+        if plan is not None:
+            existing_tasks = list(
+                ScheduleTask.objects.filter(plan=plan).order_by("sort_order", "id")
+            )
+            if existing_tasks:
+                return plan, _decorate_progress_tasks(existing_tasks)
+        return plan, []
+
+    with transaction.atomic():
+        plan = SchedulePlan.objects.filter(project=project, is_active=True).first()
+        if plan is None:
+            latest_version = (
+                SchedulePlan.objects.filter(project=project)
+                .order_by("-version_no")
+                .values_list("version_no", flat=True)
+                .first()
+                or 0
+            )
+            plan = SchedulePlan.objects.create(
+                project=project,
+                version_no=latest_version + 1,
+                name="WBS Baseline",
+                is_active=True,
+            )
+
+        if not ScheduleTask.objects.filter(plan=plan).exists():
+            ScheduleTask.objects.bulk_create(
+                [
+                    ScheduleTask(
+                        plan=plan,
+                        name=wbs.name,
+                        start_date=wbs.plan_start_date,
+                        end_date=wbs.plan_end_date,
+                        weight_percent=wbs.weight or Decimal("0"),
+                        sort_order=wbs.sort_order or index,
+                        is_active=True,
+                    )
+                    for index, wbs in enumerate(wbs_items, start=1)
+                ]
+            )
+
+    tasks = list(
+        ScheduleTask.objects.filter(plan=plan, is_active=True).order_by(
+            "sort_order", "id"
+        )
+    )
+    if not tasks:
+        tasks = list(ScheduleTask.objects.filter(plan=plan).order_by("sort_order", "id"))
+    return plan, _decorate_progress_tasks(tasks)
 
 
 def _parse_decimal(value, default=Decimal("0")):
@@ -821,6 +913,7 @@ def _handle_progress_submit(request, project, context):
     message_context = "진행률 입력입니다."
     today = date.today()
     min_date = today - timedelta(days=1)
+    _plan, available_tasks = _ensure_progress_tasks_for_project(project)
 
     def _validate_recent_date(target_date):
         if target_date < min_date or target_date > today:
@@ -972,11 +1065,25 @@ def _handle_progress_submit(request, project, context):
     task_id = request.POST.get("task_id")
     report_date = request.POST.get("report_date") or today.isoformat()
     progress_percent = request.POST.get("progress_percent")
-    note = request.POST.get("note", "")
+    note = (request.POST.get("note") or "").strip()
     progress_photo = request.FILES.getlist("progress_photo")
 
-    if not task_id or progress_percent in (None, ""):
-        context["errors"].append("작업과 진행률을 입력해 주세요.")
+    if not available_tasks:
+        context["errors"].append(
+            "이 프로젝트에는 WBS 기준선 작업이 없습니다. HQ에서 WBS 기준선을 등록한 뒤 진행률을 입력할 수 있습니다."
+        )
+        return
+
+    if not task_id:
+        context["errors"].append("작업을 선택해 주세요.")
+        return
+
+    if progress_percent in (None, ""):
+        context["errors"].append("진행률을 입력해 주세요.")
+        return
+
+    if len(note) > 5000:
+        context["errors"].append("메모는 5,000자 이내로 입력해 주세요.")
         return
 
     try:
@@ -1068,6 +1175,12 @@ def _handle_progress_submit(request, project, context):
                 return
     except IntegrityError:
         context["errors"].append("이미 동일한 작업/날짜의 진행률이 존재합니다.")
+        return
+    except DataError:
+        logger.exception("Failed to save DailyProgress due to invalid field length.")
+        context["errors"].append(
+            "입력값 중 너무 긴 항목이 있습니다. 메모 길이를 줄이거나 관리자에게 문의해 주세요."
+        )
         return
 
     log_action(
@@ -1454,17 +1567,26 @@ def _handle_cost_submit(request, project, context):
 
 def _load_progress_context(project, user, request, context):
     context["tasks"] = []
+    context["progress_task_input_disabled"] = True
+    context["progress_tasks_unavailable_message"] = ""
     context["progress_entries"] = []
     context["progress_page_obj"] = None
     context["progress_draft"] = None
     context["progress_reject_reasons"] = {}
     if project is None:
         return
-    plan = SchedulePlan.objects.filter(project=project, is_active=True).first()
-    if plan:
-        context["tasks"] = list(
-            ScheduleTask.objects.filter(plan=plan, is_active=True).order_by("sort_order")
-        )
+    plan, tasks = _ensure_progress_tasks_for_project(project)
+    context["tasks"] = tasks
+    context["progress_task_input_disabled"] = not bool(tasks)
+    if not tasks:
+        if _get_progress_wbs_queryset(project).exists():
+            context["progress_tasks_unavailable_message"] = (
+                "이 프로젝트의 진행률 작업을 준비하지 못했습니다. HQ에서 일정 기준선을 확인해 주세요."
+            )
+        else:
+            context["progress_tasks_unavailable_message"] = (
+                "이 프로젝트에는 WBS 기준선 작업이 없습니다. HQ에서 WBS 기준선을 등록한 뒤 진행률을 입력할 수 있습니다."
+            )
     progress_qs = (
         DailyProgress.objects.filter(project=project, reporter=user)
         .select_related("task")

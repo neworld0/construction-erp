@@ -1,0 +1,323 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}전자카드 대사 검토{% endblock %}
+
+{% block content %}
+<style>
+  .summary-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .summary-box {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: rgba(15, 23, 42, 0.24);
+  }
+  .summary-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .filters {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-bottom: 16px;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .compact-input,
+  .compact-select,
+  textarea.compact-textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  textarea.compact-textarea {
+    min-height: 64px;
+    resize: vertical;
+  }
+  .action-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .muted-block {
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+
+<div class="card">
+  <div class="card-title">전자카드 대사 검토</div>
+  <div class="summary-grid" style="margin-top: 12px;">
+    <div class="summary-box"><div class="summary-label">기준월</div><div>{{ batch.year_month|date:"Y-m" }}</div></div>
+    <div class="summary-box"><div class="summary-label">현장</div><div>{{ batch.project.name }}</div></div>
+    <div class="summary-box"><div class="summary-label">원본 파일명</div><div>{{ batch.original_filename }}</div></div>
+    <div class="summary-box"><div class="summary-label">배치 상태</div><div>{{ batch.get_status_display }}</div></div>
+    <div class="summary-box"><div class="summary-label">원본 Raw 건수</div><div>{{ summary.parsed_raw_count|default:batch.raw_rows.count|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">원본 Day 건수</div><div>{{ summary.parsed_day_count|default:batch.day_rows.count|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">일치</div><div>{{ summary.reconciliation_match_count|default:0|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">ERP만 있음</div><div>{{ summary.reconciliation_erp_only_count|default:0|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">전자카드만 있음</div><div>{{ summary.reconciliation_card_only_count|default:0|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">공수 차이</div><div>{{ summary.reconciliation_diff_count|default:0|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">미매칭</div><div>{{ summary.reconciliation_unmatched_count|default:0|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">미해결 건수</div><div>{{ unresolved_count|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">확정 근로내역 생성 건수</div><div>{{ summary.confirmed_work_day_count|default:confirmed_work_days_count|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">신고 포함 건수</div><div>{{ summary.confirmed_included_count|default:0|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">신고 제외 건수</div><div>{{ summary.confirmed_excluded_count|default:0|intcomma }}</div></div>
+    <div class="summary-box"><div class="summary-label">최종 공수 합계</div><div>{{ summary.confirmed_total_final_work_unit|default:"0" }}</div></div>
+  </div>
+
+  <div class="action-bar">
+    <a class="btn btn-outline" href="/app/hq/labor/e-card-imports/">목록으로</a>
+    <a class="btn btn-outline" href="/app/hq/labor/confirmed-work-days/?batch_id={{ batch.id }}">확정 근로내역 보기</a>
+    {% if batch.status != "CONFIRMED" %}
+      <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reconcile_again" />
+        <input type="hidden" name="next_query" value="{{ current_query }}" />
+        <button class="btn btn-outline" type="submit">대사 재실행</button>
+      </form>
+      <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="confirm_batch" />
+        <input type="hidden" name="next_query" value="{{ current_query }}" />
+        <button class="btn" type="submit">대사 전체 확정</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if batch.status == "CONFIRMED" %}
+    <div class="muted-block" style="margin-top: 10px;">확정 근로내역이 생성되었습니다. 확정된 배치는 더 이상 수정할 수 없습니다.</div>
+  {% endif %}
+  {% if summary.reconciliation_no_result_reason %}
+    <div class="muted-block" style="margin-top: 10px;">{{ summary.reconciliation_no_result_reason }}</div>
+  {% endif %}
+</div>
+
+{% if batch.status == "CONFIRMED" %}
+  <div class="card" style="margin-top: 18px;">
+    <div class="card-title">CWMA 전자카드 재업로드 엑셀</div>
+    <div class="muted-block">확정 근로내역을 기준으로 원본 전자카드 양식을 유지한 재업로드용 엑셀을 생성합니다.</div>
+    <form method="post" style="margin-top: 12px; display: grid; gap: 12px; grid-template-columns: minmax(240px, 1fr) auto;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="generate_cwma_reupload" />
+      <input type="text" name="export_note" class="compact-input" placeholder="생성 메모 (선택)" />
+      <button class="btn" type="submit">재업로드 엑셀 생성</button>
+    </form>
+
+    <div style="margin-top: 16px;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>생성일시</th>
+            <th>생성자</th>
+            <th>파일명</th>
+            <th>변경 셀 수</th>
+            <th>신고 포함 건수</th>
+            <th>신고 제외 건수</th>
+            <th>최종 공수 합계</th>
+            <th>상태</th>
+            <th>다운로드</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for export in excel_exports %}
+            <tr>
+              <td>{{ export.generated_at|date:"Y-m-d H:i" }}</td>
+              <td>{% if export.generated_by %}{{ export.generated_by.username }}{% else %}-{% endif %}</td>
+              <td>{{ export.generated_filename|default:export.original_filename }}</td>
+              <td>{{ export.changed_count|intcomma }}</td>
+              <td>{{ export.included_count|intcomma }}</td>
+              <td>{{ export.excluded_count|intcomma }}</td>
+              <td>{{ export.total_export_work_unit }}</td>
+              <td>{{ export.get_status_display }}</td>
+              <td><a class="btn btn-outline" href="/app/hq/labor/excel-exports/{{ export.id }}/download/">다운로드</a></td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9" class="muted-block">아직 생성된 재업로드 엑셀이 없습니다.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+<div class="card" style="margin-top: 18px;">
+  <div class="card-title">필터</div>
+  <form method="get" class="filters">
+    <label>
+      상태
+      <select name="status">
+        <option value="">전체</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if filter_values.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      처리 방식
+      <select name="resolution">
+        <option value="">전체</option>
+        <option value="ERP" {% if filter_values.resolution == "ERP" %}selected{% endif %}>ERP 기준</option>
+        <option value="CARD" {% if filter_values.resolution == "CARD" %}selected{% endif %}>전자카드 기준</option>
+        <option value="MANUAL" {% if filter_values.resolution == "MANUAL" %}selected{% endif %}>수동 조정</option>
+        <option value="EXCLUDED" {% if filter_values.resolution == "EXCLUDED" %}selected{% endif %}>제외</option>
+      </select>
+    </label>
+    <label>
+      근로자
+      <select name="worker">
+        <option value="">전체</option>
+        {% for worker in workers %}
+          <option value="{{ worker.id }}" {% if filter_values.worker_id == worker.id|stringformat:"s" %}selected{% endif %}>{{ worker.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      검색어
+      <input type="text" name="q" value="{{ filter_values.q }}" placeholder="근로자명 / 원본 성명 / 연락처" />
+    </label>
+    <label style="display:flex; align-items:end; gap:8px;">
+      <input type="checkbox" name="only_unresolved" value="1" {% if filter_values.only_unresolved == "1" %}checked{% endif %} />
+      미해결만 보기
+    </label>
+    <div style="display:flex; align-items:end;">
+      <button class="btn btn-outline" type="submit">적용</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top: 18px;">
+  <div class="card-title">대사 결과</div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="next_query" value="{{ current_query }}" />
+    {% if batch.status != "CONFIRMED" %}
+      <div class="action-bar" style="margin-bottom: 12px;">
+        <select name="bulk_resolution" class="compact-select" style="max-width: 200px;">
+          <option value="">일괄 처리 방식</option>
+          <option value="ERP">ERP 기준</option>
+          <option value="CARD">전자카드 기준</option>
+          <option value="EXCLUDED">제외</option>
+        </select>
+        <input type="text" name="bulk_comment" class="compact-input" style="max-width: 360px;" placeholder="HQ 의견" />
+        <button class="btn btn-outline" type="submit" name="action" value="resolve_bulk">선택 일괄 처리</button>
+      </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>선택</th>
+          <th>근무일</th>
+          <th>근로자</th>
+          <th>ERP 공수</th>
+          <th>전자카드 공수</th>
+          <th>차이</th>
+          <th>상태</th>
+          <th>처리 방식</th>
+          <th>최종 공수</th>
+          <th>HQ 의견</th>
+          <th>신고 포함</th>
+          <th>처리자 / 일시</th>
+          <th>작업</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in results %}
+          <tr>
+            <td><input type="checkbox" name="selected_result_ids" value="{{ result.id }}" {% if batch.status == "CONFIRMED" %}disabled{% endif %} /></td>
+            <td>{{ result.work_date|date:"Y-m-d" }}</td>
+            <td>
+              {% if result.worker %}
+                {{ result.worker.name }}
+              {% elif result.card_day %}
+                {{ result.card_day.raw.worker_name_raw }}<br />
+                <span class="muted-block">{{ result.card_day.raw.rrn_masked }}</span>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ result.erp_work_unit }}</td>
+            <td>{{ result.card_work_unit }}</td>
+            <td>{{ result.difference }}</td>
+            <td>{{ result.get_status_display }}</td>
+            <td>
+              {% if batch.status == "CONFIRMED" %}
+                {{ result.resolution|default:"-" }}
+              {% else %}
+                <select name="row_resolution__{{ result.id }}" class="compact-select">
+                  <option value="">선택</option>
+                  <option value="ERP">ERP 기준</option>
+                  <option value="CARD">전자카드 기준</option>
+                  <option value="MANUAL">수동 조정</option>
+                  <option value="EXCLUDED">제외</option>
+                </select>
+              {% endif %}
+            </td>
+            <td>
+              <input type="number" step="0.01" min="0" name="row_final_work_unit__{{ result.id }}" class="compact-input" value="{{ result.final_work_unit|default_if_none:'' }}" {% if batch.status == "CONFIRMED" %}disabled{% endif %} />
+            </td>
+            <td>
+              <textarea name="row_comment__{{ result.id }}" class="compact-textarea" {% if batch.status == "CONFIRMED" %}disabled{% endif %}>{{ result.hq_comment }}</textarea>
+              <input type="text" name="row_export_note__{{ result.id }}" class="compact-input" value="{{ result.export_note }}" placeholder="export 비고" style="margin-top: 8px;" {% if batch.status == "CONFIRMED" %}disabled{% endif %} />
+              {% if result.status == "UNMATCHED" and result.card_day and batch.status != "CONFIRMED" %}
+                <div style="margin-top: 8px;">
+                  <a href="/app/hq/labor/workers/new/" class="muted-block">새 근로자 등록</a>
+                  <select name="row_worker_id__{{ result.id }}" class="compact-select" style="margin-top: 6px;">
+                    <option value="">기존 WorkerMaster 선택</option>
+                    {% for worker in workers %}
+                      <option value="{{ worker.id }}">{{ worker.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              {% endif %}
+            </td>
+            <td>{{ result.export_included|yesno:"예,아니오" }}</td>
+            <td>
+              {% if result.resolved_by %}{{ result.resolved_by.username }}{% else %}-{% endif %}<br />
+              <span class="muted-block">{% if result.resolved_at %}{{ result.resolved_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</span>
+            </td>
+            <td>
+              {% if batch.status == "CONFIRMED" %}
+                <span class="muted-block">확정 완료</span>
+              {% else %}
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="btn btn-outline" type="submit" name="resolve_result_id" value="{{ result.id }}">처리</button>
+                  {% if result.status == "UNMATCHED" and result.card_day %}
+                    <button class="btn btn-outline" type="submit" name="match_result_id" value="{{ result.id }}">근로자 매칭</button>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="13">대사 결과가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
+</div>
+{% endblock %}

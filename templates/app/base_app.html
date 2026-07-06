@@ -136,9 +136,18 @@
         padding-right: 38px;
         cursor: pointer;
       }
+      input[type="date"]::-webkit-calendar-picker-indicator,
+      input[type="month"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+      }
       input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 0;
-        cursor: pointer;
+      }
+      input[type="month"] {
+        color-scheme: dark;
+      }
+      input[type="month"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
       }
       select,
       option {

@@ -14,6 +14,37 @@ class CostItemCategory(models.TextChoices):
     OTHER = "other", "Other"
 
 
+COST_ITEM_CATEGORY_LABELS = {
+    CostItemCategory.MATERIAL: "재료비",
+    CostItemCategory.LABOR: "노무비",
+    CostItemCategory.OTHER: "경비",
+    CostItemCategory.SUBCON: "하도급",
+    CostItemCategory.EQUIP: "경비",
+    "overhead": "경비",
+}
+
+COST_ITEM_TYPE_LABELS = {
+    "D": "직접비",
+    "I": "간접비",
+    "L": "노무비",
+    "M": "재료비",
+    "E": "경비",
+    "S": "하도급",
+    "O": "기타",
+    "G": "일반관리비",
+    "P": "이윤",
+}
+
+COST_ITEM_WORK_TYPE_LABELS = {
+    "07": "토공",
+    "08": "포장",
+    "09": "교량보수",
+    "11": "교통안전",
+    "12": "운반/폐기물/장비",
+    "99": "공통",
+}
+
+
 class CostItem(models.Model):
     code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=255)
@@ -29,6 +60,32 @@ class CostItem(models.Model):
 
     class Meta:
         ordering = ["sort_order", "-created_at"]
+
+    def get_category_label_ko(self) -> str:
+        value = str(self.category or "").strip().lower()
+        return COST_ITEM_CATEGORY_LABELS.get(value, self.category or "-")
+
+    def get_cost_type_label_ko(self) -> str:
+        value = str(self.cost_type or "").strip().upper()
+        return COST_ITEM_TYPE_LABELS.get(value, self.cost_type or "-")
+
+    def get_work_type_label_ko(self) -> str:
+        value = str(self.work_type or "").strip()
+        return COST_ITEM_WORK_TYPE_LABELS.get(value, value or "-")
+
+    def get_cost_type_display_ko(self) -> str:
+        value = str(self.cost_type or "").strip().upper()
+        label = self.get_cost_type_label_ko()
+        if value and label != value:
+            return f"{value} - {label}"
+        return label
+
+    def get_work_type_display_ko(self) -> str:
+        value = str(self.work_type or "").strip()
+        label = self.get_work_type_label_ko()
+        if value and label != value:
+            return f"{value} - {label}"
+        return label
 
     def get_display_name(self) -> str:
         primary = getattr(self, "aliases", None)

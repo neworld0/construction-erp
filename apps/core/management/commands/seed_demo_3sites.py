@@ -35,10 +35,23 @@ class Command(BaseCommand):
         call_command("seed_master_templates")
 
         User = get_user_model()
-        _get_or_create_user(User, os.getenv("SEED_CEO_USERNAME", "ceo"), Role.CEO)
-        hq_user = _get_or_create_user(User, os.getenv("SEED_HQ_USERNAME", "hq"), Role.HQ)
+        _get_or_create_user(
+            User,
+            os.getenv("SEED_CEO_USERNAME", "ceo"),
+            os.getenv("SEED_CEO_PASSWORD", "change-me"),
+            Role.CEO,
+        )
+        hq_user = _get_or_create_user(
+            User,
+            os.getenv("SEED_HQ_USERNAME", "hq"),
+            os.getenv("SEED_HQ_PASSWORD", "change-me"),
+            Role.HQ,
+        )
         field_user = _get_or_create_user(
-            User, os.getenv("SEED_FIELD_USERNAME", "field1"), Role.FIELD
+            User,
+            os.getenv("SEED_FIELD_USERNAME", "field1"),
+            os.getenv("SEED_FIELD_PASSWORD", "change-me"),
+            Role.FIELD,
         )
 
         cost_items = list(CostItem.objects.filter(is_active=True).order_by("sort_order"))
@@ -111,8 +124,11 @@ class Command(BaseCommand):
         self.stdout.write("seed_demo_3sites done.")
 
 
-def _get_or_create_user(user_model, username, role):
+def _get_or_create_user(user_model, username, password, role):
     user, _created = user_model.objects.get_or_create(username=username)
+    if password:
+        user.set_password(password)
+        user.save(update_fields=["password"])
     profile, _ = UserProfile.objects.get_or_create(user=user, defaults={"role": role})
     if profile.role != role:
         profile.role = role

@@ -139,20 +139,10 @@
               {% endif %}
             </td>
             <td>
-              {% with ct=item|get_attribute:mapping.cost_type %}
-                {{ ct }}
-                {% with ct_label=cost_type_labels|get_item:ct %}
-                  {% if ct_label %} · {{ ct_label }}{% endif %}
-                {% endwith %}
-              {% endwith %}
+              {{ item.get_cost_type_display_ko }}
             </td>
             <td>
-              {% with wt=item|get_attribute:mapping.work_type|work_code %}
-                {{ wt }}
-                {% with wt_label=work_type_labels|get_item:wt %}
-                  {% if wt_label %} · {{ wt_label }}{% endif %}
-                {% endwith %}
-              {% endwith %}
+              {{ item.get_work_type_display_ko }}
             </td>
             <td>
               {% if active_supported %}

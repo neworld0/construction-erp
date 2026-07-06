@@ -1,4 +1,5 @@
 {% extends "app/base_app.html" %}
+{% load humanize %}
 {% block page_title %}프로젝트 상세{% endblock %}
 {% block content %}
 <style>
@@ -18,34 +19,30 @@
     grid-template-columns: 2fr 1fr 1fr auto;
   }
   .row.budget {
-    grid-template-columns: 1.2fr 1.4fr 1.4fr 1fr auto;
+    grid-template-columns: 1.2fr 1.6fr 1.4fr 1fr auto;
   }
   .row.labor {
-    grid-template-columns: 1.6fr 1.6fr 1fr auto;
+    grid-template-columns: 1.8fr 1.6fr 1fr auto;
   }
   .row.wbs {
     grid-template-columns: 2fr 1.2fr 0.8fr 1fr 1fr auto;
   }
-  .badge.draft {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
+  .badge {
     padding: 4px 8px;
     border-radius: 999px;
     font-size: 12px;
+  }
+  .badge.draft {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
   }
   .badge.submitted {
     background: rgba(245, 158, 11, 0.2);
     color: #fbbf24;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 12px;
   }
   .badge.approved {
     background: rgba(34, 197, 94, 0.2);
     color: #86efac;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 12px;
   }
   .row.header {
     background: rgba(15, 23, 42, 0.9);
@@ -70,7 +67,28 @@
     border-bottom: 1px solid rgba(148, 163, 184, 0.2);
     text-align: left;
   }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 12px 0 16px;
+  }
+  .summary-box {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.65);
+  }
+  .summary-box .label {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+  }
+  .summary-box .value {
+    font-size: 18px;
+    font-weight: 700;
+  }
 </style>
+
 <div class="card">
   <h3>프로젝트 상세</h3>
   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
@@ -94,9 +112,7 @@
       {% endif %}
     </div>
   {% endif %}
-  <div class="mb-3">
-    <strong>프로젝트명</strong> {{ project.name }}
-  </div>
+  <div class="mb-3"><strong>프로젝트명</strong> {{ project.name }}</div>
   <div class="mb-3">
     <strong>상태:</strong>
     {% if project.status == "draft" %}
@@ -107,12 +123,8 @@
       <span class="badge approved">승인됨</span>
     {% endif %}
   </div>
-  <div class="mb-3">
-    <strong>시작일</strong> {{ project.start_date }}
-  </div>
-  <div class="mb-3">
-    <strong>종료일</strong> {{ project.end_date }}
-  </div>
+  <div class="mb-3"><strong>시작일</strong> {{ project.start_date }}</div>
+  <div class="mb-3"><strong>종료일</strong> {{ project.end_date }}</div>
   <div style="display:flex; gap:8px; flex-wrap:wrap;">
     <a class="btn btn-outline" href="/app/hq/projects/{{ project.id }}/approval-packages/">패키지 목록</a>
     {% if project.status == "draft" %}
@@ -127,6 +139,12 @@
         <input type="hidden" name="action" value="approve_baseline" />
         <button class="btn" type="submit">승인</button>
       </form>
+      <form method="post" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject_baseline" />
+        <input type="text" name="reject_reason" placeholder="반려 사유" class="form-control" style="max-width:280px;" />
+        <button class="btn btn-outline" type="submit">반려</button>
+      </form>
     {% endif %}
   </div>
 </div>
@@ -134,9 +152,9 @@
 <div class="card" style="margin-top: 16px;">
   <h3>계약 정보</h3>
   {% if contract %}
-    <div class="mb-3"><strong>계약 금액:</strong> {{ contract.contract_amount }}</div>
-    <div class="mb-3"><strong>계약 시작일:</strong> {{ contract.contract_start_date }}</div>
-    <div class="mb-3"><strong>계약 종료일:</strong> {{ contract.contract_end_date }}</div>
+    <div class="mb-3"><strong>계약 금액:</strong> {{ contract.contract_amount|intcomma }}</div>
+    <div class="mb-3"><strong>계약 시작일</strong> {{ contract.contract_start_date }}</div>
+    <div class="mb-3"><strong>계약 종료일</strong> {{ contract.contract_end_date }}</div>
     <div class="mb-3">
       <strong>계약 파일:</strong>
       {% if contract.contract_file %}
@@ -145,7 +163,7 @@
         없음
       {% endif %}
     </div>
-    <div class="mb-3"><strong>메모:</strong> {{ contract.memo }}</div>
+    <div class="mb-3"><strong>메모:</strong> {{ contract.memo|default:"-" }}</div>
   {% else %}
     <div>계약 정보가 없습니다.</div>
   {% endif %}
@@ -238,9 +256,9 @@
         <div>{{ assignment.role_in_project|default:"-" }}</div>
         <div>
           {% if assignment.is_active %}
-            <span class="badge approved">active</span>
+            <span class="badge approved">활성</span>
           {% else %}
-            <span class="badge rejected">inactive</span>
+            <span class="badge draft">비활성</span>
           {% endif %}
         </div>
         <div>
@@ -256,7 +274,7 @@
       </div>
     {% empty %}
       <div class="row assignment">
-        <div>배정된 사용자가 없습니다.</div>
+        <div>등록된 항목이 없습니다.</div>
         <div></div>
         <div></div>
         <div></div>
@@ -266,68 +284,181 @@
 </div>
 
 <div class="card" style="margin-top: 16px;">
-  <h3>프로젝트 예산</h3>
-  <div class="helper">비활성/변경승인대기 CBS는 신규 예산에 사용할 수 없습니다.</div>
+  <h3>예산 기준선</h3>
+  <div class="helper">비활성/변경대기 CBS와 임시 예산은 현장 예산에서 사용할 수 없습니다.</div>
+  {% if budget_form_errors or labor_form_errors %}
+    <div class="alert alert-warning" style="margin-top: 12px;">
+      예산 기준선 저장에 실패했습니다. 오류 항목을 확인해 주세요.
+      <div class="muted" style="margin-top: 6px;">
+        아래 합계는 현재 저장된 기준선 기준입니다. 저장 실패 시 입력값은 합계에 반영되지 않습니다.
+      </div>
+    </div>
+  {% endif %}
+  <div class="summary-grid">
+    <div class="summary-box">
+      <div class="label">일반 예산 합계</div>
+      <div class="value">{{ budget_total_amount|intcomma }}</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">노무 예산 합계</div>
+      <div class="value">{{ labor_budget_total_amount|intcomma }}</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">예산 기준선 총합계</div>
+      <div class="value">{{ budget_grand_total_amount|intcomma }}</div>
+    </div>
+    {% if contract %}
+      <div class="summary-box">
+        <div class="label">계약금액</div>
+        <div class="value">{{ contract.contract_amount|intcomma }}</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">계약금액 - 예산 기준선 차이</div>
+        <div class="value">{{ contract_budget_difference|default:0|intcomma }}</div>
+      </div>
+    {% endif %}
+  </div>
+  {% if contract_budget_difference and contract_budget_difference != 0 %}
+    <div class="alert alert-warning">
+      계약금액과 예산 기준선 총합계가 일치하지 않습니다. 이윤, 단수조정, 관급자재 제외 여부를 확인해 주세요.
+    </div>
+  {% endif %}
+  <div class="summary-grid" style="margin-top: 0;">
+    <div class="summary-box">
+      <div class="label">재료비 합계</div>
+      <div class="value">{{ material_budget_total_amount|intcomma }}</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">하도급 합계</div>
+      <div class="value">{{ subcontract_budget_total_amount|intcomma }}</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">노무비 합계</div>
+      <div class="value">{{ labor_budget_total_amount|intcomma }}</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">경비 합계</div>
+      <div class="value">{{ expense_budget_total_amount|intcomma }}</div>
+    </div>
+  </div>
   {% if wbs_locked %}
     <div class="alert alert-danger">제출 이후 예산은 수정할 수 없습니다.</div>
   {% endif %}
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_budget" />
-    <h4 style="margin-top: 8px;">예산 항목</h4>
+    <h4 style="margin-top: 8px;">일반 예산</h4>
     {{ budget_formset.management_form }}
+    {% if budget_formset.non_form_errors %}
+      <div class="alert alert-warning">
+        {% for err in budget_formset.non_form_errors %}
+          <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if budget_form_errors %}
+      <div class="alert alert-warning">
+        {% for err in budget_form_errors %}
+          <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
     <div class="table">
       <div class="row header budget">
         <div>카테고리</div>
-        <div>예산 항목</div>
-        <div>명칭</div>
+        <div>CBS</div>
+        <div>항목명</div>
         <div>예산 금액</div>
         <div>삭제</div>
       </div>
       {% for form in budget_formset %}
         <div class="row budget">
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
           <div>{{ form.category }}</div>
           <div>{{ form.cost_item }}</div>
           <div>{{ form.name }}</div>
           <div>{{ form.planned_amount }}</div>
           <div>{{ form.DELETE }}</div>
-          <div style="grid-column: 1 / -1;">
-            {{ form.note }}
-          </div>
+          <div style="grid-column: 1 / -1;">{{ form.note }}</div>
+          {% if form.errors %}
+            <div style="grid-column: 1 / -1; color: #fca5a5; font-size: 13px;">
+              {% for field, errors in form.errors.items %}
+                {% for err in errors %}
+                  <div>{{ field }}: {{ err }}</div>
+                {% endfor %}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
       {% endfor %}
+      <div class="row header budget">
+        <div>합계</div>
+        <div></div>
+        <div>일반 예산 합계</div>
+        <div>{{ budget_total_amount|intcomma }}</div>
+        <div></div>
+      </div>
     </div>
 
-    <h4 style="margin-top: 20px;">인건비</h4>
+    <h4 style="margin-top: 20px;">노무 예산</h4>
     {{ labor_formset.management_form }}
+    {% if labor_formset.non_form_errors %}
+      <div class="alert alert-warning">
+        {% for err in labor_formset.non_form_errors %}
+          <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if labor_form_errors %}
+      <div class="alert alert-warning">
+        {% for err in labor_form_errors %}
+          <div>{{ err }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
     <div class="table">
       <div class="row header labor">
-        <div>예산 항목</div>
-        <div>명칭</div>
+        <div>CBS</div>
+        <div>항목명</div>
         <div>예산 금액</div>
         <div>삭제</div>
       </div>
       {% for form in labor_formset %}
         <div class="row labor">
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
           <div>{{ form.cost_item }}{{ form.category }}</div>
           <div>{{ form.name }}</div>
           <div>{{ form.planned_amount }}</div>
           <div>{{ form.DELETE }}</div>
-          <div style="grid-column: 1 / -1;">
-            {{ form.note }}
-          </div>
+          <div style="grid-column: 1 / -1;">{{ form.note }}</div>
+          {% if form.errors %}
+            <div style="grid-column: 1 / -1; color: #fca5a5; font-size: 13px;">
+              {% for field, errors in form.errors.items %}
+                {% for err in errors %}
+                  <div>{{ field }}: {{ err }}</div>
+                {% endfor %}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
       {% endfor %}
+      <div class="row header labor">
+        <div></div>
+        <div>노무 예산 합계</div>
+        <div>{{ labor_budget_total_amount|intcomma }}</div>
+        <div></div>
+      </div>
     </div>
 
     <div style="margin-top: 12px;">
-      <button class="btn" type="submit">예산 저장</button>
+      <div class="muted" style="margin-bottom: 8px;">예산 기준선 총합계 {{ budget_grand_total_amount|intcomma }}</div>
+      <button class="btn" type="submit">저장</button>
     </div>
   </form>
 </div>
 
 <div class="card" style="margin-top: 16px;">
-  <h3>WBS</h3>
+  <h3>WBS 기준선</h3>
   {% if wbs_locked %}
     <div class="alert alert-danger">제출 이후 WBS는 수정할 수 없습니다.</div>
   {% endif %}
@@ -346,17 +477,27 @@
       </div>
       {% for form in wbs_formset %}
         <div class="row wbs">
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
           <div>{{ form.name }}</div>
           <div>{{ form.parent }}</div>
           <div>{{ form.weight }}</div>
           <div>{{ form.plan_start_date }}</div>
           <div>{{ form.plan_end_date }}</div>
           <div>{{ form.DELETE }}</div>
+          {% if form.errors %}
+            <div style="grid-column: 1 / -1; color: #fca5a5; font-size: 13px;">
+              {% for field, errors in form.errors.items %}
+                {% for err in errors %}
+                  <div>{{ field }}: {{ err }}</div>
+                {% endfor %}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
       {% endfor %}
     </div>
     <div style="margin-top: 12px;">
-      <button class="btn" type="submit" {% if wbs_locked %}disabled{% endif %}>WBS 저장</button>
+      <button class="btn" type="submit" {% if wbs_locked %}disabled{% endif %}>저장</button>
     </div>
   </form>
 </div>

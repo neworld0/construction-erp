@@ -21,6 +21,22 @@ from .models import (
     WBSItem,
 )
 
+BUDGET_BASELINE_CATEGORY_LABELS = {
+    BudgetCategory.MATERIAL: "재료비",
+    BudgetCategory.SUBCON: "하도급",
+    BudgetCategory.LABOR: "노무비",
+    BudgetCategory.OTHER: "경비",
+    BudgetCategory.EQUIP: "경비",
+    BudgetCategory.OVERHEAD: "경비",
+}
+
+BUDGET_BASELINE_CATEGORY_CHOICES = [
+    (BudgetCategory.MATERIAL, "재료비"),
+    (BudgetCategory.SUBCON, "하도급"),
+    (BudgetCategory.LABOR, "노무비"),
+    (BudgetCategory.OTHER, "경비"),
+]
+
 
 class ProjectOnboardingForm(forms.ModelForm):
     class Meta:
@@ -78,13 +94,14 @@ class ProjectContractForm(forms.ModelForm):
         return value
 
     def __init__(self, *args, **kwargs):
+        self.require_file = kwargs.pop("require_file", True)
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "form-control")
 
     def clean_contract_file(self):
         file_obj = self.cleaned_data.get("contract_file")
-        if not file_obj:
+        if not file_obj and self.require_file:
             raise forms.ValidationError("계약서 파일은 필수입니다.")
         return file_obj
 
@@ -111,6 +128,7 @@ class BudgetItemForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["category"].choices = BUDGET_BASELINE_CATEGORY_CHOICES
         self.fields["cost_item"].queryset = CostItem.objects.all().order_by(
             "sort_order", "name"
         )
@@ -146,8 +164,17 @@ class BudgetItemForm(forms.ModelForm):
 class LaborBudgetItemForm(BudgetItemForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["category"].choices = [(BudgetCategory.LABOR, "노무비")]
         self.fields["category"].initial = BudgetCategory.LABOR
         self.fields["category"].widget = forms.HiddenInput()
+        base_qs = CostItem.objects.exclude(code="CIVIL-PROFIT").filter(
+            category="labor"
+        )
+        if self.is_bound:
+            raw_cost_item = self.data.get(self.add_prefix("cost_item"))
+            if raw_cost_item:
+                base_qs = CostItem.objects.filter(id=raw_cost_item) | base_qs
+        self.fields["cost_item"].queryset = base_qs.order_by("sort_order", "name")
 
     def clean(self):
         cleaned = super().clean()
@@ -167,6 +194,14 @@ class WBSItemForm(forms.ModelForm):
             "plan_end_date",
         ]
         widgets = {
+            "weight": forms.NumberInput(
+                attrs={
+                    "step": "0.01",
+                    "min": "0",
+                    "max": "100",
+                    "inputmode": "decimal",
+                }
+            ),
             "plan_start_date": forms.DateInput(attrs={"type": "date"}),
             "plan_end_date": forms.DateInput(attrs={"type": "date"}),
         }
@@ -175,6 +210,12 @@ class WBSItemForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "form-control")
+        weight_attrs = self.fields["weight"].widget.attrs
+        weight_attrs["class"] = "form-control"
+        weight_attrs["step"] = "0.01"
+        weight_attrs["min"] = "0"
+        weight_attrs["max"] = "100"
+        weight_attrs["inputmode"] = "decimal"
 
 
 class WBSChangeRequestForm(forms.ModelForm):
@@ -206,6 +247,12 @@ class WBSChangeLineForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "form-control")
+        weight_attrs = self.fields["weight"].widget.attrs
+        weight_attrs["class"] = "form-control"
+        weight_attrs["step"] = "0.01"
+        weight_attrs["min"] = "0"
+        weight_attrs["max"] = "100"
+        weight_attrs["inputmode"] = "decimal"
 
 
 class ApprovalPackageForm(forms.ModelForm):

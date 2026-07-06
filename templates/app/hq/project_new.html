@@ -50,6 +50,61 @@
     color: var(--muted);
     margin-top: 4px;
   }
+  .unmatched-row {
+    background: rgba(248, 113, 113, 0.08);
+  }
+  .matched-row {
+    background: rgba(74, 222, 128, 0.06);
+  }
+  .budget-review-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .budget-review-table {
+    width: 100%;
+    min-width: 1500px;
+    table-layout: fixed;
+  }
+  .budget-review-table td {
+    vertical-align: top;
+  }
+  .budget-review-table .col-exclude { width: 54px; }
+  .budget-review-table .col-source { width: 110px; }
+  .budget-review-table .col-item-name { width: 190px; }
+  .budget-review-table .col-spec { width: 190px; }
+  .budget-review-table .col-category { width: 90px; }
+  .budget-review-table .col-cbs { width: 210px; }
+  .budget-review-table .col-name { width: 170px; }
+  .budget-review-table .col-amount { width: 130px; }
+  .budget-review-table .col-status { width: 110px; }
+  .budget-review-table .col-note { width: 360px; min-width: 360px; }
+  .budget-review-table .col-alias { width: 70px; }
+  .budget-review-table .cell-text {
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+  }
+  .budget-review-note {
+    width: 100%;
+    min-width: 340px;
+    min-height: 72px;
+    resize: vertical;
+    white-space: pre-wrap;
+  }
+  .budget-review-table select,
+  .budget-review-table input[type="text"],
+  .budget-review-table input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .budget-review-table .amount-input {
+    text-align: right;
+  }
+  .budget-review-table .alias-cell {
+    text-align: center;
+    white-space: nowrap;
+  }
 </style>
 
 <div class="grid">
@@ -88,6 +143,9 @@
 
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
+    <input type="hidden" name="contract_file_token" value="{{ upload_tokens.contract_file_token }}" />
+    <input type="hidden" name="budget_excel_token" value="{{ upload_tokens.budget_excel_token }}" />
+    <input type="hidden" name="commencement_excel_token" value="{{ upload_tokens.commencement_excel_token }}" />
 
     <div class="card">
       <div class="section-title">공사 기본정보</div>
@@ -152,6 +210,9 @@
         <div class="mb-3">
           <label class="form-label" for="{{ contract_form.contract_file.id_for_label }}">계약서 파일</label>
           {{ contract_form.contract_file }}
+          {% if stored_upload_names.contract_file %}
+            <div class="input-hint">임시 보관 중: {{ stored_upload_names.contract_file }}</div>
+          {% endif %}
           {% if contract_form.contract_file.errors %}
             <div class="input-hint" style="color:#fca5a5;">{{ contract_form.contract_file.errors|striptags }}</div>
           {% endif %}
@@ -184,6 +245,343 @@
       <div class="section-title">예산 라인 입력</div>
       <div class="helper">예산 라인은 최소 1개 이상 필요합니다.</div>
       <div class="helper">비활성/변경승인대기 CBS는 신규 예산으로 저장할 수 없습니다.</div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label class="form-label" for="id_budget_excel">계약내역서 Excel 업로드</label>
+          <input id="id_budget_excel" type="file" name="budget_excel" class="form-control" accept=".xlsx" />
+          <div class="input-hint">도급계약내역서, 설계내역서, 내역서총괄표(도급) 시트를 우선 탐색합니다.</div>
+          {% if stored_upload_names.budget_excel %}
+            <div class="input-hint">임시 보관 중: {{ stored_upload_names.budget_excel }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% if budget_import_notice %}
+        <div class="alert" style="background:rgba(56,189,248,0.15); color:var(--text);">
+          {{ budget_import_notice }}
+        </div>
+      {% endif %}
+      {% if budget_import_warnings %}
+        <div class="alert alert-danger">
+          {% for warning in budget_import_warnings %}
+            <div>{{ warning }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if budget_preview_rows %}
+        <div class="helper" style="margin-bottom:12px;">
+          전체 예산 상세행: {{ budget_import_total_rows }}건
+          <br />
+          CBS 자동 매칭: {{ budget_import_auto_matched_rows }}건
+          <br />
+          CBS 수동 매칭: {{ budget_import_manual_matched_rows }}건
+          <br />
+          CBS 매칭되어 입력표 반영: {{ budget_import_matched_rows }}건
+          <br />
+          CBS 미매칭: {{ budget_import_unmatched_rows }}건
+          <br />
+          자동 제외(섹션/제목 등): {{ budget_import_skipped_rows }}건
+          <br />
+          섹션/제목 자동 제외: {{ budget_import_skipped_section_rows }}건
+          <br />
+          입력표 생성 행 수: {{ budget_form_initial_count }}건
+          <br />
+          계약금액: {{ contract_form.contract_amount.value|default:"-" }}
+          <br />
+          총괄표 도급예정액: {{ budget_summary_contract_amount|default_if_none:"-"|intcomma }}
+          <br />
+          총괄표 노무비: {{ budget_summary_labor_amount|default_if_none:"-"|intcomma }}
+          <br />
+          총괄표 재료비: {{ budget_summary_material_amount|default_if_none:"-"|intcomma }}
+          <br />
+          총괄표 경비: {{ budget_summary_expense_amount|default_if_none:"-"|intcomma }}
+          <br />
+          Excel 도급대상 상세 합계: {{ budget_import_contract_scope_amount|intcomma }}
+          <br />
+          생성 노무비 합계: {{ budget_import_generated_labor_amount|intcomma }}
+          <br />
+          생성 재료비 합계: {{ budget_import_generated_material_amount|intcomma }}
+          <br />
+          생성 경비 합계: {{ budget_import_generated_expense_amount|intcomma }}
+          <br />
+          생성 도급 3분류 합계: {{ budget_import_generated_contract_amount|intcomma }}
+          <br />
+          수동 매핑 필요 노무비: {{ budget_import_manual_required_labor_amount|intcomma }}
+          <br />
+          수동 매핑 필요 재료비: {{ budget_import_manual_required_material_amount|intcomma }}
+          <br />
+          수동 매핑 필요 경비: {{ budget_import_manual_required_expense_amount|intcomma }}
+          <br />
+          미매핑 노무비: {{ budget_import_unmapped_labor_amount|intcomma }}
+          <br />
+          미매핑 재료비: {{ budget_import_unmapped_material_amount|intcomma }}
+          <br />
+          미매핑 경비: {{ budget_import_unmapped_expense_amount|intcomma }}
+          <br />
+          관급자재 참고금액: {{ budget_import_owner_supplied_amount|intcomma }}
+          <br />
+          관급자재 제외 행: {{ budget_import_owner_supplied_rows }}건
+          <br />
+          Excel 총공사비 기준 합계: {{ budget_import_total_construction_amount|intcomma }}
+          <br />
+          계약금액 대비 차이: {{ budget_contract_amount_difference|default_if_none:"-"|intcomma }}
+          <br />
+          노무비 차이: {{ budget_summary_labor_difference|default_if_none:"-"|intcomma }}
+          <br />
+          재료비 차이: {{ budget_summary_material_difference|default_if_none:"-"|intcomma }}
+          <br />
+          경비 차이: {{ budget_summary_expense_difference|default_if_none:"-"|intcomma }}
+          <br />
+          총액 차이: {{ budget_summary_total_difference|default_if_none:"-"|intcomma }}
+          <br />
+          CBS 매칭 금액: {{ budget_import_matched_amount|intcomma }}
+          <br />
+          CBS 미매칭 금액: {{ budget_import_unmatched_amount|intcomma }}
+          <br />
+          매칭률: {{ budget_import_match_rate|floatformat:1 }}%
+          <br />
+          미매칭 행은 미리보기에는 표시되지만 저장 예산 라인에는 포함되지 않습니다. CBS alias를 등록한 뒤 다시 가져오세요.
+        </div>
+      {% endif %}
+      {% if budget_import_coverage_warning %}
+        <div class="alert alert-danger">{{ budget_import_coverage_warning }}</div>
+      {% endif %}
+      {% if budget_summary_warnings %}
+        <div class="alert" style="background:rgba(248,189,56,0.12); color:var(--text);">
+          {% for warning in budget_summary_warnings %}
+            <div>총괄표 3분류 금액 파싱 경고: {{ warning }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if budget_reconciliation_candidates %}
+        <div class="alert" style="background:rgba(248,113,113,0.12); color:var(--text);">
+          <div style="font-weight:600; margin-bottom:6px;">비목 대사 오류 후보</div>
+          <div style="overflow:auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>비목</th>
+                  <th>품명</th>
+                  <th>원본 행</th>
+                  <th>금액</th>
+                  <th>상태</th>
+                  <th>원인</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in budget_reconciliation_candidates %}
+                  <tr>
+                    <td>{{ item.bucket_label }}</td>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.row_ref }}</td>
+                    <td>{{ item.amount|intcomma }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.cause }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endif %}
+      {% if budget_alias_created_count or budget_alias_existing_count or budget_alias_skipped_count %}
+        <div class="alert" style="background:rgba(56,189,248,0.15); color:var(--text);">
+          <div>이번 처리에서 저장된 CBS alias: {{ budget_alias_created_count }}건</div>
+          <div>이미 존재하는 CBS alias: {{ budget_alias_existing_count }}건</div>
+          <div>저장 제외 alias: {{ budget_alias_skipped_count }}건</div>
+          {% if budget_alias_saved_labels %}
+            <div class="input-hint" style="margin-top:8px;">저장된 alias 예시</div>
+            {% for label in budget_alias_saved_labels|slice:":10" %}
+              <div>{{ label }}</div>
+            {% endfor %}
+          {% endif %}
+          {% if budget_alias_skipped_reasons %}
+            <div class="input-hint" style="margin-top:8px;">저장 제외 사유</div>
+            {% for reason in budget_alias_skipped_reasons|slice:":5" %}
+              <div>{{ reason }}</div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% endif %}
+      {% if budget_review_errors %}
+        <div class="alert alert-danger">
+          <div style="font-weight:600; margin-bottom:6px;">예산 상세 조정 오류</div>
+          {% for error in budget_review_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if budget_review_rows %}
+        <div class="card" style="margin-bottom:16px;">
+          <div class="section-title">예산 자동 매칭 상세 조정</div>
+          <div class="helper" style="margin-bottom:12px;">
+            원본 Excel 상세행을 비목 버킷별로 나눈 검토 목록입니다. 제외, 비목, CBS, 항목명, 금액을 조정한 뒤 적용하거나 바로 등록할 수 있습니다.
+          </div>
+          <div class="budget-review-table-wrap">
+            <table class="table budget-review-table">
+              <thead>
+                <tr>
+                  <th class="col-exclude">선택/제외</th>
+                  <th class="col-source">원본</th>
+                  <th class="col-item-name">품명</th>
+                  <th class="col-spec">규격</th>
+                  <th class="col-category">비목</th>
+                  <th class="col-cbs">CBS</th>
+                  <th class="col-name">항목명</th>
+                  <th class="col-amount">예산금액</th>
+                  <th class="col-status">상태/경고</th>
+                  <th class="col-note">비고</th>
+                  <th class="col-alias">alias 저장</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in budget_review_rows %}
+                  <tr class="{% if row.is_excluded %}unmatched-row{% elif row.cost_item_id %}matched-row{% else %}unmatched-row{% endif %}">
+                    <td class="col-exclude">
+                      <label style="display:flex; gap:6px; align-items:center;">
+                        <input type="checkbox" name="budget_review_exclude__{{ row.review_key }}" value="1" {% if row.is_excluded %}checked{% endif %} />
+                        <span class="input-hint">제외</span>
+                      </label>
+                    </td>
+                    <td class="col-source cell-text">{{ row.source_sheet_name }}:{{ row.source_row_no }}</td>
+                    <td class="col-item-name cell-text">{{ row.source_item_name }}</td>
+                    <td class="col-spec cell-text">{{ row.source_spec|default:"-" }}</td>
+                    <td class="col-category">
+                      <select name="budget_review_category__{{ row.review_key }}" class="form-control">
+                        {% for value, label in budget_review_category_choices %}
+                          <option value="{{ value }}" {% if row.category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    <td class="col-cbs">
+                      <select name="budget_review_cost_item__{{ row.review_key }}" class="form-control">
+                        <option value="">CBS 선택</option>
+                        {% for option in budget_match_options %}
+                          <option value="{{ option.id }}" {% if row.cost_item_id and row.cost_item_id|stringformat:"s" == option.id|stringformat:"s" %}selected{% endif %}>
+                            {{ option.label }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    <td class="col-name">
+                      <input type="text" name="budget_review_name__{{ row.review_key }}" class="form-control" value="{{ row.name }}" />
+                    </td>
+                    <td class="col-amount">
+                      <input type="number" name="budget_review_amount__{{ row.review_key }}" class="form-control amount-input" min="0" step="1" value="{{ row.planned_amount }}" />
+                    </td>
+                    <td class="col-status cell-text">
+                      <div>{{ row.status }}</div>
+                      {% for warning in row.warnings %}
+                        <div class="input-hint" style="color:#fca5a5;">{{ warning }}</div>
+                      {% empty %}
+                        {% if row.match_source %}
+                          <div class="input-hint">{{ row.match_source }}</div>
+                        {% else %}
+                          <div class="input-hint">-</div>
+                        {% endif %}
+                      {% endfor %}
+                    </td>
+                    <td class="col-note">
+                      <textarea name="budget_review_note__{{ row.review_key }}" class="form-control budget-review-note" rows="3">{{ row.note }}</textarea>
+                    </td>
+                    <td class="col-alias alias-cell">
+                      {% if row.source_item_name and row.source_item_name != "이윤" and not row.is_excluded and "관급" not in row.source_item_name %}
+                        <label style="display:flex; gap:6px; align-items:center;">
+                          <input type="checkbox" name="budget_review_alias_save__{{ row.review_key }}" value="1" {% if row.alias_save %}checked{% endif %} />
+                          <span class="input-hint">저장</span>
+                        </label>
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="row-actions">
+            <button class="btn btn-outline" type="submit" name="action" value="apply_budget_review_adjustments">상세 조정 적용</button>
+          </div>
+        </div>
+      {% endif %}
+      {% if budget_preview_rows %}
+        <div class="helper">엑셀 미리보기입니다. 아래 예산 라인 입력 표에서 CBS/금액/삭제 여부를 조정한 뒤 저장하세요.</div>
+        <div style="overflow:auto; margin-bottom:12px;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>코드</th>
+                <th>계층</th>
+                <th>항목명</th>
+                <th>규격</th>
+                <th>수량</th>
+                <th>단위</th>
+                <th>단가</th>
+                <th>금액</th>
+                <th>노무비</th>
+                <th>재료비</th>
+                <th>경비</th>
+                <th>CBS 매핑</th>
+                <th>alias 저장</th>
+                <th>경고</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in budget_preview_rows %}
+                <tr class="{% if row.is_skipped %}{% elif row.matched_cost_item_id %}matched-row{% else %}unmatched-row{% endif %}">
+                  <td>{{ row.code }}</td>
+                  <td>{{ row.hierarchy }}</td>
+                  <td>{{ row.item_name }}</td>
+                  <td>{{ row.spec }}</td>
+                  <td>{{ row.quantity|default:"-" }}</td>
+                  <td>{{ row.unit|default:"-" }}</td>
+                  <td>{{ row.unit_price|default:"-" }}</td>
+                  <td>{{ row.amount|default:"-" }}</td>
+                  <td>{{ row.labor_amount|default:"-" }}</td>
+                  <td>{{ row.material_amount|default:"-" }}</td>
+                  <td>{{ row.expense_amount|default:"-" }}</td>
+                  <td>
+                    {% if row.is_skipped %}
+                      <span class="input-hint">자동 제외{% if row.skip_reason %} / {{ row.skip_reason }}{% endif %}</span>
+                    {% elif row.matched_cost_item_id and row.match_source != "manual" %}
+                      <span class="input-hint">자동 매칭</span>
+                    {% else %}
+                      <select name="budget_match__{{ row.import_key }}" class="form-control">
+                        <option value="">CBS 선택</option>
+                        {% for option in budget_match_options %}
+                          <option value="{{ option.id }}" {% if row.selected_cost_item_id == option.id|stringformat:"s" %}selected{% endif %}>
+                            {{ option.label }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if not row.is_skipped and row.item_name and not row.requires_manual_profit_mapping and not row.matched_cost_item_id %}
+                      <label style="display:flex; gap:6px; align-items:center;">
+                        <input type="checkbox" name="budget_alias_save__{{ row.import_key }}" value="1" />
+                        <span class="input-hint">저장</span>
+                      </label>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% for warning in row.warnings %}
+                      <div>{{ warning }}</div>
+                    {% empty %}
+                      {% if row.skip_reason %}
+                        {{ row.skip_reason }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    {% endfor %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
         <div>
           <label class="form-label" for="budget_template_select">예산 템플릿</label>
@@ -259,6 +657,10 @@
         </tr>
       </template>
       <div class="row-actions">
+        <button class="btn btn-outline" type="submit" name="action" value="apply_budget_cbs_mapping">CBS 매핑 적용</button>
+        {% if budget_review_rows %}
+          <button class="btn btn-outline" type="submit" name="action" value="apply_budget_review_adjustments">상세 조정 적용</button>
+        {% endif %}
         <button type="button" class="btn btn-outline" id="add-budget-row">예산 행 추가</button>
       </div>
     </div>
@@ -266,6 +668,73 @@
     <div class="card">
       <div class="section-title">WBS 기준선</div>
       <div class="helper">가중치 합계는 100%여야 합니다.</div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label class="form-label" for="id_commencement_excel">착공계 Excel 업로드</label>
+          <input id="id_commencement_excel" type="file" name="commencement_excel" class="form-control" accept=".xlsx" />
+          <div class="input-hint">예정공정표 시트를 우선 탐색합니다.</div>
+          {% if stored_upload_names.commencement_excel %}
+            <div class="input-hint">임시 보관 중: {{ stored_upload_names.commencement_excel }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% if wbs_import_notice %}
+        <div class="alert" style="background:rgba(56,189,248,0.15); color:var(--text);">
+          {{ wbs_import_notice }}
+        </div>
+      {% endif %}
+      {% if wbs_import_warnings %}
+        <div class="alert alert-danger">
+          {% for warning in wbs_import_warnings %}
+            <div>{{ warning }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if wbs_preview_rows %}
+        <div class="helper">엑셀 미리보기입니다. 아래 WBS 기준선 표에서 작업명, 가중치, 기간을 조정한 뒤 저장하세요.</div>
+        <div style="overflow:auto; margin-bottom:12px;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>WBS 코드</th>
+                <th>WBS 명</th>
+                <th>가중치</th>
+                <th>기간 진도값</th>
+                <th>계획 시작</th>
+                <th>계획 종료</th>
+                <th>메모</th>
+                <th>경고</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in wbs_preview_rows %}
+                <tr>
+                  <td>{{ row.code|default:"-" }}</td>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.weight }}</td>
+                  <td>
+                    {% for period in row.period_progress_values %}
+                      <div>{{ period.period }}: {{ period.value }}</div>
+                    {% empty %}
+                      -
+                    {% endfor %}
+                  </td>
+                  <td>{{ row.plan_start_date|default:"-" }}</td>
+                  <td>{{ row.plan_end_date|default:"-" }}</td>
+                  <td>{{ row.memo|default:"-" }}</td>
+                  <td>
+                    {% for warning in row.warnings %}
+                      <div>{{ warning }}</div>
+                    {% empty %}
+                      -
+                    {% endfor %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
         <div>
           <label class="form-label" for="wbs_template_select">WBS 템플릿</label>
@@ -338,8 +807,40 @@
       </div>
     </div>
 
+    {% if import_warning_count %}
+      <div class="card" style="margin-top:16px;">
+        <label style="display:flex; gap:8px; align-items:flex-start;">
+          <input type="checkbox" name="confirm_import_warnings" value="1" />
+          <span class="input-hint" style="font-size:13px;">
+            파싱 경고 {{ import_warning_count }}건을 확인했습니다. 경고가 있어도 현재 입력값 기준으로 저장합니다.
+          </span>
+        </label>
+      </div>
+    {% endif %}
+    {% if budget_preview_rows and budget_import_unmatched_rows > 0 %}
+      <div class="card" style="margin-top:16px;">
+        <label style="display:flex; gap:8px; align-items:flex-start;">
+          <input type="checkbox" name="confirm_partial_budget_import" value="1" />
+          <span class="input-hint" style="font-size:13px;">
+            미매칭 예산 행을 제외하고 부분 등록합니다.
+          </span>
+        </label>
+      </div>
+    {% endif %}
+    {% if budget_preview_rows and budget_summary_total_difference %}
+      <div class="card" style="margin-top:16px;">
+        <label style="display:flex; gap:8px; align-items:flex-start;">
+          <input type="checkbox" name="confirm_budget_reconciliation_gap" value="1" />
+          <span class="input-hint" style="font-size:13px;">
+            총괄표 금액과 예산 상세 조정 합계 차이를 확인했습니다. 차이가 남아 있어도 현재 조정값 기준으로 등록합니다.
+          </span>
+        </label>
+      </div>
+    {% endif %}
+
     <div class="actions">
-      <button class="btn" type="submit">등록</button>
+      <button class="btn btn-outline" type="submit" name="action" value="parse_all">엑셀 미리보기</button>
+      <button class="btn" type="submit" name="action" value="save_project">등록</button>
       <a class="btn btn-outline" href="/app/hq/projects/">취소</a>
     </div>
   </form>

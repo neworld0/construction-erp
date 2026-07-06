@@ -66,7 +66,7 @@ class DailyProgress(models.Model):
         default="submitted",
     )
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    note = models.CharField(max_length=255, blank=True, default="")
+    note = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

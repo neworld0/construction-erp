@@ -28,21 +28,18 @@ class Command(BaseCommand):
         User = get_user_model()
 
         ceo_user, ceo_created = User.objects.get_or_create(username=ceo_username)
-        if ceo_created:
-            ceo_user.set_password(ceo_password)
-            ceo_user.save(update_fields=["password"])
+        ceo_user.set_password(ceo_password)
+        ceo_user.save(update_fields=["password"])
         UserProfile.objects.get_or_create(user=ceo_user, defaults={"role": Role.CEO})
 
         hq_user, hq_created = User.objects.get_or_create(username=hq_username)
-        if hq_created:
-            hq_user.set_password(hq_password)
-            hq_user.save(update_fields=["password"])
+        hq_user.set_password(hq_password)
+        hq_user.save(update_fields=["password"])
         UserProfile.objects.get_or_create(user=hq_user, defaults={"role": Role.HQ})
 
         field_user, field_created = User.objects.get_or_create(username=field_username)
-        if field_created:
-            field_user.set_password(field_password)
-            field_user.save(update_fields=["password"])
+        field_user.set_password(field_password)
+        field_user.save(update_fields=["password"])
         UserProfile.objects.get_or_create(user=field_user, defaults={"role": Role.FIELD})
 
         project, project_created = Project.objects.get_or_create(

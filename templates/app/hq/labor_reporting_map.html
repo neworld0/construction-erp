@@ -1,0 +1,191 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}신고용 현장 매핑{% endblock %}
+
+{% block content %}
+<style>
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .table thead th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .table-wrap {
+    overflow: auto;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+  }
+  .filters {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    align-items: end;
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .filters input[type="month"] {
+    color-scheme: dark;
+  }
+  .filters input[type="month"]::-webkit-calendar-picker-indicator {
+    width: 18px;
+    height: 18px;
+    margin-right: 2px;
+    padding: 0;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><path d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 8H5v10h14V10zM5 8h14V6H5v2z'/></svg>") no-repeat center / 16px 16px;
+    color: transparent;
+    opacity: 1;
+    cursor: pointer;
+    filter: none;
+  }
+</style>
+
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">신고용 현장 매핑</div>
+      <div class="muted">실제 현장은 유지한 채 신고용 현장만 검토하고 일괄 변경합니다.</div>
+    </div>
+    <a class="btn btn-outline" href="/app/hq/labor/work-ledger/">노무 작업 원장</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  <form method="get" class="filters">
+    <label>
+      <span class="form-label">월</span>
+      <input class="form-control" type="month" name="month" value="{{ month }}" />
+    </label>
+    <label>
+      <span class="form-label">실제 현장</span>
+      <select class="form-control" name="actual_project">
+        <option value="">전체</option>
+        {% for project in projects %}
+          <option value="{{ project.id }}" {% if actual_project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="form-label">신고용 현장</span>
+      <select class="form-control" name="report_project">
+        <option value="">전체</option>
+        {% for project in projects %}
+          <option value="{{ project.id }}" {% if report_project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="form-label">근로자</span>
+      <select class="form-control" name="worker">
+        <option value="">전체</option>
+        {% for worker in workers %}
+          <option value="{{ worker.id }}" {% if worker_id == worker.id|stringformat:"s" %}selected{% endif %}>{{ worker.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="form-label">상태</span>
+      <select class="form-control" name="status">
+        <option value="">전체</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="display:flex; align-items:center; gap:8px; min-height:42px;">
+      <input type="checkbox" name="only_different" value="1" {% if only_different == "1" %}checked{% endif %} />
+      <span class="form-label" style="margin:0;">다른 현장만</span>
+    </label>
+    <button class="btn" type="submit">조회</button>
+  </form>
+</div>
+
+<form method="post" class="card" style="margin-top:18px;">
+  {% csrf_token %}
+  <input type="hidden" name="month" value="{{ month }}" />
+  <input type="hidden" name="actual_project" value="{{ actual_project_id }}" />
+  <input type="hidden" name="report_project" value="{{ report_project_id }}" />
+  <input type="hidden" name="worker" value="{{ worker_id }}" />
+  <input type="hidden" name="status" value="{{ status }}" />
+  <input type="hidden" name="only_different" value="{{ only_different }}" />
+
+  <div style="display:grid; gap:12px; grid-template-columns: minmax(220px, 1.2fr) minmax(240px, 1.8fr) auto; align-items:end; margin-bottom:16px;">
+    <label>
+      <span class="form-label">변경할 신고용 현장</span>
+      <select class="form-control" name="target_report_project">
+        <option value="">선택</option>
+        {% for project in projects %}
+          <option value="{{ project.id }}">{{ project.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="form-label">변경 사유</span>
+      <input class="form-control" type="text" name="reason" placeholder="실제 현장과 다르게 신고하는 사유를 입력하세요." />
+    </label>
+    <button class="btn" type="submit">신고용 현장 일괄 변경</button>
+  </div>
+
+  <div class="muted" style="margin-bottom:12px;">실제 현장과 다른 신고용 현장으로 변경할 때는 사유가 필요합니다. 마감된 월은 수정할 수 없습니다. 정정으로 처리하세요.</div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:40px;">
+            <input type="checkbox" onclick="document.querySelectorAll('input[name=&quot;ledger_ids&quot;]').forEach(cb => cb.checked = this.checked)" />
+          </th>
+          <th>근무일</th>
+          <th>근로자</th>
+          <th>직종</th>
+          <th>실제 현장</th>
+          <th>현재 신고용 현장</th>
+          <th>공수</th>
+          <th>상태</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ledger in ledgers %}
+          <tr>
+            <td>
+              <input type="checkbox" name="ledger_ids" value="{{ ledger.id }}" {% if ledger.status == "CONFIRMED" %}disabled{% endif %} />
+            </td>
+            <td>{{ ledger.work_date }}</td>
+            <td>{{ ledger.worker.name }}</td>
+            <td>{{ ledger.labor_role.name }}</td>
+            <td>{{ ledger.actual_project.name }}</td>
+            <td>
+              {{ ledger.report_project.name }}
+              {% if ledger.actual_project_id != ledger.report_project_id %}
+                <div class="muted">실제 현장과 다름</div>
+              {% endif %}
+            </td>
+            <td>{{ ledger.work_unit }}</td>
+            <td>
+              {{ ledger.get_status_display }}
+              {% if ledger.status == "CONFIRMED" %}
+                <div class="muted">확정 행은 변경 불가</div>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8">조회된 신고용 현장 매핑 대상이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}노무 작업 원장{% endblock %}
+
+{% block content %}
+<style>
+  .grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .full {
+    grid-column: 1 / -1;
+  }
+  .error {
+    color: #f87171;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .help {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .summary {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-top: 18px;
+  }
+  .summary .card {
+    padding: 12px;
+  }
+</style>
+
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">노무 작업 원장 {% if mode == "edit" %}수정{% else %}등록{% endif %}</div>
+      <div class="help">실제 근무지와 보고 프로젝트를 분리해 기록하며, 마감 후에는 수정할 수 없습니다.</div>
+    </div>
+    <a class="btn btn-outline" href="/app/hq/labor/work-ledger/">목록으로</a>
+  </div>
+</div>
+
+{% if ledger %}
+  <div class="summary">
+    <div class="card">
+      <div class="help">귀속월</div>
+      <div>{{ ledger.work_month }}</div>
+    </div>
+    <div class="card">
+      <div class="help">총지급액</div>
+      <div>{{ ledger.gross_wage }}</div>
+    </div>
+    <div class="card">
+      <div class="help">실지급액</div>
+      <div>{{ ledger.net_pay }}</div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="card" style="margin-top:18px;">
+  {% if form.non_field_errors %}
+    <div class="error" style="margin-bottom:12px;">
+      {% for err in form.non_field_errors %}
+        <div>{{ err }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <form method="post" class="grid">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="{% if field.name == 'detail_work_type' %}full{% endif %}">
+        <span class="form-label">{{ field.label }}</span>
+        {{ field }}
+        {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        {% if field.errors %}<div class="error">{{ field.errors|join:", " }}</div>{% endif %}
+      </label>
+    {% endfor %}
+    <div class="full" style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn" type="submit">저장</button>
+      <a class="btn btn-outline" href="/app/hq/labor/work-ledger/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

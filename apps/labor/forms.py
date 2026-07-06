@@ -1,14 +1,21 @@
 from django import forms
+from django.core.exceptions import ValidationError
 
-from apps.cost.models import CostItem
+from apps.cost.models import CostActual, CostItem
 from apps.projects.models import Project
 
 from .models import (
+    ElectronicCardImportBatchStatus,
+    LaborWorkLedger,
+    LaborWorkLedgerSource,
+    LaborWorkLedgerStatus,
     LaborRateScope,
     LaborRateTable,
     LaborRateType,
     LaborRole,
     PayrollAllocationBatch,
+    Timesheet,
+    WorkerMaster,
 )
 
 
@@ -81,5 +88,214 @@ class PayrollBatchForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "input")
+
+
+class WorkerMasterForm(forms.ModelForm):
+    rrn = forms.CharField(
+        label="주민등록번호",
+        required=False,
+        widget=forms.TextInput(attrs={"autocomplete": "off"}),
+    )
+    account_number = forms.CharField(
+        label="계좌번호",
+        required=False,
+        widget=forms.TextInput(attrs={"autocomplete": "off"}),
+    )
+
+    class Meta:
+        model = WorkerMaster
+        fields = [
+            "name",
+            "rrn",
+            "phone",
+            "address",
+            "bank_name",
+            "bank_code",
+            "account_number",
+            "account_holder",
+            "nationality_code",
+            "visa_code",
+            "comwel_job_code",
+            "cwma_job_name",
+            "default_labor_role",
+            "retirement_deduction_eligible",
+            "active",
+        ]
+        widgets = {
+            "address": forms.Textarea(attrs={"rows": 3}),
+        }
+        labels = {
+            "name": "성명",
+            "phone": "전화번호",
+            "address": "주소",
+            "bank_name": "은행명",
+            "bank_code": "은행코드",
+            "account_holder": "예금주",
+            "nationality_code": "국적코드",
+            "visa_code": "비자코드",
+            "comwel_job_code": "근로복지공단 직종코드",
+            "cwma_job_name": "건설근로자공제회 직종명",
+            "default_labor_role": "기본 노무 역할",
+            "retirement_deduction_eligible": "퇴직공제 대상",
+            "active": "사용중",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["default_labor_role"].queryset = LaborRole.objects.order_by("sort_order", "code")
+        instance = getattr(self, "instance", None)
+        if instance and instance.pk:
+            if instance.rrn_masked:
+                self.fields["rrn"].help_text = f"현재 값: {instance.rrn_masked}"
+            if instance.account_number_masked:
+                self.fields["account_number"].help_text = f"현재 값: {instance.account_number_masked}"
+        for field_name, field in self.fields.items():
+            field.widget.attrs.setdefault("class", "form-control")
+            if field_name in ("retirement_deduction_eligible", "active"):
+                field.widget.attrs["class"] = ""
+
+    def clean_name(self):
+        value = str(self.cleaned_data.get("name") or "").strip()
+        if not value:
+            raise forms.ValidationError("성명을 입력해 주세요.")
+        return value
+
+    def clean_rrn(self):
+        return str(self.cleaned_data.get("rrn") or "").strip()
+
+    def clean_account_number(self):
+        return str(self.cleaned_data.get("account_number") or "").strip()
+
+    def clean(self):
+        cleaned = super().clean()
+        rrn = cleaned.get("rrn") or ""
+        if not rrn and not getattr(self.instance, "rrn_encrypted", ""):
+            self.add_error("rrn", "주민등록번호를 입력해 주세요.")
+        return cleaned
+
+
+class LaborWorkLedgerForm(forms.ModelForm):
+    source = forms.ChoiceField(choices=LaborWorkLedgerSource.choices)
+    status = forms.ChoiceField(choices=LaborWorkLedgerStatus.choices)
+
+    class Meta:
+        model = LaborWorkLedger
+        fields = [
+            "work_date",
+            "worker",
+            "actual_project",
+            "report_project",
+            "labor_role",
+            "work_unit",
+            "work_hours",
+            "unit_wage",
+            "income_tax",
+            "local_tax",
+            "employment_insurance",
+            "pension",
+            "health_insurance",
+            "detail_work_type",
+            "source",
+            "status",
+            "timesheet_ref",
+            "cost_ref",
+        ]
+        labels = {
+            "work_date": "근무일",
+            "worker": "근로자",
+            "actual_project": "실제 근무 프로젝트",
+            "report_project": "보고 프로젝트",
+            "labor_role": "노무 역할",
+            "work_unit": "공수",
+            "work_hours": "근무시간",
+            "unit_wage": "단가",
+            "income_tax": "소득세",
+            "local_tax": "지방세",
+            "employment_insurance": "고용보험",
+            "pension": "국민연금",
+            "health_insurance": "건강보험",
+            "detail_work_type": "세부 작업유형",
+            "source": "출처",
+            "status": "상태",
+            "timesheet_ref": "출역부 연결",
+            "cost_ref": "원가실적 연결",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["worker"].queryset = WorkerMaster.objects.order_by("name", "id")
+        self.fields["actual_project"].queryset = Project.objects.order_by("name")
+        self.fields["report_project"].queryset = Project.objects.order_by("name")
+        self.fields["labor_role"].queryset = LaborRole.objects.order_by("sort_order", "code")
+        self.fields["timesheet_ref"].queryset = Timesheet.objects.select_related("project").order_by("-work_date", "-id")
+        self.fields["cost_ref"].queryset = CostActual.objects.select_related("project").order_by("-report_date", "-id")
+        self.fields["report_project"].required = False
+        self.fields["timesheet_ref"].required = False
+        self.fields["cost_ref"].required = False
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "form-control")
+
+    def clean(self):
+        cleaned = super().clean()
+        actual_project = cleaned.get("actual_project")
+        if actual_project and not cleaned.get("report_project"):
+            cleaned["report_project"] = actual_project
+        return cleaned
+
+
+class ElectronicCardImportBatchUploadForm(forms.Form):
+    year_month = forms.CharField(label="기준월")
+    project = forms.ModelChoiceField(
+        label="현장",
+        queryset=Project.objects.none(),
+        empty_label="현장을 선택하세요",
+    )
+    source_file = forms.FileField(label="전자카드 원본 파일")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["project"].queryset = Project.objects.order_by("name")
+        self.fields["year_month"].widget = forms.TextInput(
+            attrs={"class": "input", "placeholder": "YYYY-MM"}
+        )
+        self.fields["project"].widget.attrs.setdefault("class", "input")
+        self.fields["source_file"].widget.attrs.setdefault("class", "input")
+
+    def clean_year_month(self):
+        value = str(self.cleaned_data.get("year_month") or "").strip()
+        if not value:
+            raise ValidationError("기준월을 입력해 주세요.")
+        parts = value.split("-", 1)
+        if len(parts) != 2:
+            raise ValidationError("기준월 형식은 YYYY-MM 이어야 합니다.")
+        try:
+            year = int(parts[0])
+            month = int(parts[1])
+        except ValueError as exc:
+            raise ValidationError("기준월 형식은 YYYY-MM 이어야 합니다.") from exc
+        if month < 1 or month > 12:
+            raise ValidationError("기준월 형식은 YYYY-MM 이어야 합니다.")
+        return f"{year:04d}-{month:02d}"
+
+
+class ElectronicCardImportBatchFilterForm(forms.Form):
+    month = forms.CharField(label="기준월", required=False)
+    project = forms.ModelChoiceField(
+        label="현장",
+        queryset=Project.objects.none(),
+        required=False,
+        empty_label="전체 현장",
+    )
+    status = forms.ChoiceField(
+        label="상태",
+        required=False,
+        choices=[("", "전체 상태"), *ElectronicCardImportBatchStatus.choices],
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["project"].queryset = Project.objects.order_by("name")
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "input")

@@ -109,12 +109,8 @@ class BudgetItem(models.Model):
         indexes = [
             models.Index(fields=["project", "cost_item"]),
         ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["project", "cost_item"],
-                name="uq_budgetitem_project_costitem",
-            )
-        ]
+        # SOURCE_ROW_BUCKET import allows multiple budget rows under the same CBS.
+        # Consider source-key based uniqueness later if we need stronger deduplication.
 
     def __str__(self) -> str:
         label = self.name or self.cost_item.get_display_name()

@@ -1,0 +1,129 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}확정 근로내역{% endblock %}
+
+{% block content %}
+<style>
+  .filters {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-bottom: 16px;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    text-align: left;
+    font-size: 13px;
+  }
+  .table thead th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+</style>
+
+<div class="card">
+  <div class="card-title">확정 근로내역</div>
+  <form method="get" class="filters">
+    <label>
+      기준월
+      <input type="month" name="month" value="{{ month }}" />
+    </label>
+    <label>
+      신고 현장
+      <select name="project">
+        <option value="">전체</option>
+        {% for project in projects %}
+          <option value="{{ project.id }}" {% if project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      근로자
+      <select name="worker">
+        <option value="">전체</option>
+        {% for worker in workers %}
+          <option value="{{ worker.id }}" {% if worker_id == worker.id|stringformat:"s" %}selected{% endif %}>{{ worker.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      배치
+      <select name="batch_id">
+        <option value="">전체</option>
+        {% for batch in batches %}
+          <option value="{{ batch.id }}" {% if batch_id == batch.id|stringformat:"s" %}selected{% endif %}>{{ batch.year_month|date:"Y-m" }} / {{ batch.project.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      기준
+      <select name="source_basis">
+        <option value="">전체</option>
+        {% for value, label in source_basis_choices %}
+          <option value="{{ value }}" {% if source_basis == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      신고 포함
+      <select name="export_included">
+        <option value="">전체</option>
+        <option value="1" {% if export_included == "1" %}selected{% endif %}>예</option>
+        <option value="0" {% if export_included == "0" %}selected{% endif %}>아니오</option>
+      </select>
+    </label>
+    <div style="display:flex; align-items:end;">
+      <button class="btn" type="submit">조회</button>
+    </div>
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>기준월</th>
+        <th>근무일</th>
+        <th>근로자</th>
+        <th>실제 현장</th>
+        <th>신고 현장</th>
+        <th>전자카드 현장</th>
+        <th>최종 공수</th>
+        <th>기준</th>
+        <th>신고 포함</th>
+        <th>확정자</th>
+        <th>확정일시</th>
+        <th>비고</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.year_month|date:"Y-m" }}</td>
+          <td>{{ row.work_date|date:"Y-m-d" }}</td>
+          <td>{% if row.worker %}{{ row.worker.name }}{% else %}-{% endif %}</td>
+          <td>{% if row.actual_project %}{{ row.actual_project.name }}{% else %}-{% endif %}</td>
+          <td>{{ row.report_project.name }}</td>
+          <td>{% if row.card_project %}{{ row.card_project.name }}{% else %}-{% endif %}</td>
+          <td>{{ row.final_work_unit }}</td>
+          <td>{{ row.get_source_basis_display }}</td>
+          <td>{{ row.export_included|yesno:"예,아니오" }}</td>
+          <td>{% if row.confirmed_by %}{{ row.confirmed_by.username }}{% else %}-{% endif %}</td>
+          <td>{{ row.confirmed_at|date:"Y-m-d H:i" }}</td>
+          <td>{{ row.export_note|default:"-" }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="12">확정 근로내역이 없습니다.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

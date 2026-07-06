@@ -21,4 +21,5 @@ qrcode==7.4.2
 whitenoise==6.7.0
 
 phonenumbers==8.13.38
+openpyxl==3.1.5
 

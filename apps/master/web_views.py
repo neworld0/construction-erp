@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps.audit.services.logger import log_action
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import get_user_role, require_role
+from apps.cost.models import COST_ITEM_TYPE_LABELS, COST_ITEM_WORK_TYPE_LABELS
 from .forms import (
     MasterBudgetTemplateItemForm,
     MasterTemplateForm,
@@ -33,32 +34,19 @@ from .models import (
 logger = logging.getLogger(__name__)
 _MAPPING_LOGGED = False
 DEFAULT_LOCK_ON_UNKNOWN = True
-COST_TYPE_CODES = ["M", "L", "E", "S", "O", "G", "P"]
+COST_TYPE_CODES = ["D", "I", "L", "M", "E", "S", "O", "G", "P"]
 
-COST_TYPE_LABELS = {
-    "M": "???",
-    "L": "???",
-    "E": "??",
-    "S": "??????",
-    "O": "?????",
-    "G": "?????",
-    "P": "??/??(???)",
-}
+COST_TYPE_LABELS = dict(COST_ITEM_TYPE_LABELS)
 WORK_TYPE_LABELS = {
-    "01": "??",
-    "02": "????",
-    "03": "??",
-    "04": "??",
-    "05": "??????",
-    "06": "???",
-    "07": "????",
-    "08": "????",
-    "09": "?????",
-    "10": "??",
-    "11": "??",
-    "12": "?????",
-    "13": "????",
-    "99": "??",
+    "01": "공통",
+    "02": "토목",
+    "03": "건축",
+    "04": "기계",
+    "05": "전기통신",
+    "06": "조경",
+    **COST_ITEM_WORK_TYPE_LABELS,
+    "10": "배수",
+    "13": "유지보수",
 }
 
 
@@ -823,6 +811,24 @@ def _apply_deactivate_request(change_request, model, mapping):
     item.save(update_fields=[mapping["active"]])
 
 
+def _build_proposed_payload(mapping, values, model):
+    code = (values.get(mapping["code"]) or "").strip().upper()
+    name = (values.get(mapping["name"]) or "").strip()
+    cost_type = (values.get(mapping["cost_type"]) or "").strip().upper()
+    work_raw = values.get(mapping["work_type"])
+    work_type = "" if work_raw in (None, "") else str(work_raw).strip()
+
+    payload = {
+        "code": code,
+        "name": name,
+        "cost_type": cost_type,
+        "work_type": work_type,
+    }
+    if mapping["active"]:
+        payload["active"] = bool(values.get(mapping["active"]))
+    return payload
+
+
 def _validate_proposed(change_request, model, mapping, *, require_code):
     proposed = change_request.proposed or {}
     code = (proposed.get("code") or "").strip().upper()
@@ -1087,7 +1093,13 @@ def _extract_cbs_form_data(request, model, mapping, *, is_create):
         active_raw = request.POST.get("active")
         values[mapping["active"]] = bool(active_raw)
 
-    return errors, values, changed
+    return {
+        "errors": errors,
+        "values": values,
+        "changed": changed,
+    }
+
+
 def _normalize_work_type(model, field_name, raw_value, errors):
     value = raw_value.strip()
     if not re.match(r"^\d{2}$", value):

@@ -1,0 +1,79 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}급여 배부{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:20px; font-weight:700;">급여 배부</div>
+        <div class="hint">월 총급여를 프로젝트별로 배부하는 배치를 관리합니다.</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a class="btn btn-outline" href="/app/hq/labor/monthly-payroll/">월 급여 요약 보기</a>
+        <a class="btn" href="/app/hq/labor/payroll-allocation/new/">신규 월 배부 생성</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <form method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+      <div>
+        <label class="hint">연도</label>
+        <input class="input" type="number" name="year" value="{{ year }}" placeholder="2026" />
+      </div>
+      <div>
+        <label class="hint">월</label>
+        <input class="input" type="number" name="month" value="{{ month }}" placeholder="1" min="1" max="12" />
+      </div>
+      <div>
+        <label class="hint">상태</label>
+        <select class="input" name="status">
+          <option value="">전체</option>
+          <option value="DRAFT" {% if status == "DRAFT" %}selected{% endif %}>임시저장</option>
+          <option value="SUBMITTED" {% if status == "SUBMITTED" %}selected{% endif %}>제출</option>
+          <option value="APPROVED" {% if status == "APPROVED" %}selected{% endif %}>확인</option>
+          <option value="REJECTED" {% if status == "REJECTED" %}selected{% endif %}>반려</option>
+        </select>
+      </div>
+      <button class="btn btn-outline" type="submit">조회</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="section-title">배부 배치 목록</div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>년월</th>
+          <th>배치번호</th>
+          <th>총액</th>
+          <th>배부합계</th>
+          <th>차이</th>
+          <th>상태</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in batches %}
+          <tr>
+            <td>{{ item.obj.period_year }}-{{ item.obj.period_month|stringformat:"02d" }}</td>
+            <td>{{ item.obj.batch_no }}</td>
+            <td>{{ item.obj.total_amount|intcomma }}</td>
+            <td>{{ item.sum_lines|intcomma }}</td>
+            <td>{{ item.diff|intcomma }}</td>
+            <td>{{ item.obj.status }}</td>
+            <td><a class="btn btn-outline" href="/app/hq/labor/payroll-allocation/{{ item.obj.id }}/">상세</a></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="muted">배부 이력이 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

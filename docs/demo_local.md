@@ -54,9 +54,9 @@ python manage.py runserver --settings=config.settings.prod
 ```
 
 ## 6) Demo accounts (examples)
-- ceo / example-password
-- hq / example-password
-- field1 / example-password
+- ceo / ChangeMe!1234
+- hq / ChangeMe!1234
+- field1 / ChangeMe!1234
 
 ## 7) Health check
 

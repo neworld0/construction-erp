@@ -1,0 +1,133 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}근로자 마스터{% endblock %}
+
+{% block content %}
+<style>
+  .grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .full {
+    grid-column: 1 / -1;
+  }
+  .help {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .error {
+    color: #f87171;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+</style>
+
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:20px; font-weight:700;">
+        근로자 마스터 {% if mode == "edit" %}수정{% else %}등록{% endif %}
+      </div>
+      <div class="help">주민번호와 계좌번호는 화면에 마스킹된 값만 표시됩니다.</div>
+    </div>
+    <a class="btn btn-outline" href="/app/hq/labor/workers/">목록으로</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px;">
+  {% if form.non_field_errors %}
+    <div class="error" style="margin-bottom:12px;">
+      {% for err in form.non_field_errors %}
+        <div>{{ err }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <form method="post" class="grid">
+    {% csrf_token %}
+    <label>
+      <span class="form-label">성명</span>
+      {{ form.name }}
+      {% if form.name.errors %}<div class="error">{{ form.name.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">전화번호</span>
+      {{ form.phone }}
+      {% if form.phone.errors %}<div class="error">{{ form.phone.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">주민등록번호</span>
+      {{ form.rrn }}
+      {% if form.rrn.help_text %}<div class="help">{{ form.rrn.help_text }}</div>{% endif %}
+      {% if form.rrn.errors %}<div class="error">{{ form.rrn.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">국적코드</span>
+      {{ form.nationality_code }}
+      {% if form.nationality_code.errors %}<div class="error">{{ form.nationality_code.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">비자코드</span>
+      {{ form.visa_code }}
+      {% if form.visa_code.errors %}<div class="error">{{ form.visa_code.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">근로복지공단 직종코드</span>
+      {{ form.comwel_job_code }}
+      {% if form.comwel_job_code.errors %}<div class="error">{{ form.comwel_job_code.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">건설근로자공제회 직종명</span>
+      {{ form.cwma_job_name }}
+      {% if form.cwma_job_name.errors %}<div class="error">{{ form.cwma_job_name.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">기본 노무 역할</span>
+      {{ form.default_labor_role }}
+      {% if form.default_labor_role.errors %}<div class="error">{{ form.default_labor_role.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label class="full">
+      <span class="form-label">주소</span>
+      {{ form.address }}
+      {% if form.address.errors %}<div class="error">{{ form.address.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">은행명</span>
+      {{ form.bank_name }}
+      {% if form.bank_name.errors %}<div class="error">{{ form.bank_name.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">은행코드</span>
+      {{ form.bank_code }}
+      {% if form.bank_code.errors %}<div class="error">{{ form.bank_code.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">계좌번호</span>
+      {{ form.account_number }}
+      {% if form.account_number.help_text %}<div class="help">{{ form.account_number.help_text }}</div>{% endif %}
+      {% if form.account_number.errors %}<div class="error">{{ form.account_number.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      <span class="form-label">예금주</span>
+      {{ form.account_holder }}
+      {% if form.account_holder.errors %}<div class="error">{{ form.account_holder.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
+      {{ form.retirement_deduction_eligible }} 퇴직공제 대상
+    </label>
+    <label>
+      {{ form.active }} 사용중
+    </label>
+    <div class="actions full">
+      <button class="btn" type="submit">저장</button>
+      <a class="btn btn-outline" href="/app/hq/labor/workers/">취소</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
