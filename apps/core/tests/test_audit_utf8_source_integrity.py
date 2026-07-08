@@ -84,6 +84,19 @@ REQUIRED_STRINGS = {
         "\ud504\ub85c\uc81d\ud2b8 \uc694\uc57d",
         "\ud0dc\uc2a4\ud06c \uc9c4\ud589 \ud604\ud669",
     ],
+    "apps/core/tests/test_audit9_operational_smoke_matrix.py": [
+        "AUDIT9 \uc2e4\uc81c \ud604\uc7a5",
+        "AUDIT9 \uc608\uc0b0",
+        "AUDIT9 \ud3ec\uc7a5\uacf5\uc0ac",
+        "\uc624\ub298 \uc9c4\ud589\ub960 \uc785\ub825",
+        "CEO \ub300\uc2dc\ubcf4\ub4dc",
+        "\ud504\ub85c\uc81d\ud2b8 \ubaa9\ub85d",
+        "\ud504\ub85c\uc81d\ud2b8 \uc694\uc57d",
+        "\uc9c4\ud589\ub960",
+        "\uc190\uc775",
+        "\uc120\ud0dd \uac00\ub2a5\ud55c \uc791\uc5c5\uc774 \uc5c6\uc2b5\ub2c8\ub2e4",
+        "\ub9c8\uac10\ub418\uc5c8\uc2b5\ub2c8\ub2e4",
+    ],
 }
 
 
