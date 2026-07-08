@@ -4,7 +4,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.http import FileResponse
+from django.http import FileResponse, Http404
 from django.db import models
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -325,6 +325,11 @@ def hq_labor_excel_export_download(request, export_id):
         LaborExcelExportBatch.objects.select_related("source_batch", "project"),
         id=export_id,
     )
+    if (
+        not export_batch.generated_file
+        or not export_batch.generated_file.storage.exists(export_batch.generated_file.name)
+    ):
+        raise Http404("생성된 엑셀 파일을 찾을 수 없습니다.")
     try:
         register_labor_excel_export_download(export_batch, request.user)
     except ValidationError as exc:
