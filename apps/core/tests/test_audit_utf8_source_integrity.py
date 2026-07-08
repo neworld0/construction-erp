@@ -66,6 +66,24 @@ REQUIRED_STRINGS = {
         "\ub418\uba54\uc6b0\uae30",
         "\ub418\uba54\uc6b0\uae30 CBS",
     ],
+    "apps/projects/tests/test_audit8_ceo_dashboard_lineage.py": [
+        "AUDIT8 \uc2e4\uc81c \ud604\uc7a5",
+        "AUDIT8 A\ud604\uc7a5",
+        "AUDIT8 B\ud604\uc7a5",
+        "AUDIT8 \ud55c\uac15 \ud604\uc7a5",
+        "AUDIT8 \ube44\ud65c\uc131 \ud604\uc7a5",
+        "AUDIT8 \ub9c8\uac10 \ud604\uc7a5",
+        "AUDIT8 \uac1c\uc778\uc815\ubcf4 \ud604\uc7a5",
+        "AUDIT8 \ub9c1\ud06c \ud604\uc7a5",
+        "\ud1a0\uacf5\uc0ac",
+        "\ud3ec\uc7a5\uacf5\uc0ac",
+        "\uc608\uc0b0",
+        "\uc2e4\ud589\uc6d0\uac00",
+        "\uc9c4\ud589\ub960",
+        "\uc190\uc775",
+        "\ud504\ub85c\uc81d\ud2b8 \uc694\uc57d",
+        "\ud0dc\uc2a4\ud06c \uc9c4\ud589 \ud604\ud669",
+    ],
 }
 
 

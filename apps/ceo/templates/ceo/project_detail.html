@@ -85,7 +85,7 @@
   <div>
     <h2 style="margin:0;">프로젝트 요약</h2>
     <div class="muted" style="margin-top:4px;">
-      프로젝트 ID: {{ summary.project_id }} · 기준일 {{ summary.as_of_date|default:"-" }}
+      프로젝트 ID: {{ summary.project_id }} · 기준일 {{ as_of_date|default:"-" }}
     </div>
     {% if wbs_badge %}
       <div style="margin-top:6px;">
@@ -116,7 +116,7 @@
       <div class="value">{{ summary.recognized_revenue|floatformat:0|intcomma }}</div>
     </div>
     <div class="summary-card">
-      <h4>발생원가</h4>
+      <h4>발생 원가</h4>
       <div class="value">{{ summary.accrual_cost|floatformat:0|intcomma }}</div>
     </div>
     <div class="summary-card">

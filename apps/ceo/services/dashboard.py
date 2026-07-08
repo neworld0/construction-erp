@@ -60,18 +60,18 @@ def get_ceo_dashboard(as_of_date=None):
 
 def get_ceo_projects_list(filters):
     filters = filters or {}
-    queryset = Project.objects.all().order_by("id").select_related()
+    queryset = Project.objects.filter(is_active=True).order_by("id").select_related()
     query = (filters.get("q") or "").strip()
     if query:
         queryset = queryset.filter(name__icontains=query)
     project_ids = list(queryset.values_list("id", flat=True))
 
     progress_map = _bulk_progress(project_ids, filters.get("as_of_date"))
-    accrual_map = _bulk_accrual(project_ids)
+    accrual_map = _bulk_accrual(project_ids, filters.get("as_of_date"))
     labor_map = get_labor_totals_for_projects(
         project_ids, as_of_date=filters.get("as_of_date") or timezone.localdate()
     )
-    profit_map = _bulk_profit(project_ids)
+    profit_map = _bulk_profit(project_ids, filters.get("as_of_date"))
     risk_counts = _risk_counts_by_project(project_ids)
     risk_updates = _latest_risk_updated_at(project_ids)
 
@@ -227,14 +227,17 @@ def _bulk_progress(project_ids, as_of_date):
     return summary
 
 
-def _bulk_accrual(project_ids):
+def _bulk_accrual(project_ids, as_of_date=None):
     if not project_ids:
         return {}
+    cost_filters = {
+        "cost_actual__project_id__in": project_ids,
+        "cost_actual__status__in": [CostActualStatus.APPROVED, CostActualStatus.CLOSED],
+    }
+    if as_of_date is not None:
+        cost_filters["cost_actual__report_date__lte"] = as_of_date
     rows = (
-        CostActualLine.objects.filter(
-            cost_actual__project_id__in=project_ids,
-            cost_actual__status__in=[CostActualStatus.APPROVED, CostActualStatus.CLOSED],
-        )
+        CostActualLine.objects.filter(**cost_filters)
         .values("cost_actual__project_id", "cost_item__category")
         .annotate(total=Sum("amount"))
     )
@@ -247,7 +250,7 @@ def _bulk_accrual(project_ids):
     return summary
 
 
-def _bulk_profit(project_ids):
+def _bulk_profit(project_ids, as_of_date=None):
     if not project_ids:
         return {}
     projects = Project.objects.filter(id__in=project_ids)
@@ -259,10 +262,13 @@ def _bulk_profit(project_ids):
     queryset = RevenueRecognition.objects.filter(project_id__in=project_ids).order_by(
         "project_id", "-as_of_date", "-id"
     )
+    if as_of_date is not None:
+        queryset = queryset.filter(as_of_date__lte=as_of_date)
     latest_by_project = {}
     for record in queryset:
         snapshot_id = snapshot_by_project.get(record.project_id)
-        if snapshot_id is not None and record.contract_snapshot != snapshot_id:
+        record_snapshot_id = getattr(record, "contract_snapshot_id", None)
+        if snapshot_id is not None and record_snapshot_id != snapshot_id:
             continue
         if record.project_id not in latest_by_project:
             latest_by_project[record.project_id] = record
