@@ -1,0 +1,7 @@
+Evidence_ID,Manual,Section,Source_Artifact,Evidence_Type,Claim_Supported,Confidence,Contains_PII,Notes
+ME-01,master,current scope,OPS-0/OPS-1A,report,conditional readiness,HIGH,NO,OPS-0 source report missing locally; prompt status used
+ME-02,CEO,KPI,ops1c_kpi_reconciliation_report.md,report,KPI values and routes,HIGH,NO,value-level reconciliation
+ME-03,HQ,baseline,ops1b_r1_wbs_revenue_alignment_report.md,report,WBS 100 and budget reconciliation,HIGH,NO,sanitized pilot
+ME-04,FIELD,progress,ops1b_rerun_input_rehearsal_report.md,report,FIELD input path,HIGH,NO,assignment based
+ME-05,LABPAY,e-card,AUDIT-6 evidence,audit,fixture workflow only,MEDIUM,NO,real file excluded
+ME-06,Closing,guard,AUDIT-4/AUDIT-9 evidence,audit,post-close protection,MEDIUM,NO,policy caveat

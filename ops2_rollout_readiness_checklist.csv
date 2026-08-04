@@ -1,0 +1,11 @@
+Gate_ID,Area,Check_Item,Required_Before_Pilot,Required_Before_Full_Rollout,Current_Status,Evidence,Owner,Next_Action
+G-01,CEO,CEO KPI PASS,YES,YES,PASS,OPS-1C,CEO/HQ,monitor KPI
+G-02,FIELD,FIELD progress PASS,YES,YES,PASS,OPS-1B-RERUN/AUDIT-7,HQ,train users
+G-03,Baseline,WBS 100% rule,YES,YES,PASS,OPS-1B-R1,HQ,enforce review
+G-04,Baseline,budget-contract reconciliation,YES,YES,PASS,OPS-1B-R1,HQ,review exceptions
+G-05,LABPAY,LABPAY safe file pending,NO,YES,NEEDS_SAFE_REAL_FILE,OPS-1C,LABPAY,LABPAY-REAL-1
+G-06,Finance,final revenue accounting policy pending,NO,YES,POLICY PENDING,OPS-1C,Finance,FINANCE-REVENUE-POLICY-1
+G-07,Operations,backup dry-run pending,NO,YES,PENDING,OPS-2,ERP admin,run restore drill
+G-08,Release,deployment dry-run pending,NO,YES,PENDING,RELEASE-1,ERP admin,release rehearsal
+G-09,Training,user training pending,NO,YES,PENDING,OPS-2,HQ lead,complete checklist
+G-10,Admin,admin runbook pending,NO,YES,READY,OPS-2,ERP admin,review runbook

@@ -1,0 +1,8 @@
+Role,Primary_Menu,Can_View,Can_Create,Can_Edit,Cannot_Do,Key_Rule,Evidence,Notes
+CEO,CEO dashboard,portfolio and project KPI,approved workflow only,approval decisions,FIELD-only daily input,CEO dashboard is CEO role,OPS-1C,KPI values are provisional revenue policy
+HQ,HQ projects and labor,"project, budget, WBS, labor",project baseline and assignment,allowed draft workflow,bypass closing,assign FIELD before input,OPS-1B-RERUN,CBS/WBS baseline owner
+FIELD,FIELD progress,assigned project only,daily progress,own allowed input,CEO dashboard and HQ master,ProjectAssignment required,AUDIT-7/AUDIT-9,WBS task required
+LABPAY 담당자,HQ labor,worker and e-card batches,authorized labor batches,unconfirmed reconciliation,expose raw PII,real file NEEDS_SAFE_REAL_FILE,AUDIT-6,use masking
+회계/마감 담당자,HQ closing,cost and closing evidence,approved closing workflow,approved correction only,post-close direct mutation,AuditLog preserved,AUDIT-9,final policy pending
+ERP 관리자,admin runbook,operational evidence,approved maintenance only,configuration under policy,production deletion without backup,dry-run before apply,OPS-1B-CLEANUP,RELEASE-1 owner
+익명 사용자,login,none,none,none,protected routes,redirect to login,OPS-1C,no KPI exposure

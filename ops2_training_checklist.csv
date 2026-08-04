@@ -1,0 +1,10 @@
+Training_ID,Role,Topic,Required,Practice_Task,Completion_Criteria,Evidence,Trainer,Notes
+T-01,CEO,CEO dashboard reading,YES,read pilot KPI,explains 5.625 percent,OPS-1C,HQ lead,provisional revenue
+T-02,HQ,HQ project setup,YES,create sanitized project,master and assignment checked,OPS-1B-RERUN,ERP admin,no real PII
+T-03,HQ,HQ WBS/Budget setup,YES,make WBS 100 percent,budget reconciles,OPS-1B-R1,HQ lead,CBS baseline
+T-04,FIELD,FIELD progress input,YES,save and submit task progress,WBS task selected,AUDIT-7,HQ lead,assigned project
+T-05,LABPAY,LABPAY upload rehearsal,YES,fixture e-card reconciliation,no raw PII,AUDIT-6,LABPAY lead,safe real file pending
+T-06,회계/마감 담당자,Closing guard,YES,confirm blocked mutation,uses correction policy,AUDIT-4,finance lead,do not bypass
+T-07,ERP 관리자,AuditLog review,YES,review masked audit event,no raw PII,AUDIT-3,security lead,privacy
+T-08,All,Excel troubleshooting,YES,identify missing header,original preserved,AUDIT-5,ERP admin,template verification
+T-09,All,Privacy/PII handling,YES,mask sample incident,uses placeholders,AUDIT-3,security lead,mandatory

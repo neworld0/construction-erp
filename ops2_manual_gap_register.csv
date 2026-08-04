@@ -1,0 +1,7 @@
+Gap_ID,Manual_Area,Gap,Severity,P0_P1_P2,Current_Status,Workaround,Required_Before_Pilot,Required_Before_Full_Rollout,Followup_Prompt
+GAP-01,LABPAY,LABPAY real e-card file not verified,P1,P1,NEEDS_SAFE_REAL_FILE,fixture only,NO,YES,LABPAY-REAL-1
+GAP-02,Finance,final accounting revenue policy pending,P1,P1,POLICY PENDING,PROGRESS_BASED_PROVISIONAL label,NO,YES,FINANCE-REVENUE-POLICY-1
+GAP-03,Release,RELEASE-1 deployment dry-run pending,P1,P1,PENDING,local demo only,NO,YES,RELEASE-1
+GAP-04,Admin,backup/restore drill pending,P1,P1,PENDING,do not perform destructive work,NO,YES,OPS-BACKUP-1
+GAP-05,Training,real user training pending,P2,P2,PENDING,use OPS-2 pack,NO,YES,OPS-TRAINING-1
+GAP-06,Pilot data,real project data beyond sanitized sample pending,P2,P2,PENDING,sanitized pilot,NO,YES,OPS-REAL-DATA-1

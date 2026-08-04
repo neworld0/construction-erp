@@ -1,0 +1,13 @@
+Error_ID,User_Role,Screen_or_Workflow,Symptom,Likely_Cause,User_Action,Admin_Action,Severity,Evidence,Followup
+E-01,FIELD,progress,Project not visible,missing assignment,ask HQ,check ProjectAssignment,P1,AUDIT-7,HQ assignment
+E-02,FIELD,progress,WBS dropdown empty,missing WBS baseline,do not submit,register baseline WBS,P1,FIELD-PROGRESS-1,HQ WBS check
+E-03,CEO,dashboard,CEO KPI value mismatch,source timing or policy,check as-of date,reconcile contract/budget/progress/cost,P0,OPS-1C,KPI reconciliation
+E-04,CEO/HQ,dashboard,Dashboard 500,application error,record time and route,inspect logs and recent changes,P0,OPS-1C,incident runbook
+E-05,HQ/LABPAY,Excel upload,Excel upload failed,header/sheet/date mismatch,preserve original,verify template,P1,AUDIT-5,Excel troubleshooting
+E-06,LABPAY,Excel export,Generated Excel missing,batch not confirmed or file issue,check batch state,check storage and AuditLog,P1,LABPAY-10,export verification
+E-07,LABPAY,e-card,E-card unmatched worker,identity or name-phone mismatch,do not auto-create,review WorkerMaster match,P1,LABPAY-6,masked matching
+E-08,HQ/FIELD,Closing,Closing mutation blocked,month is closed,use approved correction,review closing policy,P1,AUDIT-4,closing guard
+E-09,All,Excel/UI,Korean text broken,encoding/source issue,preserve file,run UTF-8 scan,P1,AUDIT UTF-8,encoding check
+E-10,All,protected route,Permission denied,role rule,confirm role,review RBAC,P2,AUDIT-2,RBAC matrix
+E-11,익명 사용자,protected route,Login required,unauthenticated,login,none,P2,OPS-1C,session
+E-12,CEO/HQ,KPI,Revenue policy unclear,final accounting policy pending,treat as provisional,finalize policy,P1,OPS-1C,FINANCE-REVENUE-POLICY-1
