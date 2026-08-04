@@ -153,7 +153,7 @@ def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include
     projects = list(
         Project.objects.filter(id__in=project_ids)
         .select_related("contract")
-        .prefetch_related("budgetitem_set", "wbsitem_set")
+        .prefetch_related("budget_items", "wbsitem_set")
     )
     project_ids = [project.id for project in projects]
 
