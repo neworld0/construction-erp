@@ -1,0 +1,9 @@
+Check,Expected,Actual,Result,Severity,Notes
+Nginx config,staging config present,NOT_DISCOVERED,HOLD,P1,no production config created
+proxy,proxy_pass to Gunicorn,CHECKLIST_ONLY,HOLD,P1,preserve X-Forwarded-Proto
+static,serve /static/,CHECKLIST_ONLY,HOLD,P1,or WhiteNoise policy
+media,serve/protect /media/,CHECKLIST_ONLY,HOLD,P1,restrict uploads and backups
+upload,client_max_body_size for Excel,CHECKLIST_ONLY,HOLD,P1,set controlled limit
+timeout,proxy timeout for Excel,CHECKLIST_ONLY,HOLD,P1,set explicit value
+HTTPS,TLS termination,CHECKLIST_ONLY,HOLD,P1,secure cookies require HTTPS
+logs,access/error paths,CHECKLIST_ONLY,HOLD,P2,retain incident evidence

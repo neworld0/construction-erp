@@ -1,0 +1,24 @@
+﻿[2026-08-05 10:45:31,539] WARNING apps.core.rbac.permissions: RBAC deny: user=field1 role=field path=None allowed_roles=[Role.CEO]
+[2026-08-05 10:45:31,541] WARNING django.request: Forbidden (Permission denied): /app/ceo/
+Traceback (most recent call last):
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\apps\ceo\app_views.py", line 556, in ceo_home
+    require_role(request.user, [Role.CEO])
+  File "C:\projects\construction-erp\apps\core\rbac\permissions.py", line 64, in require_role
+    raise PermissionDenied("User role not permitted.")
+django.core.exceptions.PermissionDenied: User role not permitted.
+LOCAL_SMOKE=PASS
+STAGING_READY=HOLD
+HEALTH=200
+CEO=200
+FIELD=200
+SOURCE_SCAN=True
+NO_PRODUCTION_DEPLOYMENT=True

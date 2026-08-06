@@ -1,0 +1,13 @@
+Env_Key,Purpose,Required_For_Local,Required_For_Staging,Required_For_Production,Current_Status,Safe_Default_Allowed,Example_Format_No_Secret,Notes
+DJANGO_SETTINGS_MODULE,settings selection,YES,YES,YES,PRESENT,NO,config.settings.prod,local uses config.settings.local
+SECRET_KEY,Django signing,YES,YES,YES,PRESENT,NO,SECRET_KEY=PRESENT,prod fails closed when missing
+DEBUG,debug mode,YES,YES,YES,LOCAL_TRUE,NO for staging/prod,false,local setting default is True
+ALLOWED_HOSTS,host validation,YES,YES,YES,LOCAL_WILDCARD_UNSAFE,NO for staging/prod,staging.example.com,prod fails closed when missing
+DATABASE_URL / DATABASE,PostgreSQL connection,YES,YES,YES,LOCAL_PRESENT,NO,postgresql://USER:PASSWORD@HOST:5432/DB,no value printed
+CSRF_TRUSTED_ORIGINS,CSRF host validation,NO,YES,YES,PRESENT,NO,https://staging.example.com,configure for HTTPS host
+STATIC_ROOT,collected static path,YES,YES,YES,PRESENT,YES local,/srv/app/staticfiles,local staticfiles
+MEDIA_ROOT,uploaded/generated files,YES,YES,YES,PRESENT,YES local,/srv/app/media,backup required
+DJANGO_LOG_LEVEL,logging,YES,YES,YES,PRESENT,YES,INFO,avoid sensitive values
+SECURE_SSL_REDIRECT,HTTPS redirect,NO,YES,YES,PRESENT,NO,true,prod default true
+SESSION_COOKIE_SECURE,secure cookies,NO,YES,YES,PRESENT,NO,true,prod default true
+CSRF_COOKIE_SECURE,secure CSRF cookie,NO,YES,YES,PRESENT,NO,true,prod default true

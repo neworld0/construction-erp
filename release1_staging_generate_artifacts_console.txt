@@ -1,0 +1,48 @@
+﻿[2026-08-05 16:44:48,827] WARNING apps.core.rbac.permissions: RBAC deny: user=field1 role=field path=None allowed_roles=[Role.CEO]
+[2026-08-05 16:44:48,831] WARNING django.request: Forbidden (Permission denied): /app/ceo/
+Traceback (most recent call last):
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\apps\ceo\app_views.py", line 556, in ceo_home
+    require_role(request.user, [Role.CEO])
+  File "C:\projects\construction-erp\apps\core\rbac\permissions.py", line 64, in require_role
+    raise PermissionDenied("User role not permitted.")
+django.core.exceptions.PermissionDenied: User role not permitted.
+[2026-08-05 16:44:48,834] WARNING apps.core.rbac.permissions: RBAC deny: user=field1 role=field path=/app/hq/labor/e-card-imports/ allowed_roles=[Role.HQ, Role.CEO]
+[2026-08-05 16:44:48,835] WARNING django.request: Forbidden (Permission denied): /app/hq/labor/e-card-imports/
+Traceback (most recent call last):
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\apps\labor\web_views.py", line 90, in hq_e_card_import_batch_list
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+  File "C:\projects\construction-erp\apps\core\rbac\permissions.py", line 64, in require_role
+    raise PermissionDenied("User role not permitted.")
+django.core.exceptions.PermissionDenied: User role not permitted.
+[2026-08-05 16:44:48,837] WARNING apps.core.rbac.permissions: RBAC deny: user=field1 role=field path=None allowed_roles=[Role.HQ, Role.CEO]
+[2026-08-05 16:44:48,837] WARNING django.request: Forbidden (Permission denied): /app/hq/projects/17/
+Traceback (most recent call last):
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\construction-erp\apps\projects\hq_views.py", line 3559, in hq_project_detail
+    require_role(request.user, [Role.HQ, Role.CEO])
+  File "C:\projects\construction-erp\apps\core\rbac\permissions.py", line 64, in require_role
+    raise PermissionDenied("User role not permitted.")
+django.core.exceptions.PermissionDenied: User role not permitted.

@@ -1,0 +1,1 @@
+﻿<django.core.handlers.wsgi.WSGIHandler object at 0x000001F0B7DD3F80>

@@ -1,0 +1,13 @@
+Check_ID,Requirement,Current_Status,Required_Status,Why_Required,Safe_Command_Template,Evidence_File,Result,Notes
+D-01,confirm staging DB is not production,UNKNOWN,not production,prevent production write,psql <STAGING_DB> -c 'select current_database()',restore safety check,HOLD,no credentials printed
+D-02,confirm restore target is isolated,MISSING,isolated,prevent active DB overwrite,createdb <RESTORE_DB_NAME>,restore log,HOLD,name contains restore/drill
+D-03,confirm restore DB name,MISSING,provided,target control,echo <RESTORE_DB_NAME>,approval form,HOLD,safe identifier only
+D-04,confirm CREATEDB or pre-created DB,DENIED_LOCAL,CREATEDB or pre-created,restore authority,psql -c 'select rolcreatedb',privilege check,HOLD,DB owner
+D-05,confirm backup archive path,LOCAL_ONLY,provided,archive integrity,pg_restore --list <BACKUP_FILE>,archive list,HOLD,
+D-06,confirm backup checksum,LOCAL_ONLY,provided,tamper detection,sha256sum <BACKUP_FILE>,checksum evidence,HOLD,
+D-07,confirm pg_restore available,LOCAL_ONLY,available,restore execution,pg_restore --version,command output,HOLD,
+D-08,confirm restore does not target active DB,MISSING,isolated,non-destructive,pg_restore --dbname <RESTORE_DB_NAME> <BACKUP_FILE>,restore log,HOLD,
+D-09,confirm restore verification command,MISSING,provided,post-restore smoke,python manage.py check,restore report,HOLD,
+D-10,confirm AuditLog preservation check,MISSING,required,audit continuity,select count from audit log,restore report,HOLD,count only
+D-11,confirm cleanup policy,MISSING,approved,retain evidence,dropdb <RESTORE_DB_NAME> only if approved,approval form,HOLD,
+D-12,confirm media backup policy,PENDING,approved,sensitive Excel,archive metadata only,media policy,HOLD,

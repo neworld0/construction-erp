@@ -1,0 +1,11 @@
+Area,Check_Item,Current_Status,Result,Severity,Evidence,Next
+Git,application working tree diff,NONE; KPI fix is commit 5bf5e7f,PASS,P0,release1_03_diff_name_only.txt,review release artifacts separately
+Django,system check,PASS,PASS,P0,release1_10_manage_check.txt,none
+Migration,no pending model changes,PASS,PASS,P0,release1_11_makemigrations_check.txt,backup before staging migrate
+Static,collectstatic dry-run,PASS,PASS,P1,release1_14_collectstatic_dryrun.txt,staging collectstatic
+WSGI,import,PASS,PASS,P0,release1_16_wsgi_import_check.txt,Gunicorn staging smoke
+Nginx,reverse proxy,NOT_DISCOVERED,HOLD,P1,release1_19_nginx_discovery.txt,create reviewed config
+Smoke,health/CEO/HQ/FIELD/LABPAY,LABPAY route bounded check pending,HOLD,P1,release1_healthcheck_smoke_matrix.csv,inspect LABPAY list before staging
+RBAC,CEO/HQ/FIELD/anonymous,PASS,PASS,P0,release1_rbac_smoke_matrix.csv,repeat on staging
+Backup,restore rehearsal,NOT_EXECUTED,HOLD,P1,release1_backup_restore_runbook.md,run isolated drill
+LABPAY,real safe file,NEEDS_SAFE_REAL_FILE,HOLD,P1,OPS-2 gap register,LABPAY-REAL-1

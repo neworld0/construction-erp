@@ -1,0 +1,5 @@
+Run_ID,Route,Scenario,Batch_Count,Raw_Row_Count,Day_Row_Count,Reconciliation_Row_Count,SQL_Query_Count,Elapsed_Seconds,Baseline_or_After,Result,Notes
+L-BASELINE,/app/hq/labor/e-card-imports/,legacy multi-relation Count distinct queryset,3,72,2232,702,1,265.355231,Baseline,DIAGNOSED,read-only legacy query measurement
+L-AFTER-1,/app/hq/labor/e-card-imports/,current grouped-count list route,3,72,2232,702,8,0.367431,After,PASS,HTTP 200
+L-AFTER-2,/app/hq/labor/e-card-imports/,current grouped-count list route,3,72,2232,702,8,0.007535,After,PASS,HTTP 200
+L-AFTER-3,/app/hq/labor/e-card-imports/,current grouped-count list route,3,72,2232,702,8,0.007981,After,PASS,HTTP 200

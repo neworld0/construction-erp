@@ -1,0 +1,8 @@
+Area,Setting_or_Path,Expected,Actual,Result,Notes
+STATIC_URL,/static/,/static/,/static/,PASS,configured
+STATIC_ROOT,STATIC_ROOT,local/staging writable path,C:\projects\construction-erp\staticfiles,PASS,collectstatic dry-run passed
+collectstatic,collectstatic --dry-run,success,success,PASS,no destructive clear
+MEDIA_URL,/media/,/media/,/media/,PASS,configured
+MEDIA_ROOT,MEDIA_ROOT,local/staging backup path,C:\projects\construction-erp\media,PASS,generated Excel and uploads
+storage,S3/django-storages,chosen for staging,NOT_INSTALLED,HOLD,local media only
+filename,Korean filename handling,UTF-8 retained,LOCAL_PATH_READY,PASS,source scan required

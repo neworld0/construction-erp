@@ -1,0 +1,8 @@
+Issue_ID,Issue,P0_P1_P2,Required_Before_Staging,Required_Before_Production,Next
+R-01,Gunicorn unavailable on Windows local,P1,YES,YES,install/test on Linux staging
+R-02,Nginx reverse proxy config not discovered,P1,YES,YES,RELEASE-1-FIX deployment config
+R-03,backup/restore drill not executed,P1,YES,YES,OPS-BACKUP-1
+R-04,HQ LABPAY e-card list route exceeded bounded local smoke,P1,YES,YES,inspect query/response time before staging
+R-05,LABPAY real e-card safe file pending,P1,NO,YES,LABPAY-REAL-1
+R-06,final revenue accounting policy pending,P1,NO,YES,FINANCE-REVENUE-POLICY-1
+R-07,user training and deployment rehearsal pending,P2,YES,YES,OPS-TRAINING-1

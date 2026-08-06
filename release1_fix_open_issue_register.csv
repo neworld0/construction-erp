@@ -1,0 +1,7 @@
+Issue_ID,Area,P0_P1_P2,Previous_Status,Current_Status,Required_Before_Staging,Required_Before_Production,Owner,Next_Action,Evidence
+RF-01,Gunicorn,P1,HOLD,TEMPLATE_READY,YES,YES,release manager,Linux staging service smoke,release1_fix_staging_gunicorn_config.md
+RF-02,Nginx,P1,HOLD,TEMPLATE_READY,YES,YES,platform owner,"apply config, nginx -t, HTTPS health",release1_fix_staging_nginx_config.md
+RF-03,Backup/restore,P1,HOLD,BACKUP_EXECUTED_RESTORE_NOT_EXECUTED,YES,YES,DB owner,isolated restore and media backup policy,release1_fix_backup_restore_drill_report.md
+RF-04,LABPAY safe real e-card file,P2,HOLD,SEPARATE_OPEN_ITEM,NO,YES,labor owner,sanitized/safe real-file verification,OPS-2 gap register
+RF-05,Revenue accounting policy,P1,HOLD,SEPARATE_OPEN_ITEM,NO,YES,finance owner,approve recognition policy,OPS-2 gap register
+RF-06,User training,P2,HOLD,OPEN,YES,YES,operations owner,controlled pilot rehearsal,OPS-2 manual pack

@@ -1,0 +1,137 @@
+﻿.\config\asgi.py:7:https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
+.\config\asgi.py:12:from django.core.asgi import get_asgi_application
+.\config\asgi.py:16:application = get_asgi_application()
+.\config\wsgi.py:7:https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
+.\config\wsgi.py:12:from django.core.wsgi import get_wsgi_application
+.\config\wsgi.py:16:application = get_wsgi_application()
+.\ops1b_r2_purge_and_visibility_script.py:143:    from apps.ceo.services.dashboard import get_ceo_projects_list
+.\config\settings\base.py:90:WSGI_APPLICATION = "config.wsgi.application"
+.\config\settings\base.py:91:ASGI_APPLICATION = "config.asgi.application"
+.\ops1c_kpi_reconciliation_script.py:26:from apps.ceo.services.dashboard import get_ceo_projects_list
+.\ops1c_kpi_reconciliation_script.py:27:from apps.ceo.services.kpi_engine import compute_project_kpi
+.\ops1c_kpi_reconciliation_script.py:33:from apps.schedule.services.progress_agg import get_project_progress
+.\ops1c_kpi_reconciliation_script.py:293:            difference_rows.append({"Difference_ID": f"D-{index:02d}", "KPI": row["KPI"], "Expected_Value": row["Expected_Value"], "Actual_Value": row["Dashboard_Value"], "Difference": row["Difference"], "Tolerance": row["Tolerance"], "Severity": "P0", "Classification": "DASHBOARD_FORMULA_MISMATCH", "Explanation": "Expected seed and dashboard service differ.", "Followup_Action": "Investigate before OPS-2."})
+.\ops1c_kpi_reconciliation_script.py:301:        {"Issue_ID": "OPS1C-00", "Area": "CEO KPI Detail", "Severity": "RESOLVED", "P0_P1_P2": "P0_RESOLVED", "Description": "KPI detail prefetch used the missing budgetitem_set relation and caused a 500 response.", "Evidence": "apps/ceo/services/kpi_engine.py; rerun route check HTTP 200", "Workaround": "Not required after one-line relation-name fix.", "Required_Before_OPS2": "NO", "Required_Before_Full_Rollout": "NO", "Followup_Prompt": "None"},
+.\ops1c_kpi_reconciliation_script.py:390:        {"Evidence_ID": "E-02", "Step": "Dashboard", "Evidence_Type": "CSV", "File_or_Screen": VALUE_MATRIX.name, "Description": "Expected and dashboard service values", "Contains_PII": "NO", "Storage_Note": "Local demo", "Reviewer": "Codex"},
+.\apps\audit\services\__init__.py:1:"""Audit services."""
+.\apps\audit\tests\test_audit_log_sanitization.py:7:from apps.audit.services.logger import REDACTED, log_action, sanitize_audit_payload
+.\apps\audit\tests\test_audit_log_sanitization.py:9:from apps.labor.services import create_worker_master
+.\apps\audit\tests\test_audit_logs.py:15:from apps.audit.services.logger import log_action
+.\apps\closing\api_views.py:8:from .services import close_month, get_closing_period
+.\apps\contracts\services.py:5:from apps.audit.services.logger import log_action
+.\apps\contracts\services.py:6:from apps.risk.services.engine import emit_event
+.\apps\closing\adjustments.py:16:from apps.audit.services.logger import log_action
+.\apps\closing\services.py:7:from apps.audit.services.logger import log_action
+.\apps\contracts\tests\test_contract_snapshot_rotation.py:11:from apps.contracts.services import approve_contract_change
+.\apps\contracts\tests\test_contract_snapshot_rotation.py:12:from apps.finance.services.profit_loss import get_profit_loss_by_project
+.\apps\contracts\views.py:8:from apps.audit.services.logger import log_action
+.\apps\contracts\views.py:9:from .services import approve_contract_change
+.\apps\contracts\views.py:12:from apps.evidence.services.policy import check_evidence_required
+.\apps\closing\web_views.py:11:from apps.audit.services.logger import log_action
+.\apps\closing\web_views.py:25:from .services import close_month, get_closing_period
+.\apps\cost\views.py:21:from .services.accrual_cost import get_accrual_cost_by_project, get_accrual_cost_by_snapshot
+.\apps\cost\views.py:22:from apps.risk.services.engine import emit_event
+.\apps\ceo\web_views.py:9:from .services.dashboard import get_ceo_project_summary, get_ceo_projects_list
+.\apps\ceo\web_views.py:10:from apps.projects.services.wbs_baseline import (
+.\apps\closing\tests\test_closing_guards.py:10:from apps.closing.services import close_month
+.\apps\cost\tests\test_accrual_cost.py:6:from apps.cost.services.accrual_cost import (
+.\apps\core\views.py:33:from apps.evidence.services.policy import check_evidence_required
+.\apps\core\views.py:79:            "service": "construction-erp",
+.\apps\ceo\views.py:11:from apps.audit.services.logger import log_action
+.\apps\ceo\views.py:16:from .services.dashboard import (
+.\apps\schedule\views.py:13:from .services.plan_change import approve_change_request
+.\apps\schedule\views.py:14:from apps.evidence.services.policy import check_evidence_required
+.\apps\schedule\views.py:15:from .services.progress_agg import get_project_progress
+.\apps\schedule\views.py:17:from apps.audit.services.logger import log_action
+.\apps\schedule\tests\test_plan_change_request_api.py:8:from apps.schedule.services.progress_agg import get_project_progress
+.\apps\reports\web_views.py:16:from apps.evidence.services.resolve import is_project_or_month_locked
+.\apps\closing\guards.py:7:from .services import is_month_closed
+.\apps\core\management\commands\seed_demo_3sites_e2e.py:194:        service_hints = _discover_functions(
+.\apps\core\management\commands\seed_demo_3sites_e2e.py:195:            "apps.closing.services", ["close_month", "approve_project_close"]
+.\apps\core\management\commands\seed_demo_3sites_e2e.py:206:            "service_functions": service_hints,
+.\apps\core\management\commands\seed_demo_3sites_e2e.py:227:            "service_functions": _discover_functions(
+.\apps\core\management\commands\seed_demo_3sites_e2e.py:614:        from apps.closing.services import close_month
+.\apps\kpi\timeline.py:9:from apps.closing.services import is_month_closed
+.\apps\kpi\timeline.py:11:from .services import compute_project_kpi
+.\apps\kpi\services.py:15:from apps.labor.services import (
+.\apps\kpi\api_views.py:10:from .services import compute_portfolio_kpi, compute_project_kpi
+.\apps\core\tests\test_approval_daily_progress.py:5:from apps.core.services.approvals import approve_request, reject_request
+.\apps\schedule\services\plan_change.py:5:from apps.audit.services.logger import log_action
+.\apps\schedule\services\plan_change.py:6:from apps.risk.services.engine import emit_event
+.\apps\core\tests\test_audit9_operational_smoke_matrix.py:14:from apps.closing.services import close_month
+.\apps\core\serializers.py:5:from apps.audit.services.logger import log_action
+.\apps\core\serializers.py:7:from apps.core.services.approvals import approve_request, reject_request
+.\apps\core\tests\test_healthz.py:13:    assert data["service"] == "construction-erp"
+.\apps\inventory\web_views.py:11:from apps.audit.services.logger import log_action
+.\apps\inventory\web_views.py:35:from .services import (
+.\apps\core\tests\test_atomic_flows.py:5:from apps.contracts.services import approve_contract_change
+.\apps\core\tests\test_atomic_flows.py:8:from apps.schedule.services.plan_change import approve_change_request
+.\apps\core\tests\test_demo_d3e4_compact.py:8:from apps.closing.services import close_month
+.\apps\field\web_views.py:19:from apps.audit.services.logger import log_action
+.\apps\field\web_views.py:26:from apps.evidence.services.resolve import is_project_or_month_locked
+.\apps\ceo\app_views.py:21:from apps.audit.services.logger import log_action
+.\apps\ceo\app_views.py:23:from apps.contracts.services import approve_contract_change
+.\apps\ceo\app_views.py:36:from apps.evidence.services.policy import check_evidence_required
+.\apps\ceo\app_views.py:39:from apps.labor.services import approve_timesheet, reject_timesheet
+.\apps\ceo\app_views.py:40:from apps.projects.services.approval_package import approve_package, reject_package
+.\apps\ceo\app_views.py:41:from apps.projects.services.wbs_change_approval import approve_wbs_change_request
+.\apps\ceo\app_views.py:43:from apps.finance.services.profit_loss import _calculate_margin
+.\apps\ceo\app_views.py:46:from apps.schedule.services.plan_change import approve_change_request
+.\apps\ceo\app_views.py:48:from apps.core.services.approvals import approve_request, reject_request
+.\apps\ceo\app_views.py:51:from .services.dashboard import get_ceo_dashboard, get_ceo_projects_list
+.\apps\ceo\app_views.py:52:from .services.kpi_engine import compute_project_kpi
+.\apps\ceo\app_views.py:53:from .services.kpi_utils import (
+.\apps\ceo\approval_package_views.py:16:from apps.projects.services.approval_package import approve_package, reject_package
+.\apps\core\services\approvals.py:5:from apps.audit.services.logger import log_action
+.\apps\ceo\services\dashboard.py:7:from apps.cost.services.accrual_cost import get_accrual_cost_by_project
+.\apps\ceo\services\dashboard.py:8:from apps.finance.services.cash_summary import get_cash_summary
+.\apps\ceo\services\dashboard.py:9:from apps.finance.services.profit_loss import _calculate_margin, get_profit_loss_by_project
+.\apps\ceo\services\dashboard.py:10:from apps.labor.services import get_labor_totals_for_projects
+.\apps\ceo\services\dashboard.py:15:from apps.schedule.services.progress_agg import get_project_progress
+.\apps\evidence\web_views.py:8:from apps.audit.services.logger import log_action
+.\apps\evidence\web_views.py:16:from apps.evidence.services.resolve import (
+.\apps\ceo\services\kpi_engine.py:20:from apps.labor.services import get_labor_totals_for_projects
+.\apps\inventory\services.py:11:from apps.audit.services.logger import log_action
+.\apps\inventory\services.py:13:from apps.closing.services import is_month_closed
+.\apps\evidence\views.py:11:from apps.audit.services.logger import log_action
+.\apps\evidence\views.py:17:from .services.resolve import (
+.\apps\inventory\api_views.py:11:from apps.audit.services.logger import log_action
+.\apps\inventory\api_views.py:28:from .services import (
+.\apps\evidence\tests\test_resolve_project.py:6:from apps.evidence.services.resolve import resolve_project_for_evidence
+.\apps\evidence\services\resolve.py:55:        from apps.closing.services import is_month_closed
+.\apps\risk\views.py:10:from apps.audit.services.logger import log_action
+.\apps\projects\wbs_change.py:17:from apps.audit.services.logger import log_action
+.\apps\finance\models.py:53:            from apps.contracts.services import get_active_contract_snapshot
+.\apps\risk\tests\test_risk_finding_api.py:8:from apps.risk.services.engine import emit_event
+.\apps\risk\services\engine.py:9:from apps.evidence.services.policy import check_evidence_required
+.\apps\projects\approval_package_views.py:20:from apps.projects.services.approval_package import submit_package
+.\apps\projects\approval_package_views.py:21:from apps.projects.services.wbs_baseline import get_current_wbs_version
+.\apps\projects\tests\test_audit7_field_progress_e2e.py:13:from apps.closing.services import close_month
+.\apps\projects\api_views.py:9:from apps.projects.services.wbs_baseline import (
+.\apps\projects\services\approval_package.py:11:from apps.audit.services.logger import log_action
+.\apps\projects\services\approval_package.py:14:from apps.contracts.services import approve_contract_change
+.\apps\projects\services\approval_package.py:23:from apps.projects.services.wbs_baseline import get_current_wbs_version
+.\apps\finance\services\profit_loss.py:7:from apps.cost.services.accrual_cost import (
+.\apps\finance\views.py:11:from apps.finance.services.cash_summary import get_cash_summary
+.\apps\finance\views.py:12:from .services.profit_loss import get_profit_loss_by_project, get_profit_loss_by_snapshot
+.\apps\projects\hq_views.py:37:from apps.audit.services.logger import log_action
+.\apps\projects\hq_views.py:45:from apps.inventory.services import create_site_warehouse
+.\apps\projects\hq_views.py:68:from .services.baseline import is_baseline_locked
+.\apps\projects\hq_views.py:69:from .services.wbs_baseline import (
+.\apps\projects\services\wbs_change_approval.py:8:from apps.audit.services.logger import log_action
+.\apps\master\web_views.py:14:from apps.audit.services.logger import log_action
+.\apps\labor\api_views.py:24:from .services import (
+.\apps\labor\services.py:16:from apps.audit.services.logger import log_action
+.\apps\labor\services.py:18:from apps.closing.services import is_month_closed
+.\apps\labor\web_views.py:14:from apps.evidence.services.resolve import is_project_or_month_locked
+.\apps\labor\web_views.py:50:from .services import (
+.\apps\labor\tests\test_audit6_labpay_e2e.py:31:from apps.labor.services import (
+.\apps\labor\tests\test_audit6_labpay_e2e.py:480:def test_audit6_field_user_cannot_run_hq_labpay_e2e_services(settings, tmp_path):
+.\apps\labor\tests\test_audit2_labor_rbac.py:19:from apps.labor.services import (
+.\apps\labor\tests\test_audit2_labor_rbac.py:143:def test_field_cannot_parse_or_reconcile_e_card_batch_service():
+.\apps\labor\tests\test_audit2_labor_rbac.py:144:    field_user = _user(Role.FIELD, "field-labor-service")
+.\apps\labor\tests\test_audit5_excel_reliability.py:24:from apps.labor.services import (
+.\apps\labor\tests\test_audit5_excel_reliability.py:382:    context = _create_confirmed_batch(settings, tmp_path, username="audit5-hq-download-service")
+.\apps\labor\tests\test_closing_confirmation_guards.py:22:from apps.labor.services import (
+.\apps\labor\tests\test_labor_closing_guards.py:8:from apps.closing.services import close_month
+.\apps\labor\tests\test_labor_closing_guards.py:16:from apps.labor.services import (

@@ -1,0 +1,1008 @@
+;
+; Archive created at 2026-08-05 13:58:28
+;     dbname: construction_erp_demo
+;     TOC Entries: 997
+;     Compression: gzip
+;     Dump Version: 1.16-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 17.9
+;     Dumped by pg_dump version: 17.9
+;
+;
+; Selected TOC Entries:
+;
+238; 1259 16531 TABLE public audit_auditlog erp_user
+237; 1259 16530 SEQUENCE public audit_auditlog_id_seq erp_user
+224; 1259 16413 TABLE public auth_group erp_user
+223; 1259 16412 SEQUENCE public auth_group_id_seq erp_user
+226; 1259 16421 TABLE public auth_group_permissions erp_user
+225; 1259 16420 SEQUENCE public auth_group_permissions_id_seq erp_user
+222; 1259 16407 TABLE public auth_permission erp_user
+221; 1259 16406 SEQUENCE public auth_permission_id_seq erp_user
+228; 1259 16427 TABLE public auth_user erp_user
+230; 1259 16435 TABLE public auth_user_groups erp_user
+229; 1259 16434 SEQUENCE public auth_user_groups_id_seq erp_user
+227; 1259 16426 SEQUENCE public auth_user_id_seq erp_user
+232; 1259 16441 TABLE public auth_user_user_permissions erp_user
+231; 1259 16440 SEQUENCE public auth_user_user_permissions_id_seq erp_user
+284; 1259 17108 TABLE public closing_adjustment erp_user
+283; 1259 17107 SEQUENCE public closing_adjustment_id_seq erp_user
+282; 1259 17092 TABLE public closing_closingperiod erp_user
+281; 1259 17091 SEQUENCE public closing_closingperiod_id_seq erp_user
+286; 1259 17149 TABLE public closing_projectclose erp_user
+285; 1259 17148 SEQUENCE public closing_projectclose_id_seq erp_user
+252; 1259 16685 TABLE public contracts_contractchange erp_user
+251; 1259 16684 SEQUENCE public contracts_contractchange_id_seq erp_user
+254; 1259 16713 TABLE public contracts_contractsnapshot erp_user
+253; 1259 16712 SEQUENCE public contracts_contractsnapshot_id_seq erp_user
+288; 1259 17170 TABLE public core_approvalrequest erp_user
+287; 1259 17169 SEQUENCE public core_approvalrequest_id_seq erp_user
+292; 1259 17201 TABLE public core_projectassignment erp_user
+291; 1259 17200 SEQUENCE public core_projectassignment_id_seq erp_user
+290; 1259 17193 TABLE public core_userprofile erp_user
+289; 1259 17192 SEQUENCE public core_userprofile_id_seq erp_user
+246; 1259 16627 TABLE public cost_costactual erp_user
+245; 1259 16626 SEQUENCE public cost_costactual_id_seq erp_user
+248; 1259 16635 TABLE public cost_costactualline erp_user
+247; 1259 16634 SEQUENCE public cost_costactualline_id_seq erp_user
+240; 1259 16578 TABLE public cost_costitem erp_user
+239; 1259 16577 SEQUENCE public cost_costitem_id_seq erp_user
+262; 1259 16868 TABLE public cost_costitemalias erp_user
+261; 1259 16867 SEQUENCE public cost_costitemalias_id_seq erp_user
+250; 1259 16670 TABLE public cost_revenuerecognition erp_user
+249; 1259 16669 SEQUENCE public cost_revenuerecognition_id_seq erp_user
+234; 1259 16499 TABLE public django_admin_log erp_user
+233; 1259 16498 SEQUENCE public django_admin_log_id_seq erp_user
+220; 1259 16399 TABLE public django_content_type erp_user
+219; 1259 16398 SEQUENCE public django_content_type_id_seq erp_user
+218; 1259 16391 TABLE public django_migrations erp_user
+217; 1259 16390 SEQUENCE public django_migrations_id_seq erp_user
+375; 1259 18111 TABLE public django_session erp_user
+294; 1259 17227 TABLE public evidence_evidence erp_user
+293; 1259 17226 SEQUENCE public evidence_evidence_id_seq erp_user
+298; 1259 17244 TABLE public evidence_evidencefile erp_user
+297; 1259 17243 SEQUENCE public evidence_evidencefile_id_seq erp_user
+296; 1259 17236 TABLE public evidence_evidencepolicy erp_user
+295; 1259 17235 SEQUENCE public evidence_evidencepolicy_id_seq erp_user
+242; 1259 16587 TABLE public field_dailyreport erp_user
+241; 1259 16586 SEQUENCE public field_dailyreport_id_seq erp_user
+244; 1259 16595 TABLE public field_dailyreportline erp_user
+243; 1259 16594 SEQUENCE public field_dailyreportline_id_seq erp_user
+300; 1259 17272 TABLE public finance_cashaccount erp_user
+299; 1259 17271 SEQUENCE public finance_cashaccount_id_seq erp_user
+302; 1259 17280 TABLE public finance_cashevent erp_user
+301; 1259 17279 SEQUENCE public finance_cashevent_id_seq erp_user
+316; 1259 17425 TABLE public inventory_inventoryledger erp_user
+315; 1259 17424 SEQUENCE public inventory_inventoryledger_id_seq erp_user
+326; 1259 17578 TABLE public inventory_issuenumbersequence erp_user
+325; 1259 17577 SEQUENCE public inventory_issuenumbersequence_id_seq erp_user
+328; 1259 17586 TABLE public inventory_issuetowork erp_user
+327; 1259 17585 SEQUENCE public inventory_issuetowork_id_seq erp_user
+330; 1259 17596 TABLE public inventory_issuetoworkline erp_user
+329; 1259 17595 SEQUENCE public inventory_issuetoworkline_id_seq erp_user
+308; 1259 17347 TABLE public inventory_itemcategory erp_user
+307; 1259 17346 SEQUENCE public inventory_itemcategory_id_seq erp_user
+310; 1259 17355 TABLE public inventory_itemcodesequence erp_user
+309; 1259 17354 SEQUENCE public inventory_itemcodesequence_id_seq erp_user
+314; 1259 17371 TABLE public inventory_itemmaster erp_user
+313; 1259 17370 SEQUENCE public inventory_itemmaster_id_seq erp_user
+306; 1259 17322 TABLE public inventory_location erp_user
+305; 1259 17321 SEQUENCE public inventory_location_id_seq erp_user
+318; 1259 17433 TABLE public inventory_stock erp_user
+317; 1259 17432 SEQUENCE public inventory_stock_id_seq erp_user
+322; 1259 17501 TABLE public inventory_transfer erp_user
+321; 1259 17500 SEQUENCE public inventory_transfer_id_seq erp_user
+324; 1259 17511 TABLE public inventory_transferline erp_user
+323; 1259 17510 SEQUENCE public inventory_transferline_id_seq erp_user
+320; 1259 17493 TABLE public inventory_transfernumbersequence erp_user
+319; 1259 17492 SEQUENCE public inventory_transfernumbersequence_id_seq erp_user
+312; 1259 17363 TABLE public inventory_uom erp_user
+311; 1259 17362 SEQUENCE public inventory_uom_id_seq erp_user
+304; 1259 17314 TABLE public inventory_warehouse erp_user
+303; 1259 17313 SEQUENCE public inventory_warehouse_id_seq erp_user
+383; 1259 18242 TABLE public labor_electroniccardimportbatch erp_user
+382; 1259 18241 SEQUENCE public labor_electroniccardimportbatch_id_seq erp_user
+387; 1259 18281 TABLE public labor_electroniccardworkday erp_user
+386; 1259 18280 SEQUENCE public labor_electroniccardworkday_id_seq erp_user
+385; 1259 18273 TABLE public labor_electroniccardworkraw erp_user
+384; 1259 18272 SEQUENCE public labor_electroniccardworkraw_id_seq erp_user
+391; 1259 18385 TABLE public labor_laborconfirmedworkday erp_user
+390; 1259 18384 SEQUENCE public labor_laborconfirmedworkday_id_seq erp_user
+393; 1259 18441 TABLE public labor_laborexcelexportbatch erp_user
+392; 1259 18440 SEQUENCE public labor_laborexcelexportbatch_id_seq erp_user
+381; 1259 18195 TABLE public labor_labormonthlypayroll erp_user
+380; 1259 18194 SEQUENCE public labor_labormonthlypayroll_id_seq erp_user
+334; 1259 17671 TABLE public labor_laborratetable erp_user
+333; 1259 17670 SEQUENCE public labor_laborratetable_id_seq erp_user
+389; 1259 18341 TABLE public labor_laborreconciliationresult erp_user
+388; 1259 18340 SEQUENCE public labor_laborreconciliationresult_id_seq erp_user
+332; 1259 17663 TABLE public labor_laborrole erp_user
+331; 1259 17662 SEQUENCE public labor_laborrole_id_seq erp_user
+379; 1259 18146 TABLE public labor_laborworkledger erp_user
+378; 1259 18145 SEQUENCE public labor_laborworkledger_id_seq erp_user
+344; 1259 17782 TABLE public labor_payrollallocationbatch erp_user
+343; 1259 17781 SEQUENCE public labor_payrollallocationbatch_id_seq erp_user
+346; 1259 17792 TABLE public labor_payrollallocationline erp_user
+345; 1259 17791 SEQUENCE public labor_payrollallocationline_id_seq erp_user
+342; 1259 17774 TABLE public labor_payrollbatchnumbersequence erp_user
+341; 1259 17773 SEQUENCE public labor_payrollbatchnumbersequence_id_seq erp_user
+336; 1259 17708 TABLE public labor_timesheet erp_user
+335; 1259 17707 SEQUENCE public labor_timesheet_id_seq erp_user
+338; 1259 17718 TABLE public labor_timesheetline erp_user
+337; 1259 17717 SEQUENCE public labor_timesheetline_id_seq erp_user
+340; 1259 17724 TABLE public labor_timesheetnumbersequence erp_user
+339; 1259 17723 SEQUENCE public labor_timesheetnumbersequence_id_seq erp_user
+377; 1259 18123 TABLE public labor_workermaster erp_user
+376; 1259 18122 SEQUENCE public labor_workermaster_id_seq erp_user
+266; 1259 16917 TABLE public master_cbschangerequest erp_user
+265; 1259 16916 SEQUENCE public master_cbschangerequest_id_seq erp_user
+264; 1259 16891 TABLE public master_favoritecostitem erp_user
+263; 1259 16890 SEQUENCE public master_favoritecostitem_id_seq erp_user
+272; 1259 16957 TABLE public master_masterbudgettemplateitem erp_user
+271; 1259 16956 SEQUENCE public master_masterbudgettemplateitem_id_seq erp_user
+268; 1259 16943 TABLE public master_mastertemplate erp_user
+267; 1259 16942 SEQUENCE public master_mastertemplate_id_seq erp_user
+270; 1259 16951 TABLE public master_masterwbstemplateitem erp_user
+269; 1259 16950 SEQUENCE public master_masterwbstemplateitem_id_seq erp_user
+348; 1259 17843 TABLE public otp_static_staticdevice erp_user
+347; 1259 17842 SEQUENCE public otp_static_staticdevice_id_seq erp_user
+350; 1259 17849 TABLE public otp_static_statictoken erp_user
+349; 1259 17848 SEQUENCE public otp_static_statictoken_id_seq erp_user
+352; 1259 17871 TABLE public otp_totp_totpdevice erp_user
+351; 1259 17870 SEQUENCE public otp_totp_totpdevice_id_seq erp_user
+278; 1259 17051 TABLE public projects_approvalpackage erp_user
+277; 1259 17050 SEQUENCE public projects_approvalpackage_id_seq erp_user
+280; 1259 17059 TABLE public projects_approvalpackageitem erp_user
+279; 1259 17058 SEQUENCE public projects_approvalpackageitem_id_seq erp_user
+258; 1259 16803 TABLE public projects_budgetitem erp_user
+257; 1259 16802 SEQUENCE public projects_budgetitem_id_seq erp_user
+236; 1259 16520 TABLE public projects_project erp_user
+235; 1259 16519 SEQUENCE public projects_project_id_seq erp_user
+256; 1259 16788 TABLE public projects_projectcontract erp_user
+255; 1259 16787 SEQUENCE public projects_projectcontract_id_seq erp_user
+276; 1259 17012 TABLE public projects_wbschangeline erp_user
+275; 1259 17011 SEQUENCE public projects_wbschangeline_id_seq erp_user
+274; 1259 17004 TABLE public projects_wbschangerequest erp_user
+273; 1259 17003 SEQUENCE public projects_wbschangerequest_id_seq erp_user
+260; 1259 16811 TABLE public projects_wbsitem erp_user
+259; 1259 16810 SEQUENCE public projects_wbsitem_id_seq erp_user
+354; 1259 17888 TABLE public public_site_contactmessage erp_user
+353; 1259 17887 SEQUENCE public public_site_contactmessage_id_seq erp_user
+356; 1259 17896 TABLE public public_site_publicproject erp_user
+355; 1259 17895 SEQUENCE public public_site_publicproject_id_seq erp_user
+358; 1259 17909 TABLE public reports_fieldreport erp_user
+357; 1259 17908 SEQUENCE public reports_fieldreport_id_seq erp_user
+360; 1259 17917 TABLE public reports_fieldreportfile erp_user
+359; 1259 17916 SEQUENCE public reports_fieldreportfile_id_seq erp_user
+364; 1259 17957 TABLE public risk_riskevent erp_user
+363; 1259 17956 SEQUENCE public risk_riskevent_id_seq erp_user
+366; 1259 17966 TABLE public risk_riskfinding erp_user
+365; 1259 17965 SEQUENCE public risk_riskfinding_id_seq erp_user
+362; 1259 17947 TABLE public risk_riskrule erp_user
+361; 1259 17946 SEQUENCE public risk_riskrule_id_seq erp_user
+372; 1259 18041 TABLE public schedule_dailyprogress erp_user
+371; 1259 18040 SEQUENCE public schedule_dailyprogress_id_seq erp_user
+374; 1259 18073 TABLE public schedule_planchangerequest erp_user
+373; 1259 18072 SEQUENCE public schedule_planchangerequest_id_seq erp_user
+368; 1259 18008 TABLE public schedule_scheduleplan erp_user
+367; 1259 18007 SEQUENCE public schedule_scheduleplan_id_seq erp_user
+370; 1259 18014 TABLE public schedule_scheduletask erp_user
+369; 1259 18013 SEQUENCE public schedule_scheduletask_id_seq erp_user
+6139; 0 16531 TABLE DATA public audit_auditlog erp_user
+6125; 0 16413 TABLE DATA public auth_group erp_user
+6127; 0 16421 TABLE DATA public auth_group_permissions erp_user
+6123; 0 16407 TABLE DATA public auth_permission erp_user
+6129; 0 16427 TABLE DATA public auth_user erp_user
+6131; 0 16435 TABLE DATA public auth_user_groups erp_user
+6133; 0 16441 TABLE DATA public auth_user_user_permissions erp_user
+6185; 0 17108 TABLE DATA public closing_adjustment erp_user
+6183; 0 17092 TABLE DATA public closing_closingperiod erp_user
+6187; 0 17149 TABLE DATA public closing_projectclose erp_user
+6153; 0 16685 TABLE DATA public contracts_contractchange erp_user
+6155; 0 16713 TABLE DATA public contracts_contractsnapshot erp_user
+6189; 0 17170 TABLE DATA public core_approvalrequest erp_user
+6193; 0 17201 TABLE DATA public core_projectassignment erp_user
+6191; 0 17193 TABLE DATA public core_userprofile erp_user
+6147; 0 16627 TABLE DATA public cost_costactual erp_user
+6149; 0 16635 TABLE DATA public cost_costactualline erp_user
+6141; 0 16578 TABLE DATA public cost_costitem erp_user
+6163; 0 16868 TABLE DATA public cost_costitemalias erp_user
+6151; 0 16670 TABLE DATA public cost_revenuerecognition erp_user
+6135; 0 16499 TABLE DATA public django_admin_log erp_user
+6121; 0 16399 TABLE DATA public django_content_type erp_user
+6119; 0 16391 TABLE DATA public django_migrations erp_user
+6276; 0 18111 TABLE DATA public django_session erp_user
+6195; 0 17227 TABLE DATA public evidence_evidence erp_user
+6199; 0 17244 TABLE DATA public evidence_evidencefile erp_user
+6197; 0 17236 TABLE DATA public evidence_evidencepolicy erp_user
+6143; 0 16587 TABLE DATA public field_dailyreport erp_user
+6145; 0 16595 TABLE DATA public field_dailyreportline erp_user
+6201; 0 17272 TABLE DATA public finance_cashaccount erp_user
+6203; 0 17280 TABLE DATA public finance_cashevent erp_user
+6217; 0 17425 TABLE DATA public inventory_inventoryledger erp_user
+6227; 0 17578 TABLE DATA public inventory_issuenumbersequence erp_user
+6229; 0 17586 TABLE DATA public inventory_issuetowork erp_user
+6231; 0 17596 TABLE DATA public inventory_issuetoworkline erp_user
+6209; 0 17347 TABLE DATA public inventory_itemcategory erp_user
+6211; 0 17355 TABLE DATA public inventory_itemcodesequence erp_user
+6215; 0 17371 TABLE DATA public inventory_itemmaster erp_user
+6207; 0 17322 TABLE DATA public inventory_location erp_user
+6219; 0 17433 TABLE DATA public inventory_stock erp_user
+6223; 0 17501 TABLE DATA public inventory_transfer erp_user
+6225; 0 17511 TABLE DATA public inventory_transferline erp_user
+6221; 0 17493 TABLE DATA public inventory_transfernumbersequence erp_user
+6213; 0 17363 TABLE DATA public inventory_uom erp_user
+6205; 0 17314 TABLE DATA public inventory_warehouse erp_user
+6284; 0 18242 TABLE DATA public labor_electroniccardimportbatch erp_user
+6288; 0 18281 TABLE DATA public labor_electroniccardworkday erp_user
+6286; 0 18273 TABLE DATA public labor_electroniccardworkraw erp_user
+6292; 0 18385 TABLE DATA public labor_laborconfirmedworkday erp_user
+6294; 0 18441 TABLE DATA public labor_laborexcelexportbatch erp_user
+6282; 0 18195 TABLE DATA public labor_labormonthlypayroll erp_user
+6235; 0 17671 TABLE DATA public labor_laborratetable erp_user
+6290; 0 18341 TABLE DATA public labor_laborreconciliationresult erp_user
+6233; 0 17663 TABLE DATA public labor_laborrole erp_user
+6280; 0 18146 TABLE DATA public labor_laborworkledger erp_user
+6245; 0 17782 TABLE DATA public labor_payrollallocationbatch erp_user
+6247; 0 17792 TABLE DATA public labor_payrollallocationline erp_user
+6243; 0 17774 TABLE DATA public labor_payrollbatchnumbersequence erp_user
+6237; 0 17708 TABLE DATA public labor_timesheet erp_user
+6239; 0 17718 TABLE DATA public labor_timesheetline erp_user
+6241; 0 17724 TABLE DATA public labor_timesheetnumbersequence erp_user
+6278; 0 18123 TABLE DATA public labor_workermaster erp_user
+6167; 0 16917 TABLE DATA public master_cbschangerequest erp_user
+6165; 0 16891 TABLE DATA public master_favoritecostitem erp_user
+6173; 0 16957 TABLE DATA public master_masterbudgettemplateitem erp_user
+6169; 0 16943 TABLE DATA public master_mastertemplate erp_user
+6171; 0 16951 TABLE DATA public master_masterwbstemplateitem erp_user
+6249; 0 17843 TABLE DATA public otp_static_staticdevice erp_user
+6251; 0 17849 TABLE DATA public otp_static_statictoken erp_user
+6253; 0 17871 TABLE DATA public otp_totp_totpdevice erp_user
+6179; 0 17051 TABLE DATA public projects_approvalpackage erp_user
+6181; 0 17059 TABLE DATA public projects_approvalpackageitem erp_user
+6159; 0 16803 TABLE DATA public projects_budgetitem erp_user
+6137; 0 16520 TABLE DATA public projects_project erp_user
+6157; 0 16788 TABLE DATA public projects_projectcontract erp_user
+6177; 0 17012 TABLE DATA public projects_wbschangeline erp_user
+6175; 0 17004 TABLE DATA public projects_wbschangerequest erp_user
+6161; 0 16811 TABLE DATA public projects_wbsitem erp_user
+6255; 0 17888 TABLE DATA public public_site_contactmessage erp_user
+6257; 0 17896 TABLE DATA public public_site_publicproject erp_user
+6259; 0 17909 TABLE DATA public reports_fieldreport erp_user
+6261; 0 17917 TABLE DATA public reports_fieldreportfile erp_user
+6265; 0 17957 TABLE DATA public risk_riskevent erp_user
+6267; 0 17966 TABLE DATA public risk_riskfinding erp_user
+6263; 0 17947 TABLE DATA public risk_riskrule erp_user
+6273; 0 18041 TABLE DATA public schedule_dailyprogress erp_user
+6275; 0 18073 TABLE DATA public schedule_planchangerequest erp_user
+6269; 0 18008 TABLE DATA public schedule_scheduleplan erp_user
+6271; 0 18014 TABLE DATA public schedule_scheduletask erp_user
+6301; 0 0 SEQUENCE SET public audit_auditlog_id_seq erp_user
+6302; 0 0 SEQUENCE SET public auth_group_id_seq erp_user
+6303; 0 0 SEQUENCE SET public auth_group_permissions_id_seq erp_user
+6304; 0 0 SEQUENCE SET public auth_permission_id_seq erp_user
+6305; 0 0 SEQUENCE SET public auth_user_groups_id_seq erp_user
+6306; 0 0 SEQUENCE SET public auth_user_id_seq erp_user
+6307; 0 0 SEQUENCE SET public auth_user_user_permissions_id_seq erp_user
+6308; 0 0 SEQUENCE SET public closing_adjustment_id_seq erp_user
+6309; 0 0 SEQUENCE SET public closing_closingperiod_id_seq erp_user
+6310; 0 0 SEQUENCE SET public closing_projectclose_id_seq erp_user
+6311; 0 0 SEQUENCE SET public contracts_contractchange_id_seq erp_user
+6312; 0 0 SEQUENCE SET public contracts_contractsnapshot_id_seq erp_user
+6313; 0 0 SEQUENCE SET public core_approvalrequest_id_seq erp_user
+6314; 0 0 SEQUENCE SET public core_projectassignment_id_seq erp_user
+6315; 0 0 SEQUENCE SET public core_userprofile_id_seq erp_user
+6316; 0 0 SEQUENCE SET public cost_costactual_id_seq erp_user
+6317; 0 0 SEQUENCE SET public cost_costactualline_id_seq erp_user
+6318; 0 0 SEQUENCE SET public cost_costitem_id_seq erp_user
+6319; 0 0 SEQUENCE SET public cost_costitemalias_id_seq erp_user
+6320; 0 0 SEQUENCE SET public cost_revenuerecognition_id_seq erp_user
+6321; 0 0 SEQUENCE SET public django_admin_log_id_seq erp_user
+6322; 0 0 SEQUENCE SET public django_content_type_id_seq erp_user
+6323; 0 0 SEQUENCE SET public django_migrations_id_seq erp_user
+6324; 0 0 SEQUENCE SET public evidence_evidence_id_seq erp_user
+6325; 0 0 SEQUENCE SET public evidence_evidencefile_id_seq erp_user
+6326; 0 0 SEQUENCE SET public evidence_evidencepolicy_id_seq erp_user
+6327; 0 0 SEQUENCE SET public field_dailyreport_id_seq erp_user
+6328; 0 0 SEQUENCE SET public field_dailyreportline_id_seq erp_user
+6329; 0 0 SEQUENCE SET public finance_cashaccount_id_seq erp_user
+6330; 0 0 SEQUENCE SET public finance_cashevent_id_seq erp_user
+6331; 0 0 SEQUENCE SET public inventory_inventoryledger_id_seq erp_user
+6332; 0 0 SEQUENCE SET public inventory_issuenumbersequence_id_seq erp_user
+6333; 0 0 SEQUENCE SET public inventory_issuetowork_id_seq erp_user
+6334; 0 0 SEQUENCE SET public inventory_issuetoworkline_id_seq erp_user
+6335; 0 0 SEQUENCE SET public inventory_itemcategory_id_seq erp_user
+6336; 0 0 SEQUENCE SET public inventory_itemcodesequence_id_seq erp_user
+6337; 0 0 SEQUENCE SET public inventory_itemmaster_id_seq erp_user
+6338; 0 0 SEQUENCE SET public inventory_location_id_seq erp_user
+6339; 0 0 SEQUENCE SET public inventory_stock_id_seq erp_user
+6340; 0 0 SEQUENCE SET public inventory_transfer_id_seq erp_user
+6341; 0 0 SEQUENCE SET public inventory_transferline_id_seq erp_user
+6342; 0 0 SEQUENCE SET public inventory_transfernumbersequence_id_seq erp_user
+6343; 0 0 SEQUENCE SET public inventory_uom_id_seq erp_user
+6344; 0 0 SEQUENCE SET public inventory_warehouse_id_seq erp_user
+6345; 0 0 SEQUENCE SET public labor_electroniccardimportbatch_id_seq erp_user
+6346; 0 0 SEQUENCE SET public labor_electroniccardworkday_id_seq erp_user
+6347; 0 0 SEQUENCE SET public labor_electroniccardworkraw_id_seq erp_user
+6348; 0 0 SEQUENCE SET public labor_laborconfirmedworkday_id_seq erp_user
+6349; 0 0 SEQUENCE SET public labor_laborexcelexportbatch_id_seq erp_user
+6350; 0 0 SEQUENCE SET public labor_labormonthlypayroll_id_seq erp_user
+6351; 0 0 SEQUENCE SET public labor_laborratetable_id_seq erp_user
+6352; 0 0 SEQUENCE SET public labor_laborreconciliationresult_id_seq erp_user
+6353; 0 0 SEQUENCE SET public labor_laborrole_id_seq erp_user
+6354; 0 0 SEQUENCE SET public labor_laborworkledger_id_seq erp_user
+6355; 0 0 SEQUENCE SET public labor_payrollallocationbatch_id_seq erp_user
+6356; 0 0 SEQUENCE SET public labor_payrollallocationline_id_seq erp_user
+6357; 0 0 SEQUENCE SET public labor_payrollbatchnumbersequence_id_seq erp_user
+6358; 0 0 SEQUENCE SET public labor_timesheet_id_seq erp_user
+6359; 0 0 SEQUENCE SET public labor_timesheetline_id_seq erp_user
+6360; 0 0 SEQUENCE SET public labor_timesheetnumbersequence_id_seq erp_user
+6361; 0 0 SEQUENCE SET public labor_workermaster_id_seq erp_user
+6362; 0 0 SEQUENCE SET public master_cbschangerequest_id_seq erp_user
+6363; 0 0 SEQUENCE SET public master_favoritecostitem_id_seq erp_user
+6364; 0 0 SEQUENCE SET public master_masterbudgettemplateitem_id_seq erp_user
+6365; 0 0 SEQUENCE SET public master_mastertemplate_id_seq erp_user
+6366; 0 0 SEQUENCE SET public master_masterwbstemplateitem_id_seq erp_user
+6367; 0 0 SEQUENCE SET public otp_static_staticdevice_id_seq erp_user
+6368; 0 0 SEQUENCE SET public otp_static_statictoken_id_seq erp_user
+6369; 0 0 SEQUENCE SET public otp_totp_totpdevice_id_seq erp_user
+6370; 0 0 SEQUENCE SET public projects_approvalpackage_id_seq erp_user
+6371; 0 0 SEQUENCE SET public projects_approvalpackageitem_id_seq erp_user
+6372; 0 0 SEQUENCE SET public projects_budgetitem_id_seq erp_user
+6373; 0 0 SEQUENCE SET public projects_project_id_seq erp_user
+6374; 0 0 SEQUENCE SET public projects_projectcontract_id_seq erp_user
+6375; 0 0 SEQUENCE SET public projects_wbschangeline_id_seq erp_user
+6376; 0 0 SEQUENCE SET public projects_wbschangerequest_id_seq erp_user
+6377; 0 0 SEQUENCE SET public projects_wbsitem_id_seq erp_user
+6378; 0 0 SEQUENCE SET public public_site_contactmessage_id_seq erp_user
+6379; 0 0 SEQUENCE SET public public_site_publicproject_id_seq erp_user
+6380; 0 0 SEQUENCE SET public reports_fieldreport_id_seq erp_user
+6381; 0 0 SEQUENCE SET public reports_fieldreportfile_id_seq erp_user
+6382; 0 0 SEQUENCE SET public risk_riskevent_id_seq erp_user
+6383; 0 0 SEQUENCE SET public risk_riskfinding_id_seq erp_user
+6384; 0 0 SEQUENCE SET public risk_riskrule_id_seq erp_user
+6385; 0 0 SEQUENCE SET public schedule_dailyprogress_id_seq erp_user
+6386; 0 0 SEQUENCE SET public schedule_planchangerequest_id_seq erp_user
+6387; 0 0 SEQUENCE SET public schedule_scheduleplan_id_seq erp_user
+6388; 0 0 SEQUENCE SET public schedule_scheduletask_id_seq erp_user
+5248; 2606 16538 CONSTRAINT public audit_auditlog audit_auditlog_pkey erp_user
+5208; 2606 16560 CONSTRAINT public auth_group auth_group_name_key erp_user
+5213; 2606 16456 CONSTRAINT public auth_group_permissions auth_group_permissions_group_id_permission_id_0cd325b0_uniq erp_user
+5216; 2606 16425 CONSTRAINT public auth_group_permissions auth_group_permissions_pkey erp_user
+5210; 2606 16417 CONSTRAINT public auth_group auth_group_pkey erp_user
+5203; 2606 16447 CONSTRAINT public auth_permission auth_permission_content_type_id_codename_01ab375a_uniq erp_user
+5205; 2606 16411 CONSTRAINT public auth_permission auth_permission_pkey erp_user
+5224; 2606 16439 CONSTRAINT public auth_user_groups auth_user_groups_pkey erp_user
+5227; 2606 16471 CONSTRAINT public auth_user_groups auth_user_groups_user_id_group_id_94350c0c_uniq erp_user
+5218; 2606 16431 CONSTRAINT public auth_user auth_user_pkey erp_user
+5230; 2606 16445 CONSTRAINT public auth_user_user_permissions auth_user_user_permissions_pkey erp_user
+5233; 2606 16485 CONSTRAINT public auth_user_user_permissions auth_user_user_permissions_user_id_permission_id_14a6b632_uniq erp_user
+5221; 2606 16555 CONSTRAINT public auth_user auth_user_username_key erp_user
+5375; 2606 17115 CONSTRAINT public closing_adjustment closing_adjustment_pkey erp_user
+5366; 2606 17098 CONSTRAINT public closing_closingperiod closing_closingperiod_pkey erp_user
+5380; 2606 17155 CONSTRAINT public closing_projectclose closing_projectclose_pkey erp_user
+5283; 2606 16691 CONSTRAINT public contracts_contractchange contracts_contractchange_pkey erp_user
+5290; 2606 16717 CONSTRAINT public contracts_contractsnapshot contracts_contractsnapshot_pkey erp_user
+5387; 2606 17177 CONSTRAINT public core_approvalrequest core_approvalrequest_pkey erp_user
+5394; 2606 17205 CONSTRAINT public core_projectassignment core_projectassignment_pkey erp_user
+5390; 2606 17197 CONSTRAINT public core_userprofile core_userprofile_pkey erp_user
+5392; 2606 17199 CONSTRAINT public core_userprofile core_userprofile_user_id_key erp_user
+5267; 2606 16631 CONSTRAINT public cost_costactual cost_costactual_pkey erp_user
+5270; 2606 16633 CONSTRAINT public cost_costactual cost_costactual_source_daily_report_id_key erp_user
+5274; 2606 16639 CONSTRAINT public cost_costactualline cost_costactualline_pkey erp_user
+5254; 2606 16584 CONSTRAINT public cost_costitem cost_costitem_code_key erp_user
+5256; 2606 16582 CONSTRAINT public cost_costitem cost_costitem_pkey erp_user
+5312; 2606 16874 CONSTRAINT public cost_costitemalias cost_costitemalias_pkey erp_user
+5277; 2606 16675 CONSTRAINT public cost_revenuerecognition cost_revenuerecognition_pkey erp_user
+5236; 2606 16506 CONSTRAINT public django_admin_log django_admin_log_pkey erp_user
+5198; 2606 16405 CONSTRAINT public django_content_type django_content_type_app_label_model_76bd3d3b_uniq erp_user
+5200; 2606 16403 CONSTRAINT public django_content_type django_content_type_pkey erp_user
+5196; 2606 16397 CONSTRAINT public django_migrations django_migrations_pkey erp_user
+5671; 2606 18117 CONSTRAINT public django_session django_session_pkey erp_user
+5402; 2606 17234 CONSTRAINT public evidence_evidence evidence_evidence_pkey erp_user
+5408; 2606 17250 CONSTRAINT public evidence_evidencefile evidence_evidencefile_pkey erp_user
+5404; 2606 17242 CONSTRAINT public evidence_evidencepolicy evidence_evidencepolicy_pkey erp_user
+5258; 2606 16593 CONSTRAINT public field_dailyreport field_dailyreport_pkey erp_user
+5263; 2606 16599 CONSTRAINT public field_dailyreportline field_dailyreportline_pkey erp_user
+5410; 2606 17278 CONSTRAINT public finance_cashaccount finance_cashaccount_pkey erp_user
+5417; 2606 17286 CONSTRAINT public finance_cashevent finance_cashevent_pkey erp_user
+5474; 2606 17431 CONSTRAINT public inventory_inventoryledger inventory_inventoryledger_pkey erp_user
+5513; 2606 17584 CONSTRAINT public inventory_issuenumbersequence inventory_issuenumbersequence_key_key erp_user
+5515; 2606 17582 CONSTRAINT public inventory_issuenumbersequence inventory_issuenumbersequence_pkey erp_user
+5522; 2606 17594 CONSTRAINT public inventory_issuetowork inventory_issuetowork_issue_no_key erp_user
+5525; 2606 17592 CONSTRAINT public inventory_issuetowork inventory_issuetowork_pkey erp_user
+5533; 2606 17600 CONSTRAINT public inventory_issuetoworkline inventory_issuetoworkline_pkey erp_user
+5437; 2606 17353 CONSTRAINT public inventory_itemcategory inventory_itemcategory_name_key erp_user
+5440; 2606 17351 CONSTRAINT public inventory_itemcategory inventory_itemcategory_pkey erp_user
+5443; 2606 17361 CONSTRAINT public inventory_itemcodesequence inventory_itemcodesequence_key_key erp_user
+5445; 2606 17359 CONSTRAINT public inventory_itemcodesequence inventory_itemcodesequence_pkey erp_user
+5460; 2606 17379 CONSTRAINT public inventory_itemmaster inventory_itemmaster_code_key erp_user
+5465; 2606 17377 CONSTRAINT public inventory_itemmaster inventory_itemmaster_pkey erp_user
+5428; 2606 17326 CONSTRAINT public inventory_location inventory_location_pkey erp_user
+5481; 2606 17437 CONSTRAINT public inventory_stock inventory_stock_pkey erp_user
+5496; 2606 17507 CONSTRAINT public inventory_transfer inventory_transfer_pkey erp_user
+5502; 2606 17509 CONSTRAINT public inventory_transfer inventory_transfer_transfer_no_key erp_user
+5506; 2606 17515 CONSTRAINT public inventory_transferline inventory_transferline_pkey erp_user
+5487; 2606 17499 CONSTRAINT public inventory_transfernumbersequence inventory_transfernumbersequence_key_key erp_user
+5489; 2606 17497 CONSTRAINT public inventory_transfernumbersequence inventory_transfernumbersequence_pkey erp_user
+5449; 2606 17369 CONSTRAINT public inventory_uom inventory_uom_code_key erp_user
+5451; 2606 17367 CONSTRAINT public inventory_uom inventory_uom_pkey erp_user
+5422; 2606 17320 CONSTRAINT public inventory_warehouse inventory_warehouse_code_key erp_user
+5424; 2606 17318 CONSTRAINT public inventory_warehouse inventory_warehouse_pkey erp_user
+5714; 2606 18248 CONSTRAINT public labor_electroniccardimportbatch labor_electroniccardimportbatch_pkey erp_user
+5740; 2606 18287 CONSTRAINT public labor_electroniccardworkday labor_electroniccardworkday_pkey erp_user
+5729; 2606 18279 CONSTRAINT public labor_electroniccardworkraw labor_electroniccardworkraw_pkey erp_user
+5766; 2606 18391 CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmedworkday_pkey erp_user
+5784; 2606 18447 CONSTRAINT public labor_laborexcelexportbatch labor_laborexcelexportbatch_pkey erp_user
+5703; 2606 18199 CONSTRAINT public labor_labormonthlypayroll labor_labormonthlypayroll_pkey erp_user
+5552; 2606 17675 CONSTRAINT public labor_laborratetable labor_laborratetable_pkey erp_user
+5751; 2606 18347 CONSTRAINT public labor_laborreconciliationresult labor_laborreconciliationresult_pkey erp_user
+5542; 2606 17669 CONSTRAINT public labor_laborrole labor_laborrole_code_key erp_user
+5547; 2606 17667 CONSTRAINT public labor_laborrole labor_laborrole_pkey erp_user
+5694; 2606 18150 CONSTRAINT public labor_laborworkledger labor_laborworkledger_pkey erp_user
+5586; 2606 17790 CONSTRAINT public labor_payrollallocationbatch labor_payrollallocationbatch_batch_no_key erp_user
+5589; 2606 17788 CONSTRAINT public labor_payrollallocationbatch labor_payrollallocationbatch_pkey erp_user
+5597; 2606 17796 CONSTRAINT public labor_payrollallocationline labor_payrollallocationline_pkey erp_user
+5578; 2606 17780 CONSTRAINT public labor_payrollbatchnumbersequence labor_payrollbatchnumbersequence_key_key erp_user
+5580; 2606 17778 CONSTRAINT public labor_payrollbatchnumbersequence labor_payrollbatchnumbersequence_pkey erp_user
+5559; 2606 17714 CONSTRAINT public labor_timesheet labor_timesheet_pkey erp_user
+5564; 2606 17716 CONSTRAINT public labor_timesheet labor_timesheet_sheet_no_key erp_user
+5569; 2606 17722 CONSTRAINT public labor_timesheetline labor_timesheetline_pkey erp_user
+5573; 2606 17730 CONSTRAINT public labor_timesheetnumbersequence labor_timesheetnumbersequence_key_key erp_user
+5575; 2606 17728 CONSTRAINT public labor_timesheetnumbersequence labor_timesheetnumbersequence_pkey erp_user
+5682; 2606 18129 CONSTRAINT public labor_workermaster labor_workermaster_pkey erp_user
+5326; 2606 16923 CONSTRAINT public master_cbschangerequest master_cbschangerequest_pkey erp_user
+5318; 2606 16895 CONSTRAINT public master_favoritecostitem master_favoritecostitem_pkey erp_user
+5341; 2606 16961 CONSTRAINT public master_masterbudgettemplateitem master_masterbudgettemplateitem_pkey erp_user
+5331; 2606 16949 CONSTRAINT public master_mastertemplate master_mastertemplate_pkey erp_user
+5336; 2606 16955 CONSTRAINT public master_masterwbstemplateitem master_masterwbstemplateitem_pkey erp_user
+5602; 2606 17847 CONSTRAINT public otp_static_staticdevice otp_static_staticdevice_pkey erp_user
+5606; 2606 17853 CONSTRAINT public otp_static_statictoken otp_static_statictoken_pkey erp_user
+5610; 2606 17878 CONSTRAINT public otp_totp_totpdevice otp_totp_totpdevice_pkey erp_user
+5356; 2606 17057 CONSTRAINT public projects_approvalpackage projects_approvalpackage_pkey erp_user
+5361; 2606 17063 CONSTRAINT public projects_approvalpackageitem projects_approvalpackageitem_pkey erp_user
+5302; 2606 16809 CONSTRAINT public projects_budgetitem projects_budgetitem_pkey erp_user
+5241; 2606 16528 CONSTRAINT public projects_project projects_project_code_key erp_user
+5243; 2606 16526 CONSTRAINT public projects_project projects_project_pkey erp_user
+5296; 2606 16794 CONSTRAINT public projects_projectcontract projects_projectcontract_pkey erp_user
+5298; 2606 16796 CONSTRAINT public projects_projectcontract projects_projectcontract_project_id_key erp_user
+5351; 2606 17018 CONSTRAINT public projects_wbschangeline projects_wbschangeline_pkey erp_user
+5346; 2606 17010 CONSTRAINT public projects_wbschangerequest projects_wbschangerequest_pkey erp_user
+5307; 2606 16815 CONSTRAINT public projects_wbsitem projects_wbsitem_pkey erp_user
+5613; 2606 17894 CONSTRAINT public public_site_contactmessage public_site_contactmessage_pkey erp_user
+5616; 2606 17903 CONSTRAINT public public_site_publicproject public_site_publicproject_pkey erp_user
+5619; 2606 17905 CONSTRAINT public public_site_publicproject public_site_publicproject_slug_key erp_user
+5622; 2606 17915 CONSTRAINT public reports_fieldreport reports_fieldreport_pkey erp_user
+5625; 2606 17921 CONSTRAINT public reports_fieldreportfile reports_fieldreportfile_pkey erp_user
+5637; 2606 17964 CONSTRAINT public risk_riskevent risk_riskevent_pkey erp_user
+5641; 2606 17973 CONSTRAINT public risk_riskfinding risk_riskfinding_pkey erp_user
+5630; 2606 17955 CONSTRAINT public risk_riskrule risk_riskrule_key_key erp_user
+5632; 2606 17953 CONSTRAINT public risk_riskrule risk_riskrule_pkey erp_user
+5655; 2606 18045 CONSTRAINT public schedule_dailyprogress schedule_dailyprogress_pkey erp_user
+5666; 2606 18079 CONSTRAINT public schedule_planchangerequest schedule_planchangerequest_pkey erp_user
+5646; 2606 18012 CONSTRAINT public schedule_scheduleplan schedule_scheduleplan_pkey erp_user
+5652; 2606 18018 CONSTRAINT public schedule_scheduletask schedule_scheduletask_pkey erp_user
+5368; 2606 17100 CONSTRAINT public closing_closingperiod uniq_closing_period_year_month erp_user
+5287; 2606 16693 CONSTRAINT public contracts_contractchange uniq_contract_change_no erp_user
+5294; 2606 16719 CONSTRAINT public contracts_contractsnapshot uniq_contract_snapshot_version erp_user
+5314; 2606 16877 CONSTRAINT public cost_costitemalias uniq_costitem_alias erp_user
+5661; 2606 18047 CONSTRAINT public schedule_dailyprogress uniq_daily_progress_reporter erp_user
+5745; 2606 18295 CONSTRAINT public labor_electroniccardworkday uniq_electronic_card_work_day_scope erp_user
+5732; 2606 18291 CONSTRAINT public labor_electroniccardworkraw uniq_electronic_card_work_raw_row erp_user
+5322; 2606 16897 CONSTRAINT public master_favoritecostitem uniq_favorite_costitem erp_user
+5773; 2606 18393 CONSTRAINT public labor_laborconfirmedworkday uniq_labor_confirmed_work_day_result erp_user
+5709; 2606 18201 CONSTRAINT public labor_labormonthlypayroll uniq_labor_monthly_payroll_scope erp_user
+5333; 2606 16963 CONSTRAINT public master_mastertemplate uniq_master_template_category_domain_version erp_user
+5592; 2606 17800 CONSTRAINT public labor_payrollallocationbatch uniq_payroll_batch_period erp_user
+5600; 2606 17803 CONSTRAINT public labor_payrollallocationline uniq_payroll_batch_project erp_user
+5398; 2606 17207 CONSTRAINT public core_projectassignment uniq_project_assignment erp_user
+5382; 2606 17157 CONSTRAINT public closing_projectclose uniq_project_close_project erp_user
+5280; 2606 16734 CONSTRAINT public cost_revenuerecognition uniq_revenue_recognition_asof erp_user
+5650; 2606 18020 CONSTRAINT public schedule_scheduleplan uniq_schedule_plan_version erp_user
+5363; 2606 17065 CONSTRAINT public projects_approvalpackageitem uq_approval_package_item erp_user
+5536; 2606 17602 CONSTRAINT public inventory_issuetoworkline uq_issue_line_item erp_user
+5432; 2606 17330 CONSTRAINT public inventory_location uq_location_warehouse_code erp_user
+5484; 2606 17483 CONSTRAINT public inventory_stock uq_stock_warehouse_location_item erp_user
+5510; 2606 17517 CONSTRAINT public inventory_transferline uq_transfer_line_item erp_user
+5245; 1259 16553 INDEX public audit_action_idx erp_user
+5246; 1259 16549 INDEX public audit_auditlog_actor_id_20e70a27 erp_user
+5249; 1259 16550 INDEX public audit_auditlog_project_id_025694a7 erp_user
+5250; 1259 16551 INDEX public audit_obj_idx erp_user
+5251; 1259 16552 INDEX public audit_project_idx erp_user
+5206; 1259 16561 INDEX public auth_group_name_a6ea08ec_like erp_user
+5211; 1259 16467 INDEX public auth_group_permissions_group_id_b120cbf9 erp_user
+5214; 1259 16468 INDEX public auth_group_permissions_permission_id_84c5c92e erp_user
+5201; 1259 16453 INDEX public auth_permission_content_type_id_2f476e4b erp_user
+5222; 1259 16483 INDEX public auth_user_groups_group_id_97559544 erp_user
+5225; 1259 16482 INDEX public auth_user_groups_user_id_6a12ed8b erp_user
+5228; 1259 16497 INDEX public auth_user_user_permissions_permission_id_1fbb5f2c erp_user
+5231; 1259 16496 INDEX public auth_user_user_permissions_user_id_a95ead1b erp_user
+5219; 1259 16556 INDEX public auth_user_username_6821ab7c_like erp_user
+5411; 1259 17287 INDEX public cash_event_project_date_idx erp_user
+5412; 1259 17288 INDEX public cash_event_status_date_idx erp_user
+5369; 1259 17116 INDEX public closing_adj_project_78a5fe_idx erp_user
+5370; 1259 17117 INDEX public closing_adj_status_4e43f7_idx erp_user
+5371; 1259 17143 INDEX public closing_adjustment_approved_by_id_91b8efbf erp_user
+5372; 1259 17144 INDEX public closing_adjustment_cbs_id_d37695a8 erp_user
+5373; 1259 17145 INDEX public closing_adjustment_created_by_id_3899b3fd erp_user
+5376; 1259 17146 INDEX public closing_adjustment_project_id_14779060 erp_user
+5377; 1259 17147 INDEX public closing_adjustment_target_content_type_id_e4ef342d erp_user
+5364; 1259 17106 INDEX public closing_closingperiod_closed_by_id_e8d88d19 erp_user
+5378; 1259 17168 INDEX public closing_projectclose_closed_by_id_7f60e952 erp_user
+5288; 1259 16720 INDEX public contract_snapshot_active_idx erp_user
+5281; 1259 16709 INDEX public contracts_contractchange_approved_by_id_39e4063b erp_user
+5284; 1259 16710 INDEX public contracts_contractchange_project_id_799dd2dc erp_user
+5285; 1259 16711 INDEX public contracts_contractchange_submitted_by_id_650b85aa erp_user
+5291; 1259 16731 INDEX public contracts_contractsnapshot_project_id_4cebf7fb erp_user
+5292; 1259 16732 INDEX public contracts_contractsnapshot_source_change_id_ec469207 erp_user
+5383; 1259 17190 INDEX public core_approval_obj_idx erp_user
+5384; 1259 17191 INDEX public core_approval_status_idx erp_user
+5385; 1259 17188 INDEX public core_approvalrequest_approved_by_id_be43f788 erp_user
+5388; 1259 17189 INDEX public core_approvalrequest_submitted_by_id_abeed74b erp_user
+5395; 1259 17223 INDEX public core_projectassignment_project_id_72ff2206 erp_user
+5396; 1259 17224 INDEX public core_projectassignment_user_id_4d99ab49 erp_user
+5265; 1259 16655 INDEX public cost_costactual_approved_by_id_13dce5bb erp_user
+5268; 1259 16656 INDEX public cost_costactual_project_id_f2fe7111 erp_user
+5271; 1259 16667 INDEX public cost_costactualline_cost_actual_id_9b8111c2 erp_user
+5272; 1259 16668 INDEX public cost_costactualline_cost_item_id_6e9c22ec erp_user
+5252; 1259 16585 INDEX public cost_costitem_code_f1f60c47_like erp_user
+5309; 1259 16888 INDEX public cost_costitemalias_cost_item_id_ca672c48 erp_user
+5310; 1259 16889 INDEX public cost_costitemalias_created_by_id_931ef559 erp_user
+5275; 1259 16741 INDEX public cost_revenuerecognition_contract_snapshot_id_f9cc529b erp_user
+5278; 1259 16683 INDEX public cost_revenuerecognition_project_id_064d41f3 erp_user
+5234; 1259 16517 INDEX public django_admin_log_content_type_id_c4bce8eb erp_user
+5237; 1259 16518 INDEX public django_admin_log_user_id_c564eba6 erp_user
+5669; 1259 18119 INDEX public django_session_expire_date_a5c62663 erp_user
+5672; 1259 18118 INDEX public django_session_session_key_c0390e0f_like erp_user
+5399; 1259 17251 INDEX public evidence_ev_object__e7134e_idx erp_user
+5400; 1259 17257 INDEX public evidence_evidence_created_by_id_8637db39 erp_user
+5405; 1259 17268 INDEX public evidence_evidencefile_created_by_id_32bfa9c3 erp_user
+5406; 1259 17269 INDEX public evidence_evidencefile_evidence_id_16499797 erp_user
+5259; 1259 16612 INDEX public field_dailyreport_project_id_687a5661 erp_user
+5260; 1259 16613 INDEX public field_dailyreport_reporter_id_0238f100 erp_user
+5261; 1259 16624 INDEX public field_dailyreportline_cost_item_id_c05c165b erp_user
+5264; 1259 16625 INDEX public field_dailyreportline_report_id_7734b2ac erp_user
+5413; 1259 17309 INDEX public finance_cashevent_account_id_fd924b7e erp_user
+5414; 1259 17310 INDEX public finance_cashevent_contract_snapshot_id_0330cdf8 erp_user
+5415; 1259 17311 INDEX public finance_cashevent_created_by_id_450c0ba6 erp_user
+5418; 1259 17312 INDEX public finance_cashevent_project_id_4b9909c4 erp_user
+5452; 1259 17385 INDEX public inventory_i_barcode_2416ad_idx erp_user
+5453; 1259 17383 INDEX public inventory_i_code_a374c0_idx erp_user
+5433; 1259 17382 INDEX public inventory_i_code_ac611a_idx erp_user
+5528; 1259 17661 INDEX public inventory_i_issue_i_2b6d63_idx erp_user
+5468; 1259 17480 INDEX public inventory_i_item_id_b85aef_idx erp_user
+5434; 1259 17381 INDEX public inventory_i_name_0c36a8_idx erp_user
+5454; 1259 17384 INDEX public inventory_i_name_bfbfda_idx erp_user
+5516; 1259 17635 INDEX public inventory_i_project_2c96c9_idx erp_user
+5517; 1259 17636 INDEX public inventory_i_status_114f56_idx erp_user
+5469; 1259 17479 INDEX public inventory_i_tx_date_eba51a_idx erp_user
+5470; 1259 17484 INDEX public inventory_inventoryledger_created_by_id_25a74bf7 erp_user
+5471; 1259 17485 INDEX public inventory_inventoryledger_item_id_f88791bd erp_user
+5472; 1259 17486 INDEX public inventory_inventoryledger_location_id_715599f1 erp_user
+5475; 1259 17487 INDEX public inventory_inventoryledger_uom_id_a9d6d636 erp_user
+5476; 1259 17488 INDEX public inventory_inventoryledger_warehouse_id_ffff2b1f erp_user
+5511; 1259 17603 INDEX public inventory_issuenumbersequence_key_14ba17e1_like erp_user
+5518; 1259 17630 INDEX public inventory_issuetowork_approved_by_id_9da77b8e erp_user
+5519; 1259 17631 INDEX public inventory_issuetowork_created_by_id_f25be60b erp_user
+5520; 1259 17629 INDEX public inventory_issuetowork_issue_no_bce1036a_like erp_user
+5523; 1259 17632 INDEX public inventory_issuetowork_location_id_454d9535 erp_user
+5526; 1259 17633 INDEX public inventory_issuetowork_project_id_776e4b00 erp_user
+5527; 1259 17634 INDEX public inventory_issuetowork_warehouse_id_c357bbad erp_user
+5529; 1259 17657 INDEX public inventory_issuetoworkline_cbs_id_22a83052 erp_user
+5530; 1259 17658 INDEX public inventory_issuetoworkline_issue_id_40fcf9d5 erp_user
+5531; 1259 17659 INDEX public inventory_issuetoworkline_item_id_98567dc8 erp_user
+5534; 1259 17660 INDEX public inventory_issuetoworkline_uom_id_32da2547 erp_user
+5435; 1259 17391 INDEX public inventory_itemcategory_name_173c5e8f_like erp_user
+5438; 1259 17392 INDEX public inventory_itemcategory_parent_id_62f5a205 erp_user
+5441; 1259 17393 INDEX public inventory_itemcodesequence_key_f0024789_like erp_user
+5455; 1259 17418 INDEX public inventory_itemmaster_barcode_30ef8693 erp_user
+5456; 1259 17419 INDEX public inventory_itemmaster_barcode_30ef8693_like erp_user
+5457; 1259 17420 INDEX public inventory_itemmaster_category_id_c1256482 erp_user
+5458; 1259 17415 INDEX public inventory_itemmaster_code_f8aac4ca_like erp_user
+5461; 1259 17421 INDEX public inventory_itemmaster_created_by_id_f55b3778 erp_user
+5462; 1259 17416 INDEX public inventory_itemmaster_name_db7d6e6b erp_user
+5463; 1259 17417 INDEX public inventory_itemmaster_name_db7d6e6b_like erp_user
+5466; 1259 17422 INDEX public inventory_itemmaster_uom_id_ba1c825f erp_user
+5467; 1259 17423 INDEX public inventory_itemmaster_updated_by_id_cbcbb339 erp_user
+5426; 1259 17332 INDEX public inventory_l_warehou_aa4cb9_idx erp_user
+5429; 1259 17345 INDEX public inventory_location_warehouse_id_972ee1ee erp_user
+5477; 1259 17481 INDEX public inventory_s_warehou_7eab38_idx erp_user
+5478; 1259 17489 INDEX public inventory_stock_item_id_51ef1040 erp_user
+5479; 1259 17490 INDEX public inventory_stock_location_id_be05a9db erp_user
+5482; 1259 17491 INDEX public inventory_stock_warehouse_id_2fd6d240 erp_user
+5490; 1259 17556 INDEX public inventory_t_project_cc7c90_idx erp_user
+5503; 1259 17576 INDEX public inventory_t_transfe_25692f_idx erp_user
+5491; 1259 17557 INDEX public inventory_t_tx_date_9f276a_idx erp_user
+5492; 1259 17550 INDEX public inventory_transfer_created_by_id_73dce6e7 erp_user
+5493; 1259 17551 INDEX public inventory_transfer_from_location_id_dde323db erp_user
+5494; 1259 17552 INDEX public inventory_transfer_from_warehouse_id_876a6dd5 erp_user
+5497; 1259 17553 INDEX public inventory_transfer_project_id_3e763300 erp_user
+5498; 1259 17554 INDEX public inventory_transfer_to_location_id_a879479f erp_user
+5499; 1259 17555 INDEX public inventory_transfer_to_warehouse_id_7a257a02 erp_user
+5500; 1259 17549 INDEX public inventory_transfer_transfer_no_a542e896_like erp_user
+5504; 1259 17573 INDEX public inventory_transferline_item_id_72b4d78b erp_user
+5507; 1259 17574 INDEX public inventory_transferline_transfer_id_81657792 erp_user
+5508; 1259 17575 INDEX public inventory_transferline_uom_id_3ef5d443 erp_user
+5485; 1259 17518 INDEX public inventory_transfernumbersequence_key_a0f18594_like erp_user
+5446; 1259 17380 INDEX public inventory_u_code_832a27_idx erp_user
+5447; 1259 17394 INDEX public inventory_uom_code_de24a924_like erp_user
+5419; 1259 17327 INDEX public inventory_w_warehou_a1ac57_idx erp_user
+5420; 1259 17338 INDEX public inventory_warehouse_code_ad40093e_like erp_user
+5425; 1259 17339 INDEX public inventory_warehouse_project_id_f8053050 erp_user
+5720; 1259 18289 INDEX public labor_elect_batch_i_2d2ce3_idx erp_user
+5733; 1259 18293 INDEX public labor_elect_batch_i_34c0f0_idx erp_user
+5721; 1259 18288 INDEX public labor_elect_batch_i_c0d746_idx erp_user
+5734; 1259 18292 INDEX public labor_elect_batch_i_fa7c60_idx erp_user
+5710; 1259 18271 INDEX public labor_elect_status_dfbf9e_idx erp_user
+5711; 1259 18270 INDEX public labor_elect_year_mo_ef69f0_idx erp_user
+5712; 1259 18267 INDEX public labor_electroniccardimportbatch_confirmed_by_id_10c23f45 erp_user
+5715; 1259 18268 INDEX public labor_electroniccardimportbatch_project_id_f5423ba8 erp_user
+5716; 1259 18265 INDEX public labor_electroniccardimportbatch_status_dbeaab50 erp_user
+5717; 1259 18266 INDEX public labor_electroniccardimportbatch_status_dbeaab50_like erp_user
+5718; 1259 18269 INDEX public labor_electroniccardimportbatch_uploaded_by_id_a7936584 erp_user
+5719; 1259 18264 INDEX public labor_electroniccardimportbatch_year_month_c1681a68 erp_user
+5735; 1259 18336 INDEX public labor_electroniccardworkday_batch_id_44bdea6d erp_user
+5736; 1259 18337 INDEX public labor_electroniccardworkday_card_project_id_aee58ec0 erp_user
+5737; 1259 18334 INDEX public labor_electroniccardworkday_match_status_1b10c23d erp_user
+5738; 1259 18335 INDEX public labor_electroniccardworkday_match_status_1b10c23d_like erp_user
+5741; 1259 18339 INDEX public labor_electroniccardworkday_raw_id_175fd409 erp_user
+5742; 1259 18333 INDEX public labor_electroniccardworkday_work_date_51ed9f17 erp_user
+5743; 1259 18338 INDEX public labor_electroniccardworkday_worker_id_8de1fed0 erp_user
+5722; 1259 18311 INDEX public labor_electroniccardworkraw_batch_id_ae6a6dfa erp_user
+5723; 1259 18307 INDEX public labor_electroniccardworkraw_identity_hash_b12a9033 erp_user
+5724; 1259 18308 INDEX public labor_electroniccardworkraw_identity_hash_b12a9033_like erp_user
+5725; 1259 18309 INDEX public labor_electroniccardworkraw_match_status_4fb9e3d9 erp_user
+5726; 1259 18310 INDEX public labor_electroniccardworkraw_match_status_4fb9e3d9_like erp_user
+5727; 1259 18312 INDEX public labor_electroniccardworkraw_matched_worker_id_237695fa erp_user
+5730; 1259 18306 INDEX public labor_electroniccardworkraw_work_month_ee8f60f1 erp_user
+5685; 1259 18153 INDEX public labor_labor_actual__5c75cf_idx erp_user
+5746; 1259 18383 INDEX public labor_labor_batch_i_269529_idx erp_user
+5759; 1259 18439 INDEX public labor_labor_batch_i_83d124_idx erp_user
+5747; 1259 18382 INDEX public labor_labor_batch_i_a70b18_idx erp_user
+5537; 1259 17676 INDEX public labor_labor_code_540971_idx erp_user
+5774; 1259 18477 INDEX public labor_labor_export__27c4f0_idx erp_user
+5538; 1259 17678 INDEX public labor_labor_is_acti_994071_idx erp_user
+5548; 1259 17679 INDEX public labor_labor_labor_r_a4ca68_idx erp_user
+5539; 1259 17677 INDEX public labor_labor_name_560988_idx erp_user
+5775; 1259 18479 INDEX public labor_labor_project_523dda_idx erp_user
+5686; 1259 18154 INDEX public labor_labor_report__1ab603_idx erp_user
+5776; 1259 18480 INDEX public labor_labor_source__c767de_idx erp_user
+5777; 1259 18481 INDEX public labor_labor_status_8bc492_idx erp_user
+5687; 1259 18155 INDEX public labor_labor_status_a6a8d0_idx erp_user
+5688; 1259 18151 INDEX public labor_labor_work_mo_f61fbe_idx erp_user
+5689; 1259 18152 INDEX public labor_labor_worker__a67194_idx erp_user
+5760; 1259 18438 INDEX public labor_labor_year_mo_ab6ab8_idx erp_user
+5778; 1259 18478 INDEX public labor_labor_year_mo_f0f2e3_idx erp_user
+5761; 1259 18431 INDEX public labor_laborconfirmedworkday_actual_project_id_a7c1a82c erp_user
+5762; 1259 18432 INDEX public labor_laborconfirmedworkday_batch_id_3953d45a erp_user
+5763; 1259 18433 INDEX public labor_laborconfirmedworkday_card_project_id_356135c8 erp_user
+5764; 1259 18434 INDEX public labor_laborconfirmedworkday_confirmed_by_id_f49d1a8d erp_user
+5767; 1259 18435 INDEX public labor_laborconfirmedworkday_reconciliation_result_id_2a541165 erp_user
+5768; 1259 18436 INDEX public labor_laborconfirmedworkday_report_project_id_27fb37c2 erp_user
+5769; 1259 18430 INDEX public labor_laborconfirmedworkday_work_date_d1839e44 erp_user
+5770; 1259 18437 INDEX public labor_laborconfirmedworkday_worker_id_1b7dd5ff erp_user
+5771; 1259 18429 INDEX public labor_laborconfirmedworkday_year_month_ce2db25d erp_user
+5779; 1259 18473 INDEX public labor_laborexcelexportbatch_downloaded_by_id_368dcf55 erp_user
+5780; 1259 18468 INDEX public labor_laborexcelexportbatch_export_type_8e8def43 erp_user
+5781; 1259 18469 INDEX public labor_laborexcelexportbatch_export_type_8e8def43_like erp_user
+5782; 1259 18474 INDEX public labor_laborexcelexportbatch_generated_by_id_ad3bee49 erp_user
+5785; 1259 18475 INDEX public labor_laborexcelexportbatch_project_id_32aa4939 erp_user
+5786; 1259 18476 INDEX public labor_laborexcelexportbatch_source_batch_id_e07fa1e5 erp_user
+5787; 1259 18471 INDEX public labor_laborexcelexportbatch_status_0989fdfd erp_user
+5788; 1259 18472 INDEX public labor_laborexcelexportbatch_status_0989fdfd_like erp_user
+5789; 1259 18470 INDEX public labor_laborexcelexportbatch_year_month_40496106 erp_user
+5700; 1259 18218 INDEX public labor_labormonthlypayroll_payment_status_2ee25085 erp_user
+5701; 1259 18219 INDEX public labor_labormonthlypayroll_payment_status_2ee25085_like erp_user
+5704; 1259 18220 INDEX public labor_labormonthlypayroll_project_id_ce05f62e erp_user
+5705; 1259 18221 INDEX public labor_labormonthlypayroll_report_project_id_165f1a74 erp_user
+5706; 1259 18222 INDEX public labor_labormonthlypayroll_worker_id_0401c698 erp_user
+5707; 1259 18217 INDEX public labor_labormonthlypayroll_year_month_45a7c242 erp_user
+5549; 1259 17704 INDEX public labor_laborratetable_created_by_id_871df058 erp_user
+5550; 1259 17705 INDEX public labor_laborratetable_labor_role_id_2527904d erp_user
+5553; 1259 17706 INDEX public labor_laborratetable_project_id_819d01ee erp_user
+5748; 1259 18377 INDEX public labor_laborreconciliationresult_batch_id_b306856b erp_user
+5749; 1259 18378 INDEX public labor_laborreconciliationresult_card_day_id_dd0b0c6a erp_user
+5752; 1259 18379 INDEX public labor_laborreconciliationresult_project_id_805cbbbc erp_user
+5753; 1259 18380 INDEX public labor_laborreconciliationresult_resolved_by_id_efd0433a erp_user
+5754; 1259 18375 INDEX public labor_laborreconciliationresult_status_0dc47fa0 erp_user
+5755; 1259 18376 INDEX public labor_laborreconciliationresult_status_0dc47fa0_like erp_user
+5756; 1259 18374 INDEX public labor_laborreconciliationresult_work_date_a5ee82d9 erp_user
+5757; 1259 18381 INDEX public labor_laborreconciliationresult_worker_id_67f11f7f erp_user
+5758; 1259 18373 INDEX public labor_laborreconciliationresult_year_month_da2c8472 erp_user
+5540; 1259 17685 INDEX public labor_laborrole_code_8bb92ffa_like erp_user
+5543; 1259 17688 INDEX public labor_laborrole_default_cbs_id_ad831e29 erp_user
+5544; 1259 17686 INDEX public labor_laborrole_name_8485043f erp_user
+5545; 1259 17687 INDEX public labor_laborrole_name_8485043f_like erp_user
+5690; 1259 18188 INDEX public labor_laborworkledger_actual_project_id_9b5cdd44 erp_user
+5691; 1259 18189 INDEX public labor_laborworkledger_cost_ref_id_79763afb erp_user
+5692; 1259 18190 INDEX public labor_laborworkledger_labor_role_id_295ae2b9 erp_user
+5695; 1259 18191 INDEX public labor_laborworkledger_report_project_id_8580b895 erp_user
+5696; 1259 18192 INDEX public labor_laborworkledger_timesheet_ref_id_4334f97b erp_user
+5697; 1259 18186 INDEX public labor_laborworkledger_work_date_575e8a7c erp_user
+5698; 1259 18187 INDEX public labor_laborworkledger_work_month_c705dcf3 erp_user
+5699; 1259 18193 INDEX public labor_laborworkledger_worker_id_cd485977 erp_user
+5593; 1259 17801 INDEX public labor_payro_batch_i_5333f2_idx erp_user
+5581; 1259 17797 INDEX public labor_payro_period__01d5a5_idx erp_user
+5582; 1259 17798 INDEX public labor_payro_status_362d18_idx erp_user
+5583; 1259 17821 INDEX public labor_payrollallocationbatch_approved_by_id_854edcb6 erp_user
+5584; 1259 17820 INDEX public labor_payrollallocationbatch_batch_no_7c56d4bf_like erp_user
+5587; 1259 17822 INDEX public labor_payrollallocationbatch_created_by_id_95d6d061 erp_user
+5590; 1259 17823 INDEX public labor_payrollallocationbatch_rejected_by_id_19f88937 erp_user
+5594; 1259 17839 INDEX public labor_payrollallocationline_batch_id_58c7002f erp_user
+5595; 1259 17840 INDEX public labor_payrollallocationline_cbs_id_6f64cfb9 erp_user
+5598; 1259 17841 INDEX public labor_payrollallocationline_project_id_1d94014b erp_user
+5576; 1259 17804 INDEX public labor_payrollbatchnumbersequence_key_490bd00e_like erp_user
+5565; 1259 17734 INDEX public labor_times_labor_r_7f6c02_idx erp_user
+5554; 1259 17731 INDEX public labor_times_project_3744d3_idx erp_user
+5555; 1259 17732 INDEX public labor_times_status_a2784a_idx erp_user
+5566; 1259 17733 INDEX public labor_times_timeshe_e1f946_idx erp_user
+5556; 1259 17756 INDEX public labor_timesheet_approved_by_id_a86b205c erp_user
+5557; 1259 17757 INDEX public labor_timesheet_created_by_id_5a2a150d erp_user
+5560; 1259 17758 INDEX public labor_timesheet_project_id_8f92aaf0 erp_user
+5561; 1259 17759 INDEX public labor_timesheet_rejected_by_id_a8714eaf erp_user
+5562; 1259 17755 INDEX public labor_timesheet_sheet_no_885d8332_like erp_user
+5567; 1259 17770 INDEX public labor_timesheetline_labor_role_id_9d0dfac2 erp_user
+5570; 1259 17771 INDEX public labor_timesheetline_timesheet_id_e3e6856f erp_user
+5571; 1259 17772 INDEX public labor_timesheetnumbersequence_key_e2491676_like erp_user
+5673; 1259 18131 INDEX public labor_worke_active_c151ec_idx erp_user
+5674; 1259 18132 INDEX public labor_worke_identit_357aa8_idx erp_user
+5675; 1259 18130 INDEX public labor_worke_name_58deb0_idx erp_user
+5676; 1259 18144 INDEX public labor_workermaster_default_labor_role_id_0f696880 erp_user
+5677; 1259 18142 INDEX public labor_workermaster_identity_hash_a3545161 erp_user
+5678; 1259 18143 INDEX public labor_workermaster_identity_hash_a3545161_like erp_user
+5679; 1259 18138 INDEX public labor_workermaster_name_e0f514a8 erp_user
+5680; 1259 18139 INDEX public labor_workermaster_name_e0f514a8_like erp_user
+5683; 1259 18140 INDEX public labor_workermaster_rrn_masked_62470d6c erp_user
+5684; 1259 18141 INDEX public labor_workermaster_rrn_masked_62470d6c_like erp_user
+5323; 1259 16939 INDEX public master_cbschangerequest_approved_by_id_72318173 erp_user
+5324; 1259 16940 INDEX public master_cbschangerequest_cost_item_id_12b99ea6 erp_user
+5327; 1259 16941 INDEX public master_cbschangerequest_requested_by_id_86dbfc9e erp_user
+5316; 1259 16913 INDEX public master_favoritecostitem_cost_item_id_c41ba288 erp_user
+5319; 1259 16914 INDEX public master_favoritecostitem_project_id_46a0e6c8 erp_user
+5320; 1259 16915 INDEX public master_favoritecostitem_user_id_9c944465 erp_user
+5328; 1259 16970 INDEX public master_mast_categor_e9f36f_idx erp_user
+5334; 1259 16977 INDEX public master_mast_templat_470847_idx erp_user
+5338; 1259 16990 INDEX public master_mast_templat_54a0bb_idx erp_user
+5339; 1259 16988 INDEX public master_masterbudgettemplateitem_cost_item_id_a97bd8ff erp_user
+5342; 1259 16989 INDEX public master_masterbudgettemplateitem_template_id_078eb4bc erp_user
+5329; 1259 16969 INDEX public master_mastertemplate_created_by_id_8f766f86 erp_user
+5337; 1259 16976 INDEX public master_masterwbstemplateitem_template_id_4e881cad erp_user
+5603; 1259 17859 INDEX public otp_static_staticdevice_user_id_7f9cff2b erp_user
+5604; 1259 17867 INDEX public otp_static_statictoken_device_id_74b7c7d1 erp_user
+5607; 1259 17865 INDEX public otp_static_statictoken_token_d0a51866 erp_user
+5608; 1259 17866 INDEX public otp_static_statictoken_token_d0a51866_like erp_user
+5611; 1259 17884 INDEX public otp_totp_totpdevice_user_id_0fb18292 erp_user
+5358; 1259 17090 INDEX public projects_ap_package_2176e5_idx erp_user
+5353; 1259 17081 INDEX public projects_approvalpackage_created_by_id_e164d736 erp_user
+5354; 1259 17082 INDEX public projects_approvalpackage_decided_by_id_f879abb1 erp_user
+5357; 1259 17083 INDEX public projects_approvalpackage_project_id_01f6ec56 erp_user
+5359; 1259 17089 INDEX public projects_approvalpackageitem_package_id_c32de5bb erp_user
+5299; 1259 16858 INDEX public projects_bu_project_83b1ff_idx erp_user
+5300; 1259 16828 INDEX public projects_budgetitem_cost_item_id_c245ff13 erp_user
+5303; 1259 16829 INDEX public projects_budgetitem_project_id_28d82242 erp_user
+5238; 1259 17001 INDEX public projects_project_budget_template_id_4c745037 erp_user
+5239; 1259 16529 INDEX public projects_project_code_4fdb104e_like erp_user
+5244; 1259 17002 INDEX public projects_project_wbs_template_id_ac804b1a erp_user
+5304; 1259 16817 INDEX public projects_wb_project_892322_idx erp_user
+5349; 1259 17019 INDEX public projects_wb_request_3d7589_idx erp_user
+5352; 1259 17049 INDEX public projects_wbschangeline_request_id_5db70947 erp_user
+5343; 1259 17040 INDEX public projects_wbschangerequest_approved_by_id_16280f74 erp_user
+5344; 1259 17041 INDEX public projects_wbschangerequest_change_order_id_bd74850c erp_user
+5347; 1259 17042 INDEX public projects_wbschangerequest_project_id_f0c16eed erp_user
+5348; 1259 17043 INDEX public projects_wbschangerequest_requested_by_id_930f5e09 erp_user
+5305; 1259 16840 INDEX public projects_wbsitem_parent_id_973e084f erp_user
+5308; 1259 16841 INDEX public projects_wbsitem_project_id_18c8bb91 erp_user
+5614; 1259 17907 INDEX public public_site_publicproject_is_published_c15d63b9 erp_user
+5617; 1259 17906 INDEX public public_site_publicproject_slug_3a17b472_like erp_user
+5620; 1259 17932 INDEX public reports_fieldreport_created_by_id_046b36dc erp_user
+5623; 1259 17933 INDEX public reports_fieldreport_project_id_055793a4 erp_user
+5626; 1259 17944 INDEX public reports_fieldreportfile_report_id_6ca7e307 erp_user
+5627; 1259 17945 INDEX public reports_fieldreportfile_uploaded_by_id_2cba6706 erp_user
+5633; 1259 17981 INDEX public risk_riskev_event_t_2f19b0_idx erp_user
+5634; 1259 17982 INDEX public risk_riskev_object__d09b47_idx erp_user
+5635; 1259 17980 INDEX public risk_riskevent_actor_id_f7337951 erp_user
+5638; 1259 18003 INDEX public risk_riskfinding_acknowledged_by_id_efbc15df erp_user
+5639; 1259 18004 INDEX public risk_riskfinding_event_id_dba57cba erp_user
+5642; 1259 18005 INDEX public risk_riskfinding_project_id_5c93e8e3 erp_user
+5643; 1259 18006 INDEX public risk_riskfinding_rule_id_24c8d2be erp_user
+5628; 1259 17974 INDEX public risk_riskrule_key_5b1023a4_like erp_user
+5656; 1259 18068 INDEX public schedule_dailyprogress_plan_id_d34c5692 erp_user
+5657; 1259 18069 INDEX public schedule_dailyprogress_project_id_debedeb5 erp_user
+5658; 1259 18070 INDEX public schedule_dailyprogress_reporter_id_70f29c78 erp_user
+5659; 1259 18071 INDEX public schedule_dailyprogress_task_id_3fd92120 erp_user
+5662; 1259 18106 INDEX public schedule_planchangerequest_approved_by_id_e5437be8 erp_user
+5663; 1259 18107 INDEX public schedule_planchangerequest_base_plan_id_22668495 erp_user
+5664; 1259 18105 INDEX public schedule_planchangerequest_contract_change_id_9e085402 erp_user
+5667; 1259 18108 INDEX public schedule_planchangerequest_project_id_82ea3f09 erp_user
+5668; 1259 18109 INDEX public schedule_planchangerequest_requested_by_id_87cf8bae erp_user
+5644; 1259 18032 INDEX public schedule_scheduleplan_created_by_id_c082c14c erp_user
+5647; 1259 18033 INDEX public schedule_scheduleplan_project_id_83c51ee2 erp_user
+5653; 1259 18039 INDEX public schedule_scheduletask_plan_id_2c92375b erp_user
+5315; 1259 16875 INDEX public uniq_costitem_primary_alias erp_user
+5648; 1259 18021 INDEX public uniq_schedule_plan_active erp_user
+5430; 1259 17331 INDEX public uq_location_default_per_warehouse erp_user
+5801; 2606 16539 FK CONSTRAINT public audit_auditlog audit_auditlog_actor_id_20e70a27_fk_auth_user_id erp_user
+5802; 2606 16544 FK CONSTRAINT public audit_auditlog audit_auditlog_project_id_025694a7_fk_projects_project_id erp_user
+5791; 2606 16462 FK CONSTRAINT public auth_group_permissions auth_group_permissio_permission_id_84c5c92e_fk_auth_perm erp_user
+5792; 2606 16457 FK CONSTRAINT public auth_group_permissions auth_group_permissions_group_id_b120cbf9_fk_auth_group_id erp_user
+5790; 2606 16448 FK CONSTRAINT public auth_permission auth_permission_content_type_id_2f476e4b_fk_django_co erp_user
+5793; 2606 16477 FK CONSTRAINT public auth_user_groups auth_user_groups_group_id_97559544_fk_auth_group_id erp_user
+5794; 2606 16472 FK CONSTRAINT public auth_user_groups auth_user_groups_user_id_6a12ed8b_fk_auth_user_id erp_user
+5795; 2606 16491 FK CONSTRAINT public auth_user_user_permissions auth_user_user_permi_permission_id_1fbb5f2c_fk_auth_perm erp_user
+5796; 2606 16486 FK CONSTRAINT public auth_user_user_permissions auth_user_user_permissions_user_id_a95ead1b_fk_auth_user_id erp_user
+5846; 2606 17118 FK CONSTRAINT public closing_adjustment closing_adjustment_approved_by_id_91b8efbf_fk_auth_user_id erp_user
+5847; 2606 17123 FK CONSTRAINT public closing_adjustment closing_adjustment_cbs_id_d37695a8_fk_cost_costitem_id erp_user
+5848; 2606 17128 FK CONSTRAINT public closing_adjustment closing_adjustment_created_by_id_3899b3fd_fk_auth_user_id erp_user
+5849; 2606 17133 FK CONSTRAINT public closing_adjustment closing_adjustment_project_id_14779060_fk_projects_project_id erp_user
+5850; 2606 17138 FK CONSTRAINT public closing_adjustment closing_adjustment_target_content_type__e4ef342d_fk_django_co erp_user
+5845; 2606 17101 FK CONSTRAINT public closing_closingperiod closing_closingperiod_closed_by_id_e8d88d19_fk_auth_user_id erp_user
+5851; 2606 17158 FK CONSTRAINT public closing_projectclose closing_projectclose_closed_by_id_7f60e952_fk_auth_user_id erp_user
+5852; 2606 17163 FK CONSTRAINT public closing_projectclose closing_projectclose_project_id_33e1bc98_fk_projects_project_id erp_user
+5814; 2606 16694 FK CONSTRAINT public contracts_contractchange contracts_contractch_approved_by_id_39e4063b_fk_auth_user erp_user
+5815; 2606 16699 FK CONSTRAINT public contracts_contractchange contracts_contractch_project_id_799dd2dc_fk_projects_ erp_user
+5816; 2606 16704 FK CONSTRAINT public contracts_contractchange contracts_contractch_submitted_by_id_650b85aa_fk_auth_user erp_user
+5817; 2606 16721 FK CONSTRAINT public contracts_contractsnapshot contracts_contractsn_project_id_4cebf7fb_fk_projects_ erp_user
+5818; 2606 16726 FK CONSTRAINT public contracts_contractsnapshot contracts_contractsn_source_change_id_ec469207_fk_contracts erp_user
+5853; 2606 17178 FK CONSTRAINT public core_approvalrequest core_approvalrequest_approved_by_id_be43f788_fk_auth_user_id erp_user
+5854; 2606 17183 FK CONSTRAINT public core_approvalrequest core_approvalrequest_submitted_by_id_abeed74b_fk_auth_user_id erp_user
+5856; 2606 17213 FK CONSTRAINT public core_projectassignment core_projectassignme_project_id_72ff2206_fk_projects_ erp_user
+5857; 2606 17218 FK CONSTRAINT public core_projectassignment core_projectassignment_user_id_4d99ab49_fk_auth_user_id erp_user
+5855; 2606 17208 FK CONSTRAINT public core_userprofile core_userprofile_user_id_5141ad90_fk_auth_user_id erp_user
+5807; 2606 16640 FK CONSTRAINT public cost_costactual cost_costactual_approved_by_id_13dce5bb_fk_auth_user_id erp_user
+5808; 2606 16645 FK CONSTRAINT public cost_costactual cost_costactual_project_id_f2fe7111_fk_projects_project_id erp_user
+5809; 2606 16650 FK CONSTRAINT public cost_costactual cost_costactual_source_daily_report__48d8e6d9_fk_field_dai erp_user
+5810; 2606 16657 FK CONSTRAINT public cost_costactualline cost_costactualline_cost_actual_id_9b8111c2_fk_cost_cost erp_user
+5811; 2606 16662 FK CONSTRAINT public cost_costactualline cost_costactualline_cost_item_id_6e9c22ec_fk_cost_costitem_id erp_user
+5824; 2606 16878 FK CONSTRAINT public cost_costitemalias cost_costitemalias_cost_item_id_ca672c48_fk_cost_costitem_id erp_user
+5825; 2606 16883 FK CONSTRAINT public cost_costitemalias cost_costitemalias_created_by_id_931ef559_fk_auth_user_id erp_user
+5812; 2606 16742 FK CONSTRAINT public cost_revenuerecognition cost_revenuerecognit_contract_snapshot_id_f9cc529b_fk_contracts erp_user
+5813; 2606 16678 FK CONSTRAINT public cost_revenuerecognition cost_revenuerecognit_project_id_064d41f3_fk_projects_ erp_user
+5797; 2606 16507 FK CONSTRAINT public django_admin_log django_admin_log_content_type_id_c4bce8eb_fk_django_co erp_user
+5798; 2606 16512 FK CONSTRAINT public django_admin_log django_admin_log_user_id_c564eba6_fk_auth_user_id erp_user
+5858; 2606 17252 FK CONSTRAINT public evidence_evidence evidence_evidence_created_by_id_8637db39_fk_auth_user_id erp_user
+5859; 2606 17263 FK CONSTRAINT public evidence_evidencefile evidence_evidencefil_evidence_id_16499797_fk_evidence_ erp_user
+5860; 2606 17258 FK CONSTRAINT public evidence_evidencefile evidence_evidencefile_created_by_id_32bfa9c3_fk_auth_user_id erp_user
+5803; 2606 16602 FK CONSTRAINT public field_dailyreport field_dailyreport_project_id_687a5661_fk_projects_project_id erp_user
+5804; 2606 16607 FK CONSTRAINT public field_dailyreport field_dailyreport_reporter_id_0238f100_fk_auth_user_id erp_user
+5805; 2606 16619 FK CONSTRAINT public field_dailyreportline field_dailyreportlin_report_id_7734b2ac_fk_field_dai erp_user
+5806; 2606 16614 FK CONSTRAINT public field_dailyreportline field_dailyreportline_cost_item_id_c05c165b_fk_cost_costitem_id erp_user
+5861; 2606 17289 FK CONSTRAINT public finance_cashevent finance_cashevent_account_id_fd924b7e_fk_finance_cashaccount_id erp_user
+5862; 2606 17294 FK CONSTRAINT public finance_cashevent finance_cashevent_contract_snapshot_id_0330cdf8_fk_contracts erp_user
+5863; 2606 17299 FK CONSTRAINT public finance_cashevent finance_cashevent_created_by_id_450c0ba6_fk_auth_user_id erp_user
+5864; 2606 17304 FK CONSTRAINT public finance_cashevent finance_cashevent_project_id_4b9909c4_fk_projects_project_id erp_user
+5872; 2606 17439 FK CONSTRAINT public inventory_inventoryledger inventory_inventoryl_created_by_id_25a74bf7_fk_auth_user erp_user
+5873; 2606 17444 FK CONSTRAINT public inventory_inventoryledger inventory_inventoryl_item_id_f88791bd_fk_inventory erp_user
+5874; 2606 17449 FK CONSTRAINT public inventory_inventoryledger inventory_inventoryl_location_id_715599f1_fk_inventory erp_user
+5875; 2606 17459 FK CONSTRAINT public inventory_inventoryledger inventory_inventoryl_warehouse_id_ffff2b1f_fk_inventory erp_user
+5876; 2606 17454 FK CONSTRAINT public inventory_inventoryledger inventory_inventoryledger_uom_id_a9d6d636_fk_inventory_uom_id erp_user
+5894; 2606 17642 FK CONSTRAINT public inventory_issuetoworkline inventory_issuetowor_issue_id_40fcf9d5_fk_inventory erp_user
+5895; 2606 17647 FK CONSTRAINT public inventory_issuetoworkline inventory_issuetowor_item_id_98567dc8_fk_inventory erp_user
+5889; 2606 17614 FK CONSTRAINT public inventory_issuetowork inventory_issuetowor_location_id_454d9535_fk_inventory erp_user
+5890; 2606 17619 FK CONSTRAINT public inventory_issuetowork inventory_issuetowor_project_id_776e4b00_fk_projects_ erp_user
+5891; 2606 17624 FK CONSTRAINT public inventory_issuetowork inventory_issuetowor_warehouse_id_c357bbad_fk_inventory erp_user
+5892; 2606 17604 FK CONSTRAINT public inventory_issuetowork inventory_issuetowork_approved_by_id_9da77b8e_fk_auth_user_id erp_user
+5893; 2606 17609 FK CONSTRAINT public inventory_issuetowork inventory_issuetowork_created_by_id_f25be60b_fk_auth_user_id erp_user
+5896; 2606 17637 FK CONSTRAINT public inventory_issuetoworkline inventory_issuetoworkline_cbs_id_22a83052_fk_cost_costitem_id erp_user
+5897; 2606 17652 FK CONSTRAINT public inventory_issuetoworkline inventory_issuetoworkline_uom_id_32da2547_fk_inventory_uom_id erp_user
+5867; 2606 17386 FK CONSTRAINT public inventory_itemcategory inventory_itemcatego_parent_id_62f5a205_fk_inventory erp_user
+5868; 2606 17395 FK CONSTRAINT public inventory_itemmaster inventory_itemmaster_category_id_c1256482_fk_inventory erp_user
+5869; 2606 17400 FK CONSTRAINT public inventory_itemmaster inventory_itemmaster_created_by_id_f55b3778_fk_auth_user_id erp_user
+5870; 2606 17405 FK CONSTRAINT public inventory_itemmaster inventory_itemmaster_uom_id_ba1c825f_fk_inventory_uom_id erp_user
+5871; 2606 17410 FK CONSTRAINT public inventory_itemmaster inventory_itemmaster_updated_by_id_cbcbb339_fk_auth_user_id erp_user
+5866; 2606 17340 FK CONSTRAINT public inventory_location inventory_location_warehouse_id_972ee1ee_fk_inventory erp_user
+5877; 2606 17464 FK CONSTRAINT public inventory_stock inventory_stock_item_id_51ef1040_fk_inventory_itemmaster_id erp_user
+5878; 2606 17469 FK CONSTRAINT public inventory_stock inventory_stock_location_id_be05a9db_fk_inventory_location_id erp_user
+5879; 2606 17474 FK CONSTRAINT public inventory_stock inventory_stock_warehouse_id_2fd6d240_fk_inventory_warehouse_id erp_user
+5880; 2606 17519 FK CONSTRAINT public inventory_transfer inventory_transfer_created_by_id_73dce6e7_fk_auth_user_id erp_user
+5881; 2606 17524 FK CONSTRAINT public inventory_transfer inventory_transfer_from_location_id_dde323db_fk_inventory erp_user
+5882; 2606 17529 FK CONSTRAINT public inventory_transfer inventory_transfer_from_warehouse_id_876a6dd5_fk_inventory erp_user
+5883; 2606 17534 FK CONSTRAINT public inventory_transfer inventory_transfer_project_id_3e763300_fk_projects_project_id erp_user
+5884; 2606 17539 FK CONSTRAINT public inventory_transfer inventory_transfer_to_location_id_a879479f_fk_inventory erp_user
+5885; 2606 17544 FK CONSTRAINT public inventory_transfer inventory_transfer_to_warehouse_id_7a257a02_fk_inventory erp_user
+5886; 2606 17558 FK CONSTRAINT public inventory_transferline inventory_transferli_item_id_72b4d78b_fk_inventory erp_user
+5887; 2606 17563 FK CONSTRAINT public inventory_transferline inventory_transferli_transfer_id_81657792_fk_inventory erp_user
+5888; 2606 17568 FK CONSTRAINT public inventory_transferline inventory_transferline_uom_id_3ef5d443_fk_inventory_uom_id erp_user
+5865; 2606 17333 FK CONSTRAINT public inventory_warehouse inventory_warehouse_project_id_f8053050_fk_projects_project_id erp_user
+5953; 2606 18313 FK CONSTRAINT public labor_electroniccardworkday labor_electroniccard_batch_id_44bdea6d_fk_labor_ele erp_user
+5951; 2606 18296 FK CONSTRAINT public labor_electroniccardworkraw labor_electroniccard_batch_id_ae6a6dfa_fk_labor_ele erp_user
+5954; 2606 18318 FK CONSTRAINT public labor_electroniccardworkday labor_electroniccard_card_project_id_aee58ec0_fk_projects_ erp_user
+5948; 2606 18249 FK CONSTRAINT public labor_electroniccardimportbatch labor_electroniccard_confirmed_by_id_10c23f45_fk_auth_user erp_user
+5952; 2606 18301 FK CONSTRAINT public labor_electroniccardworkraw labor_electroniccard_matched_worker_id_237695fa_fk_labor_wor erp_user
+5949; 2606 18254 FK CONSTRAINT public labor_electroniccardimportbatch labor_electroniccard_project_id_f5423ba8_fk_projects_ erp_user
+5955; 2606 18328 FK CONSTRAINT public labor_electroniccardworkday labor_electroniccard_raw_id_175fd409_fk_labor_ele erp_user
+5950; 2606 18259 FK CONSTRAINT public labor_electroniccardimportbatch labor_electroniccard_uploaded_by_id_a7936584_fk_auth_user erp_user
+5956; 2606 18323 FK CONSTRAINT public labor_electroniccardworkday labor_electroniccard_worker_id_8de1fed0_fk_labor_wor erp_user
+5962; 2606 18394 FK CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmed_actual_project_id_a7c1a82c_fk_projects_ erp_user
+5963; 2606 18399 FK CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmed_batch_id_3953d45a_fk_labor_ele erp_user
+5964; 2606 18404 FK CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmed_card_project_id_356135c8_fk_projects_ erp_user
+5965; 2606 18409 FK CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmed_confirmed_by_id_f49d1a8d_fk_auth_user erp_user
+5966; 2606 18414 FK CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmed_reconciliation_resul_2a541165_fk_labor_lab erp_user
+5967; 2606 18419 FK CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmed_report_project_id_27fb37c2_fk_projects_ erp_user
+5968; 2606 18424 FK CONSTRAINT public labor_laborconfirmedworkday labor_laborconfirmed_worker_id_1b7dd5ff_fk_labor_wor erp_user
+5969; 2606 18448 FK CONSTRAINT public labor_laborexcelexportbatch labor_laborexcelexpo_downloaded_by_id_368dcf55_fk_auth_user erp_user
+5970; 2606 18453 FK CONSTRAINT public labor_laborexcelexportbatch labor_laborexcelexpo_generated_by_id_ad3bee49_fk_auth_user erp_user
+5971; 2606 18458 FK CONSTRAINT public labor_laborexcelexportbatch labor_laborexcelexpo_project_id_32aa4939_fk_projects_ erp_user
+5972; 2606 18463 FK CONSTRAINT public labor_laborexcelexportbatch labor_laborexcelexpo_source_batch_id_e07fa1e5_fk_labor_ele erp_user
+5945; 2606 18202 FK CONSTRAINT public labor_labormonthlypayroll labor_labormonthlypa_project_id_ce05f62e_fk_projects_ erp_user
+5946; 2606 18207 FK CONSTRAINT public labor_labormonthlypayroll labor_labormonthlypa_report_project_id_165f1a74_fk_projects_ erp_user
+5947; 2606 18212 FK CONSTRAINT public labor_labormonthlypayroll labor_labormonthlypa_worker_id_0401c698_fk_labor_wor erp_user
+5899; 2606 17689 FK CONSTRAINT public labor_laborratetable labor_laborratetable_created_by_id_871df058_fk_auth_user_id erp_user
+5900; 2606 17694 FK CONSTRAINT public labor_laborratetable labor_laborratetable_labor_role_id_2527904d_fk_labor_lab erp_user
+5901; 2606 17699 FK CONSTRAINT public labor_laborratetable labor_laborratetable_project_id_819d01ee_fk_projects_project_id erp_user
+5957; 2606 18348 FK CONSTRAINT public labor_laborreconciliationresult labor_laborreconcili_batch_id_b306856b_fk_labor_ele erp_user
+5958; 2606 18353 FK CONSTRAINT public labor_laborreconciliationresult labor_laborreconcili_card_day_id_dd0b0c6a_fk_labor_ele erp_user
+5959; 2606 18358 FK CONSTRAINT public labor_laborreconciliationresult labor_laborreconcili_project_id_805cbbbc_fk_projects_ erp_user
+5960; 2606 18363 FK CONSTRAINT public labor_laborreconciliationresult labor_laborreconcili_resolved_by_id_efd0433a_fk_auth_user erp_user
+5961; 2606 18368 FK CONSTRAINT public labor_laborreconciliationresult labor_laborreconcili_worker_id_67f11f7f_fk_labor_wor erp_user
+5898; 2606 17680 FK CONSTRAINT public labor_laborrole labor_laborrole_default_cbs_id_ad831e29_fk_cost_costitem_id erp_user
+5939; 2606 18156 FK CONSTRAINT public labor_laborworkledger labor_laborworkledge_actual_project_id_9b5cdd44_fk_projects_ erp_user
+5940; 2606 18161 FK CONSTRAINT public labor_laborworkledger labor_laborworkledge_cost_ref_id_79763afb_fk_cost_cost erp_user
+5941; 2606 18166 FK CONSTRAINT public labor_laborworkledger labor_laborworkledge_labor_role_id_295ae2b9_fk_labor_lab erp_user
+5942; 2606 18171 FK CONSTRAINT public labor_laborworkledger labor_laborworkledge_report_project_id_8580b895_fk_projects_ erp_user
+5943; 2606 18176 FK CONSTRAINT public labor_laborworkledger labor_laborworkledge_timesheet_ref_id_4334f97b_fk_labor_tim erp_user
+5944; 2606 18181 FK CONSTRAINT public labor_laborworkledger labor_laborworkledge_worker_id_cd485977_fk_labor_wor erp_user
+5908; 2606 17805 FK CONSTRAINT public labor_payrollallocationbatch labor_payrollallocat_approved_by_id_854edcb6_fk_auth_user erp_user
+5911; 2606 17824 FK CONSTRAINT public labor_payrollallocationline labor_payrollallocat_batch_id_58c7002f_fk_labor_pay erp_user
+5909; 2606 17810 FK CONSTRAINT public labor_payrollallocationbatch labor_payrollallocat_created_by_id_95d6d061_fk_auth_user erp_user
+5912; 2606 17834 FK CONSTRAINT public labor_payrollallocationline labor_payrollallocat_project_id_1d94014b_fk_projects_ erp_user
+5910; 2606 17815 FK CONSTRAINT public labor_payrollallocationbatch labor_payrollallocat_rejected_by_id_19f88937_fk_auth_user erp_user
+5913; 2606 17829 FK CONSTRAINT public labor_payrollallocationline labor_payrollallocationline_cbs_id_6f64cfb9_fk_cost_costitem_id erp_user
+5902; 2606 17735 FK CONSTRAINT public labor_timesheet labor_timesheet_approved_by_id_a86b205c_fk_auth_user_id erp_user
+5903; 2606 17740 FK CONSTRAINT public labor_timesheet labor_timesheet_created_by_id_5a2a150d_fk_auth_user_id erp_user
+5904; 2606 17745 FK CONSTRAINT public labor_timesheet labor_timesheet_project_id_8f92aaf0_fk_projects_project_id erp_user
+5905; 2606 17750 FK CONSTRAINT public labor_timesheet labor_timesheet_rejected_by_id_a8714eaf_fk_auth_user_id erp_user
+5906; 2606 17760 FK CONSTRAINT public labor_timesheetline labor_timesheetline_labor_role_id_9d0dfac2_fk_labor_lab erp_user
+5907; 2606 17765 FK CONSTRAINT public labor_timesheetline labor_timesheetline_timesheet_id_e3e6856f_fk_labor_timesheet_id erp_user
+5938; 2606 18133 FK CONSTRAINT public labor_workermaster labor_workermaster_default_labor_role_i_0f696880_fk_labor_lab erp_user
+5829; 2606 16929 FK CONSTRAINT public master_cbschangerequest master_cbschangerequ_cost_item_id_12b99ea6_fk_cost_cost erp_user
+5830; 2606 16934 FK CONSTRAINT public master_cbschangerequest master_cbschangerequ_requested_by_id_86dbfc9e_fk_auth_user erp_user
+5831; 2606 16924 FK CONSTRAINT public master_cbschangerequest master_cbschangerequest_approved_by_id_72318173_fk_auth_user_id erp_user
+5826; 2606 16898 FK CONSTRAINT public master_favoritecostitem master_favoritecosti_cost_item_id_c41ba288_fk_cost_cost erp_user
+5827; 2606 16903 FK CONSTRAINT public master_favoritecostitem master_favoritecosti_project_id_46a0e6c8_fk_projects_ erp_user
+5828; 2606 16908 FK CONSTRAINT public master_favoritecostitem master_favoritecostitem_user_id_9c944465_fk_auth_user_id erp_user
+5834; 2606 16978 FK CONSTRAINT public master_masterbudgettemplateitem master_masterbudgett_cost_item_id_a97bd8ff_fk_cost_cost erp_user
+5835; 2606 16983 FK CONSTRAINT public master_masterbudgettemplateitem master_masterbudgett_template_id_078eb4bc_fk_master_ma erp_user
+5832; 2606 16964 FK CONSTRAINT public master_mastertemplate master_mastertemplate_created_by_id_8f766f86_fk_auth_user_id erp_user
+5833; 2606 16971 FK CONSTRAINT public master_masterwbstemplateitem master_masterwbstemp_template_id_4e881cad_fk_master_ma erp_user
+5914; 2606 17854 FK CONSTRAINT public otp_static_staticdevice otp_static_staticdevice_user_id_7f9cff2b_fk_auth_user_id erp_user
+5915; 2606 17860 FK CONSTRAINT public otp_static_statictoken otp_static_statictok_device_id_74b7c7d1_fk_otp_stati erp_user
+5916; 2606 17879 FK CONSTRAINT public otp_totp_totpdevice otp_totp_totpdevice_user_id_0fb18292_fk_auth_user_id erp_user
+5844; 2606 17084 FK CONSTRAINT public projects_approvalpackageitem projects_approvalpac_package_id_c32de5bb_fk_projects_ erp_user
+5841; 2606 17076 FK CONSTRAINT public projects_approvalpackage projects_approvalpac_project_id_01f6ec56_fk_projects_ erp_user
+5842; 2606 17066 FK CONSTRAINT public projects_approvalpackage projects_approvalpackage_created_by_id_e164d736_fk_auth_user_id erp_user
+5843; 2606 17071 FK CONSTRAINT public projects_approvalpackage projects_approvalpackage_decided_by_id_f879abb1_fk_auth_user_id erp_user
+5820; 2606 16851 FK CONSTRAINT public projects_budgetitem projects_budgetitem_cost_item_id_c245ff13_fk_cost_costitem_id erp_user
+5821; 2606 16823 FK CONSTRAINT public projects_budgetitem projects_budgetitem_project_id_28d82242_fk_projects_project_id erp_user
+5799; 2606 16991 FK CONSTRAINT public projects_project projects_project_budget_template_id_4c745037_fk_master_ma erp_user
+5800; 2606 16996 FK CONSTRAINT public projects_project projects_project_wbs_template_id_ac804b1a_fk_master_ma erp_user
+5819; 2606 16797 FK CONSTRAINT public projects_projectcontract projects_projectcont_project_id_f3855ac4_fk_projects_ erp_user
+5840; 2606 17044 FK CONSTRAINT public projects_wbschangeline projects_wbschangeli_request_id_5db70947_fk_projects_ erp_user
+5836; 2606 17020 FK CONSTRAINT public projects_wbschangerequest projects_wbschangere_approved_by_id_16280f74_fk_auth_user erp_user
+5837; 2606 17025 FK CONSTRAINT public projects_wbschangerequest projects_wbschangere_change_order_id_bd74850c_fk_contracts erp_user
+5838; 2606 17030 FK CONSTRAINT public projects_wbschangerequest projects_wbschangere_project_id_f0c16eed_fk_projects_ erp_user
+5839; 2606 17035 FK CONSTRAINT public projects_wbschangerequest projects_wbschangere_requested_by_id_930f5e09_fk_auth_user erp_user
+5822; 2606 16830 FK CONSTRAINT public projects_wbsitem projects_wbsitem_parent_id_973e084f_fk_projects_wbsitem_id erp_user
+5823; 2606 16835 FK CONSTRAINT public projects_wbsitem projects_wbsitem_project_id_18c8bb91_fk_projects_project_id erp_user
+5917; 2606 17922 FK CONSTRAINT public reports_fieldreport reports_fieldreport_created_by_id_046b36dc_fk_auth_user_id erp_user
+5918; 2606 17927 FK CONSTRAINT public reports_fieldreport reports_fieldreport_project_id_055793a4_fk_projects_project_id erp_user
+5919; 2606 17934 FK CONSTRAINT public reports_fieldreportfile reports_fieldreportf_report_id_6ca7e307_fk_reports_f erp_user
+5920; 2606 17939 FK CONSTRAINT public reports_fieldreportfile reports_fieldreportfile_uploaded_by_id_2cba6706_fk_auth_user_id erp_user
+5921; 2606 17975 FK CONSTRAINT public risk_riskevent risk_riskevent_actor_id_f7337951_fk_auth_user_id erp_user
+5922; 2606 17983 FK CONSTRAINT public risk_riskfinding risk_riskfinding_acknowledged_by_id_efbc15df_fk_auth_user_id erp_user
+5923; 2606 17988 FK CONSTRAINT public risk_riskfinding risk_riskfinding_event_id_dba57cba_fk_risk_riskevent_id erp_user
+5924; 2606 17993 FK CONSTRAINT public risk_riskfinding risk_riskfinding_project_id_5c93e8e3_fk_projects_project_id erp_user
+5925; 2606 17998 FK CONSTRAINT public risk_riskfinding risk_riskfinding_rule_id_24c8d2be_fk_risk_riskrule_id erp_user
+5929; 2606 18048 FK CONSTRAINT public schedule_dailyprogress schedule_dailyprogre_plan_id_d34c5692_fk_schedule_ erp_user
+5930; 2606 18053 FK CONSTRAINT public schedule_dailyprogress schedule_dailyprogre_project_id_debedeb5_fk_projects_ erp_user
+5931; 2606 18063 FK CONSTRAINT public schedule_dailyprogress schedule_dailyprogre_task_id_3fd92120_fk_schedule_ erp_user
+5932; 2606 18058 FK CONSTRAINT public schedule_dailyprogress schedule_dailyprogress_reporter_id_70f29c78_fk_auth_user_id erp_user
+5933; 2606 18085 FK CONSTRAINT public schedule_planchangerequest schedule_planchanger_approved_by_id_e5437be8_fk_auth_user erp_user
+5934; 2606 18090 FK CONSTRAINT public schedule_planchangerequest schedule_planchanger_base_plan_id_22668495_fk_schedule_ erp_user
+5935; 2606 18080 FK CONSTRAINT public schedule_planchangerequest schedule_planchanger_contract_change_id_9e085402_fk_contracts erp_user
+5936; 2606 18095 FK CONSTRAINT public schedule_planchangerequest schedule_planchanger_project_id_82ea3f09_fk_projects_ erp_user
+5937; 2606 18100 FK CONSTRAINT public schedule_planchangerequest schedule_planchanger_requested_by_id_87cf8bae_fk_auth_user erp_user
+5926; 2606 18027 FK CONSTRAINT public schedule_scheduleplan schedule_schedulepla_project_id_83c51ee2_fk_projects_ erp_user
+5927; 2606 18022 FK CONSTRAINT public schedule_scheduleplan schedule_scheduleplan_created_by_id_c082c14c_fk_auth_user_id erp_user
+5928; 2606 18034 FK CONSTRAINT public schedule_scheduletask schedule_scheduletas_plan_id_2c92375b_fk_schedule_ erp_user

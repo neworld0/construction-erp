@@ -1,0 +1,17 @@
+Env_Key,Purpose,Required_For_Staging,Required_For_Production,Expected_Status,Allowed_To_Print_Value,Example_Format_No_Secret,Validation_Method,Notes
+DJANGO_SETTINGS_MODULE,settings selection,YES,YES,PRESENT,YES,config.settings.prod,echo name only,
+SECRET_KEY,Django signing,YES,YES,PRESENT,NO,SECRET_KEY=PRESENT,presence only,
+DEBUG,debug mode,YES,YES,FALSE,YES,false,settings status,
+ALLOWED_HOSTS,host validation,YES,YES,ALLOWLIST,YES,staging.example.com,config review,no wildcard
+CSRF_TRUSTED_ORIGINS,CSRF validation,YES,YES,PRESENT,YES,https://staging.example.com,config review,
+DATABASE_URL / DATABASE,PostgreSQL,YES,YES,PRESENT,NO,DATABASE_URL=PRESENT,connection status only,
+STATIC_ROOT,static collection,YES,YES,WRITABLE,YES,/srv/app/staticfiles,path permission,
+MEDIA_ROOT,uploads and Excel,YES,YES,WRITABLE_RESTRICTED,YES,/srv/app/media,path permission,
+STATIC_URL / MEDIA_URL,URL routing,YES,YES,PRESENT,YES,/static/ and /media/,Nginx smoke,
+SECURE_SSL_REDIRECT,HTTPS,YES,YES,TRUE,YES,true,settings status,
+SESSION_COOKIE_SECURE,secure session,YES,YES,TRUE,YES,true,settings status,
+CSRF_COOKIE_SECURE,secure CSRF,YES,YES,TRUE,YES,true,settings status,
+LOG_LEVEL,logging,YES,YES,PRESENT,YES,INFO,settings status,no PII logs
+EMAIL settings,optional notification,NO,AS_REQUIRED,NOT_APPLICABLE,NO,PRESENT if used,presence only,
+AWS/S3 settings,optional storage,NO,AS_REQUIRED,NOT_APPLICABLE,NO,PRESENT if used,presence only,
+HEALTHCHECK_ALLOWED_HOST,health policy,NO,AS_REQUIRED,NOT_APPLICABLE,YES,staging.example.com,route smoke,

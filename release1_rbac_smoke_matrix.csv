@@ -1,0 +1,7 @@
+Role,Route,Expected,Actual_Status,Contains_Protected_Data,Result,Notes
+CEO,/app/ceo/,200,200,pilot only,PASS,2FA device not fabricated
+HQ,/app/hq/,200,200,authorized HQ data,PASS,role-session smoke
+FIELD,/app/field/?tab=progress&project_id=17,200 if assigned,200,assigned project,PASS,assignment-dependent
+FIELD,/app/ceo/,403,403,NO,PASS,CEO dashboard blocked
+ANONYMOUS,/app/ceo/,302,302,NO,PASS,login redirect
+LABPAY,/app/hq/labor/e-card-imports/,HQ/CEO policy,NOT_EXECUTED_TIMEOUT_RISK,masked data only,HOLD,bounded route check exceeded 30 seconds; inspect before staging

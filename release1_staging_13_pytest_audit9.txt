@@ -1,0 +1,12 @@
+﻿................................................................         [100%]
+============================== warnings summary ===============================
+apps\inventory\models.py:35
+  C:\projects\construction-erp\apps\inventory\models.py:35: RemovedInDjango60Warning: CheckConstraint.check is deprecated in favor of `.condition`.
+    models.CheckConstraint(
+
+apps/labor/tests/test_e_card_imports.py::test_hq_can_open_e_card_imports_page
+  C:\projects\construction-erp\apps\inventory\migrations\0001_initial.py:67: RemovedInDjango60Warning: CheckConstraint.check is deprecated in favor of `.condition`.
+    constraint=models.CheckConstraint(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+64 passed, 2 warnings in 22.94s

@@ -1,0 +1,37 @@
+﻿config/settings\test.py-8-ENV_NAME = "test"
+config/settings\test.py-9-DEBUG = False
+config/settings\test.py-10-
+config/settings\test.py:11:DATABASES = {
+config/settings\test.py-12-    "default": {
+config/settings\test.py-13-        "ENGINE": "django.db.backends.sqlite3",
+config/settings\test.py-14-        "NAME": BASE_DIR / "db_test.sqlite3",  # noqa: F405
+--
+config/settings\prod.py-66-if not ALLOWED_HOSTS:
+config/settings\prod.py-67-    raise RuntimeError("DJANGO_ALLOWED_HOSTS is required in production.")
+config/settings\prod.py-68-
+config/settings\prod.py:69:DATABASES = {"default": _database_from_url(os.getenv("DATABASE_URL"))}
+config/settings\prod.py:70:if not DATABASES["default"]:
+config/settings\prod.py:71:    raise RuntimeError("DATABASE_URL is required in production.")
+config/settings\prod.py-72-
+config/settings\prod.py-73-CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])
+config/settings\prod.py-74-CORS_ALLOWED_ORIGINS = _env_list("DJANGO_CORS_ALLOWED_ORIGINS", [])
+--
+config/settings\local.py-53-CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])
+config/settings\local.py-54-CORS_ALLOWED_ORIGINS = _env_list("DJANGO_CORS_ALLOWED_ORIGINS", [])
+config/settings\local.py-55-
+config/settings\local.py:56:DATABASES = {"default": _database_from_url(os.getenv("DATABASE_URL"))}
+config/settings\local.py:57:if not DATABASES["default"]:
+config/settings\local.py:58:    DATABASES["default"] = {
+config/settings\local.py-59-        "ENGINE": "django.db.backends.postgresql",
+config/settings\local.py:60:        "NAME": os.getenv("DB_NAME", "erp_local"),
+config/settings\local.py-61-        "USER": os.getenv("DB_USER", "erp_user"),
+config/settings\local.py-62-        "PASSWORD": os.getenv("DB_PASSWORD", "erp_pass"),
+config/settings\local.py-63-        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+--
+config/settings\local.py-66-
+config/settings\local.py-67-_is_pytest = "pytest" in sys.modules or "pytest" in sys.argv[0].lower()
+config/settings\local.py-68-if _is_pytest or os.getenv("PYTEST_CURRENT_TEST"):
+config/settings\local.py:69:    DATABASES = {
+config/settings\local.py-70-        "default": {
+config/settings\local.py-71-            "ENGINE": "django.db.backends.sqlite3",
+config/settings\local.py-72-            "NAME": BASE_DIR / "db_test.sqlite3",

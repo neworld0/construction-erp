@@ -1,0 +1,3 @@
+﻿Pretending to copy 'C:\projects\construction-erp\static\public_site\site.css'
+
+1 static file copied to 'C:\projects\construction-erp\staticfiles', 167 unmodified.

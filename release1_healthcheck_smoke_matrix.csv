@@ -1,0 +1,13 @@
+Check_ID,Area,Route_or_Command,Expected,Actual,Result,Severity,Notes
+H-01,Django,python manage.py check,PASS,PASS,PASS,P0,release1_10_manage_check.txt
+H-02,Migration,makemigrations --check --dry-run,No changes,No changes,PASS,P0,release1_11_makemigrations_check.txt
+H-03,Static,collectstatic --dry-run --noinput,success,success,PASS,P1,local staticfiles only
+H-04,WSGI,import config.wsgi,WSGI_IMPORT_OK,WSGI_IMPORT_OK,PASS,P0,local import
+H-05,Health,/healthz/,200 / db ok,200 / db,PASS,P0,anonymous safe endpoint
+H-06,Auth,/login/,200,200,PASS,P1,two-factor login route
+H-07,CEO dashboard,/app/ceo/,200 and pilot visible,200,PASS,P0,role-session smoke without DB session
+H-08,CEO KPI,/app/ceo/projects/17/kpi/,200,200,PASS,P0,committed KPI relation fix covered
+H-09,FIELD,/app/field/?tab=progress,200 if assigned,200,PASS,P1,assignment-dependent
+H-10,LABPAY,/app/hq/labor/e-card-imports/,200 for HQ,NOT_EXECUTED_TIMEOUT_RISK,HOLD,P1,local test-client route exceeded 30 seconds; inspect list query before staging
+H-11,Excel,re-upload download,route available,NOT_EXECUTED,HOLD,P2,requires confirmed safe batch
+H-12,Admin,/admin/,redirect for anonymous,302,PASS,P1,staff access not exercised

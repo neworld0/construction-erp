@@ -1,0 +1,9 @@
+Evidence_ID,Step,Evidence_Type,File,Description,Contains_Secret,Contains_PII,Reviewer,Notes
+RF-E01,Discovery,TXT,release1_fix_16_settings_discovery.txt,settings references only,NO,NO,release owner,no values printed
+RF-E02,Gunicorn,MD,release1_fix_staging_gunicorn_config.md,staging template,NO,NO,platform owner,placeholder-only
+RF-E03,Nginx,MD,release1_fix_staging_nginx_config.md,reverse proxy template,NO,NO,platform owner,placeholder-only
+RF-E04,Backup,MD,release1_fix_backup_restore_drill_report.md,local demo drill report,NO,NO,DB owner,archive not printed
+RF-E05,LABPAY,CSV,release1_fix_labpay_performance_matrix.csv,read-only timing,NO,NO,release owner,counts only
+RF-E06,Smoke,CSV,release1_fix_healthcheck_smoke_matrix.csv,route smoke,NO,NO,release owner,signed-cookie session
+RF-E07,RBAC,CSV,release1_fix_rbac_smoke_matrix.csv,access boundaries,NO,NO,release owner,403/302 expected
+RF-E08,Tests,TXT,release1_fix_30_pytest_combined.txt,targeted regression,NO,NO,release owner,81 passed

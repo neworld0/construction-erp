@@ -1,0 +1,6 @@
+Evidence_ID,Step,Evidence_Type,File_or_Screen,Description,Contains_PII,Storage_Note,Reviewer
+RE-01,Django,TXT,release1_10_manage_check.txt,system check,NO,local only,release owner
+RE-02,Static,TXT,release1_14_collectstatic_dryrun.txt,dry run,NO,local only,release owner
+RE-03,WSGI,TXT,release1_16_wsgi_import_check.txt,WSGI import,NO,local only,release owner
+RE-04,Smoke,CSV,release1_healthcheck_smoke_matrix.csv,route/command smoke,NO,local only,release owner
+RE-05,RBAC,CSV,release1_rbac_smoke_matrix.csv,access boundary,NO,local only,release owner

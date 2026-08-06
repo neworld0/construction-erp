@@ -1,0 +1,7 @@
+Check,Expected,Actual,Result,Severity,Notes
+WSGI import,config.wsgi import,WSGI_IMPORT_OK,PASS,P0,local import passed
+Gunicorn,installed in Linux staging,GUNICORN_NOT_AVAILABLE_LOCAL,HOLD,P1,Windows local does not require Gunicorn
+Gunicorn command,gunicorn config.wsgi:application --bind 0.0.0.0:8000,documented,HOLD,P1,execute only staging
+worker,start 2-3 then load test,NOT_EXECUTED,HOLD,P2,size to CPU/load
+timeout,Excel-aware timeout,NOT_EXECUTED,HOLD,P1,set staging policy
+logging,access/error logs,Django console configured,PASS,P1,route logs to staging collector

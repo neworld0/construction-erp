@@ -1,0 +1,14 @@
+Check_ID,Area,Route_or_Command,Expected,Actual,Result,Severity,Notes
+F-01,Django,python manage.py check,PASS,PASS,PASS,P0,release1_fix_12_manage_check.txt
+F-02,Migration,makemigrations --check --dry-run,No changes,No changes,PASS,P0,release1_fix_13_makemigrations_check.txt
+F-03,WSGI,import config.wsgi,WSGI_IMPORT_OK,WSGI_IMPORT_OK,PASS,P0,release1_fix_19_wsgi_import_check.txt
+F-04,Static,collectstatic --dry-run,PASS,PASS,PASS,P1,release1_fix_24_collectstatic_dryrun.txt
+F-05,Health,/healthz/,200 / db ok,200 / db,PASS,P0,anonymous health route
+F-06,Auth,/login/,200,200,PASS,P0,login route
+F-07,CEO,/app/ceo/,200 / pilot visible,200,PASS,P0,role smoke
+F-08,CEO KPI,/app/ceo/projects/17/kpi/,200 / pilot visible,200,PASS,P0,KPI smoke
+F-09,HQ,/app/hq/,200,200,PASS,P0,role smoke
+F-10,LABPAY,/app/hq/labor/e-card-imports/,200 / upload and batch list,200,PASS,P0,after grouped counts patch
+F-11,FIELD,/app/field/?tab=progress&project_id=17,200 if assigned,200,PASS,P1,assignment-dependent
+F-12,Excel,CWMA reupload download,safe confirmed export,NOT_EXECUTED,HOLD,P2,no safe confirmed export fixture on local data
+F-13,Admin,/admin/,anonymous redirect,302,PASS,P1,staff flow not exercised

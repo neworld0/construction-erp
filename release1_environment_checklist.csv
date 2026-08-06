@@ -1,0 +1,8 @@
+Area,Required,Current_Status,Result,Notes
+Python/Django,Python 3.12 and Django 5.2,PRESENT,PASS,local venv
+PostgreSQL driver,psycopg,PRESENT,PASS,local demo DB
+Production settings,secret/hosts/database environment,TEMPLATE_READY,HOLD,must validate in staging
+Gunicorn,Linux staging WSGI server,NOT_INSTALLED_LOCAL,HOLD,Windows local limitation
+Nginx,reverse proxy config,NOT_DISCOVERED,HOLD,checklist created
+WhiteNoise,static fallback,PRESENT,PASS,enabled by prod settings if installed
+S3/storages,optional media storage,NOT_INSTALLED,HOLD,local media only

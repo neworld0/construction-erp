@@ -1,0 +1,18 @@
+Check_ID,Area,Requirement,Command_Template,Expected_Result,Evidence_File,Status,Notes
+G-01,WSGI,WSGI import,"python -c ""import config.wsgi; print('WSGI_IMPORT_OK')""",WSGI_IMPORT_OK,actual WSGI output,PENDING,
+G-02,Gunicorn,Gunicorn import,"python -c ""import gunicorn; print('GUNICORN_IMPORT_OK')""",GUNICORN_IMPORT_OK,actual Gunicorn output,PENDING,
+G-03,Gunicorn,systemd service file path,systemctl cat <GUNICORN_SERVICE>,approved unit,service config,PENDING,
+G-04,Gunicorn,service status,systemctl status <GUNICORN_SERVICE> --no-pager,active,gunicorn status,PENDING,
+G-05,Gunicorn,restart permission,sudo systemctl restart <GUNICORN_SERVICE>,approved restart,approval form,PENDING,
+G-06,Gunicorn,journalctl check,journalctl -u <GUNICORN_SERVICE> -n 100 --no-pager,no startup error,journal excerpt,PENDING,mask secrets
+G-07,Nginx,Nginx config file path,sudo nginx -T,active site identified,Nginx config summary,PENDING,mask secrets
+G-08,Nginx,nginx -t,sudo nginx -t,syntax successful,nginx test,PENDING,
+G-09,Nginx,reload permission,sudo systemctl reload nginx,approved reload,approval form,PENDING,
+G-10,Nginx,HTTPS health request,curl -fsS https://<STAGING_DOMAIN>/healthz/,200,health result,PENDING,
+G-11,Nginx,proxy_pass to Gunicorn,grep proxy_pass <NGINX_SITE>,<GUNICORN_BIND>,config summary,PENDING,
+G-12,Nginx,static alias,grep static <NGINX_SITE>,STATIC_ROOT,static smoke,PENDING,
+G-13,Nginx,media alias/policy,grep media <NGINX_SITE>,approved media policy,media policy,PENDING,
+G-14,Nginx,upload size,grep client_max_body_size <NGINX_SITE>,Excel limit,config summary,PENDING,
+G-15,Nginx,timeout,grep proxy_read_timeout <NGINX_SITE>,120s or approved,config summary,PENDING,
+G-16,Nginx,forwarded headers,grep X-Forwarded-Proto <NGINX_SITE>,header present,config summary,PENDING,
+G-17,Nginx,log paths,grep -E 'access_log|error_log' <NGINX_SITE>,writable paths,log summary,PENDING,

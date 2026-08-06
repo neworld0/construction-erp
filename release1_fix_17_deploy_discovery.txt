@@ -1,0 +1,65 @@
+﻿.\docs\demo_local.md:## 3) Migrate + collectstatic
+.\docs\demo_local.md:python manage.py collectstatic --noinput
+.\docs\deploy.md:python manage.py collectstatic --noinput --settings=config.settings.prod
+.\docs\deploy.md:gunicorn config.wsgi:application \
+.\docs\deploy.md:python manage.py collectstatic --noinput --settings=config.settings.prod
+.\config\asgi.py:https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
+.\config\asgi.py:from django.core.asgi import get_asgi_application
+.\config\asgi.py:application = get_asgi_application()
+.\config\urls.py:    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+.\config\urls.py:        re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+.\config\wsgi.py:https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
+.\config\wsgi.py:from django.core.wsgi import get_wsgi_application
+.\config\wsgi.py:application = get_wsgi_application()
+.\config\settings\base.py:WSGI_APPLICATION = "config.wsgi.application"
+.\config\settings\base.py:ASGI_APPLICATION = "config.asgi.application"
+.\config\settings\base.py:STATIC_ROOT = BASE_DIR / "staticfiles"
+.\config\settings\base.py:MEDIA_ROOT = BASE_DIR / "media"
+.\release1_rollback_plan.md:Re-run approved collectstatic for the restored release or restore the matching static artifact.
+.\release1_backup_restore_runbook.md:Compress-Archive -Path <MEDIA_ROOT> -DestinationPath <BACKUP_DIR>/media_<DATE>.zip
+.\release1_backup_restore_runbook.md:Expand-Archive <MEDIA_BACKUP_FILE> -DestinationPath <MEDIA_ROOT>
+.\release1_deployment_dryrun_script.py:        "release1_deployment_dryrun_report.md": ["종합 결론", "Local/Staging Deployment Dry Run", "manage.py check", "makemigrations", "collectstatic", "WSGI", "Gunicorn", "Nginx", "CEO dashboard", "FIELD", "RBAC", "backup", "rollback", "최종 판정"],
+.\release1_deployment_dryrun_script.py:        "release1_static_media_check.csv": ["STATIC_ROOT", "STATIC_URL", "MEDIA_ROOT", "MEDIA_URL", "collectstatic"],
+.\release1_deployment_dryrun_script.py:        "release1_wsgi_gunicorn_check.csv": ["WSGI", "Gunicorn", "worker", "timeout"],
+.\release1_deployment_dryrun_script.py:        "release1_nginx_reverse_proxy_check.csv": ["Nginx", "proxy", "static", "media", "upload"],
+.\release1_deployment_dryrun_script.py:        ("H-03", "Static", "collectstatic --dry-run --noinput", "success", "success", "PASS", "P1", "local staticfiles only"),
+.\release1_deployment_dryrun_script.py:        ("H-04", "WSGI", "import config.wsgi", "WSGI_IMPORT_OK", "WSGI_IMPORT_OK", "PASS", "P0", "local import"),
+.\release1_deployment_dryrun_script.py:        ("STATIC_ROOT", "collected static path", "YES", "YES", "YES", "PRESENT", "YES local", "/srv/app/staticfiles", "local staticfiles"),
+.\release1_deployment_dryrun_script.py:        ("MEDIA_ROOT", "uploaded/generated files", "YES", "YES", "YES", "PRESENT", "YES local", "/srv/app/media", "backup required"),
+.\release1_deployment_dryrun_script.py:        ("STATIC_ROOT", "STATIC_ROOT", "local/staging writable path", str(settings.STATIC_ROOT), "PASS", "collectstatic dry-run passed"),
+.\release1_deployment_dryrun_script.py:        ("collectstatic", "collectstatic --dry-run", "success", "success", "PASS", "no destructive clear"),
+.\release1_deployment_dryrun_script.py:        ("MEDIA_ROOT", "MEDIA_ROOT", "local/staging backup path", str(settings.MEDIA_ROOT), "PASS", "generated Excel and uploads"),
+.\release1_deployment_dryrun_script.py:    gunicorn = importlib.util.find_spec("gunicorn") is not None
+.\release1_deployment_dryrun_script.py:    write_csv("release1_wsgi_gunicorn_check.csv", ["Check", "Expected", "Actual", "Result", "Severity", "Notes"], [
+.\release1_deployment_dryrun_script.py:        ("WSGI import", "config.wsgi import", "WSGI_IMPORT_OK", "PASS", "P0", "local import passed"),
+.\release1_deployment_dryrun_script.py:        ("Gunicorn", "installed in Linux staging", "AVAILABLE" if gunicorn else "GUNICORN_NOT_AVAILABLE_LOCAL", "HOLD" if not gunicorn else "PASS", "P1", "Windows local does not require Gunicorn"),
+.\release1_deployment_dryrun_script.py:        ("Gunicorn command", "gunicorn config.wsgi:application --bind 0.0.0.0:8000", "documented", "HOLD", "P1", "execute only staging"),
+.\release1_deployment_dryrun_script.py:    write_csv("release1_nginx_reverse_proxy_check.csv", ["Check", "Expected", "Actual", "Result", "Severity", "Notes"], [
+.\release1_deployment_dryrun_script.py:        ("proxy", "proxy_pass to Gunicorn", "CHECKLIST_ONLY", "HOLD", "P1", "preserve X-Forwarded-Proto"),
+.\release1_deployment_dryrun_script.py:Compress-Archive -Path <MEDIA_ROOT> -DestinationPath <BACKUP_DIR>/media_<DATE>.zip
+.\release1_deployment_dryrun_script.py:Expand-Archive <MEDIA_BACKUP_FILE> -DestinationPath <MEDIA_ROOT>
+.\release1_deployment_dryrun_script.py:Re-run approved collectstatic for the restored release or restore the matching static artifact.
+.\release1_deployment_dryrun_script.py:        ("Static", "collectstatic dry-run", "PASS", "PASS", "P1", "release1_14_collectstatic_dryrun.txt", "staging collectstatic"),
+.\release1_deployment_dryrun_script.py:        ("WSGI", "import", "PASS", "PASS", "P0", "release1_16_wsgi_import_check.txt", "Gunicorn staging smoke"),
+.\release1_deployment_dryrun_script.py:        ("Nginx", "reverse proxy", "NOT_DISCOVERED", "HOLD", "P1", "release1_19_nginx_discovery.txt", "create reviewed config"),
+.\release1_deployment_dryrun_script.py:        ("RE-02", "Static", "TXT", "release1_14_collectstatic_dryrun.txt", "dry run", "NO", "local only", "release owner"),
+.\release1_deployment_dryrun_script.py:        ("RE-03", "WSGI", "TXT", "release1_16_wsgi_import_check.txt", "WSGI import", "NO", "local only", "release owner"),
+.\release1_deployment_dryrun_script.py:`collectstatic --dry-run --noinput`이 성공했습니다. STATIC_ROOT와 MEDIA_ROOT는 로컬 경로로 확인했습니다. media와 생성 Excel은 staging에서 접근권한·보관·백업을 별도 검증해야 합니다.
+.\release1_deployment_dryrun_report.md:`collectstatic --dry-run --noinput`이 성공했습니다. STATIC_ROOT와 MEDIA_ROOT는 로컬 경로로 확인했습니다. media와 생성 Excel은 staging에서 접근권한·보관·백업을 별도 검증해야 합니다.
+.\apps\projects\hq_views.py:    temp_dir = Path(settings.MEDIA_ROOT) / "project_import_temp"
+.\apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit6_labpay_e2e.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit6_labpay_e2e.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit2_labor_rbac.py:    settings.MEDIA_ROOT = tmp_path
+.\apps\labor\tests\test_audit2_labor_rbac.py:    settings.MEDIA_ROOT = tmp_path

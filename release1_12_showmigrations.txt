@@ -1,0 +1,119 @@
+﻿admin
+ [X] 0001_initial
+ [X] 0002_logentry_remove_auto_add
+ [X] 0003_logentry_add_action_flag_choices
+audit
+ [X] 0001_initial
+auth
+ [X] 0001_initial
+ [X] 0002_alter_permission_name_max_length
+ [X] 0003_alter_user_email_max_length
+ [X] 0004_alter_user_username_opts
+ [X] 0005_alter_user_last_login_null
+ [X] 0006_require_contenttypes_0002
+ [X] 0007_alter_validators_add_error_messages
+ [X] 0008_alter_user_username_max_length
+ [X] 0009_alter_user_last_name_max_length
+ [X] 0010_alter_group_name_max_length
+ [X] 0011_update_proxy_permissions
+ [X] 0012_alter_user_first_name_max_length
+closing
+ [X] 0001_initial
+ [X] 0002_adjustment
+ [X] 0003_rename_closing_adj_project_period_idx_closing_adj_project_78a5fe_idx_and_more
+ [X] 0004_projectclose
+contenttypes
+ [X] 0001_initial
+ [X] 0002_remove_content_type_name
+contracts
+ [X] 0001_initial
+ [X] 0002_contractsnapshot
+core
+ [X] 0001_initial
+ [X] 0002_rbac_models
+ [X] 0003_projectassignment_role_created_at
+ [X] 0004_remove_projectassignment_created_at_and_more
+cost
+ [X] 0001_initial
+ [X] 0002_costactual_and_lines
+ [X] 0003_revenue_recognition
+ [X] 0004_contractsnapshot_fk
+ [X] 0005_costitem_cbs_fields
+ [X] 0006_costitemalias
+evidence
+ [X] 0001_initial
+ [X] 0002_rename_evidence_obje_4a1c42_idx_evidence_ev_object__e7134e_idx
+ [X] 0003_evidence_status
+field
+ [X] 0001_initial
+ [X] 0002_remove_dailyreport_unique
+finance
+ [X] 0001_cash_models
+inventory
+ [X] 0001_initial
+ [X] 0002_item_master
+ [X] 0003_inventoryledger_stock_and_more
+ [X] 0004_transfer
+ [X] 0005_issue_to_work
+ [X] 0006_rename_inventory_i_project_8f7e2c_idx_inventory_i_project_2c96c9_idx_and_more
+labor
+ [X] 0001_initial
+ [X] 0002_timesheet
+ [X] 0003_rename_labor_laborrate_labor_r_b44f8f_idx_labor_labor_labor_r_a4ca68_idx_and_more
+ [X] 0004_payrollbatchnumbersequence_payrollallocationbatch_and_more
+ [X] 0005_workermaster
+ [X] 0006_laborworkledger
+ [X] 0007_labormonthlypayroll
+ [X] 0008_electroniccardimportbatch
+ [X] 0009_electroniccardworkraw_electroniccardworkday_and_more
+ [X] 0010_laborreconciliationresult
+ [X] 0011_laborconfirmedworkday
+ [X] 0012_laborexcelexportbatch
+master
+ [X] 0001_favoritecostitem
+ [X] 0002_cbschangerequest
+ [X] 0003_master_templates
+ [X] 0004_rename_master_mas_template_8dc4c0_idx_master_mast_templat_54a0bb_idx_and_more
+otp_static
+ [X] 0001_initial
+ [X] 0002_throttling
+otp_totp
+ [X] 0001_initial
+ [X] 0002_auto_20190420_0723
+projects
+ [X] 0001_initial
+ [X] 0002_projectcontract
+ [X] 0003_budgetitem
+ [X] 0003_alter_project_status
+ [X] 0004_merge_0003_alter_project_status_0003_budgetitem
+ [X] 0005_wbsitem
+ [X] 0006_rename_projects_bu_project_6f9e5b_idx_projects_bu_project_186f23_idx_and_more
+ [X] 0007_remove_projectcontract_project_remove_wbsitem_parent_and_more
+ [X] 0008_projectcontract
+ [X] 0009_budgetitem_wbsitem
+ [X] 0010_update_budgetitem_fields
+ [X] 0011_project_wbs_fields
+ [X] 0012_project_templates
+ [X] 0013_wbs_change_request
+ [X] 0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more
+ [X] 0015_approval_package
+ [X] 0016_rename_projects_ap_package_3a20c6_idx_projects_ap_package_2176e5_idx
+ [X] 0017_remove_budgetitem_uq_budgetitem_project_costitem
+public_site
+ [X] 0001_initial
+reports
+ [X] 0001_initial
+ [X] 0002_alter_fieldreport_status
+risk
+ [X] 0001_initial
+ [X] 0002_rename_risk_riske_event_t_d1b177_idx_risk_riskev_event_t_2f19b0_idx_and_more
+schedule
+ [X] 0001_initial
+ [X] 0002_daily_progress
+ [X] 0003_plan_change_request
+ [X] 0004_daily_progress_status
+ [X] 0005_alter_dailyprogress_note
+sessions
+ [X] 0001_initial
+two_factor
+ [X] 0001_squashed_0008_delete_phonedevice (8 squashed migrations)

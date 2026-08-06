@@ -1,0 +1,20 @@
+﻿5df8b1e docs: add ERP operation manual pack
+5bf5e7f fix: correct CEO KPI budget prefetch relation
+8b69896 audit: add operational smoke release readiness gate
+1807142 audit: add CEO dashboard lineage and UTF-8 coverage
+dfaf18b audit: add FIELD progress e2e and UTF-8 source integrity coverage
+34b026a audit: add Excel import export reliability coverage
+b25c3df audit: add LABPAY e2e operational harness
+ac101d2 audit: add URL and template link integrity coverage
+cc3431b audit: add RBAC matrix enforcement coverage
+9eae185 i18n: fix inventory closing guard Korean message
+f86b9df audit: harden closing and confirmation guard coverage
+41c908d audit: harden AuditLog sensitive payload sanitization
+09a09e4 docs: add AUDIT-0 ERP inventory and operational risk map
+d9552c5 1차 데모까지 구현 완료
+79734a4 close-4 단계까지  마무리
+c4dad29 Demo: add seed_demo_3sites and core migration
+7617701 CEO-KPI: add KPI engine + KPI detail page
+9b70a7e T10: HQ project registration + contract/budget/WBS baseline
+102e79e CBS-1: add CBS CostItem master CSV + seed loader (idempotent upsert)
+de1e86e Initial commit

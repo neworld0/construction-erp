@@ -1,0 +1,12 @@
+Role,Route,Expected,Actual_Status,Contains_Protected_Data,Result,Notes
+ANONYMOUS,/app/ceo/,302,302,NO,PASS,login redirect
+ANONYMOUS,/app/hq/,302,302,NO,PASS,login redirect
+CEO,/app/ceo/,200,200,pilot only,PASS,allowed
+CEO,/app/ceo/projects/17/kpi/,200,200,pilot KPI,PASS,allowed
+HQ,/app/hq/,200,200,HQ data,PASS,allowed
+HQ,/app/hq/labor/e-card-imports/,200,200,masked LABPAY,PASS,allowed
+FIELD,/app/field/?tab=progress&project_id=17,200 if assigned,200,assigned project,PASS,assignment-dependent
+FIELD,/app/ceo/,403,403,NO,PASS,CEO blocked
+FIELD,/app/hq/labor/e-card-imports/,403,403,NO,PASS,LABPAY blocked
+FIELD,/app/hq/projects/17/,403,403,NO,PASS,HQ project/budget blocked
+ADMIN,/admin/,staff login,302,NO,PASS,staff UI not exercised

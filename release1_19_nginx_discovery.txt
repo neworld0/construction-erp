@@ -1,0 +1,8 @@
+﻿.\docs\audit\AUDIT_0_ERP_INVENTORY.md:21:| Media/evidence | `media/`, `evidence/` | 업로드/증빙 저장 영역 | 민감 파일 포함 가능성. 내용 열람 금지 |
+.\docs\audit\AUDIT_0_ERP_INVENTORY.md:86:| `media/` | 업로드 원본 파일/Excel 포함 가능 |
+.\docs\deploy.md:35:## 3) Migration and static files
+.\docs\deploy.md:41:python manage.py collectstatic --noinput --settings=config.settings.prod
+.\docs\deploy.md:47:gunicorn config.wsgi:application \
+.\docs\deploy.md:78:python manage.py collectstatic --noinput --settings=config.settings.prod
+.\docs\demo_local.md:35:## 3) Migrate + collectstatic
+.\docs\demo_local.md:40:python manage.py collectstatic --noinput

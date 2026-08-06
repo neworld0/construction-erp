@@ -1,0 +1,7 @@
+Issue_ID,Area,P0_P1_P2,Current_Status,Required_Before_Staging,Required_Before_Production,Next_Action,Evidence
+SS-01,Staging host,P1,NOT_PROVIDED,YES,YES,provide Linux staging endpoint and approved account,release1_staging_host_access_check.md
+SS-02,Gunicorn/Nginx,P1,TEMPLATE_ONLY,YES,YES,apply config and run service/nginx -t smoke,release1_staging_gunicorn_verification.md
+SS-03,Isolated restore,P1,CREATEDB_DENIED,YES,YES,DB owner executes isolated restore,release1_staging_restore_drill_report.md
+SS-04,Media policy,P1,PENDING,YES,YES,approve protected media and backup retention,release1_staging_static_media_policy_check.md
+SS-05,LABPAY safe real file,P2,SEPARATE_OPEN_ITEM,NO,YES,run sanitized real-file verification,OPS-2 gap register
+SS-06,Revenue policy,P1,SEPARATE_OPEN_ITEM,NO,YES,finance approval,OPS-2 gap register

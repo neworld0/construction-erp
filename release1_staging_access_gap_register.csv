@@ -1,0 +1,9 @@
+Gap_ID,Area,Gap,Severity,P0_P1_P2,Blocks_Rerun,Blocks_Staging_Pilot,Blocks_Production,Required_Action,Owner,Status,Notes
+GAP-01,Host,Linux staging host missing,HIGH,P1,YES,YES,YES,provide host and SSH method,infra,OPEN,
+GAP-02,Proxy,Gunicorn/Nginx actual execution missing,HIGH,P1,YES,YES,YES,authorize systemctl and nginx -t,infra,OPEN,
+GAP-03,Restore,isolated restore DB privilege missing,HIGH,P1,YES,YES,YES,CREATEDB or pre-create isolated DB,DB owner,OPEN,
+GAP-04,Media,media backup policy pending,HIGH,P1,YES,YES,YES,approve storage/retention/access policy,security,OPEN,
+GAP-05,Finance,final revenue accounting policy pending,MEDIUM,P1,NO,NO,YES,approve finance policy,finance,OPEN,separate
+GAP-06,LABPAY,safe real e-card file pending,MEDIUM,P2,NO,NO,YES,sanitized safe-file validation,labor,OPEN,separate
+GAP-07,Operations,user training pending,MEDIUM,P2,NO,YES,YES,pilot rehearsal,ops,OPEN,
+GAP-08,Release,production release remains excluded,HIGH,P1,NO,NO,YES,complete separate production gates,release owner,OPEN,

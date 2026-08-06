@@ -1,0 +1,17 @@
+﻿Check_ID,Area,Route_or_Command,Expected,Actual,HTTP_Status,Elapsed_Seconds,Result,Severity,Notes
+S-01,Django,python manage.py check,PASS,PASS,-,-,PASS,P0,local baseline
+S-02,Migration,makemigrations --check --dry-run,No changes,No changes,-,-,PASS,P0,local baseline
+S-03,WSGI,import config.wsgi,WSGI_IMPORT_OK,WSGI_IMPORT_OK,-,-,PASS,P0,local only
+S-04,Gunicorn,Linux service status,PASS,NOT_EXECUTED_NO_STAGING_HOST,-,-,HOLD,P1,host-dependent
+S-05,Nginx,nginx -t,PASS,NOT_EXECUTED_NO_STAGING_HOST,-,-,HOLD,P1,host-dependent
+S-06,Health,/healthz/,200 <2s,200,200,0.331193,PASS,P0,local staging-equivalent
+S-07,Auth,/login/,200 <3s,200,200,0.019013,PASS,P0,local staging-equivalent
+S-08,CEO,/app/ceo/,200 <5s,200,200,0.071297,PASS,P0,pilot visible
+S-09,CEO KPI,/app/ceo/projects/17/kpi/,200 <5s,200,200,0.021159,PASS,P0,pilot KPI
+S-10,HQ,/app/hq/,200,200,200,0.014460,PASS,P0,local staging-equivalent
+S-11,LABPAY,/app/hq/labor/e-card-imports/,200 <5s,200,200,0.017803,PASS,P0,grouped-count patch
+S-12,FIELD,/app/field/,200,200,200,0.027809,PASS,P0,field dashboard
+S-13,FIELD progress,/app/field/?tab=progress&project_id=17,200 <5s if assigned,200,200,0.019616,PASS,P1,assignment dependent
+S-14,Static,Nginx static file,200,NOT_EXECUTED_NO_STAGING_HOST,-,-,HOLD,P1,collectstatic dry-run only
+S-15,Media,staging media policy,approved,NOT_EXECUTED_NO_STAGING_HOST,-,-,HOLD,P1,sensitive upload policy pending
+S-16,Admin,/admin/,redirect,302,302,0.007798,PASS,P1,anonymous route only

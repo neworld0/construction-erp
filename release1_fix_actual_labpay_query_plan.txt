@@ -1,0 +1,30 @@
+Limit  (cost=135377.21..135377.34 rows=50 width=4172)
+  ->  Sort  (cost=135377.21..135521.21 rows=57600 width=4172)
+        Sort Key: labor_electroniccardimportbatch.uploaded_at DESC, labor_electroniccardimportbatch.id DESC
+        ->  GroupAggregate  (cost=4427.69..133463.78 rows=57600 width=4172)
+              Group Key: labor_electroniccardimportbatch.id, projects_project.id, auth_user.id
+              ->  Incremental Sort  (cost=4427.69..131843.21 rows=69638 width=4172)
+                    Sort Key: labor_electroniccardimportbatch.id DESC, projects_project.id, auth_user.id, labor_electroniccardworkraw.id
+                    Presorted Key: labor_electroniccardimportbatch.id
+                    ->  Merge Left Join  (cost=64.09..2024.13 rows=69638 width=4172)
+                          Merge Cond: (labor_electroniccardimportbatch.id = labor_laborreconciliationresult.batch_id)
+                          ->  Merge Left Join  (cost=6.88..914.91 rows=2976 width=4164)
+                                Merge Cond: (labor_electroniccardimportbatch.id = labor_electroniccardworkraw.batch_id)
+                                ->  Nested Loop Left Join  (cost=0.42..858.23 rows=2232 width=4156)
+                                      ->  Nested Loop Left Join  (cost=0.14..100.03 rows=30 width=4148)
+                                            Join Filter: (labor_electroniccardimportbatch.uploaded_by_id = auth_user.id)
+                                            ->  Nested Loop  (cost=0.14..76.52 rows=30 width=4023)
+                                                  Join Filter: (labor_electroniccardimportbatch.project_id = projects_project.id)
+                                                  ->  Index Scan Backward using labor_electroniccardimportbatch_pkey on labor_electroniccardimportbatch  (cost=0.14..48.59 rows=30 width=2174)
+                                                  ->  Materialize  (cost=0.00..10.60 rows=40 width=1849)
+                                                        ->  Seq Scan on projects_project  (cost=0.00..10.40 rows=40 width=1849)
+                                            ->  Materialize  (cost=0.00..2.72 rows=48 width=125)
+                                                  ->  Seq Scan on auth_user  (cost=0.00..2.48 rows=48 width=125)
+                                      ->  Index Scan using labor_electroniccardworkday_batch_id_44bdea6d on labor_electroniccardworkday  (cost=0.28..17.83 rows=744 width=16)
+                                            Index Cond: (batch_id = labor_electroniccardimportbatch.id)
+                                ->  Sort  (cost=6.46..6.56 rows=40 width=16)
+                                      Sort Key: labor_electroniccardworkraw.batch_id DESC
+                                      ->  Seq Scan on labor_electroniccardworkraw  (cost=0.00..5.40 rows=40 width=16)
+                          ->  Sort  (cost=57.21..58.96 rows=702 width=16)
+                                Sort Key: labor_laborreconciliationresult.batch_id DESC
+                                ->  Seq Scan on labor_laborreconciliationresult  (cost=0.00..24.02 rows=702 width=16)

@@ -1,0 +1,8 @@
+Area,Check_Item,Current_Status,Result,Severity,Evidence,Next
+Application,LABPAY list performance,PASS <5 seconds,PASS,P0,release1_fix_labpay_performance_matrix.csv,recheck under staging volume
+Application,health/CEO/HQ/FIELD smoke,LOCAL_EQUIVALENT_PASS,PASS,P0,release1_staging_healthcheck_smoke_matrix.csv,repeat through staging proxy
+RBAC,restricted routes,LOCAL_EQUIVALENT_PASS,PASS,P0,release1_staging_rbac_smoke_matrix.csv,repeat on staging
+Gunicorn,actual Linux service,NOT_EXECUTED_NO_HOST,HOLD,P1,release1_staging_gunicorn_verification.md,staging host required
+Nginx,actual reverse proxy,NOT_EXECUTED_NO_HOST,HOLD,P1,release1_staging_nginx_verification.md,staging host required
+Restore,isolated restore,CREATEDB_DENIED,HOLD,P1,release1_staging_restore_drill_report.md,DB owner required
+Static/media,actual routing and policy,NOT_EXECUTED_NO_HOST,HOLD,P1,release1_staging_static_media_policy_check.md,platform policy required

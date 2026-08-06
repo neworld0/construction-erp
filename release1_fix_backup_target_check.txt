@@ -1,0 +1,6 @@
+﻿DB_VENDOR=postgresql
+DB_NAME=construction_erp_demo
+DB_HOST=127.0.0.1
+DB_PORT=5432
+MEDIA_ROOT_EXISTS=True
+MEDIA_ROOT=C:\projects\construction-erp\media

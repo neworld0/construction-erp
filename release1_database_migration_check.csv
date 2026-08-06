@@ -1,0 +1,6 @@
+Check,Command,Expected,Actual,Result,Severity,Notes
+manage.py check,python manage.py check,no issues,no issues,PASS,P0,local settings
+makemigrations,python manage.py makemigrations --check --dry-run,no changes,no changes,PASS,P0,no migration generated
+showmigrations,python manage.py showmigrations,captured,captured,PASS,P1,release1_12_showmigrations.txt
+migrate plan,python manage.py migrate --plan,captured only,captured,PASS,P1,no migration applied
+staging migrate backup,backup before migrate,required,NOT_EXECUTED,HOLD,P1,runbook required

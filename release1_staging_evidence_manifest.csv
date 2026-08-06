@@ -1,0 +1,6 @@
+Evidence_ID,Step,Evidence_Type,File,Description,Contains_Secret,Contains_PII,Reviewer,Notes
+SS-E01,Host access,MD,release1_staging_host_access_check.md,availability check,NO,NO,release owner,no host fabricated
+SS-E02,Restore,MD,release1_staging_restore_drill_report.md,safe restore attempt,NO,NO,DB owner,no source row output
+SS-E03,Health,CSV,release1_staging_healthcheck_smoke_matrix.csv,local equivalent smoke,NO,NO,release owner,timings recorded
+SS-E04,RBAC,CSV,release1_staging_rbac_smoke_matrix.csv,access controls,NO,NO,release owner,403/302 expected
+SS-E05,Tests,TXT,release1_staging_12_14_pytest_baseline.txt,targeted regression,NO,NO,release owner,64 passed

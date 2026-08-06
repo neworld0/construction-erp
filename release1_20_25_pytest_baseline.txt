@@ -1,0 +1,12 @@
+﻿.........................................................                [100%]
+============================== warnings summary ===============================
+apps\inventory\models.py:35
+  C:\projects\construction-erp\apps\inventory\models.py:35: RemovedInDjango60Warning: CheckConstraint.check is deprecated in favor of `.condition`.
+    models.CheckConstraint(
+
+apps/core/tests/test_audit9_operational_smoke_matrix.py::test_audit9_release_preflight_has_no_pending_migration_or_debug_artifact_contract
+  C:\projects\construction-erp\apps\inventory\migrations\0001_initial.py:67: RemovedInDjango60Warning: CheckConstraint.check is deprecated in favor of `.condition`.
+    constraint=models.CheckConstraint(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+57 passed, 2 warnings in 21.80s

@@ -1,0 +1,8 @@
+Role,Route,Expected,Actual_Status,Result,Notes
+CEO,/app/ceo/,200,200,PASS,CEO dashboard allowed
+HQ,/app/hq/,200,200,PASS,HQ home allowed
+HQ,/app/hq/labor/e-card-imports/,200,200,PASS,LABPAY import list allowed
+FIELD,/app/field/?tab=progress,200 if assigned,200,PASS,assigned progress
+FIELD,/app/hq/labor/e-card-imports/,403,403,PASS,HQ LABPAY blocked
+FIELD,/app/ceo/,403,403,PASS,CEO blocked
+ANONYMOUS,/app/ceo/,302,302,PASS,login redirect

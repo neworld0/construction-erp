@@ -1,0 +1,9 @@
+Area,Check_Item,Previous_Status,Current_Status,Result,Severity,Evidence,Next_Action
+Gunicorn,staging configuration,HOLD,TEMPLATE_READY / LOCAL_IMPORT_PASS,HOLD,P1,release1_fix_staging_gunicorn_config.md,apply and smoke on Linux staging
+Nginx,reverse proxy configuration,HOLD,TEMPLATE_READY,HOLD,P1,release1_fix_staging_nginx_config.md,"apply, nginx -t, HTTPS health smoke"
+Backup,local demo backup,HOLD,BACKUP_EXECUTED / RESTORE_COMMAND_VERIFIED,HOLD,P1,release1_fix_backup_restore_drill_report.md,isolated restore and media policy
+LABPAY,e-card list response time,HOLD (>30 seconds),PASS (<0.38 seconds cold),PASS,P0,release1_fix_labpay_performance_matrix.csv,recheck staging volume
+Smoke,core routes,PASS except LABPAY,PASS except optional export,PASS,P0,release1_fix_healthcheck_smoke_matrix.csv,repeat after staging deployment
+RBAC,CEO/HQ/FIELD,PASS,PASS,PASS,P0,release1_fix_rbac_smoke_matrix.csv,repeat after staging deployment
+LABPAY,safe real e-card file,HOLD,SEPARATE_OPEN_ITEM,HOLD,P2,release1_fix_open_issue_register.csv,LABPAY-REAL-1
+Finance,revenue accounting policy,HOLD,SEPARATE_OPEN_ITEM,HOLD,P1,release1_fix_open_issue_register.csv,FINANCE-REVENUE-POLICY-1

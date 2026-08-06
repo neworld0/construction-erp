@@ -1,0 +1,9 @@
+﻿python : Traceback (most recent call last):
+At line:3 char:1
++ python -c "import gunicorn; print('GUNICORN_IMPORT_OK')" 2>&1 | Out-F ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'gunicorn'

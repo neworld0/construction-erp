@@ -1,0 +1,12 @@
+Input_ID,Required_Input,Provided_Value_Status,Example_No_Secret,Used_By,Required,Blocker_If_Missing,Notes
+I-01,Linux staging host + SSH method,MISSING,stg-app-01 via approved bastion,all host checks,YES,host smoke cannot start,
+I-02,service account + project/venv paths,MISSING,erp-staging /srv/app /srv/venv,Gunicorn,YES,service check blocked,
+I-03,branch/commit,MISSING,<COMMIT_SHA>,deployment validation,YES,artifact not immutable,commit LABPAY patch
+I-04,settings/env status,MISSING,config.settings.prod; SECRET_KEY=PRESENT,security smoke,YES,security check blocked,no values
+I-05,staging DB classification,MISSING,non-production staging PostgreSQL,restore safety,YES,restore blocked,
+I-06,isolated restore target authority,MISSING,erp_staging_restore_drill,restore drill,YES,restore blocked,CREATEDB or pre-created
+I-07,backup path/checksum,MISSING,<BACKUP_DIR>/erp.dump,restore drill,YES,restore blocked,
+I-08,Nginx/Gunicorn service config and authority,MISSING,service names and config paths,proxy smoke,YES,proxy check blocked,
+I-09,media policy,MISSING,restricted media + encrypted backup,upload/export scope,YES,staging policy blocked,
+I-10,CEO/HQ/FIELD safe test accounts,MISSING,role-specific staging accounts,RBAC smoke,YES,RBAC smoke blocked,
+I-11,release owner approval,MISSING,approved limited smoke scope,go/no-go,YES,rerun not authorized,production excluded

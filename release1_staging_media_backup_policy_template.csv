@@ -1,0 +1,11 @@
+Area,Policy_Question,Required_For_Staging,Required_For_Production,Current_Answer,Recommended_Answer,Risk_If_Unresolved,Owner,Notes
+media,media contains real upload files,YES,YES,UNKNOWN,inventory before pilot,sensitive data exposure,security,
+media,media contains sensitive Excel,YES,YES,UNKNOWN,treat as sensitive Excel,privacy breach,security,
+media,media is backed up,YES,YES,PENDING,encrypted scheduled backup,data loss,infra,
+media,encrypted at rest,YES,YES,UNKNOWN,approved encrypted storage,data exposure,security,
+media,Nginx may serve media directly,YES,YES,UNKNOWN,protected download unless approved public,unauthorized download,security,
+media,retention period,YES,YES,PENDING,documented retention,unbounded storage,ops,
+media,backup storage location,YES,YES,PENDING,separate protected location,single-host loss,infra,
+media,restore test,YES,YES,PENDING,isolated restore verification,unverified recovery,infra,
+media,Korean filename handling,YES,YES,NOT_TESTED,upload/download smoke,filename corruption,QA,
+media,Excel generated files,YES,YES,PENDING,writable restricted storage,failed export,infra,

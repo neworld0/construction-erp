@@ -1,0 +1,9 @@
+Evidence_ID,Artifact,Purpose,Contains_Secret,Contains_PII,Source,Reviewer,Notes
+AP-E01,release1_staging_access_pack.md,coordination guide,NO,NO,RELEASE-1 evidence,release owner,documentation only
+AP-E02,release1_staging_access_questionnaire.csv,collect required inputs,NO,NO,access gaps,infra,placeholders only
+AP-E03,release1_staging_authority_matrix.csv,approve activities,NO,NO,governance,release owner,
+AP-E04,release1_staging_env_var_request_template.csv,safe config request,NO,NO,settings discovery,security,values forbidden
+AP-E05,release1_staging_db_restore_authority_checklist.csv,safe restore prep,NO,NO,restore HOLD,DB owner,
+AP-E06,release1_staging_nginx_gunicorn_execution_checklist.csv,host execution plan,NO,NO,RELEASE-1-FIX templates,infra,
+AP-E07,release1_staging_media_backup_policy_template.csv,media policy,NO,NO,staging smoke gap,security,
+AP-E08,release1_staging_owner_approval_form.md,scope approval,NO,NO,governance,release owner,

@@ -1,0 +1,32 @@
+﻿Name: Django
+Version: 5.2.10
+Summary: A high-level Python web framework that encourages rapid development and clean, pragmatic design.
+Home-page: https://www.djangoproject.com/
+Author: 
+Author-email: Django Software Foundation <foundation@djangoproject.com>
+License-Expression: BSD-3-Clause
+Location: C:\projects\construction-erp\.venv\Lib\site-packages
+Requires: asgiref, sqlparse, tzdata
+Required-by: django-formtools, django-otp, django-phonenumber-field, django-two-factor-auth, djangorestframework
+---
+Name: psycopg
+Version: 3.3.2
+Summary: PostgreSQL database adapter for Python
+Home-page: https://psycopg.org/
+Author: 
+Author-email: Daniele Varrazzo <daniele.varrazzo@gmail.com>
+License-Expression: LGPL-3.0-only
+Location: C:\projects\construction-erp\.venv\Lib\site-packages
+Requires: typing-extensions, tzdata
+Required-by: 
+---
+Name: whitenoise
+Version: 6.7.0
+Summary: Radically simplified static file serving for WSGI applications
+Home-page: 
+Author: David Evans
+Author-email: 
+License: 
+Location: C:\projects\construction-erp\.venv\Lib\site-packages
+Requires: 
+Required-by: 

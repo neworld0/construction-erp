@@ -1,0 +1,3 @@
+﻿ apps/labor/tests/test_e_card_imports.py | 44 +++++++++++++++++++++++++++++++++
+ apps/labor/web_views.py                 | 41 ++++++++++++++++++++++--------
+ 2 files changed, 75 insertions(+), 10 deletions(-)

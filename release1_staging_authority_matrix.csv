@@ -1,0 +1,16 @@
+Authority_ID,Activity,Required_Role,Allowed_Operator,Approval_Required,Approval_Owner,Evidence_Required,Forbidden_Without_Approval,Notes
+A-01,SSH login,staging operator,approved release operator,YES,infra,access confirmation,YES,bastion policy
+A-02,pull/fetch code,deploy operator,service owner,YES,release owner,commit SHA,YES,no branch drift
+A-03,install Python dependencies,deploy operator,service owner,YES,release owner,pip result,YES,lock approved versions
+A-04,set environment variables,config custodian,infra,YES,security owner,status only,YES,no values printed
+A-05,run migrations,DB/deploy operator,DB owner,YES,release owner,backup + migrate output,YES,not part of current smoke
+A-06,restart Gunicorn,systemd operator,infra,YES,infra,systemctl status,YES,
+A-07,reload Nginx,systemd operator,infra,YES,infra,nginx -t + reload,YES,
+A-08,run nginx -t,Nginx operator,infra,YES,infra,nginx test output,YES,
+A-09,create isolated restore DB,DB owner,DB operator,YES,DB owner,DB name + privilege,YES,CREATEDB or pre-created
+A-10,restore backup to isolated DB,DB owner,DB operator,YES,DB owner,restore log/checksum,YES,never active DB
+A-11,inspect media folder,storage operator,infra,YES,security owner,permission summary,YES,no file content
+A-12,create media backup,storage operator,infra,YES,DB/security owner,backup ID/checksum,YES,encrypted destination
+A-13,run smoke tests,release operator,approved tester,YES,release owner,matrices,YES,test users only
+A-14,approve limited staging pilot,release approver,release owner,YES,release owner,approval form,YES,production excluded
+A-15,approve production release,executive/release authority,designated approver,YES,production owner,separate gate,YES,not in this pack

@@ -1,0 +1,375 @@
+﻿config\urls.py:4:The `urlpatterns` list routes URLs to views. For more information please see:
+config\urls.py:9:    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+config\urls.py:12:    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+config\urls.py:15:    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+config\urls.py:22:from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+config\urls.py:27:from apps.core.views import healthz_view
+config\urls.py:29:urlpatterns = [
+config\urls.py:30:    path('admin/', admin.site.urls),
+config\urls.py:31:    path("", include("apps.core.urls")),
+config\urls.py:32:    path("", include("apps.public_site.urls")),
+config\urls.py:33:    path(
+config\urls.py:35:        include((two_factor_urls.urlpatterns[0], "two_factor"), namespace="two_factor"),
+config\urls.py:37:    path("healthz/", healthz_view),
+config\urls.py:38:    path("", include("apps.ceo.web_urls")),
+config\urls.py:39:    path("app/", include("apps.core.app_urls")),
+config\urls.py:40:    path("api/", include("apps.projects.urls")),
+config\urls.py:41:    path("api/", include("apps.cost.urls")),
+config\urls.py:42:    path("api/", include("apps.field.urls")),
+config\urls.py:43:    path("api/", include("apps.finance.urls")),
+config\urls.py:44:    path("api/", include("apps.schedule.urls")),
+config\urls.py:45:    path("api/", include("apps.contracts.urls")),
+config\urls.py:46:    path("api/", include("apps.evidence.urls")),
+config\urls.py:47:    path("api/", include("apps.risk.urls")),
+config\urls.py:48:    path("api/", include("apps.ceo.urls")),
+config\urls.py:49:    path("api/", include("apps.audit.urls")),
+config\urls.py:50:    path("api/", include("apps.master.api_urls")),
+config\urls.py:51:    path("api/closing/", include("apps.closing.urls")),
+config\urls.py:52:    path("api/kpi/", include("apps.kpi.urls")),
+config\urls.py:53:    path("api/inventory/", include("apps.inventory.urls")),
+config\urls.py:54:    path("api/labor/", include("apps.labor.urls")),
+config\urls.py:68:    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+config\urls.py:69:    urlpatterns += staticfiles_urlpatterns()
+config\urls.py:71:    urlpatterns += staticfiles_urlpatterns()
+config\urls.py:74:    urlpatterns += [
+config\urls.py:75:        re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+apps\closing\models.py:48:            raise ValidationError("ClosingPeriod is already closed.")
+apps\closing\urls.py:5:urlpatterns = [
+apps\closing\urls.py:6:    path("month/status/", ClosingMonthStatusView.as_view(), name="closing-status"),
+apps\closing\urls.py:7:    path("month/close/", ClosingMonthCloseView.as_view(), name="closing-close"),
+apps\core\app_urls.py:43:urlpatterns = [
+apps\core\app_urls.py:44:    path("", app_entry),
+apps\core\app_urls.py:45:    path("ceo/", include("apps.ceo.app_urls")),
+apps\core\app_urls.py:46:    path("hq/master/", include("apps.master.web_urls")),
+apps\core\app_urls.py:47:    path("hq/master/", include("apps.labor.web_urls")),
+apps\core\app_urls.py:48:    path("hq/", hq_app_view),
+apps\core\app_urls.py:49:    path("hq/inbox/", hq_inbox_view),
+apps\core\app_urls.py:50:    path("hq/risks/", hq_risk_list_view),
+apps\core\app_urls.py:51:    path("hq/missing/", hq_missing_list_view),
+apps\core\app_urls.py:52:    path("hq/reports/<int:report_id>/", hq_daily_report_detail),
+apps\core\app_urls.py:53:    path("hq/progress/<int:progress_id>/", hq_daily_progress_detail),
+apps\core\app_urls.py:54:    path("hq/field-reports/<int:field_report_id>/", hq_field_report_detail),
+apps\core\app_urls.py:55:    path("hq/costs/<int:cost_actual_id>/", hq_cost_actual_detail),
+apps\core\app_urls.py:56:    path("hq/approvals/<int:approval_id>/", hq_approval_detail),
+apps\core\app_urls.py:57:    path("hq/", include(contract_web_urls)),
+apps\core\app_urls.py:58:    path("hq/", include(schedule_web_urls)),
+apps\core\app_urls.py:59:    path("hq/projects/", hq_project_list),
+apps\core\app_urls.py:60:    path("hq/projects/new/", hq_project_new),
+apps\core\app_urls.py:61:    path("hq/projects/<int:project_id>/", hq_project_detail),
+apps\core\app_urls.py:62:    path("hq/projects/<int:project_id>/wbs-change/new/", hq_wbs_change_new),
+apps\core\app_urls.py:63:    path(
+apps\core\app_urls.py:67:    path("hq/projects/<int:project_id>/approval-packages/new/", hq_approval_package_new),
+apps\core\app_urls.py:68:    path(
+apps\core\app_urls.py:72:    path(
+apps\core\app_urls.py:76:    path("hq/adjustments/", hq_adjustment_list),
+apps\core\app_urls.py:77:    path("hq/adjustments/<int:adjustment_id>/", hq_adjustment_detail),
+apps\core\app_urls.py:78:    path("hq/adjustments/<int:adjustment_id>/submit/", hq_adjustment_submit),
+apps\core\app_urls.py:79:    path("hq/closing/", hq_closing_list),
+apps\core\app_urls.py:80:    path("hq/closing/new/", hq_closing_new),
+apps\core\app_urls.py:81:    path("hq/closing/<int:closing_id>/", hq_closing_detail),
+apps\core\app_urls.py:82:    path("hq/closing/<int:closing_id>/submit/", hq_closing_submit),
+apps\core\app_urls.py:83:    path("hq/closing/<int:closing_id>/approve/", ceo_closing_approve),
+apps\core\app_urls.py:84:    path("hq/closing/<int:closing_id>/reject/", ceo_closing_reject),
+apps\core\app_urls.py:85:    path("hq/inventory/", include("apps.inventory.web_urls_hq")),
+apps\core\app_urls.py:86:    path("hq/labor/", include("apps.labor.web_urls_hq")),
+apps\core\app_urls.py:87:    path("field/", include("apps.field.web_urls")),
+apps\core\app_urls.py:88:    path("field/inventory/", include("apps.inventory.web_urls_field")),
+apps\core\app_urls.py:89:    path("field/labor/", include("apps.labor.web_urls_field")),
+apps\core\app_urls.py:90:    path("reports/", include("apps.reports.web_urls")),
+apps\core\app_urls.py:91:    path("evidence/<int:pk>/edit/", evidence_edit),
+apps\core\app_urls.py:92:    path("evidence-files/<int:file_id>/open/", evidence_file_open, name="evidence-file-open"),
+apps\core\middleware\two_factor_enforce.py:34:        if request.path.startswith(("/healthz/", "/health")):
+apps\core\middleware\two_factor_enforce.py:57:        next_path = quote(request.get_full_path())
+apps\closing\services.py:45:            raise ValidationError("ClosingPeriod is already closed.")
+apps\closing\services.py:131:        raise ValidationError("Project is already closed.")
+apps\audit\urls.py:5:urlpatterns = [
+apps\audit\urls.py:6:    path("audit-logs/", AuditLogListView.as_view()),
+apps\contracts\web_urls.py:5:urlpatterns = [
+apps\contracts\web_urls.py:6:    path("contract-changes/<int:change_id>/", hq_contract_change_detail),
+apps\ceo\web_urls.py:5:urlpatterns = [
+apps\ceo\web_urls.py:6:    path("ceo/dashboard/", dashboard_page, name="ceo-dashboard"),
+apps\ceo\web_urls.py:7:    path("ceo/projects/<int:project_id>/", project_detail_page, name="ceo-project-detail"),
+apps\contracts\urls.py:9:urlpatterns = router.urls
+apps\contracts\urls.py:10:urlpatterns += [
+apps\contracts\urls.py:11:    path(
+apps\contracts\urls.py:15:    path(
+apps\contracts\urls.py:19:    path(
+apps\ceo\urls.py:10:urlpatterns = [
+apps\ceo\urls.py:11:    path("ceo/dashboard/", CEODashboardView.as_view()),
+apps\ceo\urls.py:12:    path("ceo/projects/", CEOProjectsView.as_view()),
+apps\ceo\urls.py:13:    path("ceo/projects/<int:id>/summary/", CEOProjectSummaryView.as_view()),
+apps\ceo\urls.py:14:    path("ceo/reports/project-summary.csv", CEOProjectSummaryReportView.as_view()),
+apps\ceo\app_urls.py:40:urlpatterns = [
+apps\ceo\app_urls.py:41:    path("", ceo_home),
+apps\ceo\app_urls.py:42:    path("inbox/", hq_inbox_view),
+apps\ceo\app_urls.py:43:    path("approvals/approve/", ceo_approval_quick_approve),
+apps\ceo\app_urls.py:44:    path("approvals/reject/", ceo_approval_quick_reject),
+apps\ceo\app_urls.py:45:    path("approvals/<int:approval_id>/", hq_approval_detail),
+apps\ceo\app_urls.py:46:    path("reports/<int:report_id>/", hq_daily_report_detail),
+apps\ceo\app_urls.py:47:    path("progress/<int:progress_id>/", hq_daily_progress_detail),
+apps\ceo\app_urls.py:48:    path("field-reports/<int:field_report_id>/", hq_field_report_detail),
+apps\ceo\app_urls.py:49:    path("costs/<int:cost_actual_id>/", hq_cost_actual_detail),
+apps\ceo\app_urls.py:50:    path("contract-changes/<int:change_id>/", hq_contract_change_detail),
+apps\ceo\app_urls.py:51:    path("plan-change-requests/<int:request_id>/", hq_plan_change_request_detail),
+apps\ceo\app_urls.py:52:    path("labor/timesheets/<int:timesheet_id>/", hq_timesheet_detail),
+apps\ceo\app_urls.py:53:    path("cbs/", include("apps.master.web_urls_ceo")),
+apps\ceo\app_urls.py:54:    path("cbs/cbs/", RedirectView.as_view(url="/app/ceo/cbs/", permanent=True)),
+apps\ceo\app_urls.py:55:    path("projects/", ceo_projects_list),
+apps\ceo\app_urls.py:56:    path("projects/<int:project_id>/", project_detail_page),
+apps\ceo\app_urls.py:57:    path("projects/<int:project_id>/kpi/", ceo_project_kpi_detail),
+apps\ceo\app_urls.py:58:    path("wbs-change/requests/", ceo_wbs_change_list),
+apps\ceo\app_urls.py:59:    path("wbs-change/requests/<int:request_id>/", ceo_wbs_change_detail),
+apps\ceo\app_urls.py:60:    path("wbs-change/requests/<int:request_id>/approve/", ceo_wbs_change_approve),
+apps\ceo\app_urls.py:61:    path("wbs-change/requests/<int:request_id>/reject/", ceo_wbs_change_reject),
+apps\ceo\app_urls.py:62:    path("approval-packages/", ceo_approval_package_list),
+apps\ceo\app_urls.py:63:    path("approval-packages/<int:package_id>/", ceo_approval_package_detail),
+apps\ceo\app_urls.py:64:    path(
+apps\ceo\app_urls.py:68:    path(
+apps\ceo\app_urls.py:72:    path("adjustments/", ceo_adjustment_list),
+apps\ceo\app_urls.py:73:    path("adjustments/<int:adjustment_id>/", ceo_adjustment_detail),
+apps\ceo\app_urls.py:74:    path("adjustments/<int:adjustment_id>/approve/", ceo_adjustment_approve),
+apps\ceo\app_urls.py:75:    path("adjustments/<int:adjustment_id>/reject/", ceo_adjustment_reject),
+apps\core\views.py:56:def health_view(request):
+apps\core\views.py:66:def healthz_view(request):
+apps\core\views.py:262:def _maybe_redirect_ceo_to_ceo_path(request):
+apps\core\views.py:276:    ceo_redirect = _maybe_redirect_ceo_to_ceo_path(request)
+apps\core\views.py:651:    ceo_redirect = _maybe_redirect_ceo_to_ceo_path(request)
+apps\core\views.py:678:    ceo_redirect = _maybe_redirect_ceo_to_ceo_path(request)
+apps\core\views.py:739:        "return_url": request.get_full_path(),
+apps\core\views.py:747:    ceo_redirect = _maybe_redirect_ceo_to_ceo_path(request)
+apps\core\views.py:795:        "return_url": request.get_full_path(),
+apps\core\views.py:803:    ceo_redirect = _maybe_redirect_ceo_to_ceo_path(request)
+apps\core\views.py:847:        "return_url": request.get_full_path(),
+apps\core\views.py:855:    ceo_redirect = _maybe_redirect_ceo_to_ceo_path(request)
+apps\core\urls.py:9:    health_view,
+apps\core\urls.py:13:urlpatterns = [
+apps\core\urls.py:14:    path("login/", ERPLoginView.as_view()),
+apps\core\urls.py:15:    path("logout/", logout_view),
+apps\core\urls.py:16:    path("health", health_view),
+apps\core\urls.py:17:    path("api/approvals/", ApprovalRequestListView.as_view()),
+apps\core\urls.py:18:    path("api/approvals/submit/", ApprovalSubmitView.as_view()),
+apps\core\urls.py:19:    path("api/approvals/<int:pk>/approve/", ApprovalApproveView.as_view()),
+apps\core\urls.py:20:    path("api/approvals/<int:pk>/reject/", ApprovalRejectView.as_view()),
+apps\ceo\services\kpi_engine.py:66:def _baseline_ready(project, contract_amount, budget_total, planned_progress_percent):
+apps\ceo\services\kpi_engine.py:250:        baseline_ready, excluded_reason = _baseline_ready(
+apps\ceo\services\kpi_engine.py:294:            baseline_ready,
+apps\ceo\services\kpi_engine.py:300:                "baseline_ready": baseline_ready,
+apps\ceo\services\kpi_engine.py:450:    baseline_ready,
+apps\ceo\services\kpi_engine.py:466:    if not baseline_ready:
+apps\schedule\web_urls.py:5:urlpatterns = [
+apps\schedule\web_urls.py:6:    path("plan-change-requests/<int:request_id>/", hq_plan_change_request_detail),
+apps\schedule\urls.py:10:urlpatterns = router.urls
+apps\schedule\urls.py:11:urlpatterns += [
+apps\schedule\urls.py:12:    path("progress/", ProgressSummaryView.as_view()),
+apps\schedule\urls.py:13:    path(
+apps\schedule\urls.py:17:    path(
+apps\schedule\urls.py:21:    path(
+apps\core\tests\test_health.py:1:def test_health_endpoint(client):
+apps\core\tests\test_health.py:2:    response = client.get("/health")
+apps\finance\urls.py:6:urlpatterns = [
+apps\finance\urls.py:7:    path("revenue-recognition/", RevenueRecognitionView.as_view()),
+apps\finance\urls.py:8:    path("profit-loss/", ProfitLossView.as_view()),
+apps\finance\urls.py:9:    path("cash/summary/", CashSummaryView.as_view()),
+apps\finance\urls.py:10:    path("cash/events/", CashEventCreateView.as_view()),
+apps\core\tests\test_healthz.py:6:def test_healthz_ok(db):
+apps\core\tests\test_healthz.py:8:    response = client.get("/healthz/")
+apps\core\tests\test_healthz.py:16:def test_healthz_db_fail(monkeypatch):
+apps\core\tests\test_healthz.py:34:    response = client.get("/healthz/")
+apps\public_site\urls.py:5:urlpatterns = [
+apps\public_site\urls.py:6:    path("", views.home),
+apps\public_site\urls.py:7:    path("about/", views.about),
+apps\public_site\urls.py:8:    path("projects/", views.projects_list),
+apps\public_site\urls.py:9:    path("projects/<slug:slug>/", views.projects_detail),
+apps\public_site\urls.py:10:    path("partners/", views.partners),
+apps\public_site\urls.py:11:    path("contact/", views.contact),
+apps\cost\serializers.py:119:            raise serializers.ValidationError("cost actual already exists for this report.")
+apps\cost\urls.py:14:urlpatterns = [
+apps\cost\urls.py:15:    path("accrual-cost/", AccrualCostView.as_view()),
+apps\cost\urls.py:16:    path("cost-actuals/from-daily-report/", cost_actual_from_daily_report),
+apps\cost\urls.py:17:    path("cost-actuals/<int:pk>/approve/", cost_actual_approve),
+apps\cost\urls.py:18:    path("cost-actuals/<int:pk>/close/", cost_actual_close),
+apps\cost\urls.py:20:urlpatterns += router.urls
+apps\risk\views.py:95:            return Response({"detail": "Finding already acknowledged."}, status=status.HTTP_400_BAD_REQUEST)
+apps\evidence\urls.py:10:urlpatterns = [
+apps\evidence\urls.py:11:    path("evidence/", EvidenceListCreateView.as_view()),
+apps\evidence\urls.py:12:    path("evidence/<int:pk>/", EvidenceDetailView.as_view()),
+apps\evidence\urls.py:13:    path("evidence/<int:pk>/files/", EvidenceFileUploadView.as_view()),
+apps\evidence\urls.py:14:    path("evidence-files/<int:pk>/download/", EvidenceFileDownloadView.as_view()),
+apps\field\urls.py:8:urlpatterns = router.urls
+apps\field\web_urls.py:23:urlpatterns = [
+apps\field\web_urls.py:24:    path("", field_dashboard),
+apps\field\web_urls.py:25:    path("approved/", field_approved_list),
+apps\field\web_urls.py:26:    path("mobile/", field_mobile_home),
+apps\field\web_urls.py:27:    path("mobile/progress/", field_mobile_progress),
+apps\field\web_urls.py:28:    path("mobile/reports/", field_mobile_reports),
+apps\field\web_urls.py:29:    path("mobile/costs/", field_mobile_costs),
+apps\field\web_urls.py:30:    path("mobile/inventory/issue", field_mobile_inventory_issue),
+apps\field\web_urls.py:31:    path("mobile/labor/timesheet", field_mobile_timesheet),
+apps\field\web_urls.py:32:    path("cost/<int:cost_actual_id>/", field_cost_detail),
+apps\field\web_urls.py:33:    path("cost/<int:cost_actual_id>/edit/", field_cost_edit),
+apps\field\web_urls.py:34:    path("progress/<int:progress_id>/", field_progress_detail),
+apps\field\web_urls.py:35:    path("progress/<int:progress_id>/edit/", field_progress_edit),
+apps\field\web_urls.py:36:    path("progress/yesterday/", field_progress_yesterday),
+apps\field\web_urls.py:37:    path("adjustments/new/", field_adjustment_new),
+apps\field\web_urls.py:38:    path("adjustments/<int:adjustment_id>/", field_adjustment_detail),
+apps\field\web_urls.py:39:    path("projects/<int:project_id>/wbs-change/new/", field_wbs_change_new),
+apps\risk\urls.py:5:urlpatterns = [
+apps\risk\urls.py:6:    path("risk/findings/", RiskFindingListView.as_view()),
+apps\risk\urls.py:7:    path("risk/findings/<int:pk>/", RiskFindingDetailView.as_view()),
+apps\risk\urls.py:8:    path("risk/findings/<int:pk>/ack/", RiskFindingAckView.as_view()),
+apps\master\api_urls.py:5:urlpatterns = [
+apps\master\api_urls.py:6:    path("master/cbs/search", CbsSearchView.as_view()),
+apps\master\api_urls.py:7:    path("master/cbs/favorites", CbsFavoritesView.as_view()),
+apps\master\api_urls.py:8:    path("master/cbs/favorites/toggle", CbsFavoriteToggleView.as_view()),
+apps\kpi\services.py:35:    baseline_ready: bool
+apps\kpi\services.py:188:                    "baseline_ready": quality.baseline_ready,
+apps\kpi\services.py:347:    baseline_ready = not missing
+apps\kpi\services.py:357:        baseline_ready=baseline_ready,
+apps\labor\forms.py:198:            "health_insurance",
+apps\labor\forms.py:218:            "health_insurance": "건강보험",
+apps\kpi\urls.py:5:urlpatterns = [
+apps\kpi\urls.py:6:    path("project/<int:project_id>/", ProjectKPIView.as_view()),
+apps\kpi\urls.py:7:    path("projects/<int:project_id>/timeline/", ProjectKPITimelineView.as_view()),
+apps\kpi\urls.py:8:    path("portfolio/", PortfolioKPIView.as_view()),
+apps\reports\web_urls.py:11:urlpatterns = [
+apps\reports\web_urls.py:12:    path("", report_list),
+apps\reports\web_urls.py:13:    path("new/", report_create),
+apps\reports\web_urls.py:14:    path("<int:report_id>/", report_detail),
+apps\reports\web_urls.py:15:    path("<int:report_id>/edit/", report_edit),
+apps\reports\web_urls.py:16:    path("<int:report_id>/submit/", report_submit),
+apps\labor\models.py:339:    health_insurance = models.BigIntegerField(default=0)
+apps\labor\models.py:423:                self.health_insurance,
+apps\labor\services.py:247:        "health_insurance": ledger.health_insurance,
+apps\labor\services.py:698:            summary=f"WorkerMaster already inactive: {worker.id}",
+apps\labor\services.py:710:        return {"action": "already_inactive", "usage_count": usage_count}
+apps\labor\services.py:2268:    health_insurance = _coerce_int(
+apps\labor\services.py:2269:        data.get("health_insurance"), field_name="health_insurance"
+apps\labor\services.py:2285:        "health_insurance": health_insurance,
+apps\labor\services.py:2459:            health_insurance=Sum("health_insurance"),
+apps\labor\services.py:2502:                for field_name in ("employment_insurance", "pension", "health_insurance")
+apps\labor\migrations\0006_laborworkledger.py:30:                ("health_insurance", models.BigIntegerField(default=0)),
+apps\master\web_urls_ceo.py:11:urlpatterns = [
+apps\master\web_urls_ceo.py:12:    path("", ceo_cbs_list_view),
+apps\master\web_urls_ceo.py:13:    path("requests/", ceo_cbs_requests_list),
+apps\master\web_urls_ceo.py:14:    path("requests/<int:pk>/", ceo_cbs_request_detail),
+apps\master\web_urls_ceo.py:15:    path("requests/<int:pk>/approve/", ceo_cbs_request_approve),
+apps\master\web_urls_ceo.py:16:    path("requests/<int:pk>/reject/", ceo_cbs_request_reject),
+apps\master\web_urls.py:38:urlpatterns = [
+apps\master\web_urls.py:39:    path("", include("apps.labor.web_urls")),
+apps\master\web_urls.py:40:    path("cbs/", cbs_list_view),
+apps\master\web_urls.py:41:    path("cbs/new/", cbs_create),
+apps\master\web_urls.py:42:    path("cbs/<int:pk>/edit/", cbs_edit),
+apps\master\web_urls.py:43:    path("cbs/<int:pk>/toggle-active/", cbs_toggle_active),
+apps\master\web_urls.py:44:    path("cbs/<int:pk>/edit-name/", cbs_edit_name),
+apps\master\web_urls.py:45:    path("cbs/<int:pk>/aliases/", cbs_aliases_view),
+apps\master\web_urls.py:46:    path("cbs/<int:pk>/aliases/add/", cbs_alias_add),
+apps\master\web_urls.py:47:    path("cbs/<int:pk>/aliases/<int:alias_id>/set-primary/", cbs_alias_set_primary),
+apps\master\web_urls.py:48:    path("cbs/<int:pk>/aliases/<int:alias_id>/delete/", cbs_alias_delete),
+apps\master\web_urls.py:49:    path("cbs/requests/", hq_cbs_requests_list),
+apps\master\web_urls.py:50:    path("cbs/requests/<int:pk>/", hq_cbs_request_detail),
+apps\master\web_urls.py:51:    path("cbs/requests/<int:pk>/submit/", hq_cbs_request_submit),
+apps\master\web_urls.py:52:    path("templates/", master_template_list_view),
+apps\master\web_urls.py:53:    path("templates/new/", master_template_new_view),
+apps\master\web_urls.py:54:    path("templates/<int:pk>/edit/", master_template_edit_view),
+apps\master\web_urls.py:55:    path("templates/<int:pk>/clone/", master_template_clone_view),
+apps\master\web_urls.py:56:    path("templates/<int:pk>/toggle/", master_template_toggle_active),
+apps\master\web_urls.py:57:    path("warehouses/", hq_master_warehouse_list),
+apps\master\web_urls.py:58:    path("warehouses/new/", hq_master_warehouse_new),
+apps\master\web_urls.py:59:    path("warehouses/<int:warehouse_id>/edit/", hq_master_warehouse_edit),
+apps\master\web_urls.py:60:    path("warehouses/<int:warehouse_id>/toggle/", hq_master_warehouse_toggle),
+apps\master\web_urls.py:61:    path("items/", hq_master_item_list),
+apps\master\web_urls.py:62:    path("items/new/", hq_master_item_new),
+apps\master\web_urls.py:63:    path("items/<int:item_id>/edit/", hq_master_item_edit),
+apps\master\web_urls.py:64:    path("uom/", hq_master_uom_list),
+apps\master\web_urls.py:65:    path("uom/new/", hq_master_uom_new),
+apps\master\web_urls.py:66:    path("uom/<int:uom_id>/edit/", hq_master_uom_edit),
+apps\master\web_urls.py:67:    path("categories/", hq_master_category_list),
+apps\master\web_urls.py:68:    path("categories/new/", hq_master_category_new),
+apps\master\web_urls.py:69:    path("categories/<int:category_id>/edit/", hq_master_category_edit),
+apps\labor\web_urls_hq.py:26:urlpatterns = [
+apps\labor\web_urls_hq.py:27:    path("e-card-imports/", hq_e_card_import_batch_list),
+apps\labor\web_urls_hq.py:28:    path("e-card-imports/<int:batch_id>/", hq_e_card_import_batch_detail),
+apps\labor\web_urls_hq.py:29:    path("excel-exports/<int:export_id>/download/", hq_labor_excel_export_download),
+apps\labor\web_urls_hq.py:30:    path("confirmed-work-days/", hq_confirmed_work_day_list),
+apps\labor\web_urls_hq.py:31:    path("workers/", hq_worker_master_list),
+apps\labor\web_urls_hq.py:32:    path("workers/new/", hq_worker_master_new),
+apps\labor\web_urls_hq.py:33:    path("workers/<int:worker_id>/edit/", hq_worker_master_edit),
+apps\labor\web_urls_hq.py:34:    path("workers/<int:worker_id>/delete/", hq_worker_master_delete),
+apps\labor\web_urls_hq.py:35:    path("work-ledger/", hq_labor_work_ledger_list),
+apps\labor\web_urls_hq.py:36:    path("work-ledger/new/", hq_labor_work_ledger_form),
+apps\labor\web_urls_hq.py:37:    path("work-ledger/<int:ledger_id>/", hq_labor_work_ledger_form),
+apps\labor\web_urls_hq.py:38:    path("reporting-map/", hq_labor_reporting_map),
+apps\labor\web_urls_hq.py:39:    path("timesheets/", hq_timesheet_list),
+apps\labor\web_urls_hq.py:40:    path("timesheets/<int:timesheet_id>/", hq_timesheet_detail),
+apps\labor\web_urls_hq.py:41:    path("timesheets/<int:timesheet_id>/approve/", hq_timesheet_approve),
+apps\labor\web_urls_hq.py:42:    path("timesheets/<int:timesheet_id>/reject/", hq_timesheet_reject),
+apps\labor\web_urls_hq.py:43:    path("monthly-payroll/", hq_payroll_list),
+apps\labor\web_urls_hq.py:44:    path("payroll-allocation/", hq_payroll_allocation_list),
+apps\labor\web_urls_hq.py:45:    path("payroll-allocation/new/", hq_payroll_new),
+apps\labor\web_urls_hq.py:46:    path("payroll-allocation/<int:batch_id>/", hq_payroll_detail),
+apps\labor\web_urls_hq.py:47:    path(
+apps\labor\web_urls_hq.py:51:    path(
+apps\labor\web_urls_hq.py:57:    path(
+apps\inventory\web_urls_hq.py:5:urlpatterns = [
+apps\inventory\web_urls_hq.py:6:    path("warehouses/", hq_warehouse_list),
+apps\inventory\web_urls_hq.py:7:    path("warehouses/<int:warehouse_id>/", hq_warehouse_detail),
+apps\labor\web_urls_field.py:5:urlpatterns = [
+apps\labor\web_urls_field.py:6:    path("timesheets/", field_timesheet_list),
+apps\labor\web_urls_field.py:7:    path("timesheets/new/", field_timesheet_form),
+apps\labor\web_urls_field.py:8:    path("timesheets/<int:timesheet_id>/", field_timesheet_form),
+apps\inventory\urls.py:18:urlpatterns = [
+apps\inventory\urls.py:19:    path("warehouses/", WarehouseListView.as_view()),
+apps\inventory\urls.py:20:    path("warehouses/<int:warehouse_id>/locations/", WarehouseLocationsView.as_view()),
+apps\inventory\urls.py:21:    path("locations/", LocationCreateView.as_view()),
+apps\inventory\urls.py:22:    path("items/", ItemListView.as_view()),
+apps\inventory\urls.py:23:    path("items/<int:item_id>/", ItemDetailView.as_view()),
+apps\inventory\urls.py:24:    path("ledger/", InventoryLedgerView.as_view()),
+apps\inventory\urls.py:25:    path("stock/", InventoryStockView.as_view()),
+apps\inventory\urls.py:26:    path("transfers/", TransferListView.as_view()),
+apps\inventory\urls.py:27:    path("transfers/<int:transfer_id>/<str:action>/", TransferActionView.as_view()),
+apps\inventory\urls.py:28:    path("issues/", IssueListView.as_view()),
+apps\inventory\urls.py:29:    path("issues/<int:issue_id>/", IssueDetailView.as_view()),
+apps\inventory\urls.py:30:    path("issues/<int:issue_id>/submit/", IssueSubmitView.as_view()),
+apps\inventory\web_urls_field.py:5:urlpatterns = [
+apps\inventory\web_urls_field.py:6:    path("warehouses/", field_warehouse_list),
+apps\inventory\web_urls_field.py:7:    path("issues/", field_inventory_issue_form),
+apps\labor\urls.py:21:urlpatterns = [
+apps\labor\urls.py:22:    path("roles/", LaborRoleListView.as_view()),
+apps\labor\urls.py:23:    path("roles/<int:role_id>/", LaborRoleDetailView.as_view()),
+apps\labor\urls.py:24:    path("rates/", LaborRateListView.as_view()),
+apps\labor\urls.py:25:    path("rates/<int:rate_id>/", LaborRateDetailView.as_view()),
+apps\labor\urls.py:26:    path("rates/applicable/", LaborRateApplicableView.as_view()),
+apps\labor\urls.py:27:    path("timesheets/", TimesheetListView.as_view()),
+apps\labor\urls.py:28:    path("timesheets/<int:timesheet_id>/", TimesheetDetailView.as_view()),
+apps\labor\urls.py:29:    path("timesheets/<int:timesheet_id>/lines/", TimesheetLinesView.as_view()),
+apps\labor\urls.py:30:    path("timesheets/<int:timesheet_id>/submit/", TimesheetSubmitView.as_view()),
+apps\labor\urls.py:31:    path("timesheets/<int:timesheet_id>/approve/", TimesheetApproveView.as_view()),
+apps\labor\urls.py:32:    path("timesheets/<int:timesheet_id>/reject/", TimesheetRejectView.as_view()),
+apps\labor\urls.py:33:    path("payroll-batches/", PayrollBatchListView.as_view()),
+apps\labor\urls.py:34:    path("payroll-batches/<int:batch_id>/", PayrollBatchDetailView.as_view()),
+apps\labor\urls.py:35:    path("payroll-batches/<int:batch_id>/lines/", PayrollBatchLinesView.as_view()),
+apps\labor\urls.py:36:    path("payroll-batches/<int:batch_id>/submit/", PayrollBatchSubmitView.as_view()),
+apps\labor\web_urls.py:14:urlpatterns = [
+apps\labor\web_urls.py:15:    path("labor/roles/", hq_labor_role_list),
+apps\labor\web_urls.py:16:    path("labor/roles/new/", hq_labor_role_new),
+apps\labor\web_urls.py:17:    path("labor/roles/<int:role_id>/edit/", hq_labor_role_edit),
+apps\labor\web_urls.py:18:    path("labor/roles/<int:role_id>/toggle/", hq_labor_role_toggle),
+apps\labor\web_urls.py:19:    path("labor/rates/", hq_labor_rate_list),
+apps\labor\web_urls.py:20:    path("labor/rates/new/", hq_labor_rate_new),
+apps\labor\web_urls.py:21:    path("labor/rates/<int:rate_id>/edit/", hq_labor_rate_edit),
+apps\labor\web_urls.py:22:    path("labor/rates/<int:rate_id>/toggle/", hq_labor_rate_toggle),
+apps\projects\urls.py:10:urlpatterns = router.urls + [
+apps\projects\urls.py:11:    path(
+apps\projects\urls.py:15:    path(
+apps\projects\hq_urls.py:5:urlpatterns = [
+apps\projects\hq_urls.py:6:    path("projects/", hq_views.hq_project_list),
+apps\projects\hq_urls.py:7:    path("projects/new/", hq_views.hq_project_new),
+apps\projects\hq_urls.py:8:    path("projects/<int:project_id>/", hq_views.hq_project_detail),
+apps\projects\tests\test_project_budget_detail_save.py:63:def _detail_path(project):
+apps\projects\tests\test_project_budget_detail_save.py:115:    request = _build_request(user, _detail_path(project), data=data)
+apps\projects\tests\test_project_budget_detail_save.py:162:    request = _build_request(user, _detail_path(project), data=data)
+apps\projects\tests\test_project_budget_detail_save.py:201:    save_request = _build_request(user, _detail_path(project), data=data)
+apps\projects\tests\test_project_budget_detail_save.py:203:    get_request = _build_request(user, _detail_path(project), method="get")
+apps\projects\tests\test_project_budget_detail_save.py:252:    response = hq_project_detail(_build_request(user, _detail_path(project), data=data), project.id)
+apps\projects\tests\test_project_budget_detail_save.py:284:        _build_request(user, _detail_path(project), method="get"),
+apps\projects\tests\test_project_budget_detail_save.py:325:    request = _build_request(user, _detail_path(project), data=data)

@@ -1,0 +1,209 @@
+﻿apps/labor\api_views.py:        qs = LaborRateTable.objects.select_related("labor_role", "project").order_by(
+apps/labor\api_views.py:        qs = Timesheet.objects.select_related("project").order_by("-work_date", "-id")
+apps/labor\api_views.py:            qs.annotate(total_amount=Sum("lines__amount"))
+apps/labor\api_views.py:            Timesheet.objects.select_related("project").prefetch_related("lines", "lines__labor_role"),
+apps/labor\api_views.py:            .annotate(total=Sum("amount"))
+apps/labor\web_urls_hq.py:    hq_e_card_import_batch_list,
+apps/labor\web_urls_hq.py:    path("e-card-imports/", hq_e_card_import_batch_list),
+apps/labor\web_urls_hq.py:    path("e-card-imports/<int:batch_id>/", hq_e_card_import_batch_detail),
+apps/labor\web_views.py:    ElectronicCardImportBatchFilterForm,
+apps/labor\web_views.py:    ElectronicCardImportBatchUploadForm,
+apps/labor\web_views.py:    ElectronicCardImportBatch,
+apps/labor\web_views.py:    ElectronicCardImportBatchStatus,
+apps/labor\web_views.py:def hq_e_card_import_batch_list(request):
+apps/labor\web_views.py:    filter_form = ElectronicCardImportBatchFilterForm(request.GET or None)
+apps/labor\web_views.py:    upload_form = ElectronicCardImportBatchUploadForm()
+apps/labor\web_views.py:            batch = get_object_or_404(ElectronicCardImportBatch, id=batch_id)
+apps/labor\web_views.py:                return redirect("/app/hq/labor/e-card-imports/")
+apps/labor\web_views.py:            batch = get_object_or_404(ElectronicCardImportBatch, id=batch_id)
+apps/labor\web_views.py:                return redirect("/app/hq/labor/e-card-imports/")
+apps/labor\web_views.py:            upload_form = ElectronicCardImportBatchUploadForm(request.POST, request.FILES)
+apps/labor\web_views.py:                    return redirect("/app/hq/labor/e-card-imports/")
+apps/labor\web_views.py:        ElectronicCardImportBatch.objects.select_related("project", "uploaded_by")
+apps/labor\web_views.py:        .annotate(
+apps/labor\web_views.py:            raw_count=models.Count("raw_rows", distinct=True),
+apps/labor\web_views.py:            day_count=models.Count("day_rows", distinct=True),
+apps/labor\web_views.py:            reconciliation_count=models.Count("reconciliation_results", distinct=True),
+apps/labor\web_views.py:            "status_choices": ElectronicCardImportBatchStatus.choices,
+apps/labor\web_views.py:    base = f"/app/hq/labor/e-card-imports/{batch_id}/"
+apps/labor\web_views.py:        batch.reconciliation_results.select_related(
+apps/labor\web_views.py:        ElectronicCardImportBatch.objects.select_related("project", "uploaded_by", "confirmed_by"),
+apps/labor\web_views.py:            "excel_exports": batch.excel_exports.select_related("generated_by", "downloaded_by").order_by("-generated_at", "-id")[:20],
+apps/labor\web_views.py:        LaborExcelExportBatch.objects.select_related("source_batch", "project"),
+apps/labor\web_views.py:        return redirect(f"/app/hq/labor/e-card-imports/{export_batch.source_batch_id}/")
+apps/labor\web_views.py:        LaborConfirmedWorkDay.objects.select_related(
+apps/labor\web_views.py:            "batches": ElectronicCardImportBatch.objects.order_by("-uploaded_at", "-id")[:100],
+apps/labor\web_views.py:    qs = WorkerMaster.objects.select_related("default_labor_role").order_by("name", "id")
+apps/labor\web_views.py:        LaborWorkLedger.objects.select_related(
+apps/labor\web_views.py:            LaborWorkLedger.objects.select_related(
+apps/labor\web_views.py:        LaborWorkLedger.objects.select_related(
+apps/labor\web_views.py:        LaborRateTable.objects.select_related("labor_role", "project")
+apps/labor\web_views.py:        Timesheet.objects.select_related("project")
+apps/labor\web_views.py:            .prefetch_related("files")
+apps/labor\web_views.py:            Timesheet.objects.select_related("project").prefetch_related("lines", "lines__labor_role"),
+apps/labor\web_views.py:            .prefetch_related("files")
+apps/labor\web_views.py:        Timesheet.objects.select_related("project", "created_by")
+apps/labor\web_views.py:        Timesheet.objects.select_related("project", "created_by", "approved_by", "rejected_by")
+apps/labor\web_views.py:        .prefetch_related("lines", "lines__labor_role"),
+apps/labor\web_views.py:        LaborMonthlyPayroll.objects.select_related("worker", "project", "report_project")
+apps/labor\web_views.py:        .annotate(total=models.Sum("amount"))
+apps/labor\web_views.py:        PayrollAllocationLine.objects.select_related("project", "cbs")
+apps/labor\models.py:                line = self.timesheet_ref.lines.select_related("labor_role").first()
+apps/labor\models.py:class ElectronicCardImportBatchStatus(models.TextChoices):
+apps/labor\models.py:class ElectronicCardImportBatch(models.Model):
+apps/labor\models.py:        choices=ElectronicCardImportBatchStatus.choices,
+apps/labor\models.py:        default=ElectronicCardImportBatchStatus.UPLOADED,
+apps/labor\models.py:        "labor.ElectronicCardImportBatch",
+apps/labor\models.py:        "labor.ElectronicCardImportBatch",
+apps/labor\models.py:        "labor.ElectronicCardImportBatch",
+apps/labor\models.py:        "labor.ElectronicCardImportBatch",
+apps/labor\models.py:        "labor.ElectronicCardImportBatch",
+apps/labor\services.py:    ElectronicCardImportBatch,
+apps/labor\services.py:    ElectronicCardImportBatchStatus,
+apps/labor\services.py:        .annotate(total=Sum("amount"))
+apps/labor\services.py:        .annotate(total=Sum("amount"))
+apps/labor\services.py:        .annotate(total=Sum("amount"))
+apps/labor\services.py:        .annotate(total=Sum("amount"))
+apps/labor\services.py:    if not isinstance(batch, ElectronicCardImportBatch):
+apps/labor\services.py:        batch = ElectronicCardImportBatch.objects.filter(id=batch).first()
+apps/labor\services.py:        ElectronicCardImportBatchStatus.CONFIRMED,
+apps/labor\services.py:        ElectronicCardImportBatchStatus.DISCARDED,
+apps/labor\services.py:        created_day_count = 0
+apps/labor\services.py:            created_day_count += last_day
+apps/labor\services.py:        parsed_worked_day_count = 0
+apps/labor\services.py:        parsed_zero_day_count = 0
+apps/labor\services.py:        parsed_unreadable_day_count = 0
+apps/labor\services.py:                parsed_unreadable_day_count += 1
+apps/labor\services.py:                parsed_worked_day_count += 1
+apps/labor\services.py:                parsed_zero_day_count += 1
+apps/labor\services.py:            "parsed_raw_count": len(created_raws),
+apps/labor\services.py:            "parsed_day_count": len(day_rows_to_create),
+apps/labor\services.py:            "parsed_worked_day_count": parsed_worked_day_count,
+apps/labor\services.py:            "parsed_zero_day_count": parsed_zero_day_count,
+apps/labor\services.py:            "parsed_unreadable_day_count": parsed_unreadable_day_count,
+apps/labor\services.py:        batch.status = ElectronicCardImportBatchStatus.PARSE_READY
+apps/labor\services.py:            summary=f"ElectronicCardImportBatch parse: {batch.id}",
+apps/labor\services.py:                "raw_count": len(created_raws),
+apps/labor\services.py:                "day_count": len(day_rows_to_create),
+apps/labor\services.py:            object_type="ElectronicCardImportBatch",
+apps/labor\services.py:    if not isinstance(batch, ElectronicCardImportBatch):
+apps/labor\services.py:        batch = ElectronicCardImportBatch.objects.filter(id=batch).first()
+apps/labor\services.py:        ElectronicCardImportBatchStatus.CONFIRMED,
+apps/labor\services.py:        ElectronicCardImportBatchStatus.DISCARDED,
+apps/labor\services.py:        batch.day_rows.select_related("worker", "card_project", "raw").order_by("work_date", "id")
+apps/labor\services.py:    reconcile_card_worked_day_count = sum(1 for row in card_days if Decimal(row.card_value or 0) > 0)
+apps/labor\services.py:        .annotate(total=Sum("work_unit"))
+apps/labor\services.py:        .annotate(total=Sum("work_unit"))
+apps/labor\services.py:            if reconcile_card_worked_day_count == 0 and reconcile_erp_worked_count == 0:
+apps/labor\services.py:            elif reconcile_card_worked_day_count > 0 and reconcile_erp_worked_count == 0:
+apps/labor\services.py:            elif reconcile_card_worked_day_count == 0 and reconcile_erp_worked_count > 0:
+apps/labor\services.py:            "reconcile_card_worked_day_count": reconcile_card_worked_day_count,
+apps/labor\services.py:            summary=f"ElectronicCardImportBatch reconcile: {batch.id}",
+apps/labor\services.py:            object_type="ElectronicCardImportBatch",
+apps/labor\services.py:        ElectronicCardImportBatchStatus.CONFIRMED,
+apps/labor\services.py:        ElectronicCardImportBatchStatus.DISCARDED,
+apps/labor\services.py:        result = LaborReconciliationResult.objects.select_related("batch").filter(id=result).first()
+apps/labor\services.py:    results = list(LaborReconciliationResult.objects.filter(id__in=result_ids).select_related("batch"))
+apps/labor\services.py:        object_type="ElectronicCardImportBatch",
+apps/labor\services.py:            LaborReconciliationResult.objects.select_related("batch", "card_day__raw")
+apps/labor\services.py:            .select_related("actual_project")
+apps/labor\services.py:    if not isinstance(batch, ElectronicCardImportBatch):
+apps/labor\services.py:            ElectronicCardImportBatch.objects.select_related("project")
+apps/labor\services.py:        batch.reconciliation_results.select_related(
+apps/labor\services.py:        "confirmed_work_day_count": len(confirmed_rows),
+apps/labor\services.py:        object_type="ElectronicCardImportBatch",
+apps/labor\services.py:    if not isinstance(batch, ElectronicCardImportBatch):
+apps/labor\services.py:            ElectronicCardImportBatch.objects.select_related("project")
+apps/labor\services.py:        batch.status = ElectronicCardImportBatchStatus.CONFIRMED
+apps/labor\services.py:        summary=f"ElectronicCardImportBatch reconciliation confirm: {batch.id}",
+apps/labor\services.py:        object_type="ElectronicCardImportBatch",
+apps/labor\services.py:    if not isinstance(source_batch, ElectronicCardImportBatch):
+apps/labor\services.py:            ElectronicCardImportBatch.objects.select_related("project")
+apps/labor\services.py:    if source_batch.status != ElectronicCardImportBatchStatus.CONFIRMED:
+apps/labor\services.py:        source_batch.confirmed_work_days.select_related(
+apps/labor\services.py:        source_batch.raw_rows.select_related("matched_worker").order_by("row_no", "id")
+apps/labor\services.py:        day_count_value = len(included_work_days)
+apps/labor\services.py:                day_count_value if day_count_value > 0 else None,
+apps/labor\services.py:                day_count_value if day_count_value > 0 else None,
+apps/labor\services.py:        export_batch = LaborExcelExportBatch.objects.select_related("source_batch", "project").filter(id=export_batch).first()
+apps/labor\services.py:        batch = ElectronicCardImportBatch.objects.create(
+apps/labor\services.py:            status=ElectronicCardImportBatchStatus.PARSE_READY,
+apps/labor\services.py:            summary=f"ElectronicCardImportBatch upload: {batch.id}",
+apps/labor\services.py:            object_type="ElectronicCardImportBatch",
+apps/labor\services.py:            line = timesheet_ref.lines.select_related("labor_role").first()
+apps/labor\services.py:        LaborWorkLedger.objects.select_related(
+apps/labor\services.py:        source_qs.values("worker_id", "actual_project_id", "report_project_id").annotate(
+apps/labor\services.py:    lines = list(timesheet.lines.select_related("labor_role").all())
+apps/labor\tests\test_audit2_labor_rbac.py:    ElectronicCardImportBatch,
+apps/labor\tests\test_audit2_labor_rbac.py:    ElectronicCardImportBatchStatus,
+apps/labor\tests\test_audit2_labor_rbac.py:    return ElectronicCardImportBatch.objects.create(
+apps/labor\tests\test_audit2_labor_rbac.py:        status=ElectronicCardImportBatchStatus.PARSE_READY,
+apps/labor\tests\test_audit2_labor_rbac.py:        "/app/hq/labor/e-card-imports/",
+apps/labor\tests\test_audit2_labor_rbac.py:    detail_response = _client(field_user).get(f"/app/hq/labor/e-card-imports/{batch.id}/")
+apps/labor\tests\test_audit2_labor_rbac.py:    assert _client(hq_user).get("/app/hq/labor/e-card-imports/").status_code == 200
+apps/labor\tests\test_audit2_labor_rbac.py:    assert _client(ceo_user).get("/app/hq/labor/e-card-imports/").status_code == 200
+apps/labor\forms.py:    ElectronicCardImportBatchStatus,
+apps/labor\forms.py:        self.fields["timesheet_ref"].queryset = Timesheet.objects.select_related("project").order_by("-work_date", "-id")
+apps/labor\forms.py:        self.fields["cost_ref"].queryset = CostActual.objects.select_related("project").order_by("-report_date", "-id")
+apps/labor\forms.py:class ElectronicCardImportBatchUploadForm(forms.Form):
+apps/labor\forms.py:class ElectronicCardImportBatchFilterForm(forms.Form):
+apps/labor\forms.py:        choices=[("", "전체 상태"), *ElectronicCardImportBatchStatus.choices],
+apps/labor\tests\test_audit5_excel_reliability.py:    ElectronicCardImportBatch,
+apps/labor\tests\test_audit5_excel_reliability.py:    ElectronicCardImportBatchStatus,
+apps/labor\tests\test_audit5_excel_reliability.py:    assert ElectronicCardImportBatch.objects.count() == 0
+apps/labor\tests\test_audit5_excel_reliability.py:    assert ElectronicCardImportBatch.objects.count() == 0
+apps/labor\tests\test_audit5_excel_reliability.py:    assert batch.header_check_summary["parsed_raw_count"] == 1
+apps/labor\tests\test_audit5_excel_reliability.py:    assert batch.header_check_summary["parsed_worked_day_count"] == 2
+apps/labor\tests\test_audit5_excel_reliability.py:    assert batch.header_check_summary["parsed_unreadable_day_count"] == 1
+apps/labor\tests\test_audit5_excel_reliability.py:    assert batch.status == ElectronicCardImportBatchStatus.PARSE_READY
+apps/labor\tests\test_audit6_labpay_e2e.py:    ElectronicCardImportBatch,
+apps/labor\tests\test_audit6_labpay_e2e.py:    ElectronicCardImportBatchStatus,
+apps/labor\tests\test_audit6_labpay_e2e.py:    assert batch.header_check_summary["parsed_worked_day_count"] == 4
+apps/labor\tests\test_audit6_labpay_e2e.py:    assert batch.status == ElectronicCardImportBatchStatus.CONFIRMED
+apps/labor\tests\test_audit6_labpay_e2e.py:    assert ElectronicCardImportBatch.objects.count() == 1
+apps/labor\tests\test_audit6_labpay_e2e.py:    assert batch.status == ElectronicCardImportBatchStatus.PARSE_READY
+apps/labor\tests\test_closing_confirmation_guards.py:    ElectronicCardImportBatch,
+apps/labor\tests\test_closing_confirmation_guards.py:    ElectronicCardImportBatchStatus,
+apps/labor\tests\test_closing_confirmation_guards.py:def _batch(project, *, status=ElectronicCardImportBatchStatus.CONFIRMED):
+apps/labor\tests\test_closing_confirmation_guards.py:    return ElectronicCardImportBatch.objects.create(
+apps/labor\tests\test_closing_confirmation_guards.py:    batch = _batch(project, status=ElectronicCardImportBatchStatus.PARSE_READY)
+apps/labor\tests\test_e_card_imports.py:    ElectronicCardImportBatch,
+apps/labor\tests\test_e_card_imports.py:    hq_e_card_import_batch_list,
+apps/labor\tests\test_e_card_imports.py:    path = "/app/hq/labor/e-card-imports/"
+apps/labor\tests\test_e_card_imports.py:    path = f"/app/hq/labor/e-card-imports/{batch.id}/"
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(_build_request(user))
+apps/labor\tests\test_e_card_imports.py:        hq_e_card_import_batch_list(_build_request(user))
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    batch = ElectronicCardImportBatch.objects.get()
+apps/labor\tests\test_e_card_imports.py:        object_type="ElectronicCardImportBatch",
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    batch = ElectronicCardImportBatch.objects.get(project=project)
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    assert ElectronicCardImportBatch.objects.count() == 0
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    return user, project, ElectronicCardImportBatch.objects.get(project=project)
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    assert batch.header_check_summary["parsed_raw_count"] == 1
+apps/labor\tests\test_e_card_imports.py:    assert batch.header_check_summary["parsed_day_count"] == 31
+apps/labor\tests\test_e_card_imports.py:        object_type="ElectronicCardImportBatch",
+apps/labor\tests\test_e_card_imports.py:        hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:        response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:        object_type="ElectronicCardImportBatch",
+apps/labor\tests\test_e_card_imports.py:        hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    response = hq_e_card_import_batch_list(
+apps/labor\tests\test_e_card_imports.py:    batch = ElectronicCardImportBatch.objects.get(project=project)
+apps/labor\tests\test_e_card_imports.py:    assert batch.header_check_summary["parsed_worked_day_count"] == 0
+apps/labor\tests\test_e_card_imports.py:    assert batch.header_check_summary["reconcile_card_worked_day_count"] == 0
+apps/labor\tests\test_e_card_imports.py:    assert batch.header_check_summary["parsed_worked_day_count"] == 1
+apps/labor\tests\test_e_card_imports.py:    assert batch.header_check_summary["reconcile_card_worked_day_count"] == 1
+apps/labor\tests\test_e_card_imports.py:    raw_count = ElectronicCardWorkRaw.objects.filter(batch=batch).count()
+apps/labor\tests\test_e_card_imports.py:    day_count = ElectronicCardWorkDay.objects.filter(batch=batch).count()
+apps/labor\tests\test_e_card_imports.py:    assert ElectronicCardWorkRaw.objects.filter(batch=batch).count() == raw_count
+apps/labor\tests\test_e_card_imports.py:    assert ElectronicCardWorkDay.objects.filter(batch=batch).count() == day_count
+apps/labor\migrations\0008_electroniccardimportbatch.py:            name='ElectronicCardImportBatch',

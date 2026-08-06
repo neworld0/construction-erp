@@ -1,0 +1,93 @@
+﻿config\wsgi.py:os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+config\urls.py:from apps.core.views import healthz_view
+config\urls.py:    path("healthz/", healthz_view),
+config\urls.py:is_local_settings = os.getenv("DJANGO_SETTINGS_MODULE") == "config.settings.local"
+config\urls.py:should_serve_media = settings.DEBUG or is_local_settings or serve_media or is_runserver
+config\urls.py:if settings.DEBUG:
+config\urls.py:    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+config\urls.py:        re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+config\settings.py:Use DJANGO_SETTINGS_MODULE=config.settings.local or config.settings.prod.
+config\asgi.py:os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+config\settings\__init__.py:# set DJANGO_SETTINGS_MODULE=config.settings.local
+config\settings\test.py:DEBUG = False
+config\settings\test.py:DATABASES = {
+config\settings\prod.py:SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+config\settings\prod.py:if not SECRET_KEY:
+config\settings\prod.py:    raise RuntimeError("DJANGO_SECRET_KEY is required in production.")
+config\settings\prod.py:DEBUG = _env_bool("DJANGO_DEBUG", False)
+config\settings\prod.py:ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS")
+config\settings\prod.py:if not ALLOWED_HOSTS:
+config\settings\prod.py:    raise RuntimeError("DJANGO_ALLOWED_HOSTS is required in production.")
+config\settings\prod.py:DATABASES = {"default": _database_from_url(os.getenv("DATABASE_URL"))}
+config\settings\prod.py:if not DATABASES["default"]:
+config\settings\prod.py:CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])
+config\settings\prod.py:SECURE_SSL_REDIRECT = _env_bool("DJANGO_SECURE_SSL_REDIRECT", True)
+config\settings\prod.py:SESSION_COOKIE_SECURE = _env_bool("DJANGO_SESSION_COOKIE_SECURE", True)
+config\settings\prod.py:CSRF_COOKIE_SECURE = _env_bool("DJANGO_CSRF_COOKIE_SECURE", True)
+config\settings\prod.py:SECURE_HSTS_SECONDS = _env_int("DJANGO_SECURE_HSTS_SECONDS", 3600)
+config\settings\prod.py:SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+config\settings\prod.py:SECURE_HSTS_PRELOAD = True
+config\settings\prod.py:SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+config\settings\local.py:SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "change-me")
+config\settings\local.py:DEBUG = _env_bool("DJANGO_DEBUG", True)
+config\settings\local.py:ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", ["*"])
+config\settings\local.py:CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])
+config\settings\local.py:DATABASES = {"default": _database_from_url(os.getenv("DATABASE_URL"))}
+config\settings\local.py:if not DATABASES["default"]:
+config\settings\local.py:    DATABASES["default"] = {
+config\settings\local.py:    DATABASES = {
+config\settings\local.py:LOGGING = LOGGING.copy()  # noqa: F405
+config\settings\local.py:LOGGING["disable_existing_loggers"] = False
+config\settings\local.py:LOGGING["handlers"] = LOGGING.get("handlers", {}).copy()
+config\settings\local.py:LOGGING["handlers"]["console"] = {
+config\settings\local.py:LOGGING["loggers"] = LOGGING.get("loggers", {}).copy()
+config\settings\local.py:    _logger_cfg = LOGGING["loggers"].get(_name, {}).copy()
+config\settings\local.py:    LOGGING["loggers"][_name] = _logger_cfg
+config\settings\local.py:LOGGING["root"] = {
+config\settings\base.py:SECRET_KEY = "change-me"
+config\settings\base.py:STATIC_ROOT = BASE_DIR / "staticfiles"
+config\settings\base.py:MEDIA_ROOT = BASE_DIR / "media"
+config\settings\base.py:LOGGING = {
+apps\core\views.py:    settings_module = os.getenv("DJANGO_SETTINGS_MODULE", "")
+apps\core\views.py:def health_view(request):
+apps\core\views.py:def healthz_view(request):
+apps\core\urls.py:    health_view,
+apps\core\urls.py:    path("health", health_view),
+apps\ceo\services\kpi_engine.py:    if logger.isEnabledFor(logging.DEBUG):
+apps\core\middleware\two_factor_enforce.py:        if request.path.startswith(("/healthz/", "/health")):
+apps\core\tests\test_healthz.py:def test_healthz_ok(db):
+apps\core\tests\test_healthz.py:    response = client.get("/healthz/")
+apps\core\tests\test_healthz.py:def test_healthz_db_fail(monkeypatch):
+apps\core\tests\test_healthz.py:    response = client.get("/healthz/")
+apps\core\tests\test_health.py:def test_health_endpoint(client):
+apps\core\tests\test_health.py:    response = client.get("/health")
+apps\labor\forms.py:            "health_insurance",
+apps\labor\forms.py:            "health_insurance": "건강보험",
+apps\labor\models.py:    seed = f"{settings.SECRET_KEY}:worker-master:{purpose}"
+apps\labor\models.py:        secret = f"{settings.SECRET_KEY}:{normalized}:worker-master:identity"
+apps\labor\models.py:    health_insurance = models.BigIntegerField(default=0)
+apps\labor\models.py:                self.health_insurance,
+apps\labor\services.py:        "health_insurance": ledger.health_insurance,
+apps\labor\services.py:    health_insurance = _coerce_int(
+apps\labor\services.py:        data.get("health_insurance"), field_name="health_insurance"
+apps\labor\services.py:        "health_insurance": health_insurance,
+apps\labor\services.py:            health_insurance=Sum("health_insurance"),
+apps\labor\services.py:                for field_name in ("employment_insurance", "pension", "health_insurance")
+apps\labor\tests\test_audit2_labor_rbac.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit2_labor_rbac.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit5_excel_reliability.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit6_labpay_e2e.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_audit6_labpay_e2e.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\tests\test_e_card_imports.py:    settings.MEDIA_ROOT = tmp_path
+apps\labor\migrations\0006_laborworkledger.py:                ("health_insurance", models.BigIntegerField(default=0)),
+apps\projects\hq_views.py:    temp_dir = Path(settings.MEDIA_ROOT) / "project_import_temp"

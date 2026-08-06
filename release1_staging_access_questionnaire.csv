@@ -1,0 +1,17 @@
+Question_ID,Area,Required_Input,Why_Required,Example_Answer_No_Secret,Required_Before_Rerun,Required_Before_Production,Owner,Status,Notes
+Q-01,staging host,masked host identifier,actual host smoke,stg-app-01 or staging.example.com,YES,YES,infra,MISSING,no production host
+Q-02,OS,Linux distribution/version,systemctl package paths,Ubuntu LTS,YES,YES,infra,MISSING,
+Q-03,SSH,SSH access method,controlled operator access,approved bastion + key reference,YES,YES,infra,MISSING,no key value
+Q-04,service account,service account name,Gunicorn ownership,erp-staging,YES,YES,infra,MISSING,least privilege
+Q-05,paths,project root and venv path,commands/service unit,/srv/construction-erp and /srv/venv,YES,YES,infra,MISSING,
+Q-06,Git,branch and commit,immutable release artifact,feature/t10-ceo-kpi + <COMMIT_SHA>,YES,YES,release owner,MISSING,commit LABPAY patch first
+Q-07,settings module,settings module and env-file path,safe config loading,config.settings.prod + <SECURE_ENV_FILE>,YES,YES,release owner,MISSING,do not send values
+Q-08,domain,staging domain / allowed hosts / CSRF origin,HTTPS host validation,staging.example.com,YES,YES,infra,MISSING,allowlist only
+Q-09,database,database host class/name/role privilege,prove non-production,staging PostgreSQL / erp_staging / least privilege,YES,YES,DB owner,MISSING,no URL/password
+Q-10,restore target DB,restore target DB and CREATEDB/pre-created approval,isolated restore,erp_staging_restore_drill,YES,YES,DB owner,MISSING,must not be active DB
+Q-11,backup,archive path/checksum,restore integrity,<BACKUP_DIR>/erp.dump + SHA256,YES,YES,DB owner,MISSING,
+Q-12,media,media root and backup method,sensitive Excel policy,/srv/app/media + encrypted backup,YES,YES,infra,MISSING,
+Q-13,Nginx,site config path / nginx -t authority,proxy validation,/etc/nginx/sites-enabled/erp,YES,YES,infra,MISSING,
+Q-14,Gunicorn,service name / systemctl authority,service smoke,construction-erp-staging,YES,YES,infra,MISSING,
+Q-15,test users,CEO/HQ/FIELD staging-safe accounts,route/RBAC smoke,"ceo-test, hq-test, field-test",YES,YES,release owner,MISSING,no real PII
+Q-16,approvals,rollback and staging pilot approver,go/no-go authority,release owner + infra owner,YES,YES,release owner,MISSING,staging pilot approver
