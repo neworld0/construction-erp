@@ -198,6 +198,50 @@ def test_hq_can_open_e_card_imports_page():
 
 
 @pytest.mark.django_db
+def test_e_card_import_list_displays_grouped_relation_counts():
+    user = _build_user("labor-hq-counts", Role.HQ)
+    project = Project.objects.create(code="PRJ-LAB-COUNTS", name="전자카드 건수 현장")
+    batch = ElectronicCardImportBatch.objects.create(
+        year_month=date(2026, 5, 1),
+        project=project,
+        source_file="labor/e_card_imports/counts.xlsx",
+        uploaded_by=user,
+    )
+    raw_one = ElectronicCardWorkRaw.objects.create(
+        batch=batch,
+        row_no=1,
+        work_month=date(2026, 5, 1),
+        worker_name_raw="작업자1",
+    )
+    raw_two = ElectronicCardWorkRaw.objects.create(
+        batch=batch,
+        row_no=2,
+        work_month=date(2026, 5, 1),
+        worker_name_raw="작업자2",
+    )
+    for raw, work_day in ((raw_one, 1), (raw_one, 2), (raw_two, 3)):
+        ElectronicCardWorkDay.objects.create(
+            batch=batch,
+            raw=raw,
+            work_date=date(2026, 5, work_day),
+        )
+    for work_day in (1, 2):
+        LaborReconciliationResult.objects.create(
+            batch=batch,
+            year_month=date(2026, 5, 1),
+            project=project,
+            work_date=date(2026, 5, work_day),
+        )
+
+    response = hq_e_card_import_batch_list(_build_request(user))
+
+    content = response.content.decode("utf-8")
+    assert "Raw 건수</span> 2건" in content
+    assert "일별 건수</span> 3건" in content
+    assert "대사 검토" in content
+
+
+@pytest.mark.django_db
 def test_field_cannot_open_e_card_imports_page():
     user = _build_user("labor-field", Role.FIELD)
 

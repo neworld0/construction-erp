@@ -29,6 +29,8 @@ from .forms import (
 from .models import (
     ElectronicCardImportBatch,
     ElectronicCardImportBatchStatus,
+    ElectronicCardWorkDay,
+    ElectronicCardWorkRaw,
     LaborExcelExportBatch,
     LaborConfirmedWorkDay,
     LaborConfirmedWorkSourceBasis,
@@ -131,15 +133,9 @@ def hq_e_card_import_batch_list(request):
             else:
                 messages.error(request, "업로드 입력값을 확인해 주세요.")
 
-    batches = (
-        ElectronicCardImportBatch.objects.select_related("project", "uploaded_by")
-        .annotate(
-            raw_count=models.Count("raw_rows", distinct=True),
-            day_count=models.Count("day_rows", distinct=True),
-            reconciliation_count=models.Count("reconciliation_results", distinct=True),
-        )
-        .order_by("-uploaded_at", "-id")
-    )
+    batches = ElectronicCardImportBatch.objects.select_related(
+        "project", "uploaded_by"
+    ).order_by("-uploaded_at", "-id")
     if filter_form.is_valid():
         month = (filter_form.cleaned_data.get("month") or "").strip()
         project = filter_form.cleaned_data.get("project")
@@ -155,13 +151,38 @@ def hq_e_card_import_batch_list(request):
         if status:
             batches = batches.filter(status=status)
 
+    # Counting three reverse relations in one annotated query creates a
+    # raw_rows x day_rows x reconciliation_results join per batch. Limit the
+    # list first, then attach the same display counts from grouped queries.
+    batches = list(batches[:50])
+    batch_ids = [batch.id for batch in batches]
+    counts_by_relation = {
+        "raw_count": ElectronicCardWorkRaw.objects.filter(batch_id__in=batch_ids)
+        .values("batch_id")
+        .annotate(count=models.Count("id")),
+        "day_count": ElectronicCardWorkDay.objects.filter(batch_id__in=batch_ids)
+        .values("batch_id")
+        .annotate(count=models.Count("id")),
+        "reconciliation_count": LaborReconciliationResult.objects.filter(
+            batch_id__in=batch_ids
+        )
+        .values("batch_id")
+        .annotate(count=models.Count("id")),
+    }
+    for attribute, relation_counts in counts_by_relation.items():
+        count_by_batch_id = {
+            row["batch_id"]: row["count"] for row in relation_counts
+        }
+        for batch in batches:
+            setattr(batch, attribute, count_by_batch_id.get(batch.id, 0))
+
     return render(
         request,
         "app/hq/e_card_imports.html",
         {
             "upload_form": upload_form,
             "filter_form": filter_form,
-            "batches": batches[:50],
+            "batches": batches,
             "status_choices": ElectronicCardImportBatchStatus.choices,
         },
     )
