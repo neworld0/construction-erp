@@ -1,0 +1,152 @@
+C-1: HQ 리스크 카드 고도화 (자동 분류 + 등급화 + 뱃지 + 정렬)
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+목표
+- HQ 대시보드(/app/hq/)의 “리스크” 영역을 ‘OPEN 유무 텍스트’가 아니라,
+  자동 분류(Category) + 등급화(Severity) + 지연(Stale) 뱃지 + 우선순위 정렬이 적용된 “리스크 카드 리스트”로 변경한다.
+- 기존 Risk Engine / Evidence / Approval / Closing 설계는 유지하고, “표시용 로직 + HQ 템플릿 렌더링”만 추가한다.
+- DB 스키마 변경 없이 구현한다.
+
+전제(변경 금지)
+- 기존 모델/상태/권한/마감(CLOSE)/감사로그(AuditLog) 로직 변경 금지
+- HQ 화면 URL 유지: /app/hq/
+- 리스크를 생성하는 기존 로직(Risk Engine)이 있다면 그대로 사용
+- 리스크 0건이어도 UI가 깨지지 않고 ‘정상’ 상태로 표시
+- N+1 쿼리 금지
+
+구현 범위
+- HQ dashboard view: hq/views.py (또는 현재 HQ 홈 view 파일)
+- HQ 템플릿: templates/.../hq_home.html (현재 화면에 보이는 리스크 섹션)
+- (신규/권장) hq/risk_cards.py : 분류/등급화/정렬/표시 모델을 만드는 순수 함수 모듈
+
+1) 리스크 데이터 소스 Discovery (필수)
+- 프로젝트 내 “리스크” 소스가 무엇인지 먼저 확인하고, HQ 대시보드에서 이미 쓰는 소스를 그대로 사용한다.
+- 후보:
+  - Risk / RiskEvent / RiskSignal / RiskAssessment 같은 모델
+  - Risk Engine이 생성한 테이블/뷰/모델
+  - 또는 Evidence/Approval/Closing 위반을 모아 만든 “OPEN 리스크” 쿼리
+- HQ 대시보드에서 “리스크 OPEN” 문구를 만드는 기존 코드 위치를 찾아, 그 쿼리를 기반으로 확장한다.
+- 각 리스크 row가 최소 아래 필드를 갖도록 매핑한다(없으면 추정/대체):
+  - id
+  - status (OPEN/CLOSED)
+  - detected_at (없으면 created_at)
+  - updated_at (없으면 detected_at)
+  - project (가능하면)
+  - object_type / object_id (가능하면)
+  - reason_code (있으면 최우선)
+  - message/title (없으면 안전한 기본값 생성)
+
+2) 자동 분류(Category) 규칙 (필수)
+카테고리 enum(문자열) 정의:
+- EVIDENCE, COST, PROGRESS, INVENTORY, LABOR, APPROVAL, CLOSING, CHANGE, DATA
+
+분류 우선순위:
+A) reason_code prefix/매핑이 있으면 그것 사용
+   예: EVIDENCE_* → EVIDENCE, CLOSING_* → CLOSING 등
+B) object_type으로 매핑
+   - Evidence/Upload/FileAccess → EVIDENCE
+   - CostActual/DailyReportLine/BudgetItem → COST
+   - ProgressEntry/WBSProgress → PROGRESS
+   - InventoryLedger/Stock/Transfer/IssueToWork/Warehouse → INVENTORY
+   - Timesheet/PayrollAllocation/LaborRole → LABOR
+   - ApprovalRequest → APPROVAL
+   - ClosingPeriod/Adjustment → CLOSING
+   - ChangeOrder/PlanChangeRequest/WBSChangeRequest → CHANGE
+C) message 키워드 기반(마지막 fallback)
+   - “증빙/파일/업로드” → EVIDENCE
+   - “원가/CBS/금액” → COST
+   - “진행/공정/WBS” → PROGRESS
+   - “재고/창고/이동/투입” → INVENTORY
+   - “출역/급여/직종” → LABOR
+   - “승인/반려/대기” → APPROVAL
+   - “마감/정정/CLOSE” → CLOSING
+   - “변경/계약/설계/ChangeOrder” → CHANGE
+   - 그 외 → DATA
+
+카테고리 라벨(템플릿 표시용, 한국어):
+- EVIDENCE=증빙, COST=원가, PROGRESS=진행, INVENTORY=재고, LABOR=인력, APPROVAL=승인, CLOSING=마감, CHANGE=변경, DATA=데이터
+
+3) 등급화(Severity) 규칙 (필수)
+Severity enum: CRITICAL, HIGH, MED, LOW
+
+우선 적용 규칙(가장 강한 조건이 우선):
+- CRITICAL:
+  - 마감(CLOSED) 이후 입력/수정 시도(CLOSE-2 위반) 관련 리스크
+  - 재고 음수(Stock < 0) 또는 원장 불일치 지속
+  - 승인 48h+ 지연 AND (CLOSING/CHANGE/COST/INVENTORY 카테고리)
+  - (가능하면) 금액 이상치: 단일 원가가 프로젝트 예산 대비 20% 초과(예산이 존재할 때만)
+- HIGH:
+  - 승인 24h+ 지연
+  - 제출 상태에서 증빙 누락
+  - 진행률 역행(이전 대비 감소) 또는 과도한 점프(예: +30%p 이상, 정책값 있으면 그 값)
+  - 비활성/잠김 CBS 사용 시도(정책 위반 감지)
+- MED:
+  - 제출 전 누락/경미한 불일치
+  - 데이터 품질(미정/추정) 비중 경고(가능하면)
+- LOW:
+  - 안내/주의 수준(임시저장 단계, 경미한 가이드)
+
+Stale(지연) 뱃지:
+- stale_24h = detected_at 기준 24시간 경과
+- stale_48h = 48시간 경과
+- stale_48h면 stale_24h도 true로 간주
+- stale_48h는 정렬 우선순위에 반영
+
+4) 정렬(우선순위) 규칙 (필수)
+- 1) Severity: CRITICAL > HIGH > MED > LOW
+- 2) stale_48h 우선, 그 다음 stale_24h
+- 3) detected_at 최신순(내림차순) 또는 “오래된 것 우선” 중 택1
+  - HQ 업무상 ‘오래된 미해결 우선’이 더 적합하므로:
+    - stale가 같으면 detected_at 오름차순(오래된 것 먼저) 권장
+  - 단, 기존 화면 정책이 있으면 그 정책을 유지
+
+5) HQ 대시보드 UI 변경 (필수)
+- 기존 “리스크 OPEN” 블록을 아래 형태로 교체:
+  - 상단 요약: “OPEN 리스크 n건” + “CRITICAL x / HIGH y” 작은 뱃지(가능하면)
+  - 리스트(최대 5건):
+    - [Severity 뱃지] [Category 뱃지] 프로젝트명(있으면)
+    - 1줄 요약(title/message 30~40자)
+    - detected_at (YYYY-MM-DD HH:mm)
+    - stale 뱃지: “24h+”, “48h+”
+    - 버튼: [상세]
+      - 상세 링크가 없으면 관련 객체(object_type/object_id) 상세로 이동
+      - 그것도 없으면 HQ 리스크 목록 페이지(없으면 생략 가능)
+- 빈 상태(0건):
+  - “🟢 현재 OPEN 리스크가 없습니다.” 문구
+  - 보조 문구: “제출·승인·마감 흐름이 정상입니다.”
+- 카드/리스트는 HQ 화면의 다크 테마에 맞게 기존 컴포넌트 스타일을 재사용한다.
+
+6) 링크(상세) 처리 규칙 (필수)
+- risk에 detail_url이 이미 있으면 그대로 사용
+- 없으면 object_type에 따라 라우팅(존재하는 URL만):
+  - ApprovalRequest → HQ 승인함 상세
+  - Evidence → Evidence 상세
+  - CostActual → 원가 상세/수정(가능하면)
+  - Timesheet → 출역부 승인 상세
+  - Transfer/Inventory → 이동/원장 상세
+  - Closing/Adjustment → 마감/정정 상세
+  - ChangeOrder/WBSChangeRequest → 변경요청 상세
+- 어떤 링크도 없으면 [상세] 버튼은 숨기고 텍스트만 표시(깨지지 않게)
+
+7) 성능(필수)
+- 리스크 소스 쿼리 1~2회 이내
+- project 이름 표시로 인해 N+1 발생하면 select_related/prefetch 적용
+- 분류/등급화는 파이썬에서 처리하되, 필요한 필드는 미리 가져온다
+
+8) 완료 기준(Acceptance)
+- /app/hq/ 리스크 섹션이 “카테고리/등급/지연” 정보를 가진 카드 리스트로 표시된다.
+- CRITICAL/HIGH/MED/LOW 뱃지가 정상 표시되고 정렬이 적용된다.
+- 리스크 0건이면 ‘정상’ 메시지가 표시된다.
+- N+1 쿼리 없이 동작한다.
+- 기존 Risk Engine/마감/승인 로직은 변경되지 않는다.
+
+9) 간단 테스트(개발자 확인)
+- (케이스1) OPEN=0 → 🟢 정상 메시지
+- (케이스2) 증빙 누락(제출됨) 1건 → Category=증빙, Severity=HIGH
+- (케이스3) 마감 후 입력 시도 1건 → Category=마감, Severity=CRITICAL
+- (케이스4) 승인 55시간 지연 + CHANGE → Severity=CRITICAL, stale_48h 뱃지
+
+이 요구사항을 만족하도록 구현하세요.
+먼저 Discovery로 현재 프로젝트의 리스크 데이터 소스/기존 HQ 대시보드 집계 코드를 확인한 다음,
+기존 소스를 재사용하여 risk_cards 리스트를 만들고 템플릿을 교체하세요.

@@ -3,16 +3,18 @@ from decimal import Decimal
 
 from django.db.models import Case, Count, IntegerField, Max, Q, Sum, Value, When
 
-from apps.cost.models import CostActualLine, CostActualStatus, RevenueRecognition
+from apps.cost.models import CostActualLine, CostActualStatus, RevenueRecognition, RevenueRecognitionClose
 from apps.cost.services.accrual_cost import get_accrual_cost_by_project
 from apps.finance.services.cash_summary import get_cash_summary
 from apps.finance.services.profit_loss import _calculate_margin, get_profit_loss_by_project
 from apps.labor.services import get_labor_totals_for_projects
 from apps.projects.models import Project
+from apps.risk.dashboard_visibility import get_operational_dashboard_risk_queryset
 from apps.risk.models import RiskFinding
 from django.utils import timezone
 from apps.schedule.models import DailyProgress, SchedulePlan, ScheduleTask
 from apps.schedule.services.progress_agg import get_project_progress
+from apps.closing.revenue_recognition import contract_supply_amount, get_approved_progress_percent
 
 
 def _safe_decimal(value):
@@ -23,7 +25,7 @@ def _risk_counts_by_project(project_ids):
     if not project_ids:
         return {}
     rows = (
-        RiskFinding.objects.filter(project_id__in=project_ids)
+        get_operational_dashboard_risk_queryset().filter(project_id__in=project_ids)
         .values("project_id")
         .annotate(
             open_count=Count("id", filter=Q(status="open")),
@@ -43,15 +45,17 @@ def _latest_risk_updated_at(project_ids):
     if not project_ids:
         return {}
     rows = (
-        RiskFinding.objects.filter(project_id__in=project_ids)
+        get_operational_dashboard_risk_queryset().filter(project_id__in=project_ids)
         .values("project_id")
         .annotate(latest=Max("updated_at"))
     )
     return {row["project_id"]: row["latest"] for row in rows}
 
 
-def get_ceo_dashboard(as_of_date=None):
-    projects = get_ceo_projects_list({"as_of_date": as_of_date})
+def get_ceo_dashboard(as_of_date=None, *, legal_entity_ids=None):
+    projects = get_ceo_projects_list(
+        {"as_of_date": as_of_date, "legal_entity_ids": legal_entity_ids}
+    )
     return {
         "as_of_date": as_of_date,
         "projects": projects,
@@ -61,6 +65,9 @@ def get_ceo_dashboard(as_of_date=None):
 def get_ceo_projects_list(filters):
     filters = filters or {}
     queryset = Project.objects.filter(is_active=True).order_by("id").select_related()
+    legal_entity_ids = filters.get("legal_entity_ids")
+    if legal_entity_ids is not None:
+        queryset = queryset.filter(legal_entity_id__in=legal_entity_ids)
     query = (filters.get("q") or "").strip()
     if query:
         queryset = queryset.filter(name__icontains=query)
@@ -89,16 +96,23 @@ def get_ceo_projects_list(filters):
         recognized_revenue = _safe_decimal(profit_loss.get("recognized_revenue"))
         accrual_cost = _safe_decimal(accrual.get("total_cost"))
         profit = recognized_revenue - accrual_cost
+        approved_progress_percent = get_approved_progress_percent(project, filters.get("as_of_date") or timezone.localdate())
+        provisional_revenue = (contract_supply_amount(project) * approved_progress_percent / Decimal("100")).quantize(Decimal("0.01"))
+        provisional_profit = provisional_revenue - accrual_cost
+        recognition = RevenueRecognitionClose.objects.filter(project=project).order_by("-recognition_date", "-id").first()
         margin_percent = _calculate_margin(recognized_revenue, profit)
         summary = {
             "project_id": project.id,
             "project_name": getattr(project, "name", ""),
             "overall_progress_percent": _safe_decimal(progress.get("overall_progress_percent")),
             "recognized_revenue": recognized_revenue,
+            "provisional_progress_revenue": provisional_revenue,
             "accrual_cost": accrual_cost,
             "labor_cost": labor_cost,
             "profit": profit,
+            "provisional_profit": provisional_profit,
             "margin_percent": margin_percent,
+            "revenue_recognition_status": "인식 완료" if recognition else "월마감 전",
             "tasks": progress.get("tasks", []),
             "cost_by_category": accrual.get("by_category", {}),
             "updated_at": None,
@@ -194,6 +208,7 @@ def _bulk_progress(project_ids, as_of_date):
     )
     progress_rows = (
         DailyProgress.objects.filter(plan_id__in=plan_map.keys(), report_date__lte=as_of_date)
+        .exclude(status="voided")
         .order_by("task_id", "-report_date", "-id")
         .values("task_id", "progress_percent")
     )
@@ -239,7 +254,7 @@ def _bulk_accrual(project_ids, as_of_date=None):
     rows = (
         CostActualLine.objects.filter(**cost_filters)
         .values("cost_actual__project_id", "cost_item__category")
-        .annotate(total=Sum("amount"))
+        .annotate(total=Sum("accounting_cost_amount"))
     )
     summary = {project_id: _empty_accrual() for project_id in project_ids}
     for row in rows:

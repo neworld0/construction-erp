@@ -1,0 +1,159 @@
+﻿apps\audit\models.py:    project = models.ForeignKey(
+apps\closing\models.py:    project = models.OneToOneField(
+apps\closing\models.py:    project = models.ForeignKey(
+apps\contracts\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\contracts\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\ceo\web_views.py:    project = Project.objects.filter(id=project_id).first()
+apps\ceo\risk_summary.py:    safe_project = (sample_project or "").strip()
+apps\core\rbac\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.CASCADE)
+apps\ceo\app_views.py:        project = getattr(target_obj, "project", None)
+apps\ceo\app_views.py:                project = getattr(target_obj, "project", None)
+apps\ceo\app_views.py:        project = item.get("project")
+apps\ceo\app_views.py:    sample_project = (
+apps\ceo\app_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\ceo\app_views.py:    project = change_request.project
+apps\ceo\app_views.py:        project = Project.objects.select_for_update().get(id=change_request.project_id)
+apps\core\management\commands\seed_demo_3sites_e2e.py:        hq_wh.project = None
+apps\core\management\commands\seed_demo_3sites_e2e.py:            site_wh.project = project
+apps\core\management\commands\seed_demo_3sites_e2e.py:                timesheet.project = project
+apps\core\services\approvals.py:        project = _resolve_approval_project(approval)
+apps\core\services\approvals.py:        project = _resolve_approval_project(approval)
+apps\ceo\services\kpi_engine.py:    budget_by_project = {}
+apps\ceo\services\kpi_engine.py:    progress_by_project = _bulk_actual_progress(project_ids, as_of_date, progress_statuses)
+apps\ceo\services\kpi_engine.py:    cost_project = CostActual.objects.filter(id=OuterRef("object_id")).values("project_id")[:1]
+apps\ceo\services\kpi_engine.py:    progress_project = DailyProgress.objects.filter(id=OuterRef("object_id")).values("project_id")[:1]
+apps\ceo\services\kpi_engine.py:    report_project = FieldReport.objects.filter(id=OuterRef("object_id")).values("project_id")[:1]
+apps\ceo\services\dashboard.py:    snapshot_by_project = {}
+apps\ceo\services\dashboard.py:    latest_by_project = {}
+apps\schedule\serializers.py:        project = attrs.get("project")
+apps\schedule\serializers.py:        project = validated_data.get("project")
+apps\schedule\serializers.py:        project = attrs.get("project")
+apps\schedule\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\schedule\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\schedule\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\projects\approval_package_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\projects\approval_package_views.py:                package.project = project
+apps\projects\approval_package_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\projects\approval_package_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\projects\api_views.py:        project = get_object_or_404(Project, id=project_id)
+apps\projects\api_views.py:        project = get_object_or_404(Project, id=project_id)
+apps\reports\models.py:    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+apps\reports\web_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\public_site\views.py:    project = get_object_or_404(PublicProject, slug=slug, is_published=True)
+apps\field\models.py:    project = models.ForeignKey(Project, on_delete=models.PROTECT)
+apps\field\mobile_views.py:    project = None
+apps\field\mobile_views.py:            project = _resolve_project(request.user, project_id)
+apps\field\mobile_views.py:            project = None
+apps\field\mobile_views.py:                project = _resolve_project(request.user, last_project_id)
+apps\field\mobile_views.py:                project = None
+apps\field\mobile_views.py:        project = projects.first()
+apps\field\mobile_views.py:    projects, project = _resolve_mobile_project(request)
+apps\field\mobile_views.py:    projects, project = _resolve_mobile_project(request)
+apps\field\mobile_views.py:    _projects, project = _resolve_mobile_project(request)
+apps\field\mobile_views.py:    _projects, project = _resolve_mobile_project(request)
+apps\field\mobile_views.py:    _projects, project = _resolve_mobile_project(request)
+apps\field\mobile_views.py:    _projects, project = _resolve_mobile_project(request)
+apps\field\serializers.py:        project = validated_data.get("project")
+apps\risk\services\engine.py:    project = _resolve_project(event)
+apps\projects\wbs_change.py:                    obj.project = project
+apps\risk\models.py:    project = models.ForeignKey(
+apps\labor\models.py:    project = models.ForeignKey(
+apps\labor\models.py:    actual_project = models.ForeignKey(
+apps\labor\models.py:    report_project = models.ForeignKey(
+apps\labor\models.py:                self.actual_project = self.timesheet_ref.project
+apps\labor\models.py:                self.actual_project = self.cost_ref.project
+apps\labor\models.py:            self.report_project = self.actual_project
+apps\labor\models.py:    project = models.ForeignKey(
+apps\labor\models.py:    report_project = models.ForeignKey(
+apps\labor\models.py:    project = models.ForeignKey(
+apps\labor\models.py:    card_project = models.ForeignKey(
+apps\labor\models.py:    project = models.ForeignKey(
+apps\labor\models.py:    actual_project = models.ForeignKey(
+apps\labor\models.py:    report_project = models.ForeignKey(
+apps\labor\models.py:    card_project = models.ForeignKey(
+apps\labor\models.py:    project = models.ForeignKey(
+apps\labor\models.py:    project = models.ForeignKey(
+apps\labor\models.py:    project = models.ForeignKey(
+apps\labor\web_views.py:        project = filter_form.cleaned_data.get("project")
+apps\labor\web_views.py:        target_report_project = (request.POST.get("target_report_project") or "").strip()
+apps\labor\web_views.py:            project = get_object_or_404(Project, id=project_id)
+apps\field\web_views.py:    project = None
+apps\field\web_views.py:            project = _resolve_project(request.user, project_id)
+apps\field\web_views.py:            project = None
+apps\field\web_views.py:                project = _resolve_project(request.user, last_project_id)
+apps\field\web_views.py:                project = None
+apps\field\web_views.py:        project = projects.first()
+apps\field\web_views.py:    project = cost_actual.project
+apps\field\web_views.py:    project = progress.project
+apps\field\web_views.py:    project = _resolve_project(request.user, project_id)
+apps\field\web_views.py:                approved_project = (
+apps\field\web_views.py:                approved_project = (
+apps\field\web_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\cost\views.py:        project = Project.objects.filter(id=project_id).first()
+apps\labor\services.py:    actual_project = (
+apps\labor\services.py:        card_project = result.card_day.card_project
+apps\labor\services.py:        card_project = result.batch.project if result.batch.project_id else None
+apps\labor\services.py:    project = _resolve_project(data.get("project"))
+apps\labor\services.py:    actual_project = _resolve_project(data.get("actual_project"))
+apps\labor\services.py:    report_project = _resolve_project(data.get("report_project")) or actual_project
+apps\labor\services.py:            actual_project = timesheet_ref.project
+apps\labor\services.py:            report_project = actual_project
+apps\labor\services.py:            actual_project = cost_ref.project
+apps\labor\services.py:            report_project = actual_project
+apps\labor\services.py:        report_project = actual_project
+apps\labor\services.py:    new_report_project = _resolve_project(report_project)
+apps\labor\services.py:            ledger.report_project = new_report_project
+apps\labor\services.py:    project = _resolve_project(data.get("project"))
+apps\labor\services.py:        project = None
+apps\labor\services.py:    project = _resolve_project(data.get("project")) if "project" in data else rate.project
+apps\labor\services.py:        project = None
+apps\labor\services.py:    rate.project = project
+apps\labor\services.py:        project = Project.objects.filter(id=project).first()
+apps\labor\services.py:        project = Project.objects.filter(id=project_id).first()
+apps\master\models.py:    project = models.ForeignKey(
+apps\projects\services\wbs_change_approval.py:        project = Project.objects.select_for_update().get(id=change_request.project_id)
+apps\kpi\services.py:        project = projects_map[project_id]
+apps\cost\serializers.py:            project = RevenueRecognition._meta.get_field("project").remote_field.model.objects.get(
+apps\cost\serializers.py:        project = validated_data["project"]
+apps\kpi\api_views.py:        project = Project.objects.get(id=project_id)
+apps\evidence\web_views.py:    project = resolve_project_for_evidence(evidence)
+apps\evidence\web_views.py:    project = resolve_project_for_evidence(evidence)
+apps\evidence\services\resolve.py:    project = resolve_project_for_evidence(evidence)
+apps\evidence\views.py:                project = resolve_project_for_evidence(evidence)
+apps\evidence\views.py:        project = resolve_project_for_evidence(evidence)
+apps\evidence\views.py:        project = resolve_project_for_evidence(evidence)
+apps\evidence\views.py:        project = resolve_project_for_evidence(evidence)
+apps\cost\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\cost\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\projects\hq_views.py:                                        project = project_form.save(commit=False)
+apps\projects\hq_views.py:                                        contract.project = project
+apps\projects\hq_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\projects\hq_views.py:                        item.project = project
+apps\projects\hq_views.py:                        item.project = project
+apps\projects\hq_views.py:                    item.project = project
+apps\projects\hq_views.py:    project = get_object_or_404(Project, id=project_id)
+apps\projects\models.py:    project = models.ForeignKey(
+apps\projects\models.py:    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+apps\projects\models.py:    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+apps\projects\models.py:    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+apps\projects\models.py:    project = models.OneToOneField(
+apps\inventory\api_views.py:            project = get_object_or_404(Project, id=project_id)
+apps\inventory\api_views.py:        project = None
+apps\inventory\api_views.py:            project = get_object_or_404(Project, id=project_id)
+apps\inventory\api_views.py:        project = get_object_or_404(Project, id=project_id)
+apps\finance\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\inventory\models.py:    project = models.ForeignKey(
+apps\inventory\models.py:    project = models.ForeignKey(
+apps\inventory\models.py:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps\cost\management\commands\repair_project_budget_categories.py:        project = Project.objects.filter(id=options["project_id"]).first()
+apps\inventory\services.py:            warehouse.project = None
+apps\cost\management\commands\repair_project_budget_cbs.py:        project = Project.objects.filter(id=project_id).first()
+apps\cost\management\commands\repair_project_owner_supplied_budget.py:        project = Project.objects.filter(id=options["project_id"]).first()
+apps\finance\services\profit_loss.py:    project = Project.objects.filter(id=project_id).first()
+apps\inventory\web_views.py:            project = assigned_projects.get(id=project_id)
+apps\inventory\web_views.py:            project = None
+apps\labor\forms.py:        project = cleaned.get("project")
+apps\labor\forms.py:        actual_project = cleaned.get("actual_project")
+apps\labor\forms.py:    project = forms.ModelChoiceField(
+apps\labor\forms.py:    project = forms.ModelChoiceField(
+apps\labor\api_views.py:        project = get_object_or_404(Project, id=project_id)

@@ -1,12 +1,14 @@
 from django.urls import include, path
 
 from apps.evidence.web_views import evidence_edit
+from apps.field.web_views import hq_retroactive_progress_request_list
 from apps.contracts import web_urls as contract_web_urls
 from apps.schedule import web_urls as schedule_web_urls
 from apps.projects.hq_views import (
     hq_project_detail,
     hq_project_list,
     hq_project_new,
+    hq_project_operational_test_date_window,
     hq_wbs_change_new,
 )
 from apps.projects.approval_package_views import (
@@ -23,8 +25,21 @@ from apps.closing.web_views import (
     hq_closing_list,
     hq_closing_new,
     hq_closing_submit,
+    hq_closing_dual_approve,
+    hq_closing_dual_reject,
+    hq_project_reconciliation,
+    hq_revenue_recognition,
     ceo_closing_approve,
     ceo_closing_reject,
+)
+from apps.finance.web_views import hq_expense_execution_list, hq_progress_billing
+from apps.labor.web_views import my_office_payslip_download, my_office_payslips
+from apps.finance.billing_report_views import hq_billing_report_detail, hq_billing_report_export, hq_billing_report_list, hq_billing_report_new, hq_billing_report_owner_confirmation, hq_billing_report_review, hq_billing_report_settlement_detail, hq_billing_report_settlement_list, hq_billing_report_tax_invoice_issue
+from apps.field.daily_report_views import (
+    hq_organization_daily_report,
+    hq_organization_daily_report_pdf,
+    hq_project_daily_report_detail,
+    hq_project_daily_report_pdf,
 )
 from .views import (
     app_entry,
@@ -36,29 +51,48 @@ from .views import (
     hq_daily_progress_detail,
     hq_field_report_detail,
     hq_cost_actual_detail,
+    hq_cost_actual_correct_report_date,
     hq_approval_detail,
+    ceo_legal_entity_access_list,
+    hq_legal_entity_license_list,
+    hq_legal_entity_credit_rating_evidence_download,
+    hq_legal_entity_license_performance_evidence_download,
+    switch_current_legal_entity,
     evidence_file_open,
 )
 
 urlpatterns = [
     path("", app_entry),
     path("ceo/", include("apps.ceo.app_urls")),
+    path("my-payslips/", my_office_payslips),
+    path("my-payslips/<int:slip_id>/downloads/payslip.<str:file_format>", my_office_payslip_download),
     path("hq/master/", include("apps.master.web_urls")),
     path("hq/master/", include("apps.labor.web_urls")),
     path("hq/", hq_app_view),
+    path("legal-entity/switch/", switch_current_legal_entity),
+    path("hq/legal-entity-access/", ceo_legal_entity_access_list),
+    path("hq/legal-entity/licenses/", hq_legal_entity_license_list),
+    path("hq/legal-entity/licenses/new/", hq_legal_entity_license_list, {"form_section": "license"}),
+    path("hq/legal-entity/licenses/credit-ratings/new/", hq_legal_entity_license_list, {"form_section": "credit_rating"}),
+    path("hq/legal-entity/licenses/performances/new/", hq_legal_entity_license_list, {"form_section": "performance"}),
+    path("hq/legal-entity/licenses/performances/evidence/<int:evidence_id>/download/", hq_legal_entity_license_performance_evidence_download),
+    path("hq/legal-entity/licenses/credit-ratings/evidence/<int:evidence_id>/download/", hq_legal_entity_credit_rating_evidence_download),
     path("hq/inbox/", hq_inbox_view),
     path("hq/risks/", hq_risk_list_view),
     path("hq/missing/", hq_missing_list_view),
     path("hq/reports/<int:report_id>/", hq_daily_report_detail),
     path("hq/progress/<int:progress_id>/", hq_daily_progress_detail),
+    path("hq/progress/retro-requests/", hq_retroactive_progress_request_list),
     path("hq/field-reports/<int:field_report_id>/", hq_field_report_detail),
     path("hq/costs/<int:cost_actual_id>/", hq_cost_actual_detail),
+    path("hq/costs/<int:cost_actual_id>/correct-date/", hq_cost_actual_correct_report_date),
     path("hq/approvals/<int:approval_id>/", hq_approval_detail),
     path("hq/", include(contract_web_urls)),
     path("hq/", include(schedule_web_urls)),
     path("hq/projects/", hq_project_list),
     path("hq/projects/new/", hq_project_new),
     path("hq/projects/<int:project_id>/", hq_project_detail),
+    path("hq/projects/<int:project_id>/operational-test-date-window/", hq_project_operational_test_date_window),
     path("hq/projects/<int:project_id>/wbs-change/new/", hq_wbs_change_new),
     path(
         "hq/projects/<int:project_id>/approval-packages/",
@@ -77,9 +111,29 @@ urlpatterns = [
     path("hq/adjustments/<int:adjustment_id>/", hq_adjustment_detail),
     path("hq/adjustments/<int:adjustment_id>/submit/", hq_adjustment_submit),
     path("hq/closing/", hq_closing_list),
+    path("hq/reconciliation/", hq_project_reconciliation),
+    path("hq/site-daily-logs/", hq_organization_daily_report),
+    path("hq/site-daily-logs/print.pdf", hq_organization_daily_report_pdf),
+    path("hq/site-daily-logs/projects/<int:project_id>/", hq_project_daily_report_detail),
+    path("hq/site-daily-logs/projects/<int:project_id>/print.pdf", hq_project_daily_report_pdf),
+    path("hq/closing/revenue-recognition/", hq_revenue_recognition),
+    path("hq/finance/billings/", hq_progress_billing),
+    path("hq/finance/expense-executions/", hq_expense_execution_list),
+    path("hq/billing/reports/", hq_billing_report_list),
+    path("hq/billing/reports/settlements/", hq_billing_report_settlement_list),
+    path("hq/billing/reports/progress/new/", hq_billing_report_new, {"report_type": "PROGRESS"}),
+    path("hq/billing/reports/completion/new/", hq_billing_report_new, {"report_type": "COMPLETION"}),
+    path("hq/billing/reports/<int:report_id>/", hq_billing_report_detail),
+    path("hq/billing/reports/<int:report_id>/settlement/", hq_billing_report_settlement_detail),
+    path("hq/billing/reports/<int:report_id>/review/", hq_billing_report_review),
+    path("hq/billing/reports/<int:report_id>/owner-confirmation/", hq_billing_report_owner_confirmation),
+    path("hq/billing/reports/<int:report_id>/tax-invoice/", hq_billing_report_tax_invoice_issue),
+    path("hq/billing/reports/<int:report_id>/export/", hq_billing_report_export),
     path("hq/closing/new/", hq_closing_new),
     path("hq/closing/<int:closing_id>/", hq_closing_detail),
     path("hq/closing/<int:closing_id>/submit/", hq_closing_submit),
+    path("hq/closing/<int:closing_id>/hq-dual-approve/", hq_closing_dual_approve),
+    path("hq/closing/<int:closing_id>/hq-dual-reject/", hq_closing_dual_reject),
     path("hq/closing/<int:closing_id>/approve/", ceo_closing_approve),
     path("hq/closing/<int:closing_id>/reject/", ceo_closing_reject),
     path("hq/inventory/", include("apps.inventory.web_urls_hq")),

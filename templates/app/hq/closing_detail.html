@@ -22,8 +22,9 @@
 </div>
 
 <div class="card" style="margin-top: 18px;">
-  <div style="display:grid; gap:8px;">
+    <div style="display:grid; gap:8px;">
     <div><strong>대상 월:</strong> {{ period.year }}-{{ period.month|stringformat:"02d" }}</div>
+    <div><strong>확정 방식:</strong> {{ period.get_approval_policy_display }}</div>
     <div><strong>상태:</strong>
       {% if period.status == "CLOSED" %}
         <span class="badge closed">CLOSED</span>
@@ -70,10 +71,25 @@
     {% if role == "hq" and request_obj and request_obj.status == "draft" %}
       <form method="post" action="/app/hq/closing/{{ period.id }}/submit/">
         {% csrf_token %}
-        <button class="btn" type="submit">CEO 승인 요청 제출</button>
+        <button class="btn" type="submit">
+          {% if period.approval_policy == "HQ_SINGLE" %}HQ 확정 실행
+          {% elif period.approval_policy == "HQ_DUAL" %}HQ 2차 검토 요청 제출
+          {% else %}CEO 예외 승인 요청 제출{% endif %}
+        </button>
       </form>
     {% endif %}
-    {% if role == "ceo" and request_obj and request_obj.status == "submitted" %}
+    {% if role == "hq" and period.approval_policy == "HQ_DUAL" and request_obj and request_obj.status == "submitted" and request_obj.submitted_by_id != request.user.id %}
+      <form method="post" action="/app/hq/closing/{{ period.id }}/hq-dual-approve/">
+        {% csrf_token %}
+        <button class="btn" type="submit">HQ 2차 확정 후 마감 실행</button>
+      </form>
+      <form method="post" action="/app/hq/closing/{{ period.id }}/hq-dual-reject/">
+        {% csrf_token %}
+        <input class="input" type="text" name="decision_note" placeholder="반려 사유" style="min-width:200px;" />
+        <button class="btn btn-outline" type="submit">2차 검토 반려</button>
+      </form>
+    {% endif %}
+    {% if role == "ceo" and period.approval_policy == "CEO" and request_obj and request_obj.status == "submitted" %}
       <form method="post" action="/app/hq/closing/{{ period.id }}/approve/">
         {% csrf_token %}
         <button class="btn" type="submit">승인 후 마감 실행</button>

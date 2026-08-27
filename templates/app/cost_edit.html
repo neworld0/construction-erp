@@ -2,25 +2,6 @@
 {% block page_title %}원가 수정{% endblock %}
 {% block content %}
 <style>
-  .tabs {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-  .tab {
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    text-decoration: none;
-    color: var(--text);
-    font-size: 13px;
-  }
-  .tab.active {
-    background: var(--primary);
-    color: #0b1220;
-    border-color: var(--primary);
-  }
   .grid {
     display: grid;
     gap: 12px;
@@ -42,23 +23,19 @@
   }
 </style>
 
+<div class="field-page field-entry-page">
 <div class="card">
-  <div class="tabs">
-    <a class="tab" href="/app/field/?tab=progress&project_id={{ cost_actual.project_id }}">진행률</a>
-    <a class="tab" href="/app/reports/?project_id={{ cost_actual.project_id }}">보고서</a>
-    <a class="tab active" href="/app/field/?tab=cost&project_id={{ cost_actual.project_id }}">원가</a>
+  <div class="field-entry-header">
+    <h2>원가 수정</h2>
+    <span class="muted">단가와 부가세 처리 기준을 확인한 뒤 저장 또는 제출하세요.</span>
   </div>
-</div>
-
-<div class="card" style="margin-top:12px;">
-  <h2 class="card-title">원가 수정</h2>
   {% if error %}
     <div class="warning">{{ error }}</div>
   {% endif %}
-  <form method="post" enctype="multipart/form-data">
+  <form method="post" enctype="multipart/form-data" class="field-entry-form">
     {% csrf_token %}
-    <div class="grid">
-      <div class="field">
+    <div class="field-form-grid">
+      <div class="field field-form-field">
         <label for="cost_item_id">원가 항목</label>
         <select id="cost_item_id" name="cost_item_id" required>
           <option value="">선택하세요</option>
@@ -69,20 +46,29 @@
           {% endfor %}
         </select>
       </div>
-      <div class="field">
+      <div class="field field-form-field">
         <label for="quantity">수량</label>
         <input id="quantity" name="quantity" type="number" step="0.001" min="0" value="{% if line %}{{ line.quantity }}{% endif %}" required>
       </div>
-      <div class="field">
-        <label for="unit_price">단가</label>
+      <div class="field field-form-field">
+        <label for="unit_price">단가(VAT 포함)</label>
         <input id="unit_price" name="unit_price" type="number" step="1" min="0" value="{% if line %}{{ line.unit_price }}{% endif %}" required>
       </div>
-      <div class="field" style="grid-column: 1 / -1;">
+      <div class="field field-form-field">
+        <label for="vat_treatment">부가세 처리</label>
+        <select id="vat_treatment" name="vat_treatment">
+          <option value="DEDUCTIBLE" {% if not line or line.vat_treatment == "DEDUCTIBLE" %}selected{% endif %}>과세 · 매입세액 공제</option>
+          <option value="EXEMPT" {% if line and line.vat_treatment == "EXEMPT" %}selected{% endif %}>면세 · VAT 없음</option>
+          <option value="NON_DEDUCTIBLE" {% if line and line.vat_treatment == "NON_DEDUCTIBLE" %}selected{% endif %}>불공제 · VAT 포함 원가</option>
+        </select>
+      </div>
+      <p class="warning" style="grid-column: 1 / -1; margin:0;">단가는 VAT 포함 금액으로 입력합니다. 공제 가능 거래는 손익에 공급가액만 반영되며, 노무비는 VAT 없음으로 입력합니다.</p>
+      <div class="field field-form-field field-form-field--full">
         <label for="memo">메모</label>
         <textarea id="memo" name="memo" rows="4">{% if line %}{{ line.description }}{% endif %}</textarea>
       </div>
     </div>
-    <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+    <div class="field-form-actions">
       <button type="submit" name="action" value="draft" class="btn btn-primary">임시저장</button>
       <button type="submit" name="action" value="submit" class="btn btn-outline">제출</button>
       <a href="/app/field/?tab=cost&project_id={{ cost_actual.project_id }}" class="btn btn-outline">목록</a>
@@ -90,5 +76,6 @@
   </form>
 
   {% include "components/attachments_panel.html" with attachments=cost_existing_files can_edit=cost_can_edit_attachments upload_url=cost_attachment_upload_url delete_url=cost_attachment_delete_url object_label="원가" help_text=cost_attachment_help_text %}
+</div>
 </div>
 {% endblock %}

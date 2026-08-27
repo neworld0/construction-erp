@@ -1,0 +1,15 @@
+{
+  "status": "LOGICAL_BACKUP_EXECUTED_RESTORE_COMMAND_VERIFIED",
+  "vendor": "postgresql",
+  "database_name": "construction_erp_demo",
+  "host_classification": "LOCAL_DEMO",
+  "backup_executed": true,
+  "backup_filename": "construction_erp_demo_20260805_135828.dump",
+  "backup_size_bytes": 510242,
+  "backup_sha256": "960c335505969bd43c83daf0208000eae0b27a9695274ed689e0126ee9c21d1d",
+  "restore_executed": false,
+  "restore_command_verified": true,
+  "restore_verification": "pg_restore --list completed; no active database restore was attempted.",
+  "media_backup": "NOT_EXECUTED_SENSITIVE_UPLOAD_REVIEW_REQUIRED",
+  "media_root_exists": true
+}

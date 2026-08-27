@@ -1,0 +1,4 @@
+Scenario,Project_Count,Active_Project_Count,Open_Risk_Count_DB,Valid_Project_Open_Risk_Count,Orphan_Open_Risk_Count,Global_System_Open_Risk_Count,CEO_Displayed_HIGH_Count,CEO_Displayed_OPEN_Text,Result,Notes
+Before patch local reset,0,0,1,0,1,0,1,OPEN 리스크 1건이 있습니다.,FAIL,All OPEN RiskFinding rows were counted.
+After patch before reset apply,0,0,1,0,1,0,0,현재 OPEN 리스크가 없습니다.,PASS,The orphan is excluded and identified for future cleanup.
+Active project regression,1,1,1,1,0,0,1,OPEN 리스크 1건이 있습니다.,PASS,Valid active project HIGH risk remains visible.

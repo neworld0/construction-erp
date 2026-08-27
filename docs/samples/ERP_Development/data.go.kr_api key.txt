@@ -1,0 +1,18 @@
+data.go.kr_api key
+
+LH 입찰공고
+LH 개찰 결과
+LH 개찰 예가
+조달청 입찰공고
+
+	
+5027f42910f0b68f57492558123eb56fbc3da5ebeb8687a37a49e9b7474b393a
+5027f42910f0b68f57492558123eb56fbc3da5ebeb8687a37a49e9b7474b393a	
+5027f42910f0b68f57492558123eb56fbc3da5ebeb8687a37a49e9b7474b393a
+5027f42910f0b68f57492558123eb56fbc3da5ebeb8687a37a49e9b7474b393a
+
+
+https://openapi.ebid.lh.or.kr/ebid.com.openapi.service.OpenBidInfoList.dev
+https://openapi.ebid.lh.or.kr/ebid.com.openapi.service.OpenTenderopenList.dev
+https://openapi.ebid.lh.or.kr/ebid.com.openapi.service.OpenPreprcList.dev
+https://apis.data.go.kr/1230000/ad/BidPublicInfoService

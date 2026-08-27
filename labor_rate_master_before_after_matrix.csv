@@ -1,0 +1,7 @@
+scenario,before,after,result
+missing_role_rate,직종 단가 미등록 ValidationError가 리스트 형태로 표시됨,역할명과 HQ 등록 안내를 표시함,PASS
+LOCAL-OPS_rate_bootstrap,단가 행 없음,seed_labor_rates가 회사 공통 DAY 단가 생성,PASS
+legacy_role_code,LAB 코드 외 기존 역할은 누락 가능,동일 역할명의 활성 기존 역할도 seed,PASS
+field_submission,단가 없으면 이유가 불명확함,모든 행을 사전 검증하고 초안 상태 유지,PASS
+rate_snapshot,제출 전 0,제출 시 TimesheetLine unit_rate와 amount 저장,PASS
+field_rate_edit,허용되지 않음,기존 HQ/CEO 전용 유지,PASS

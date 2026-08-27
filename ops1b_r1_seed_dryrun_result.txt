@@ -1,0 +1,2 @@
+﻿DRY_RUN: project_id=17 code=OPS1B-RERUN-SAMPLE-001
+{'budget_total': Decimal('390000000'), 'wbs_total': Decimal('85.00'), 'task_total': Decimal('85.000'), 'recognized_revenue': Decimal('71377837.50'), 'revenue_progress': Decimal('12.500'), 'cost_total': Decimal('10000000.00')}

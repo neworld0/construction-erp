@@ -1,0 +1,8 @@
+Evidence_ID,Step,Evidence_Type,File_or_Screen,Description,Contains_PII,Storage_Note,Reviewer
+OPS1B-E01,Discovery,Git,ops1b_00_git_status.txt,브랜치와 작업트리 상태,No,로컬 운영 증적,Implementation Lead
+OPS1B-E02,Discovery,OPS1A inventory,ops1b_05_ops1a_csv_list.txt; ops1b_06_ops1a_md_list.txt,데이터팩 부재 확인,No,로컬 운영 증적,Implementation Lead
+OPS1B-E03,Baseline,Health,ops1b_16_manage_check.txt,시스템 검사,No,로컬 운영 증적,Implementation Lead
+OPS1B-E04,Baseline,Migration,ops1b_17_makemigrations_check.txt,미생성 migration 확인,No,로컬 운영 증적,Implementation Lead
+OPS1B-E05,Workflow,Pytest,ops1b_18_23_pytest_baseline.txt,57개 운영 회귀 통과,No,로컬 운영 증적,Implementation Lead
+OPS1B-E06,Privacy,Source scan,ops1b_24_source_scan.txt,OPS1B 산출물 한글 및 PII 점검,No,로컬 운영 증적,Implementation Lead
+OPS1B-E07,Final,Git,ops1b_27_final_git_status.txt,최종 작업트리 상태,No,커밋하지 않음,Implementation Lead

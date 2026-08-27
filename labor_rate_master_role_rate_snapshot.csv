@@ -1,0 +1,12 @@
+﻿LaborRole_ID,LaborRole_Code,LaborRole_Name,Is_Active,Required_For_LOCAL_OPS,Rate_Model,Rate_ID,Rate_Type,Effective_From,Effective_To,Daily_Rate,Hourly_Rate,Project_Specific,Rate_Resolved_For_2026_08_14,Rate_Resolved_For_2026_08_31,Gap,Notes
+2,CIVIL-PAVING,포장공,True,False,LaborRateTable,13,DAY,2026-08-01,,210000,,False,210000,210000,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+6,CLEAN-WORKER,청소정리,True,False,LaborRateTable,,,,,,,False,,,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+3,ORDINARY-WORKER,보통인부,True,False,LaborRateTable,12,DAY,2026-08-01,,160000,,False,160000,160000,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+5,SIGNAL-CRANE,장비유도원,True,False,LaborRateTable,,,,,,,False,,,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+4,SIGNAL-WORKER,신호수,True,False,LaborRateTable,,,,,,,False,,,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+7,LAB-GEN,보통인부,True,True,LaborRateTable,7,DAY,2026-08-01,,160000,,False,160000,160000,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+1,LAND-WORKER,조경공,True,False,LaborRateTable,,,,,,,False,,,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+8,LAB-PAV,포장공,True,True,LaborRateTable,8,DAY,2026-08-01,,210000,,False,210000,210000,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+9,LAB-EQP,장비공,True,True,LaborRateTable,9,DAY,2026-08-01,,250000,,False,250000,250000,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+10,LAB-CMP,다짐공,True,True,LaborRateTable,10,DAY,2026-08-01,,220000,,False,220000,220000,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+11,LAB-PNT,도색공,True,True,LaborRateTable,11,DAY,2026-08-01,,200000,,False,200000,200000,,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."

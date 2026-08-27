@@ -1,0 +1,9 @@
+﻿Changed source files:
+apps/ceo/app_views.py
+apps/ceo/risk_summary.py
+scripts/local_ops_reset_project_data.py
+scripts/local_ops_risk_diagnostic.py
+apps/risk/tests/test_local_ops_reset_risk_cleanup.py
+
+Mojibake scan:
+OVERALL_SOURCE_SCAN_PASS: True

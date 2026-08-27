@@ -1,0 +1,3 @@
+Gap_ID,데이터/업무영역,현재상태,운영영향,우회방법,P0/P1/P2,OPS1필요여부,권장후속프롬프트,비고
+OPS1A-GAP-001,전자카드 원본,미제공,실제 대사 미검증,비식별 XLSX 제공 전까지 LABPAY 보류,P1,Yes,OPS1B-LABPAY-SAFE-FILE,실 PII 금지
+OPS1A-GAP-002,수익 인식 정책,잠정,실제 이익률 미확정,진행률 기준 seed로 OPS-1C 대사,P1,Yes,OPS1C-KPI-RECONCILIATION,CEO 정책 확정 필요

@@ -1,0 +1,50 @@
+[FAST-CODEX] FIELD-APPROVED-LISTS-DETAIL: 목록 → 상세 이동 + 첨부 인라인 패널 + 한글/Discovery
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+STOP RULE
+- 상세 UI 리디자인 제한
+- 수정 파일 제한: 최대 8개
+- 테스트/서버 재시작 제한: 1회
+- 무한 UX 제안 금지
+
+전제
+- 목록 API/뷰, 목록 UI가 구현
+- attachments_panel 공통 컴포넌트 사용
+- Field는 상세에서 “조회 전용”만 가능
+- Codex는 상세 URL 패턴/상세 템플릿 위치를 Discovery로 파악
+
+목표
+1) 목록 행 클릭 시 해당 Objekt 상세로 이동
+2) 상세에서 attachments_panel로 첨부 인라인 확인
+3) can_edit=False, upload_url=None, delete_url=None(조회 전용)
+4) 한글/인코딩/레이블 회귀 체크
+
+Discovery 지시
+1) 각 object type별 상세 URL 탐색
+   - 진행률
+   - 보고서
+   - 원가
+2) 상세 템플릿 위치 확인
+3) attachments_panel 이미 포함 여부 확인
+   - 없다면 include만 추가
+4) 한글 깨짐 점검 대상 위치 파악
+
+상세 이동 링크 예시
+<a href="/app/field/progress/{{id}}/detail/">상세보기</a>
+
+
+상세 첨부
+{% include "components/attachments_panel.html"
+with attachments=attachments can_edit=False upload_url=None delete_url=None %}
+
+
+한글/인코딩 체크
+- meta charset utf-8
+- 버튼/상태/레이블 한글 깨짐 0
+
+Acceptance
+- 목록 → 상세 이동 가능
+- 상세에서 첨부 인라인 표시
+- 조회 전용(수정/업로드/삭제 버튼 없음)
+- 한글 UI 깨짐 0

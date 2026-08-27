@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client
 from django.utils import timezone
 
-from apps.core.rbac.models import ProjectAssignment, UserProfile
+from apps.core.rbac.models import LegalEntity, LegalEntityAccessScope, ProjectAssignment, UserLegalEntityMembership, UserProfile
 from apps.projects.models import Project, WBSItem
 from apps.schedule.models import DailyProgress, SchedulePlan, ScheduleTask
 
@@ -14,6 +14,11 @@ from apps.schedule.models import DailyProgress, SchedulePlan, ScheduleTask
 def _field_client(username="field1"):
     user = get_user_model().objects.create_user(username=username, password="pass")
     UserProfile.objects.create(user=user, role="field")
+    UserLegalEntityMembership.objects.create(
+        user=user,
+        legal_entity=LegalEntity.objects.get(code="ASAN"),
+        access_scope=LegalEntityAccessScope.FIELD,
+    )
     client = Client()
     client.force_login(user)
     return client, user

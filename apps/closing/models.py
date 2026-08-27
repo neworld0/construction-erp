@@ -13,11 +13,28 @@ class ClosingStatus(models.TextChoices):
     CLOSED = "CLOSED", "Closed"
 
 
+class ClosingApprovalPolicy(models.TextChoices):
+    HQ_SINGLE = "HQ_SINGLE", "HQ 단독 확정"
+    HQ_DUAL = "HQ_DUAL", "HQ 2단계 통제"
+    CEO = "CEO", "CEO 예외 승인"
+
+
 class ClosingPeriod(models.Model):
+    legal_entity = models.ForeignKey(
+        "core.LegalEntity",
+        on_delete=models.PROTECT,
+        related_name="closing_periods",
+    )
     year = models.IntegerField()
     month = models.IntegerField()
     status = models.CharField(
         max_length=10, choices=ClosingStatus.choices, default=ClosingStatus.OPEN
+    )
+    approval_policy = models.CharField(
+        max_length=16,
+        choices=ClosingApprovalPolicy.choices,
+        default=ClosingApprovalPolicy.HQ_SINGLE,
+        help_text="월 마감 확정 절차입니다. 기존 마감은 CEO 승인 방식으로 보존됩니다.",
     )
     closed_at = models.DateTimeField(null=True, blank=True)
     closed_by = models.ForeignKey(
@@ -34,7 +51,7 @@ class ClosingPeriod(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["year", "month"], name="uniq_closing_period_year_month"
+                fields=["legal_entity", "year", "month"], name="uniq_closing_period_entity_year_month"
             )
         ]
 
@@ -53,7 +70,7 @@ class ClosingPeriod(models.Model):
             self.note = note
 
     def __str__(self) -> str:
-        return f"{self.year}-{self.month:02d} {self.status}"
+        return f"{self.legal_entity.code} {self.year}-{self.month:02d} {self.status}"
 
 
 class ProjectCloseStatus(models.TextChoices):
@@ -164,7 +181,7 @@ class Adjustment(models.Model):
         if not (1 <= self.period_month <= 12):
             raise ValidationError({"period_month": "month must be between 1 and 12."})
         period_closed = ClosingPeriod.objects.filter(
-            year=self.period_year, month=self.period_month, status=ClosingStatus.CLOSED
+            legal_entity=self.project.legal_entity, year=self.period_year, month=self.period_month, status=ClosingStatus.CLOSED
         ).exists()
         if not period_closed:
             raise ValidationError(

@@ -98,7 +98,7 @@
   </div>
 </div>
 
-{% if change_request.status == "submitted" %}
+{% if change_request.status == "submitted" and not ceo_read_only %}
   <div class="card" style="margin-top:16px;">
     <form method="post" action="/app/ceo/wbs-change/requests/{{ change_request.id }}/approve/" style="display:inline;">
       {% csrf_token %}

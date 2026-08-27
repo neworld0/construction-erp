@@ -1,0 +1,70 @@
+{% extends "app/base_app.html" %}
+
+{% block page_title %}진행률 소급 입력 요청{% endblock %}
+
+{% block content %}
+<style>
+.retro-progress-table{width:100%;border-collapse:collapse;border:1px solid var(--border);table-layout:fixed}.retro-progress-table th,.retro-progress-table td{border:1px solid var(--border);padding:11px 12px;vertical-align:top;overflow-wrap:anywhere}.retro-progress-table th{background:var(--surface-2);color:var(--text);font-weight:700;text-align:center;white-space:nowrap}.retro-progress-table td:nth-child(1),.retro-progress-table td:nth-child(3),.retro-progress-table td:nth-child(4),.retro-progress-table td:nth-child(5),.retro-progress-table td:nth-child(7),.retro-progress-table td:nth-child(8),.retro-progress-table td:nth-child(9){white-space:nowrap}.retro-progress-table td:nth-child(6){min-width:180px}.retro-progress-table td:last-child{min-width:190px}.retro-progress-table__status{display:inline-flex;justify-content:center;min-width:64px;padding:3px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);font-size:12px;font-weight:700}.retro-progress-table__status--pending{color:#b45309;background:#fff7ed;border-color:#fed7aa}.retro-progress-table__status--approved,.retro-progress-table__status--used{color:#166534;background:#f0fdf4;border-color:#bbf7d0}.retro-progress-table__status--rejected{color:#b91c1c;background:#fef2f2;border-color:#fecaca}.retro-progress-table__actions{display:grid;gap:8px;min-width:180px}.retro-progress-table__actions .actions-row{display:flex;gap:8px;flex-wrap:wrap}.retro-progress-table__actions .btn{min-height:34px}
+@media(max-width:900px){.retro-progress-table{table-layout:auto}.retro-progress-table th,.retro-progress-table td{padding:9px}.retro-progress-table{font-size:13px}}
+</style>
+<div class="container">
+  <div class="card">
+    <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:20px; font-weight:700;">진행률 소급 입력 요청</div>
+        <div class="hint">FIELD 사용자의 과거 진행률 입력은 승인된 요청 범위에서만 가능합니다.</div>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/">HQ 대시보드</a>
+    </div>
+    <div class="actions-row" style="margin-top:12px;">
+      {% for value, label in retro_statuses %}
+      <a class="btn {% if selected_status == value %}btn-primary{% else %}btn-outline{% endif %}" href="?status={{ value }}">{{ label }}</a>
+      {% endfor %}
+      <a class="btn btn-outline" href="?status=all">전체</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <table class="retro-progress-table">
+      <thead>
+        <tr>
+          <th>요청일</th><th>현장</th><th>요청자</th><th>대상일</th><th>업무유형</th>
+          <th>요청사유</th><th>상태</th><th>처리자</th><th>처리일</th><th>처리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in retro_requests %}
+        <tr>
+          <td data-label="요청일">{{ item.requested_at|date:"Y-m-d H:i" }}</td>
+          <td data-label="현장">{{ item.project.name }}</td>
+          <td data-label="요청자">{{ item.requested_by.username }}</td>
+          <td data-label="대상일">{{ item.target_date|date:"Y-m-d" }}</td>
+          <td data-label="업무유형">{{ item.get_request_type_display }}</td>
+          <td data-label="요청사유">{{ item.reason }}</td>
+          <td data-label="상태"><span class="retro-progress-table__status retro-progress-table__status--{{ item.status|lower }}">{{ item.get_status_display }}</span></td>
+          <td>{% if item.reviewed_by %}{{ item.reviewed_by.username }}{% else %}-{% endif %}</td>
+          <td>{% if item.reviewed_at %}{{ item.reviewed_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+          <td>
+            {% if item.status == "PENDING" %}
+            <form method="post" class="retro-progress-table__actions">
+              {% csrf_token %}
+              <input type="hidden" name="request_id" value="{{ item.id }}" />
+              <input type="text" name="review_comment" placeholder="처리 의견 (반려 시 필수)" />
+              <div class="actions-row">
+                <button name="action" value="approve" type="submit" class="btn btn-primary">승인</button>
+                <button name="action" value="reject" type="submit" class="btn btn-outline">반려</button>
+              </div>
+            </form>
+            {% else %}
+            <span class="hint">{{ item.review_comment|default:"-" }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10">조건에 맞는 소급 입력 요청이 없습니다.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+Issue_ID,Area,Severity,P0_P1_P2,Description,Evidence,Workaround,Required_Before_OPS1C,Required_Before_Full_Rollout,Followup_Prompt
+OPS1BR2-001,Inactive purge,Low,P2,현재 inactive 프로젝트가 없어 삭제는 0건,ops1b_r2_purge_dryrun_result.txt; ops1b_r2_purge_apply_result.txt,향후 대상은 dry-run manifest 확인 후 apply,No,No,OPS-DB-HYGIENE-RERUN
+OPS1BR2-002,AuditLog,Medium,P2,AuditLog는 project purge에서 보존,ops1b_r2_purge_and_visibility_script.py,별도 보존 기간 정책 수립,No,No,AUDIT-RETENTION-POLICY
+OPS1BR-001,LABPAY 전자카드,High,P1,안전한 비식별 전자카드 XLSX 미확보,ops1b_rerun_ecard_safety_check.txt,완전 마스킹된 파일 제공,No,Yes,LABPAY-REAL-1

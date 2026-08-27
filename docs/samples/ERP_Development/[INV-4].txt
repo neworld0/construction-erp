@@ -1,0 +1,236 @@
+[INV-4]
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+
+=====================================================
+[INV-4 목표]
+=====================================================
+본사(HQ) 창고 ↔ 현장(SITE) 창고 간 재고 이동(Transfer)을 구현한다.
+
+원칙:
+- Transfer는 “요청/출고/입고” 3단계 상태를 갖는다(운영 안전)
+- 실제 재고 변동은 INV-3 원장(InventoryLedger)로만 기록한다.
+- Transfer 승인/완료 시 원장이 생성되며 Stock이 변한다.
+- 월 마감(CLOSE-2) 이후에는 Transfer 처리(출고/입고/취소)가 전면 차단된다(기준일 적용).
+
+MVP 스코프:
+- HQ가 HQ→SITE 출고(이동) 생성/출고 처리
+- SITE(현장/HQ)가 입고 확인(수령 처리)
+- SITE→HQ 반납도 가능(옵션: 같은 구조 재사용)
+- Transfer는 다건 라인(items) 지원(필수)
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- Warehouse 타입 필드명(warehouse_type) 확인
+- Project 모델 및 FIELD 사용자 프로젝트 배정 로직 확인
+- InventoryLedger 생성 서비스 함수 확인(create_ledger_entry)
+- CLOSE-2 가드 함수(assert_month_open) 확인
+- AuditLog 방식 확인
+Discovery 결과를 코드 주석으로 남기고, 실제 파일 경로를 명시.
+
+=====================================================
+1) 모델 설계 (필수)
+=====================================================
+apps/inventory/models.py
+
+[Transfer]
+- id
+- transfer_no (CharField, unique, db_index=True)  # 예: TR-202601-0001
+- direction (choices):
+    "HQ_TO_SITE"
+    "SITE_TO_HQ"   # 반납(옵션, 구조는 포함)
+- project (FK Project, null=True, blank=True)
+    - HQ_TO_SITE는 반드시 project 필요(대상 현장)
+    - SITE_TO_HQ도 project 필요(출처 현장)
+- from_warehouse (FK Warehouse)
+- from_location (FK Location, null=True, blank=True)
+- to_warehouse (FK Warehouse)
+- to_location (FK Location, null=True, blank=True)
+- tx_date (DateField)   # 재고 변동 기준일(이동 기준일). 이 날짜로 마감 체크
+- status (choices):
+    "DRAFT"        # 작성중
+    "SUBMITTED"    # 요청/확정(출고 대기)
+    "ISSUED"       # 출고 완료(원장 반영됨)
+    "RECEIVED"     # 입고 확인(원장 반영됨) = 최종 완료
+    "CANCELLED"    # 취소
+- note (TextField, blank=True)
+- created_by (FK User)
+- submitted_at (DateTimeField, null=True, blank=True)
+- issued_at (DateTimeField, null=True, blank=True)
+- received_at (DateTimeField, null=True, blank=True)
+- cancelled_at (DateTimeField, null=True, blank=True)
+- created_at/updated_at
+
+[TransferLine]
+- id
+- transfer (FK Transfer, related_name="lines")
+- item (FK ItemMaster)
+- uom (FK UoM)   # item.uom과 동일 강제(MVP)
+- qty (DecimalField(18,3))
+- note (CharField, blank=True)
+
+제약/검증:
+- qty > 0
+- 같은 transfer 내 item 중복 허용 여부: MVP는 “중복 금지” 권장(UniqueConstraint transfer+item)
+- from_warehouse/to_warehouse는 서로 달라야 함
+- HQ_TO_SITE:
+   - from_warehouse.type="HQ"
+   - to_warehouse.type="SITE"
+   - to_warehouse.project = project
+- SITE_TO_HQ:
+   - from_warehouse.type="SITE"
+   - to_warehouse.type="HQ"
+   - from_warehouse.project = project
+
+번호 생성:
+- transfer_no는 월 단위 시퀀스(동시성 안전)
+  TransferNumberSequence(key="TR-YYYYMM", last_number)
+  transaction.atomic + select_for_update
+
+=====================================================
+2) 상태 머신(필수)
+=====================================================
+허용 전이:
+- DRAFT -> SUBMITTED (submit)
+- SUBMITTED -> ISSUED (issue/출고)  [원장 생성: ISSUE (from warehouse) ]
+- ISSUED -> RECEIVED (receive/입고) [원장 생성: RECEIPT (to warehouse) ]
+- DRAFT/SUBMITTED -> CANCELLED (cancel)
+금지:
+- RECEIVED 이후 변경 불가
+- ISSUED 이후 CANCEL은 MVP에서 금지(회계/재고상 복잡). 필요하면 “반대 이동”으로 처리(후속)
+
+마감 체크:
+- 모든 전이에서 assert_month_open(tx_date) 실행
+  (tx_date가 속한 월이 CLOSED면 submit/issue/receive/cancel 모두 차단)
+
+=====================================================
+3) 원장 연계(핵심, 필수)
+=====================================================
+원장 생성 원칙:
+- 출고(issue) 시:
+  - 각 TransferLine에 대해 InventoryLedger 생성:
+    tx_type="ISSUE"
+    warehouse=from_warehouse
+    location=from_location(default)
+    item=line.item
+    qty_delta = -line.qty
+    ref_type="TRANSFER", ref_id=transfer.id
+- 입고(receive) 시:
+  - 각 line에 대해 InventoryLedger 생성:
+    tx_type="RECEIPT"
+    warehouse=to_warehouse
+    location=to_location(default)
+    qty_delta = +line.qty
+    ref_type="TRANSFER", ref_id=transfer.id
+
+주의:
+- 출고 전에 반드시 from_warehouse Stock 충분 여부 확인(음수 금지 정책 준수)
+- 출고/입고 각각 transaction.atomic으로 묶고:
+  - transfer status 변경 + ledger 생성 + stock 업데이트를 1트랜잭션으로 처리
+
+=====================================================
+4) RBAC/역할 (필수)
+=====================================================
+- HQ:
+  - Transfer 생성/수정(DRAFT) / submit / issue 가능 (HQ 창고 출고 담당)
+  - receive는 가능하되, 운영상 보통 현장 확인이므로 HQ receive는 옵션
+- FIELD(현장):
+  - 자기 프로젝트의 Transfer만 조회 가능
+  - receive(입고확인) 가능 (ISSUED 상태에서만)
+  - 생성은 MVP에서 금지(현장 요청은 후속으로 “요청서”로 분리 가능)
+- CEO:
+  - 전부 가능
+
+필수 UX 정책:
+- FIELD 화면에서는 “내 현장으로 오는 ISSUED 이동건”이 상단에 뜨게(간단 목록)
+
+=====================================================
+5) API (필수, 최소)
+=====================================================
+권한 체크 포함.
+
+- GET /api/inventory/transfers/?project=&status=&q=&start=&end=
+- POST /api/inventory/transfers/            # HQ only (create DRAFT + lines)
+- POST /api/inventory/transfers/<id>/submit/
+- POST /api/inventory/transfers/<id>/issue/
+- POST /api/inventory/transfers/<id>/receive/
+- POST /api/inventory/transfers/<id>/cancel/
+
+payload(생성):
+{
+  "direction": "HQ_TO_SITE",
+  "project_id": 123,
+  "from_warehouse_id": <HQ>,
+  "to_warehouse_id": <SITE>,
+  "tx_date": "YYYY-MM-DD",
+  "note": "",
+  "lines": [
+     {"item_id": 1, "qty": 10, "note":""},
+     ...
+  ]
+}
+
+응답:
+- transfer_no
+- status
+- stock 변화 요약(optional)
+
+마감 차단 시 메시지(한국어 표준):
+"YYYY년 M월은 마감되었습니다. 마감 후 재고 이동은 정정/후속 절차로 처리해야 합니다."
+
+=====================================================
+6) UI 최소 구현(권장)
+=====================================================
+HQ 화면:
+- Transfer 목록(상태 필터: DRAFT/SUBMITTED/ISSUED/RECEIVED)
+- 신규 이동 생성(다건 라인 입력)
+- SUBMIT/ISSUE 버튼 (상태별 노출)
+- 상세에서 라인/재고부족 경고 표시
+
+FIELD 화면:
+- “입고 확인 대기(ISSUED)” 목록
+- 상세에서 “입고 확인(Receive)” 버튼
+- 과거 이동 이력 조회(읽기)
+
+※ UI는 최소, API 우선. 템플릿 구조는 기존 HQ/Field 탭 스타일에 맞춤.
+
+=====================================================
+7) AuditLog (필수)
+=====================================================
+이벤트:
+- TRANSFER_CREATE
+- TRANSFER_SUBMIT
+- TRANSFER_ISSUE
+- TRANSFER_RECEIVE
+- TRANSFER_CANCEL
+- TRANSFER_BLOCKED_CLOSED (선택)
+
+metadata:
+{transfer_id, transfer_no, project_id, tx_date, from_wh, to_wh, status}
+
+=====================================================
+8) 테스트 시나리오(필수)
+=====================================================
+1) HQ가 HQ->SITE Transfer DRAFT 생성(라인 2개) 성공
+2) SUBMIT 성공(마감월이면 차단)
+3) ISSUE:
+   - from_warehouse 재고가 충분하면 성공 + 원장(-) 생성 + stock 감소 + status=ISSUED
+   - 부족하면 차단
+4) FIELD가 receive:
+   - status=ISSUED인 건만 가능
+   - 원장(+) 생성 + stock 증가 + status=RECEIVED
+5) CLOSED 월(tx_date가 마감월)인 transfer는 submit/issue/receive/cancel 모두 차단
+6) 권한:
+   - FIELD는 타 프로젝트 transfer 조회/수정 불가(403)
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- Transfer/TransferLine 모델 + 마이그레이션 완료
+- 상태 전이(submit/issue/receive/cancel) 구현
+- INV-3 원장/현재고와 atomic하게 연동(재고 변동은 원장으로만)
+- 마감월 처리 차단(CLOSE-2 가드 연계)
+- RBAC 적용(HQ 생성/출고, FIELD 입고확인)
+- AuditLog 기록

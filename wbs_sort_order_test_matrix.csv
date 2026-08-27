@@ -1,0 +1,6 @@
+Test,Result,Coverage
+test_hq_wbs_baseline_save_auto_assigns_sort_order_when_missing,PASS,HQ detail save assigns WBS-01=10 WBS-02=20 WBS-99=990
+test_wbs_sort_order_preserves_explicit_value_and_uses_row_fallback,PASS,Explicit and non-code row fallback
+test_wbs_import_initial_auto_assigns_sort_order_from_wbs_code,PASS,Excel/import initial values
+apps/projects/tests/test_wbs_baseline_dates.py,PASS,WBS date regression
+apps/projects/tests/test_project_budget_detail_save.py,PASS,Project detail regression

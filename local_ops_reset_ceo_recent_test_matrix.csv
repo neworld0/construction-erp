@@ -1,0 +1,7 @@
+Command,Result,Notes
+python manage.py check,PASS,No system issues.
+python manage.py makemigrations --check --dry-run,PASS,No pending model changes.
+pytest -q apps/ceo/tests/test_dashboard_recent_approval_filter.py apps/projects/tests/test_audit8_ceo_dashboard_lineage.py,PASS,12 passed; 2 existing Django deprecation warnings.
+pytest -q apps/core/tests/test_audit9_operational_smoke_matrix.py apps/core/tests/test_audit_utf8_source_integrity.py,PASS,22 passed; 2 existing Django deprecation warnings.
+python scripts/local_ops_recent_approval_diagnostic.py,PASS,Read-only local/demo diagnostic; dashboard-visible count is 0.
+python scripts/local_ops_reset_project_data.py --dry-run,PASS,No deletion was performed; stale approval manifest generated.

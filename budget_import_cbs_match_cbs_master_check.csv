@@ -1,0 +1,13 @@
+﻿CBS_Code,Expected_Name,Exists_As_CostItem,CostItem_ID,CostItem_Name,Category,Cost_Type,Active,Alias_Count,Suggested_Status,Notes
+CIVIL-QUALITY,품질관리비,NO,,,,,,0,RUN_SEED_OR_CREATE_MASTER,Read-only local DB check
+CIVIL-FINISH,마감공사,NO,,,,,,0,RUN_SEED_OR_CREATE_MASTER,Read-only local DB check
+CIVIL-DOCUMENT,준공자료,NO,,,,,,0,RUN_SEED_OR_CREATE_MASTER,Read-only local DB check
+CIVIL-SAFETY,안전관리비,NO,,,,,,0,RUN_SEED_OR_CREATE_MASTER,Read-only local DB check
+CIVIL-EQUIP,장비비,NO,,,,,,0,RUN_SEED_OR_CREATE_MASTER,Read-only local DB check
+CIVIL-WASTE,폐기물처리비,YES,13,폐기물처리,other,D,True,10,READY,Read-only local DB check
+CIVIL-MATERIAL,재료비,YES,15,재료비,material,M,True,9,READY,Read-only local DB check
+CIVIL-ASCON-PAVING,아스콘 포장,YES,9,아스콘 포장,material,D,True,9,READY,Read-only local DB check
+CIVIL-LINE-MARKING,차선도색,NO,,,,,,0,RUN_SEED_OR_CREATE_MASTER,Read-only local DB check
+CIVIL-CLEANUP,현장정리,NO,,,,,,0,RUN_SEED_OR_CREATE_MASTER,Read-only local DB check
+CIVIL-EXPENSE,경비,YES,16,경비,other,E,True,32,READY,Read-only local DB check
+LABOR-GENERAL,인건비(공통),YES,6,인건비(공통),labor,L,True,0,READY,Read-only local DB check

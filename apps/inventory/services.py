@@ -5,15 +5,17 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from apps.audit.services.logger import log_action
 from apps.closing.guards import assert_project_open
 from apps.closing.services import is_month_closed
+from apps.core.models import ApprovalRequest, ApprovalStatus
 from apps.core.rbac.models import ProjectAssignment, Role
 from apps.core.rbac.permissions import get_user_role, require_role
 from apps.cost.models import CostActual, CostActualLine, CostActualStatus
+from apps.projects.models import BudgetItem
 
 from .models import (
     InventoryLedger,
@@ -62,7 +64,7 @@ def ensure_default_location(warehouse, *, actor=None) -> Location:
     return location
 
 
-def create_hq_warehouse(name, code, *, actor=None) -> Warehouse:
+def create_hq_warehouse(name, code, *, legal_entity, actor=None) -> Warehouse:
     with transaction.atomic():
         warehouse, created = Warehouse.objects.get_or_create(
             code=code,
@@ -70,13 +72,15 @@ def create_hq_warehouse(name, code, *, actor=None) -> Warehouse:
                 "name": name,
                 "warehouse_type": WarehouseType.HQ,
                 "project": None,
+                "legal_entity": legal_entity,
             },
         )
         if not created:
             warehouse.name = name
             warehouse.warehouse_type = WarehouseType.HQ
             warehouse.project = None
-            warehouse.save(update_fields=["name", "warehouse_type", "project", "updated_at"])
+            warehouse.legal_entity = legal_entity
+            warehouse.save(update_fields=["name", "warehouse_type", "project", "legal_entity", "updated_at"])
             _log_action_safe(
                 actor,
                 action="WAREHOUSE_UPDATE",
@@ -110,13 +114,19 @@ def create_site_warehouse(project, name=None, code=None, *, actor=None) -> Wareh
             defaults={
                 "name": warehouse_name,
                 "code": warehouse_code,
+                "legal_entity": project.legal_entity,
             },
         )
         if not created:
-            if warehouse.name != warehouse_name or warehouse.code != warehouse_code:
+            if (
+                warehouse.name != warehouse_name
+                or warehouse.code != warehouse_code
+                or warehouse.legal_entity_id != project.legal_entity_id
+            ):
                 warehouse.name = warehouse_name
                 warehouse.code = warehouse_code
-                warehouse.save(update_fields=["name", "code", "updated_at"])
+                warehouse.legal_entity = project.legal_entity
+                warehouse.save(update_fields=["name", "code", "legal_entity", "updated_at"])
                 _log_action_safe(
                     actor,
                     action="WAREHOUSE_UPDATE",
@@ -288,8 +298,8 @@ def _log_action_safe(actor, *, action, object_id, summary, metadata, object_type
             action=action,
             object_type=object_type,
             object_id=object_id,
-            summary=summary,
-            metadata={
+            meta={
+                "summary": summary,
                 "actor_role": get_user_role(actor),
                 **metadata,
             },
@@ -362,7 +372,7 @@ def create_ledger_entry(
         message_context="재고 원장 기준일입니다.",
         exc=PermissionDenied,
     )
-    if is_month_closed(tx_date):
+    if is_month_closed(tx_date, legal_entity=warehouse.legal_entity):
         _log_action_safe(
             actor,
             action="INVENTORY_LEDGER_BLOCKED_CLOSED",
@@ -529,9 +539,22 @@ def create_transfer(
     from_location: Location | None = None,
     to_location: Location | None = None,
 ) -> Transfer:
-    require_role(actor, [Role.HQ, Role.CEO])
+    role = get_user_role(actor)
+    if role not in (Role.HQ, Role.CEO, Role.FIELD):
+        raise PermissionDenied("User role not permitted.")
+    if role == Role.FIELD:
+        if direction != TransferDirection.SITE_TO_HQ:
+            raise PermissionDenied("FIELD 사용자는 현장 창고 반송 요청만 등록할 수 있습니다.")
+        if project is None or from_warehouse.project_id != project.id:
+            raise PermissionDenied("Project warehouse mismatch.")
+        if not ProjectAssignment.objects.filter(user=actor, project=project, is_active=True).exists():
+            raise PermissionDenied("Project access denied.")
+    if from_warehouse.legal_entity_id != to_warehouse.legal_entity_id:
+        raise ValidationError("법인이 다른 창고 사이에는 직접 재고 이관을 할 수 없습니다.")
+    if project is not None and project.legal_entity_id != from_warehouse.legal_entity_id:
+        raise ValidationError("프로젝트 계약 법인과 창고 소유 법인이 일치하지 않습니다.")
     assert_project_open(project, message_context="재고 이동 기준일입니다.", exc=PermissionDenied)
-    if is_month_closed(tx_date):
+    if is_month_closed(tx_date, legal_entity=from_warehouse.legal_entity):
         raise PermissionDenied(_closed_month_message(tx_date))
     _validate_transfer_direction(direction, project, from_warehouse, to_warehouse)
     if not from_location:
@@ -600,7 +623,7 @@ def submit_transfer(transfer: Transfer, *, actor) -> Transfer:
     if transfer.status != TransferStatus.DRAFT:
         raise ValidationError({"status": "Transfer is not in DRAFT."})
     assert_project_open(transfer.project, message_context="?? ??????.", exc=PermissionDenied)
-    if is_month_closed(transfer.tx_date):
+    if is_month_closed(transfer.tx_date, legal_entity=transfer.from_warehouse.legal_entity):
         raise PermissionDenied(_closed_month_message(transfer.tx_date))
     transfer.status = TransferStatus.SUBMITTED
     transfer.submitted_at = timezone.now()
@@ -621,24 +644,29 @@ def issue_transfer(transfer: Transfer, *, actor) -> Transfer:
     if transfer.status != TransferStatus.SUBMITTED:
         raise ValidationError({"status": "Transfer is not in SUBMITTED."})
     assert_project_open(transfer.project, message_context="?? ??????.", exc=PermissionDenied)
-    if is_month_closed(transfer.tx_date):
+    if is_month_closed(transfer.tx_date, legal_entity=transfer.from_warehouse.legal_entity):
         raise PermissionDenied(_closed_month_message(transfer.tx_date))
     with transaction.atomic():
         transfer = (
             Transfer.objects.select_for_update()
-            .select_related("from_warehouse", "from_location")
+            # from_location is nullable; PostgreSQL rejects FOR UPDATE on the
+            # nullable side of select_related's outer join.
+            .select_related("from_warehouse")
             .get(id=transfer.id)
         )
         if transfer.status != TransferStatus.SUBMITTED:
             raise ValidationError({"status": "Transfer is not in SUBMITTED."})
         lines = list(transfer.lines.select_related("item", "uom"))
+        from_location = None
+        if transfer.from_location_id:
+            from_location = Location.objects.select_for_update().filter(id=transfer.from_location_id).first()
         for line in lines:
             create_ledger_entry(
                 actor=actor,
                 tx_type=InventoryTxType.ISSUE,
                 tx_date=transfer.tx_date,
                 warehouse=transfer.from_warehouse,
-                location=transfer.from_location,
+                location=from_location,
                 item=line.item,
                 qty_delta=-line.qty,
                 uom=line.uom,
@@ -665,24 +693,29 @@ def receive_transfer(transfer: Transfer, *, actor) -> Transfer:
     if transfer.status != TransferStatus.ISSUED:
         raise ValidationError({"status": "Transfer is not in ISSUED."})
     assert_project_open(transfer.project, message_context="?? ??????.", exc=PermissionDenied)
-    if is_month_closed(transfer.tx_date):
+    if is_month_closed(transfer.tx_date, legal_entity=transfer.to_warehouse.legal_entity):
         raise PermissionDenied(_closed_month_message(transfer.tx_date))
     with transaction.atomic():
         transfer = (
             Transfer.objects.select_for_update()
-            .select_related("to_warehouse", "to_location")
+            # to_location is nullable; lock it separately to avoid an outer
+            # join FOR UPDATE error on PostgreSQL.
+            .select_related("to_warehouse")
             .get(id=transfer.id)
         )
         if transfer.status != TransferStatus.ISSUED:
             raise ValidationError({"status": "Transfer is not in ISSUED."})
         lines = list(transfer.lines.select_related("item", "uom"))
+        to_location = None
+        if transfer.to_location_id:
+            to_location = Location.objects.select_for_update().filter(id=transfer.to_location_id).first()
         for line in lines:
             create_ledger_entry(
                 actor=actor,
                 tx_type=InventoryTxType.RECEIPT,
                 tx_date=transfer.tx_date,
                 warehouse=transfer.to_warehouse,
-                location=transfer.to_location,
+                location=to_location,
                 item=line.item,
                 qty_delta=line.qty,
                 uom=line.uom,
@@ -709,7 +742,7 @@ def cancel_transfer(transfer: Transfer, *, actor) -> Transfer:
     if transfer.status not in (TransferStatus.DRAFT, TransferStatus.SUBMITTED):
         raise ValidationError({"status": "Transfer cannot be cancelled."})
     assert_project_open(transfer.project, message_context="?? ??????.", exc=PermissionDenied)
-    if is_month_closed(transfer.tx_date):
+    if is_month_closed(transfer.tx_date, legal_entity=transfer.from_warehouse.legal_entity):
         raise PermissionDenied(_closed_month_message(transfer.tx_date))
     transfer.status = TransferStatus.CANCELLED
     transfer.cancelled_at = timezone.now()
@@ -770,22 +803,83 @@ def _resolve_issue_warehouse(actor, project, warehouse_id=None) -> Warehouse:
     return warehouse
 
 
-def _build_issue_lines(lines_payload: list[dict], *, actor) -> list[IssueToWorkLine]:
+def _normalize_unit_cost(value):
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        unit_cost = int(str(value).replace(",", "").strip())
+    except (TypeError, ValueError):
+        raise ValidationError({"unit_cost": "단가는 0 이상의 정수로 입력해 주세요."})
+    if unit_cost < 0:
+        raise ValidationError({"unit_cost": "단가는 0 이상의 정수로 입력해 주세요."})
+    return unit_cost
+
+
+def get_issue_unit_cost(*, warehouse: Warehouse, item: ItemMaster) -> int | None:
+    """Resolve the FIELD issue price from the stock's inbound purchase price.
+
+    A site warehouse receives its materials from HQ.  Prefer a price already
+    recorded on that site stock ledger; legacy transfers without a price fall
+    back to the latest HQ receipt for the same item.  Item master cost is only
+    a legacy fallback when no receipt price has been recorded.
+    """
+    site_cost = (
+        InventoryLedger.objects.filter(
+            warehouse=warehouse,
+            item=item,
+            unit_cost__isnull=False,
+        )
+        .order_by("-tx_date", "-id")
+        .values_list("unit_cost", flat=True)
+        .first()
+    )
+    if site_cost is not None:
+        return int(site_cost)
+
+    hq_cost = (
+        InventoryLedger.objects.filter(
+            warehouse__warehouse_type=WarehouseType.HQ,
+            item=item,
+            tx_type=InventoryTxType.RECEIPT,
+            unit_cost__isnull=False,
+        )
+        .order_by("-tx_date", "-id")
+        .values_list("unit_cost", flat=True)
+        .first()
+    )
+    if hq_cost is not None:
+        return int(hq_cost)
+    return int(item.standard_cost) if item.standard_cost is not None else None
+
+
+def _build_issue_lines(lines_payload: list[dict], *, actor, project, warehouse) -> list[IssueToWorkLine]:
     if not lines_payload:
-        raise ValidationError({"lines": "At least one line is required."})
+        raise ValidationError({"lines": "투입할 품목을 한 건 이상 입력해 주세요."})
     created_lines = []
     seen_items = set()
     for payload in lines_payload:
         item_id = payload.get("item_id")
         cbs_id = payload.get("cbs_id")
         qty = _normalize_qty(payload.get("qty"))
+        unit_cost = _normalize_unit_cost(payload.get("unit_cost"))
         memo = str(payload.get("memo") or "").strip()
         if not item_id or not cbs_id:
-            raise ValidationError({"lines": "item_id and cbs_id are required."})
+            raise ValidationError({"lines": "각 투입 행에서 품목과 CBS를 목록에서 선택해 주세요."})
         if item_id in seen_items:
             raise ValidationError({"lines": "Duplicate item in lines."})
         seen_items.add(item_id)
         item = ItemMaster.objects.select_related("uom").get(id=item_id)
+        if get_user_role(actor) == Role.FIELD:
+            available_qty = (
+                Stock.objects.filter(warehouse=warehouse, item=item).aggregate(total=Sum("qty_on_hand"))["total"]
+                or Decimal("0")
+            )
+            if available_qty <= 0:
+                raise ValidationError({"lines": f"{item.name}은(는) 현장창고 이관 재고가 없어 투입할 수 없습니다."})
+            transferred_unit_cost = get_issue_unit_cost(warehouse=warehouse, item=item)
+            if transferred_unit_cost is None:
+                raise ValidationError({"lines": f"{item.name}의 중앙창고 입고 단가가 없어 투입할 수 없습니다."})
+            unit_cost = transferred_unit_cost
         if not item.is_active:
             raise ValidationError({"item_id": "Inactive item cannot be used."})
         cbs_model = IssueToWorkLine._meta.get_field("cbs").remote_field.model
@@ -794,12 +888,20 @@ def _build_issue_lines(lines_payload: list[dict], *, actor) -> list[IssueToWorkL
             raise ValidationError({"cbs_id": "CBS item not found."})
         if hasattr(cbs, "is_active") and not cbs.is_active:
             raise ValidationError({"cbs_id": "Inactive CBS cannot be used."})
+        if get_user_role(actor) == Role.FIELD:
+            if not BudgetItem.objects.filter(project=project, cost_item_id=cbs.id).exists():
+                raise ValidationError({"cbs_id": "해당 프로젝트 예산에 등록된 CBS만 선택할 수 있습니다."})
+        amount = None
+        if unit_cost is not None:
+            amount = int((qty * Decimal(unit_cost)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
         created_lines.append(
             IssueToWorkLine(
                 item=item,
                 qty=qty,
                 uom=item.uom,
                 cbs=cbs,
+                unit_cost=unit_cost,
+                amount=amount,
                 memo=memo,
             )
         )
@@ -821,7 +923,7 @@ def create_issue_to_work(
     if not isinstance(issue_date, date):
         raise ValidationError({"issue_date": "issue_date must be a date."})
     assert_project_open(project, message_context="?? ??????.", exc=PermissionDenied)
-    if is_month_closed(issue_date):
+    if is_month_closed(issue_date, legal_entity=project.legal_entity):
         raise PermissionDenied(_issue_closed_message(issue_date))
     _ensure_actor_can_use_issue_project(actor, project.id)
     warehouse = _resolve_issue_warehouse(actor, project, warehouse_id)
@@ -834,7 +936,7 @@ def create_issue_to_work(
         location = warehouse.locations.filter(is_default=True).first()
         if not location:
             location = ensure_default_location(warehouse, actor=actor)
-    lines = _build_issue_lines(lines_payload, actor=actor)
+    lines = _build_issue_lines(lines_payload, actor=actor, project=project, warehouse=warehouse)
     with transaction.atomic():
         issue = IssueToWork.objects.create(
             issue_no=_generate_issue_no(issue_date),
@@ -881,9 +983,11 @@ def update_issue_to_work(
     if not isinstance(issue_date, date):
         raise ValidationError({"issue_date": "issue_date must be a date."})
     assert_project_open(issue.project, message_context="자재 투입 수정 기준입니다.", exc=PermissionDenied)
-    if is_month_closed(issue_date):
+    if is_month_closed(issue_date, legal_entity=issue.project.legal_entity):
         raise PermissionDenied(_issue_closed_message(issue_date))
-    lines = _build_issue_lines(lines_payload, actor=actor)
+    lines = _build_issue_lines(
+        lines_payload, actor=actor, project=issue.project, warehouse=issue.warehouse
+    )
     location = issue.location
     if location_id:
         location = Location.objects.filter(id=location_id, warehouse=issue.warehouse).first()
@@ -920,11 +1024,11 @@ def submit_issue_to_work(issue: IssueToWork, *, actor) -> IssueToWork:
     if get_user_role(actor) == Role.FIELD and issue.created_by_id != actor.id:
         raise PermissionDenied("Only creator can submit issue.")
     assert_project_open(issue.project, message_context="?? ??????.", exc=PermissionDenied)
-    if is_month_closed(issue.issue_date):
+    if is_month_closed(issue.issue_date, legal_entity=issue.project.legal_entity):
         raise PermissionDenied(_issue_closed_message(issue.issue_date))
     lines = list(issue.lines.select_related("item", "uom", "cbs"))
     if not lines:
-        raise ValidationError({"lines": "At least one line is required."})
+        raise ValidationError({"lines": "투입할 품목을 한 건 이상 입력해 주세요."})
     with transaction.atomic():
         issue = IssueToWork.objects.select_for_update().get(id=issue.id)
         if issue.status != IssueStatus.DRAFT:
@@ -977,7 +1081,16 @@ def submit_issue_to_work(issue: IssueToWork, *, actor) -> IssueToWork:
             )
         issue.status = IssueStatus.SUBMITTED
         issue.submitted_at = timezone.now()
-        issue.save(update_fields=["status", "submitted_at", "updated_at"])
+        issue.cost_actual = cost_actual
+        issue.save(update_fields=["status", "submitted_at", "cost_actual", "updated_at"])
+        approval = ApprovalRequest.objects.create(
+            object_type="COST_ACTUAL",
+            object_id=cost_actual.id,
+            status=ApprovalStatus.SUBMITTED,
+            submitted_by=actor,
+            submitted_at=timezone.now(),
+            comment=f"자재 투입 {issue.issue_no} 자동 생성 원가 실적",
+        )
         _log_action_safe(
             actor,
             action="ISSUE_TO_WORK_SUBMIT",
@@ -989,6 +1102,7 @@ def submit_issue_to_work(issue: IssueToWork, *, actor) -> IssueToWork:
                 "issue_date": str(issue.issue_date),
                 "line_count": len(lines),
                 "total_amount": total_amount,
+                "approval_request_id": approval.id,
             },
             object_type="IssueToWork",
         )

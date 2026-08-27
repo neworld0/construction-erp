@@ -1,0 +1,2 @@
+﻿RiskFinding_ID,Status,Severity,Title,Project_ID,Project_Exists,Project_Code,Project_Name,Object_Type,Object_ID,Object_Exists_If_Resolvable,Classification,Is_Project_Scoped,Is_Orphan,Is_Global_System,Should_Show_On_CEO_Dashboard,Recommended_Action,Reason
+1,open,high,Demo risk finding,,NO,,,PROJECT,1,NO,ORPHAN_PROJECT_RISK,YES,YES,NO,NO,DELETE_LOCAL_RESET,PROJECT generic reference no longer exists.

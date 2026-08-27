@@ -13,6 +13,7 @@ def get_task_progress(plan_id, as_of_date):
     tasks = ScheduleTask.objects.filter(plan_id=plan_id, is_active=True).order_by("id")
     progress_rows = (
         DailyProgress.objects.filter(plan_id=plan_id, report_date__lte=as_of_date)
+        .exclude(status="voided")
         .order_by("-report_date", "-id")
         .values("task_id", "progress_percent")
     )

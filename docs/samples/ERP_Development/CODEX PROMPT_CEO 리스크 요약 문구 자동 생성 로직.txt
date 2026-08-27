@@ -1,0 +1,112 @@
+CODEX PROMPT — CEO 리스크 요약 문구 자동 생성 로직
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+목표
+- CEO 대시보드(/app/ceo/)의 “리스크 요약” 카드에, 숫자(OPEN/CRITICAL)만 보여주지 말고
+  현재 상황을 1~2문장으로 자동 요약한 “안심/주의/긴급” 문구를 표시한다.
+- 기존 Risk Engine / Evidence / Approval / Closing 설계는 그대로 두고, “표시용 문구 생성”만 추가한다.
+- DB 스키마 변경 없이 구현한다.
+
+전제(변경 금지)
+- 기존 모델/상태/권한/마감/감사로그 로직 변경 금지
+- CEO 화면 URL/레이아웃은 유지(카드 내부에 문구 1~2줄 추가)
+- 리스크 계산(OPEN/CRITICAL 카운트) 로직은 기존 것을 그대로 사용
+- 숫자가 0이어도 카드 레이아웃 유지
+
+구현 범위
+- ceo dashboard view(컨텍스트 구성) 또는 기존 KPI 집계 서비스
+- (권장) ceo/risk_summary.py 같은 유틸 파일에 순수 함수로 분리
+- ceo_dashboard.html 템플릿: “리스크 요약” 카드에 summary_text, sub_text 출력
+
+요구사항 상세
+
+1) 입력 데이터(기존 계산 결과 재사용)
+다음 값들을 기존 집계 결과에서 가져오거나, 최소 쿼리로 추가 집계해 전달한다.
+- open_count: OPEN 리스크 건수
+- critical_count: CRITICAL 리스크 건수
+- high_count(옵션): HIGH 건수 (없으면 open_count에서 추정 가능)
+- stale_48h_count: 48시간 이상 미해결(OPEN) 건수 (없으면 0)
+- pending_approvals_count: CEO 승인대기 건수(있으면)
+- closing_block_count: 마감 임박/마감 상태 관련 차단 경고 건수(있으면)
+- top_reason: 리스크 원인 상위 1개 (예: 증빙누락, 진행률지연, CBS불일치, 재고음수 등)
+  * Risk Engine이 reason_code를 이미 갖고 있으면 그것을 사용. 없으면 간단한 룰로 분류:
+    - evidence_missing_count >0 이면 "증빙 누락"
+    - schedule_delay_count >0 이면 "진행 지연"
+    - inventory_negative_count >0 이면 "재고 음수"
+    - else "데이터 점검 필요"
+- sample_project: 대표 프로젝트명 1개(있으면)
+  * CRITICAL가 있으면 그 중 1개, 없으면 OPEN 중 1개
+
+2) 문구 생성 규칙(핵심)
+리스크 요약은 2줄로 구성:
+- summary_text: 한 줄 (CEO가 즉시 상태 파악)
+- sub_text: 한 줄 (무엇을 하면 되는지/왜 그런지)
+
+상태 레벨 결정(Severity)
+- if critical_count > 0:
+    severity="CRITICAL"
+- elif open_count > 0 or stale_48h_count > 0:
+    severity="WARNING"
+- else:
+    severity="OK"
+
+문구 템플릿(한국어, 짧게, 40자 내외 권장)
+
+A) OK (리스크 0)
+summary_text:
+- "🟢 현재 주요 리스크가 없습니다."
+sub_text(조건부):
+- pending_approvals_count > 0 이면: "승인 대기 {n}건 처리 시 KPI가 더 선명해집니다."
+- else: "제출·승인·마감 흐름이 정상입니다."
+
+B) WARNING (OPEN 존재, CRITICAL 없음)
+summary_text:
+- "🟠 OPEN 리스크 {open_count}건이 있습니다."
+sub_text:
+- stale_48h_count > 0 이면: "48시간 이상 미해결 {stale_48h_count}건 우선 확인하세요."
+- else if top_reason 존재: "{top_reason} 이슈가 가장 많습니다. ({sample_project} 등)"
+- else: "리스크 상세에서 원인을 확인하세요."
+
+C) CRITICAL (CRITICAL 존재)
+summary_text:
+- "🔴 CRITICAL {critical_count}건 — 즉시 확인이 필요합니다."
+sub_text:
+- top_reason 존재: "주요 원인: {top_reason}. ({sample_project} 등)"
+- stale_48h_count > 0 추가 문장 우선: "장기 미해결 {stale_48h_count}건 포함"
+
+문구 생성 시 주의
+- 숫자 0은 문장에 넣지 않는다(예: “CRITICAL 0건” 같은 표현 금지)
+- 한국어 문장 자연스럽게(존대/단문)
+- 데이터가 없으면 안전한 기본값 사용("데이터 점검 필요")
+- 긴 문장 금지(2줄, 각 60자 내외)
+
+3) UI 표시(템플릿)
+- 기존 “리스크 요약” 카드에 아래 추가:
+  - summary_text (굵게)
+  - sub_text (작게, 회색 톤)
+- 기존 OPEN/CRITICAL 뱃지는 유지하되, severity에 따라 카드 상단에 색상 바/아이콘(선택)
+- open_count=0일 때도 문구는 반드시 표시
+
+4) 성능
+- N+1 쿼리 금지
+- 리스크 원인 집계는 가능하면 DB에서 group by 1회로 가져오거나,
+  기존 Risk Engine 집계 결과를 그대로 사용
+- 기준일 필터(CEO 화면 상단 날짜)가 있다면 동일하게 적용
+
+5) 완료 기준(Acceptance)
+- /app/ceo/ 리스크 요약 카드에 숫자 외에 자동 생성 문구가 표시된다.
+- 리스크 0건이면 "🟢 현재 주요 리스크가 없습니다." 형태로 표시된다.
+- OPEN만 있으면 🟠 경고 문구가 표시되고, 우선조치 힌트가 포함된다.
+- CRITICAL이 있으면 🔴 긴급 문구가 표시된다.
+- 데이터가 비어도 화면이 깨지지 않는다(기본 문구 표시).
+
+6) 간단 테스트
+- open_count=0, pending_approvals_count=0 → OK 문구 확인
+- open_count=3, stale_48h_count=1, top_reason="증빙 누락" → WARNING 문구 확인
+- critical_count=2, sample_project 존재 → CRITICAL 문구 확인
+
+이 요구사항을 만족하도록,
+(1) 기존 CEO 대시보드 집계 코드에서 필요한 값을 수집하고
+(2) risk_summary.py(또는 유사 유틸)로 문구 생성 함수를 만들고
+(3) 템플릿에 2줄 문구를 출력하는 방식으로 구현하세요.

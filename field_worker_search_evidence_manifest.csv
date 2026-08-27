@@ -1,0 +1,9 @@
+artifact,purpose
+field_worker_search_root_cause.md,기존 선택 상자 한계와 원인
+field_worker_search_ui_decision.md,AJAX 방식 및 현장 범위 결정
+field_worker_search_before_after_matrix.csv,전후 동작 비교
+field_worker_search_result_safety_matrix.csv,응답 개인정보 최소화 계약
+field_worker_search_candidate_snapshot.csv,활성 후보 안전 스냅샷
+field_worker_search_test_matrix.csv,자동 테스트 결과
+field_worker_search_source_scan.txt,소스 안전성 점검 결과
+field_worker_search_report.md,운영 인수인계 요약

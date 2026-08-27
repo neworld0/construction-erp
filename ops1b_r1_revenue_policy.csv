@@ -1,0 +1,2 @@
+Policy_ID,Policy_Name,Scope,Formula,Progress_Source,Contract_Amount_Source,Cost_Source,Rounding,Status,Limitation,OPS1C_Action
+REV-POLICY-OPS1B-R1-001,PROGRESS_BASED_PROVISIONAL,OPS1B-RERUN-SAMPLE-001,recognized_revenue = contract_amount x dashboard_progress_percent / 100,weighted dashboard progress,ProjectContract / ContractSnapshot,approved CostActualLine,2 decimal places,PROVISIONAL_FOR_OPS1C,not final accounting policy,compare ERP dashboard value against recomputed seed

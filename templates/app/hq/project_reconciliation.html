@@ -1,0 +1,35 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}준공·월마감 대사{% endblock %}
+{% block content %}
+<style>
+  .recon-table { width:100%; border-collapse:collapse; }
+  .recon-table th, .recon-table td { padding:10px 12px; border:1px solid rgba(148,163,184,.25); text-align:left; vertical-align:top; }
+  .recon-table th { color:var(--muted); background:rgba(15,23,42,.55); }
+  .result-ok { color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; font-weight:700; }
+  .result-block { color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; font-weight:700; }
+  body.theme-dark .result-ok { color:#86efac; background:rgba(34,197,94,.16); border-color:rgba(34,197,94,.35); }
+  body.theme-dark .result-block { color:#fca5a5; background:rgba(239,68,68,.16); border-color:rgba(239,68,68,.35); }
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+</style>
+<div class="card">
+  <h2 class="card-title">준공·월마감 대사</h2>
+  <p class="muted">프로젝트와 기준일 이전의 승인 실적·현장창고 원장을 대사합니다. 미승인 또는 반려 건이 있으면 준공 청구가 차단됩니다.</p>
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-top:14px;">
+    <label>프로젝트<br><select class="form-control" name="project_id" required>{% for project in projects %}<option value="{{ project.id }}" {% if selected_project and selected_project.id == project.id %}selected{% endif %}>{{ project.name }}</option>{% endfor %}</select></label>
+    <label>기준일<br><input class="form-control" type="date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}" required></label>
+    <label>용도<br><select class="form-control" name="purpose"><option value="closing" {% if purpose == 'closing' %}selected{% endif %}>월마감</option><option value="completion" {% if purpose == 'completion' %}selected{% endif %}>준공 청구</option></select></label>
+    <button class="btn" type="submit">대사 실행</button>
+  </form>
+</div>
+{% if reconciliation %}
+<div class="card" style="margin-top:16px;">
+  <h3>{{ selected_project.name }} · {{ as_of_date|date:'Y-m-d' }} 기준</h3>
+  {% if reconciliation.ready %}<p class="result-ok">대사 통과 — 현재 기준으로 미승인·반려 건이 없습니다.</p>{% else %}<p class="result-block">대사 미통과 — 준공 청구가 차단됩니다.</p><ul>{% for issue in reconciliation.blocking_issues %}<li class="result-block">{{ issue }}</li>{% endfor %}</ul>{% endif %}
+  <div class="summary-grid">{% for row in reconciliation.summary_rows %}<div style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:10px;"><div class="muted">{{ row.name }}</div><div style="font-size:19px;font-weight:700;margin:4px 0;">{{ row.value }}</div><div class="muted">{{ row.detail }}</div><a class="btn btn-outline" style="margin-top:10px;" href="{{ row.url }}">원본 확인</a></div>{% endfor %}</div>
+</div>
+<div class="card" style="margin-top:16px;"><h3>공정별 승인 진행률</h3><table class="recon-table"><tr><th>공정</th><th>가중치</th><th>승인 진행률</th><th>최종 승인일</th></tr>{% for row in reconciliation.progress_rows %}<tr><td>{{ row.task }}</td><td>{{ row.weight }}%</td><td>{{ row.progress }}%</td><td>{% if row.report_date %}{{ row.report_date }}{% else %}<span class="result-block">승인 내역 없음</span>{% endif %}</td></tr>{% endfor %}</table></div>
+<div class="card" style="margin-top:16px;"><h3>현장창고 기준일 재고</h3><table class="recon-table"><tr><th>품목</th><th>수량</th><th>단위</th></tr>{% for row in reconciliation.stock_rows %}<tr><td>{{ row.item }}</td><td>{{ row.qty }}</td><td>{{ row.uom }}</td></tr>{% empty %}<tr><td colspan="3" class="muted">기준일 현재 재고가 없습니다.</td></tr>{% endfor %}</table></div>
+<div class="card" style="margin-top:16px;"><h3>미승인·반려 건</h3><table class="recon-table"><tr><th>구분</th><th>일자</th><th>번호/금액</th><th>상태</th></tr>{% for item in reconciliation.unresolved.timesheets %}<tr><td>출역부</td><td>{{ item.work_date }}</td><td>{{ item.sheet_no }}</td><td>{{ item.get_status_display }}</td></tr>{% endfor %}{% for item in reconciliation.unresolved.costs %}<tr><td>원가</td><td>{{ item.report_date }}</td><td>{{ item.total_amount|floatformat:0|intcomma }}원</td><td>{{ item.get_status_display }}</td></tr>{% endfor %}{% for item in reconciliation.unresolved.issues %}<tr><td>자재 투입</td><td>{{ item.issue_date }}</td><td>{{ item.issue_no }}</td><td>{{ item.get_status_display }}</td></tr>{% endfor %}{% if not reconciliation.unresolved.timesheets and not reconciliation.unresolved.costs and not reconciliation.unresolved.issues %}<tr><td colspan="4" class="result-ok">미승인·반려 건이 없습니다.</td></tr>{% endif %}</table></div>
+{% endif %}
+{% endblock %}

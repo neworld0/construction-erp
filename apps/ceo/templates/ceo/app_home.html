@@ -38,6 +38,8 @@
     font-size: 20px;
     font-weight: 700;
   }
+  .kpi-card-link { display:block; color:inherit; text-decoration:none; cursor:pointer; }
+  .kpi-card-link:hover { border-color:#38bdf8; transform:translateY(-1px); }
   .trend-line {
     margin-top: 6px;
     font-size: 12px;
@@ -88,6 +90,8 @@
   .chart-wrap {
     min-height: 260px;
   }
+  .chart-wrap canvas { background: transparent; }
+  .chart-empty { display:none; margin:8px 0 0; color:var(--muted); font-size:12px; }
   .quality-summary {
     display: inline-flex;
     align-items: center;
@@ -127,16 +131,62 @@
     color: var(--muted);
   }
   .quality-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
     font-size: 12px;
     color: var(--muted);
-    margin-top: 6px;
+    margin: 6px 0 2px;
+  }
+  .quality-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .quality-legend-marker {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    flex: 0 0 10px;
+  }
+  .quality-legend-marker.ok {
+    border-radius: 50%;
+    background: #34d399;
+  }
+  .quality-legend-marker.unknown {
+    background: #7dd3fc;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
+  .quality-legend-marker.estimated {
+    background: #fbbf24;
+    transform: rotate(45deg);
+  }
+  @media (max-width: 640px) {
+    .page-header { align-items: stretch; margin-bottom: 12px; }
+    .page-header > div,
+    .page-header-right,
+    .page-actions { width: 100%; }
+    .page-header-right { gap: 8px; }
+    .page-actions > *,
+    .page-header-right form { flex: 1 1 calc(50% - 4px); min-width: 0; }
+    .page-header-right .form-control { min-height: 42px; }
+    .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .kpi-card { min-height: 132px; padding: 12px; }
+    .kpi-card h4 { min-height: 34px; margin-bottom: 7px; font-size: 12px; line-height: 1.35; }
+    .kpi-card .value { font-size: 17px; overflow-wrap: anywhere; }
+    .kpi-card .muted, .kpi-card .trend-line { font-size: 11px; line-height: 1.45; }
+    .sub-grid { grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+    .chart-wrap { min-height: 220px; overflow: hidden; }
+    .chart-wrap canvas { max-width: 100%; }
+    .quality-legend { gap: 8px; }
   }
 </style>
 
 <div class="page-header">
   <div>
     <h2 style="margin:0;">CEO 대시보드</h2>
-    <div class="muted" style="margin-top:4px;">기준일 {{ as_of_date|date:"Y-m-d" }}</div>
+    <div class="muted" style="margin-top:4px;">기준일 {{ as_of_date|date:"Y-m-d" }} · 집계 범위 {{ entity_scope_label }}</div>
   </div>
   <div class="page-header-right">
     <div class="quality-summary" id="kpi-quality-summary" data-project-id="{{ primary_project_id|default:'' }}">
@@ -151,6 +201,11 @@
     </div>
     <form method="get" class="page-actions">
       <input class="form-control" type="date" name="as_of_date" value="{{ as_of_date|date:'Y-m-d' }}" />
+      <select class="form-control" name="entity_scope" aria-label="CEO 집계 법인 범위">
+        {% if has_asan_entity_scope %}<option value="ASAN" {% if entity_scope == "ASAN" %}selected{% endif %}>아산</option>{% endif %}
+        {% if has_misan_entity_scope %}<option value="MISAN" {% if entity_scope == "MISAN" %}selected{% endif %}>미산</option>{% endif %}
+        {% if has_group_entity_scope %}<option value="GROUP" {% if entity_scope == "GROUP" %}selected{% endif %}>아미산</option>{% endif %}
+      </select>
       <select class="form-control" name="compare">
         <option value="month" {% if compare_mode == "month" %}selected{% endif %}>전월 대비</option>
         <option value="week" {% if compare_mode == "week" %}selected{% endif %}>전주 대비</option>
@@ -165,12 +220,18 @@
         기준선만
       </label>
       <button class="btn" type="submit">조회</button>
-      <a class="btn btn-outline" href="/app/ceo/projects/">프로젝트 보기</a>
+      <a class="btn btn-outline" href="/app/ceo/site-daily-logs/?scope={{ entity_scope }}&as_of_date={{ as_of_date|date:'Y-m-d' }}">공사일보 현황</a>
+      <a class="btn btn-outline" href="/app/ceo/billing/reports/">기성·준공 결재함</a>
+      <a class="btn btn-outline" href="/app/ceo/projects/?entity_scope={{ entity_scope }}&as_of_date={{ as_of_date|date:'Y-m-d' }}">프로젝트 보기</a>
       <a class="btn btn-outline" href="/app/ceo/cbs/">CBS 마스터</a>
       <a class="btn btn-outline" href="{{ csv_url }}">CSV 내려받기</a>
     </form>
   </div>
 </div>
+
+{% if ceo_read_only %}
+  <div class="alert" style="background:rgba(56,189,248,.14); color:#bae6fd;">HQ 조회 전용 화면입니다. 기성·준공 보고서의 승인·반려는 CEO만 처리할 수 있습니다.</div>
+{% endif %}
 
 {% if evidence_missing %}
   <div class="alert alert-danger">
@@ -179,8 +240,8 @@
 {% endif %}
 
 <div class="kpi-grid">
-  <div class="card kpi-card">
-    <h4>&#45572;&#51201; &#47588;&#52636;</h4>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.revenue }}">
+    <h4>실제 누적 매출(VAT 별도)</h4>
     <div class="value">{{ total_revenue|floatformat:0|intcomma }}</div>
     {% with trend=kpi_trends.revenue %}
       {% if trend.has_data and trend.delta is not None %}
@@ -192,10 +253,16 @@
         <div class="trend-line">&#8212; ({{ compare_label }})</div>
       {% endif %}
     {% endwith %}
-  </div>
-  <div class="card kpi-card">
-    <h4>&#45572;&#51201; &#50896;&#44032;</h4>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.provisional_revenue }}">
+    <h4>잠정 진행률 매출(VAT 별도)</h4>
+    <div class="value">{{ total_provisional_revenue|floatformat:0|intcomma }}</div>
+    <div class="muted">승인된 진행률 기준 관리손익 참고값</div>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.cost }}">
+    <h4>누적 원가(VAT 별도)</h4>
     <div class="value">{{ total_cost|floatformat:0|intcomma }}</div>
+    <div class="muted">공제 가능 매입세액 제외 · 노무비는 전액 반영</div>
     {% with trend=kpi_trends.cost %}
       {% if trend.has_data and trend.delta is not None %}
         <div class="trend-line trend-{% if trend.trend == 'up' %}up{% elif trend.trend == 'down' %}down{% else %}flat{% endif %}">
@@ -206,14 +273,14 @@
         <div class="trend-line">&#8212; ({{ compare_label }})</div>
       {% endif %}
     {% endwith %}
-  </div>
-  <div class="card kpi-card">
-    <h4>&#51064;&#44148;&#48708;(&#49892;&#51201;)</h4>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.labor }}">
+    <h4>승인 인건비</h4>
     <div class="value">{{ total_labor|floatformat:0|intcomma }}</div>
     <div class="muted">&#52636;&#50669; + &#44553;&#50668; &#48176;&#48512;</div>
-  </div>
-  <div class="card kpi-card">
-    <h4>&#51060;&#51061;</h4>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.profit }}">
+    <h4>실제 손익(VAT 별도)</h4>
     <div class="value">{{ total_profit|floatformat:0|intcomma }}</div>
     <div class="muted">&#51060;&#51061;&#47456; {{ margin_percent|floatformat:2 }}%</div>
     {% with trend=kpi_trends.margin %}
@@ -226,8 +293,28 @@
         <div class="trend-line">&#8212; ({{ compare_label }})</div>
       {% endif %}
     {% endwith %}
-  </div>
-  <div class="card kpi-card">
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.provisional_profit }}">
+    <h4>잠정 손익(VAT 별도)</h4>
+    <div class="value">{{ total_provisional_profit|floatformat:0|intcomma }}</div>
+    <div class="muted">잠정 진행률 매출 - 누적 원가</div>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.revenue_status }}">
+    <h4>매출 인식 상태</h4>
+    <div class="value">{{ revenue_recognition_status }}</div>
+    <div class="muted">실제 매출은 월마감 또는 기성마감 후 인식됩니다.</div>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.advance_balance }}">
+    <h4>선급금 잔액</h4>
+    <div class="value">{{ advance_billing_summary.advance_balance|floatformat:0|intcomma }}</div>
+    <div class="muted">수령 선급금 - 기성청구 공제 누계</div>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.receivable }}">
+    <h4>기성 미수금</h4>
+    <div class="value">{{ advance_billing_summary.receivable|floatformat:0|intcomma }}</div>
+    <div class="muted">청구 후 아직 수금 등록되지 않은 순기성 금액</div>
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.progress }}">
     <h4>&#54217;&#44512; &#51652;&#54665;&#47456;</h4>
     <div class="value">{{ avg_progress|floatformat:2 }}%</div>
     <div class="muted">
@@ -244,8 +331,8 @@
         ({{ schedule_vs_progress.gap_percent|floatformat:1 }}%p)
       {% endif %}
     </div>
-  </div>
-  <div class="card kpi-card">
+  </a>
+  <a class="card kpi-card kpi-card-link" href="{{ metric_urls.cash }}">
     <h4>&#50696;&#51221; &#54788;&#44552;&#55120;&#47492;</h4>
     <div class="value">{{ cash_summary.net_planned|floatformat:0|intcomma }}</div>
     <div class="muted">&#54869;&#51221; &#54788;&#44552;&#55120;&#47492; {{ cash_summary.net_confirmed|floatformat:0|intcomma }}</div>
@@ -259,7 +346,7 @@
         <div class="trend-line">&#8212; ({{ compare_label }})</div>
       {% endif %}
     {% endwith %}
-  </div>
+  </a>
 </div>
 
 <div class="sub-grid">
@@ -301,6 +388,7 @@
               {% if item.detail_url %}
                 <a class="btn btn-outline" style="height:28px;" href="{{ item.detail_url }}">&#49345;&#49464;</a>
               {% endif %}
+              {% if not ceo_read_only %}
               <form method="post" action="/app/ceo/approvals/approve/">
                 {% csrf_token %}
                 <input type="hidden" name="object_type" value="{{ item.object_type }}" />
@@ -314,6 +402,9 @@
                 <input type="hidden" name="reason" value="" />
                 <button class="btn btn-outline" style="height:28px;" type="submit" {% if not item.can_reject %}disabled{% endif %}>&#48152;&#47140;</button>
               </form>
+              {% else %}
+              <span class="muted" style="font-size:12px;">HQ 조회 전용</span>
+              {% endif %}
             </div>
           </div>
         {% endfor %}
@@ -338,17 +429,23 @@
     <div class="muted" style="margin-top:4px;">{{ risk_summary.sub_text }}</div>
   </div>
   <div class="card chart-wrap">
-    <h3 style="margin-top:0;">프로젝트별 진행률</h3>
+    <h3 style="margin-top:0;">프로젝트별 진행률 · 누적 진행 상태</h3>
     <canvas id="progressChart" height="140"></canvas>
+    <p class="muted" style="margin-top:8px;">파랑은 실제 진행률, 주황은 예정 대비 미달분, 회색은 잔여 공정입니다. 막대를 클릭하면 프로젝트별 시간 추이로 이동합니다.</p>
     {% if not chart_labels %}
       <p class="muted" style="margin-top:8px;">표시할 데이터가 없습니다. 데모 데이터를 생성해 주세요.</p>
     {% endif %}
   </div>
   <div class="card chart-wrap">
     <h3 style="margin-top:0;">월별 원가 추이</h3>
-    <div class="quality-legend" id="timeline-quality-legend">확정 / 미정 / 추정</div>
+    <div class="quality-legend" id="timeline-quality-legend" aria-label="월별 원가 추이 데이터 상태 범례">
+      <span class="quality-legend-item" title="마감된 기간의 확정 원가"><span class="quality-legend-marker ok"></span>확정</span>
+      <span class="quality-legend-item" title="마감 전으로 입력·승인에 따라 변동될 수 있는 원가"><span class="quality-legend-marker unknown"></span>미정</span>
+      <span class="quality-legend-item" title="일부 데이터가 추정 또는 대체 계산으로 산출된 원가"><span class="quality-legend-marker estimated"></span>추정</span>
+    </div>
     <canvas id="timelineChart" height="140"></canvas>
     <p class="muted" style="margin-top:8px;">선택된 프로젝트 기준 월별 KPI 추이를 표시합니다.</p>
+    <p class="chart-empty" id="timelineChartEmpty">표시할 월별 원가 데이터가 없습니다. 기준일 또는 프로젝트 범위를 확인해 주세요.</p>
   </div>
 </div>
 
@@ -417,12 +514,24 @@
 </div>
 {{ chart_labels|json_script:"chart-labels" }}
 {{ chart_values|json_script:"chart-values" }}
+{{ chart_planned_values|json_script:"chart-planned-values" }}
+{{ chart_project_ids|json_script:"chart-project-ids" }}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script>
   (function () {
     var labels = JSON.parse(document.getElementById("chart-labels").textContent || "[]");
     var values = JSON.parse(document.getElementById("chart-values").textContent || "[]");
+    var plannedValues = JSON.parse(document.getElementById("chart-planned-values").textContent || "[]");
+    var projectIds = JSON.parse(document.getElementById("chart-project-ids").textContent || "[]");
+    var shortfalls = values.map(function (actual, index) {
+      var planned = plannedValues[index];
+      return planned === null ? 0 : Math.max(planned - actual, 0);
+    });
+    var remaining = values.map(function (actual, index) {
+      var planned = plannedValues[index];
+      return Math.max(100 - Math.max(actual, planned === null ? actual : planned), 0);
+    });
     var ctx = document.getElementById("progressChart");
     if (ctx) {
       new Chart(ctx, {
@@ -430,19 +539,54 @@
         data: {
           labels: labels,
           datasets: [{
-            label: "진행률 %",
+            label: "실제 진행률",
             data: values,
             backgroundColor: "rgba(56, 189, 248, 0.55)",
             borderColor: "rgba(56, 189, 248, 1)",
-            borderWidth: 1
+            borderWidth: 1,
+            stack: "progress"
+          }, {
+            label: "예정 대비 미달",
+            data: shortfalls,
+            backgroundColor: "rgba(245, 158, 11, 0.65)",
+            borderColor: "rgba(245, 158, 11, 1)",
+            borderWidth: 1,
+            stack: "progress"
+          }, {
+            label: "잔여 공정",
+            data: remaining,
+            backgroundColor: "rgba(148, 163, 184, 0.24)",
+            borderColor: "rgba(148, 163, 184, 0.45)",
+            borderWidth: 1,
+            stack: "progress"
           }]
         },
         options: {
           responsive: true,
+          onClick: function (_event, elements) {
+            if (!elements.length) return;
+            var projectId = projectIds[elements[0].index];
+            if (projectId) window.location.assign("/app/ceo/projects/" + projectId + "/?as_of_date={{ as_of_date|date:'Y-m-d' }}&entity_scope={{ entity_scope }}");
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                afterBody: function (items) {
+                  var index = items[0].dataIndex;
+                  var planned = plannedValues[index];
+                  return planned === null ? "예정: 기준선 미완성" : "예정 진행률: " + planned.toFixed(2) + "%\n실제 진행률: " + values[index].toFixed(2) + "%";
+                }
+              }
+            }
+          },
           scales: {
             y: {
               beginAtZero: true,
-              max: 100
+              max: 100,
+              stacked: true
+            },
+            x: {
+              stacked: true
             }
           }
         }
@@ -453,6 +597,7 @@
     var badgeEl = document.getElementById("kpi-quality-badge");
     var helpEl = document.getElementById("kpi-quality-help");
     var timelineCanvas = document.getElementById("timelineChart");
+    var timelineEmptyEl = document.getElementById("timelineChartEmpty");
     var projectId = summaryEl ? summaryEl.dataset.projectId : "";
 
     function qualityLabel(status) {
@@ -493,11 +638,12 @@
     }
 
     if (!timelineCanvas || !projectId) {
+      if (timelineEmptyEl) timelineEmptyEl.style.display = "block";
       applyQuality("UNSURE");
       return;
     }
 
-    fetch("/api/kpi/projects/" + projectId + "/timeline/?granularity=month&metrics=actual_cost")
+    fetch("/api/kpi/projects/" + projectId + "/timeline/?granularity=month&metrics=actual_cost&end={{ as_of_date|date:'Y-m-d' }}")
       .then(function (response) {
         if (!response.ok) {
           throw new Error("timeline fetch failed");
@@ -507,6 +653,7 @@
       .then(function (data) {
         var series = data.series || [];
         if (!series.length) {
+          if (timelineEmptyEl) timelineEmptyEl.style.display = "block";
           applyQuality("UNSURE");
           return;
         }
@@ -523,6 +670,11 @@
           if (status === "UNSURE") return "triangle";
           return "circle";
         });
+        var pointColors = qualities.map(function (status) {
+          if (status === "ESTIMATED") return "#fbbf24";
+          if (status === "UNSURE") return "#7dd3fc";
+          return "#34d399";
+        });
 
         new Chart(timelineCanvas, {
           type: "line",
@@ -534,6 +686,8 @@
               borderColor: "rgba(129, 140, 248, 0.85)",
               backgroundColor: "rgba(129, 140, 248, 0.15)",
               pointStyle: pointStyles,
+              pointBackgroundColor: pointColors,
+              pointBorderColor: pointColors,
               pointRadius: 4,
               spanGaps: true
             }]
@@ -552,13 +706,20 @@
             },
             scales: {
               y: {
-                beginAtZero: true
+                beginAtZero: true,
+                ticks: { color: "#475569" },
+                grid: { color: "rgba(100, 116, 139, 0.24)" }
+              },
+              x: {
+                ticks: { color: "#475569" },
+                grid: { color: "rgba(100, 116, 139, 0.14)" }
               }
             }
           }
         });
       })
       .catch(function () {
+        if (timelineEmptyEl) timelineEmptyEl.style.display = "block";
         applyQuality("UNSURE");
       });
 

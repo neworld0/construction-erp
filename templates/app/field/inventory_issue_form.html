@@ -1,16 +1,17 @@
 ﻿{% extends "app/base_app.html" %}
+{% load utils %}
 {% block page_title %}자재 투입{% endblock %}
 {% block content %}
 <style>
   .nav-right .btn-outline {
     background: transparent !important;
     border: 1px solid rgba(148, 163, 184, 0.4) !important;
-    color: #f8fafc !important;
+    color: var(--text) !important;
   }
   .nav-right form .btn {
-    background: #38bdf8 !important;
+    background: var(--action) !important;
     border: 1px solid transparent !important;
-    color: #0b1220 !important;
+    color: var(--action-text) !important;
   }
   .table {
     width: 100%;
@@ -46,13 +47,13 @@
     padding: 8px 14px;
     border-radius: 10px;
     border: 1px solid var(--border);
-    background: var(--card);
+    background: var(--panel);
     color: var(--text);
     cursor: pointer;
   }
   .btn.primary {
-    background: var(--accent);
-    color: #04111f;
+    background: var(--action);
+    color: var(--action-text);
     border-color: transparent;
   }
   .actions button[name="action"][value="draft"] {
@@ -81,8 +82,8 @@
     line-height: 1.2;
   }
   .tab.active {
-    background: var(--accent);
-    color: #04111f;
+    background: var(--active-surface);
+    color: var(--active-text);
     border-color: transparent;
   }
   .autocomplete {
@@ -93,7 +94,7 @@
     z-index: 10;
     left: 0;
     right: 0;
-    background: var(--card);
+    background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 10px;
     max-height: 220px;
@@ -114,33 +115,75 @@
   .autocomplete-results button:hover {
     background: rgba(56, 123, 248, 0.12);
   }
+  @media (max-width: 900px) {
+    .issue-lines-table,
+    .recent-issues-table,
+    .issue-lines-table tbody,
+    .recent-issues-table tbody,
+    .issue-lines-table tr,
+    .recent-issues-table tr,
+    .issue-lines-table td,
+    .recent-issues-table td {
+      display: block;
+      width: 100%;
+    }
+    .issue-lines-table thead,
+    .recent-issues-table thead { display: none; }
+    .issue-lines-table tr,
+    .recent-issues-table tr {
+      margin: 10px 0;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-raised);
+    }
+    .issue-lines-table td,
+    .recent-issues-table td { padding: 7px 0; border: 0; }
+    .issue-lines-table td::before,
+    .recent-issues-table td::before {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .issue-lines-table td:nth-child(1)::before { content: "품목"; }
+    .issue-lines-table td:nth-child(2)::before { content: "CBS"; }
+    .issue-lines-table td:nth-child(3)::before { content: "수량"; }
+    .issue-lines-table td:nth-child(4)::before { content: "자동 적용 단가"; }
+    .issue-lines-table td:nth-child(5)::before { content: "금액"; }
+    .issue-lines-table td:nth-child(6)::before { content: "메모"; }
+    .recent-issues-table td:nth-child(1)::before { content: "투입일"; }
+    .recent-issues-table td:nth-child(2)::before { content: "번호"; }
+    .recent-issues-table td:nth-child(3)::before { content: "프로젝트"; }
+    .recent-issues-table td:nth-child(4)::before { content: "상태"; }
+    .recent-issues-table td:nth-child(5)::before { content: "처리"; }
+  }
 </style>
-<div class="card" style="margin-bottom: 12px;">
-  {% include "components/field_tabs.html" with active_tab="inventory" project_id=request.GET.project_id %}
+<div class="field-page field-entry-page">
+<div class="card field-entry-header">
+  <h2 class="card-title">자재 투입</h2>
+  <p class="muted">현장창고로 이관되어 현재고가 있는 품목만 선택할 수 있습니다. 품목을 선택하면 중앙창고 입고·이관 단가가 자동 적용됩니다.</p>
+  <a class="btn btn-outline" href="/app/field/inventory/item-requests/">품목이 없거나 예산 외 품목인가요? HQ 승인 요청</a>
 </div>
 
 <div class="card">
-  <h2 class="card-title">자재 투입</h2>
-  <p class="muted">현장 자재 투입 내역을 등록하고 재고를 차감합니다.</p>
-</div>
-
-<div class="card" style="margin-top: 18px;">
-  <form method="post">
+  <form method="post" class="field-entry-form">
     {% csrf_token %}
-    <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-      <div>
+    <div class="field-form-grid">
+      <div class="field-form-field">
         <label>프로젝트</label>
-        <select class="inline-input" name="project_id" required>
+        <select class="inline-input" name="project_id" id="issue-project" required>
           {% for project in projects %}
             <option value="{{ project.id }}">{{ project.name }}</option>
           {% endfor %}
         </select>
       </div>
-      <div>
+      <div class="field-form-field">
         <label>투입일</label>
         <input class="inline-input" type="date" name="issue_date" required />
       </div>
-      <div style="grid-column: span 2;">
+      <div class="field-form-field field-form-field--full">
         <label>메모</label>
         <input class="inline-input" type="text" name="note" placeholder="선택 입력" />
       </div>
@@ -148,17 +191,19 @@
 
     <div class="card" style="margin-top: 12px; padding: 12px;">
       <div class="muted">
-        제출 시 재고 차감(출고)과 원가 실적이 자동 생성됩니다. 마감월에는 제출이 차단됩니다.
+        제출하면 현장창고 재고가 차감되고 원가 실적이 자동 생성됩니다. 이미 월마감을 완료한 달의 투입 건은 수정하거나 제출할 수 없습니다. 날짜를 확인하거나 HQ에 정정 절차를 요청해 주세요.
       </div>
     </div>
 
     <div style="margin-top: 18px;">
-      <table class="table">
+      <table class="table issue-lines-table">
         <thead>
           <tr>
             <th>품목</th>
             <th>CBS</th>
             <th>수량</th>
+            <th>단가</th>
+            <th>금액</th>
             <th>메모</th>
           </tr>
         </thead>
@@ -170,6 +215,7 @@
                   <input
                     class="inline-input js-item-search"
                     type="text"
+                    name="lines-{{ forloop.counter0 }}-item_query"
                     placeholder="품목 코드/명 검색"
                     autocomplete="off"
                   />
@@ -186,6 +232,7 @@
                   <input
                     class="inline-input js-cbs-search"
                     type="text"
+                    name="lines-{{ forloop.counter0 }}-cbs_query"
                     placeholder="CBS 코드/명 검색"
                     autocomplete="off"
                   />
@@ -201,6 +248,12 @@
                 <input class="inline-input" type="number" step="0.001" name="lines-{{ forloop.counter0 }}-qty" placeholder="0" />
               </td>
               <td>
+                <input class="inline-input js-unit-cost" type="text" inputmode="numeric" name="lines-{{ forloop.counter0 }}-unit_cost" placeholder="품목 선택 시 자동 적용" readonly />
+              </td>
+              <td>
+                <input class="inline-input js-amount" type="text" readonly aria-label="자동 계산 금액" placeholder="자동 계산" />
+              </td>
+              <td>
                 <input class="inline-input" type="text" name="lines-{{ forloop.counter0 }}-memo" placeholder="선택 입력" />
               </td>
             </tr>
@@ -212,22 +265,23 @@
       </div>
     </div>
 
-    <div class="actions" style="margin-top: 14px;">
+    <div class="field-form-actions">
       <button type="submit" name="action" value="draft" class="btn">임시저장</button>
       <button type="submit" name="action" value="submit" class="btn primary">제출</button>
     </div>
   </form>
 </div>
 
-<div class="card" style="margin-top: 18px;">
+<div class="card">
   <h3 class="card-title">최근 투입 목록</h3>
-  <table class="table">
+  <table class="table recent-issues-table">
     <thead>
       <tr>
         <th>투입일</th>
         <th>번호</th>
         <th>프로젝트</th>
         <th>상태</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -236,21 +290,23 @@
           <td>{{ issue.issue_date }}</td>
           <td>{{ issue.issue_no }}</td>
           <td>{{ issue.project.name }}</td>
-          <td>{{ issue.status }}</td>
+          <td><span class="status-badge {{ issue.status|field_status_class }}">{{ issue.status|field_status_label }}</span></td>
+          <td><a class="btn btn-outline" href="/app/field/inventory/issues/{{ issue.id }}/">{% if issue.status == "DRAFT" %}열기·제출{% else %}상세{% endif %}</a></td>
         </tr>
       {% empty %}
         <tr>
-          <td colspan="4" class="muted">등록된 투입 이력이 없습니다.</td>
+          <td colspan="5" class="muted">등록된 투입 이력이 없습니다.</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+</div>
 
 <script>
   (function () {
-    const itemEndpoint = "/api/inventory/items/";
-    const cbsEndpoint = "/api/master/cbs/search";
+    const optionsEndpoint = "/app/field/inventory/issues/options/";
+    const projectSelect = document.getElementById("issue-project");
     const debounceMap = new Map();
 
     function debounce(el, fn, delay) {
@@ -262,8 +318,12 @@
       debounceMap.set(el, timer);
     }
 
-    async function fetchResults(endpoint, query) {
-      const url = new URL(endpoint, window.location.origin);
+    async function fetchResults(type, query) {
+      const url = new URL(optionsEndpoint, window.location.origin);
+      const projectId = projectSelect ? projectSelect.value : "";
+      if (!projectId) return [];
+      url.searchParams.set("project_id", projectId);
+      url.searchParams.set("type", type);
       if (query) {
         url.searchParams.set("q", query);
       }
@@ -301,6 +361,22 @@
       const cbsInput = row.querySelector(".js-cbs-search");
       const cbsId = row.querySelector(".js-cbs-id");
       const cbsResults = row.querySelector(".js-cbs-results");
+      const qtyInput = row.querySelector('input[name$="-qty"]');
+      const unitCostInput = row.querySelector(".js-unit-cost");
+      const amountInput = row.querySelector(".js-amount");
+
+      function recalculateAmount() {
+        if (!qtyInput || !unitCostInput || !amountInput) return;
+        const qty = Number(qtyInput.value);
+        const unitCost = Number(unitCostInput.value.replace(/,/g, ""));
+        if (!Number.isFinite(qty) || !Number.isFinite(unitCost) || qty < 0 || unitCost < 0) {
+          amountInput.value = "";
+          return;
+        }
+        amountInput.value = Math.round(qty * unitCost).toLocaleString("ko-KR");
+      }
+      qtyInput?.addEventListener("input", recalculateAmount);
+      unitCostInput?.addEventListener("input", recalculateAmount);
 
       if (itemInput) {
         itemInput.addEventListener("input", () => {
@@ -312,14 +388,20 @@
           }
           debounce(itemInput, async () => {
             try {
-              const data = await fetchResults(itemEndpoint, query);
-              const items = (data || []).map((entry) => ({
-                id: entry.id,
-                label: entry.display_label || `${entry.code} - ${entry.name}`,
-              }));
+              const data = await fetchResults("item", query);
+              const items = data || [];
               renderResults(itemResults, items, (picked) => {
                 itemInput.value = picked.label;
                 itemId.value = picked.id;
+                if (picked.recommended_cbs && cbsInput && cbsId) {
+                  cbsInput.value = picked.recommended_cbs.label;
+                  cbsId.value = picked.recommended_cbs.id;
+                  cbsResults.style.display = "none";
+                }
+                if (unitCostInput && picked.issue_unit_cost !== null && picked.issue_unit_cost !== undefined) {
+                  unitCostInput.value = Number(picked.issue_unit_cost).toLocaleString("ko-KR");
+                  recalculateAmount();
+                }
               });
             } catch (_err) {
               itemResults.style.display = "none";
@@ -338,13 +420,8 @@
           }
           debounce(cbsInput, async () => {
             try {
-              const data = await fetchResults(cbsEndpoint, query);
-              const items = (data || []).map((entry) => ({
-                id: entry.id,
-                label: entry.display_name
-                  ? `${entry.code} - ${entry.display_name}`
-                  : `${entry.code} - ${entry.name}`,
-              }));
+              const data = await fetchResults("cbs", query);
+              const items = data || [];
               renderResults(cbsResults, items, (picked) => {
                 cbsInput.value = picked.label;
                 cbsId.value = picked.id;
@@ -361,6 +438,13 @@
     const tbody = document.getElementById("issue-lines");
     if (!addBtn || !tbody) return;
     tbody.querySelectorAll(".issue-row").forEach((row) => setupAutocomplete(row));
+    projectSelect?.addEventListener("change", () => {
+      tbody.querySelectorAll(".issue-row").forEach((row) => {
+        row.querySelectorAll(".js-item-search, .js-cbs-search, .js-item-id, .js-cbs-id").forEach((el) => { el.value = ""; });
+        row.querySelectorAll(".js-unit-cost, .js-amount").forEach((el) => { el.value = ""; });
+        row.querySelectorAll(".js-item-results, .js-cbs-results").forEach((el) => { el.style.display = "none"; });
+      });
+    });
     addBtn.addEventListener("click", () => {
       const rows = tbody.querySelectorAll(".issue-row");
       const nextIndex = rows.length;

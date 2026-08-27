@@ -1,0 +1,70 @@
+[FAST-CODEX] D3E-4 (Compact)
+
+Repo: construction-erp
+
+STOP
+- No schema change
+- ≤10 files
+- 1 test run
+- pytest 3~5 max
+
+Precondition
+- D3E-3 data exists
+
+GOALS
+
+1) CLOSE-1
+- Create ClosingPeriod 2026-02
+- Execute close at 2026-02-28 (OPEN→CLOSED)
+- Verify CLOSE-2 guard blocks new write in 2026-02
+
+2) CLOSE-3 (Adjustment)
+Create 2 adjustments (not original edit):
+
+A) P1 cost missing (equipment rental)
+B) P2 labor/payroll correction
+
+Flow:
+Adjustment → CEO approve → KPI reflect
+
+3) Risk cases
+
+R5:
+Attempt DRAFT in closed month → must block or redirect to Adjustment
+
+R6:
+Create stock case:
+Transfer exists
+No IssueToWork
+Remaining stock visible
+
+4) docs/DEMO_3SITES_E2E.md (update or create)
+
+Include:
+- 3 project summary (contract/period/budget)
+- FIELD flow (progress/report/cost/labor)
+- HQ inbox process
+- CEO approval detail URL
+- Monthly close steps
+- Adjustment flow
+- Data integrity checklist:
+  submit lock
+  reject editable
+  close block
+  adjustment only
+  attachment policy
+
+If URLs unknown → infer from current routing
+
+5) Minimal pytest
+
+- test_close_blocks_write
+- test_reject_allows_attachment_edit
+- test_submitted_blocks_attachment_edit
+- (optional) test_attachment_badge_count
+
+DONE
+- 2026-02 closed
+- 2 adjustments created
+- Docs updated
+- Risk reproducible

@@ -1,0 +1,107 @@
+# OPS-1B 실제 공사 프로젝트 ERP 입력 리허설
+
+## 1. 종합 결론
+
+- OPS-1B 상태: HOLD
+- 리허설 모드: SAMPLE_ONLY_DRYRUN
+- 사용 데이터: 사용자 제공 실데이터 및 OPS-1A 데이터팩 없음. 기존 격리 테스트의 비식별 fixture만 사용함.
+- OPS-1C 진행 가능 여부: 조건부 가능. OPS-1A 데이터팩을 현재 작업공간에 복원하거나 사용자 작성본을 제공한 뒤 실제 입력 리허설을 다시 수행해야 함.
+- P0: 0건
+- P1: 2건
+- P2: 1건
+
+실제 공사 데이터 입력 성공으로 판정하지 않았다. 프로젝트, 배정, WBS/예산, FIELD 진행률, 원가/수익, LABPAY, Closing, AuditLog 경로는 격리된 Django 테스트로 검증됐으나, 입력할 OPS-1A 파일과 사용자 제공 실데이터가 없어서 실운영 입력 검증은 보류한다.
+
+## 2. 리허설 모드
+
+`SAMPLE_ONLY_DRYRUN`이다. 현재 체크아웃에서 `ops1a_*.csv`와 `ops1a_*.md`를 찾지 못했다. 실 주민등록번호, 전화번호, 계좌번호 또는 CWMA 실파일은 사용하지 않았다.
+
+## 3. 사용 데이터
+
+- OPS-1A 데이터팩 상태: INSUFFICIENT_DATA
+- 실 프로젝트 데이터: 미제공
+- 근로자 데이터: 기존 테스트의 비식별 fixture만 사용
+- 전자카드: 기존 LABPAY E2E 테스트의 임시 XLSX fixture만 사용
+- 운영 DB 입력: 수행하지 않음
+
+## 4. 입력 경로
+
+| 영역 | 확인한 경로 또는 모델 | 결과 |
+|---|---|---|
+| 공사 등록 | `/app/hq/projects/new/`, `Project` | 지원 확인, 실제 입력 보류 |
+| 공사 배정 | `ProjectAssignment` | 지원 확인 |
+| CBS/WBS/예산 | `CostItem`, `WBSItem`, `BudgetItem` | 지원 확인 |
+| FIELD 진행률 | `/app/field/?tab=progress&project_id=<id>`, `DailyProgress` | 격리 테스트 PASS |
+| 계약/수익 | `ContractSnapshot`, `RevenueRecognition` | 격리 테스트 PASS |
+| 원가 | `CostActual`, `CostActualLine` | 격리 테스트 PASS |
+| LABPAY | `/app/hq/labor/e-card-imports/`, `WorkerMaster` | 격리 테스트 PASS |
+| 마감 | `close_month`, Closing guard | 격리 테스트 PASS |
+| CEO | `/app/ceo/`, `/app/ceo/projects/` | 격리 테스트 PASS |
+
+## 5. 단계별 실행 결과
+
+| Step | Workflow | Result | Evidence | Issue |
+|---|---|---|---|---|
+| 1 | 프로젝트 마스터 입력 | HOLD | `ops1b_18_23_pytest_baseline.txt` | OPS1B-001 |
+| 2 | FIELD 배정/접근통제 | PASS | AUDIT-9 RBAC route smoke | - |
+| 3 | CBS/WBS/예산 기준선 | PASS (fixture) | AUDIT-7, AUDIT-8, AUDIT-9 | OPS1B-001 |
+| 4 | 계약 Snapshot/예산 대사 | PASS (fixture) | AUDIT-8, AUDIT-9 | OPS1B-001 |
+| 5 | FIELD 진행률 임시저장/제출 | PASS | AUDIT-7, AUDIT-9 | - |
+| 6 | LABPAY/전자카드/확정근로일 | PASS (fixture) | AUDIT-6 | OPS1B-001 |
+| 7 | 원가 입력 | PASS (fixture) | AUDIT-9 | OPS1B-001 |
+| 8 | 수익 인식 | PASS (fixture) | AUDIT-8, AUDIT-9 | OPS1B-002 |
+| 9 | CEO dashboard | PASS (fixture) | AUDIT-8, AUDIT-9 | OPS1B-003 |
+| 10 | 월 마감 후 변경 차단 | PASS | AUDIT-9 | - |
+| 11 | AuditLog/개인정보 | PASS | AUDIT-6, AUDIT-9 | - |
+| 12 | Excel 다운로드/재업로드 | PASS (fixture) | AUDIT-5, AUDIT-6 | OPS1B-001 |
+
+## 6. 실패 및 보류 항목
+
+- OPS1B-001: OPS-1A 입력 템플릿과 사용자 작성 실데이터가 현재 체크아웃에 없다. 실제 공사코드, 계약금액, WBS, 예산, FIELD 배정, 비식별 전자카드 파일을 사용한 입력은 아직 검증하지 못했다.
+- OPS1B-002: 수익 인식 정책의 실제 기준일, 인식방식, 조정 기준이 제공되지 않았다. 모델 경로는 검증됐지만 실제 금액의 정책 적합성은 미검증이다.
+- OPS1B-003: 일부 `apps/cost/models.py`, `apps/ceo/app_views.py` 및 AUDIT fixture에서 이미 존재하는 한글 mojibake 문자열을 발견했다. 본 리허설은 production code를 수정하지 않는 범위이므로 별도 I18N 보수 대상으로 기록한다.
+
+## 7. 데이터 이슈 및 등급
+
+- P0: 없음. 기준 회귀는 57개 통과했고, 마감·RBAC·개인정보 가드에서 차단 실패는 발견하지 못했다.
+- P1: OPS-1A 데이터팩 부재, CEO/CBS 관련 기존 한글 문자열 품질 점검 및 수정 필요.
+- P2: pytest 종료 시 Windows Public Documents의 오래된 pytest 임시 디렉터리 접근 거부 경고가 발생했다. 테스트 결과 자체는 통과했다.
+
+## 8. CEO dashboard 반영 결과
+
+AUDIT-8/AUDIT-9 fixture에서 계약 Snapshot, 승인 원가, 수익 인식, WBS/진행률이 CEO 화면의 프로젝트 요약으로 집계됐다. 실제 프로젝트의 계약금액·예산·진행률·원가·수익 값은 없으므로 KPI 값은 `미입력`으로 OPS-1C에 넘긴다.
+
+## 9. LABPAY/e-card 결과
+
+AUDIT-6 격리 테스트는 전자카드 업로드, 파싱, 대사, 확정근로일, CWMA 재업로드 파일 생성, 월 급여 및 배부, HQ 권한과 AuditLog 개인정보 마스킹까지 통과했다. 실제 CWMA 파일은 제공되지 않아 `NEEDS_REAL_SAFE_FILE`로 보류한다.
+
+## 10. Closing/AuditLog 결과
+
+월 마감 후 FIELD 진행률 저장 차단 경로가 테스트에서 PASS했다. 핵심 LABPAY 및 DAILY_PROGRESS AuditLog는 확인됐고, AUDIT-6/AUDIT-9 테스트는 원문 주민등록번호·전화번호·계좌번호가 감사 로그에 남지 않음을 확인한다.
+
+## 11. 개인정보 및 민감정보 점검
+
+OPS-1B 산출물에는 실 근로자 식별정보를 작성하지 않았다. 예시 데이터도 포함하지 않았으며, 실파일은 업로드하거나 복사하지 않았다. Evidence manifest의 PII 열은 모두 `No` 또는 `Not collected`이다.
+
+## 12. OPS-1C 대사로 넘길 값
+
+- Project_Code: 미입력
+- Contract_Amount: 미입력
+- Budget_Total: 미입력
+- Progress_Percent: 미입력
+- Cost_Total: 미입력
+- Recognized_Revenue: 미입력
+- Expected_Profit/Margin: 정책 및 입력값 대기
+
+## 13. OPS-2 매뉴얼 캡처 항목
+
+- CEO: 프로젝트 목록, 프로젝트 KPI 상세, 예산·원가·수익 차이
+- HQ: 신규 공사 등록, FIELD 배정, CBS/WBS/예산 기준선, 계약 Snapshot
+- FIELD: 진행률 작업 선택, 임시저장, 제출, 마감 차단 메시지
+- LABPAY: 근로자, 전자카드 업로드, 대사, 확정근로일, 재업로드 파일 다운로드
+- Closing/AuditLog: 월 마감, 수정 차단, 감사로그 조회 및 개인정보 마스킹
+- Troubleshooting: WBS 없음, 예산-계약 차이, 전자카드 미매칭, 수익 인식 정책 미확정
+
+## 14. 최종 판정
+
+HOLD. 운영 경로의 자동 회귀는 통과했고 P0은 발견되지 않았지만, OPS-1A 데이터팩 또는 사용자 제공 비식별 파일이 없으므로 실제 공사 입력 리허설은 완료되지 않았다. OPS-1C는 시스템 경로 검증 결과를 참고해 준비할 수 있으나, 실제 KPI 대사는 OPS-1B 재실행 후 확정해야 한다.

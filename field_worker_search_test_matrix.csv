@@ -1,0 +1,8 @@
+test,result,evidence
+test_field_timesheet_page_shows_searchable_worker_selector,PASS,검색 입력과 API 경로 렌더링 및 주민등록번호 계좌번호 미노출
+test_field_worker_search_returns_safe_results_by_name_and_role,PASS,이름 직종 검색과 id text role_id 제한
+test_inactive_workers_are_excluded_from_field_worker_search,PASS,active=False 후보 제외
+test_search_selected_worker_id_saves_worker_master_fk,PASS,선택 worker_id가 TimesheetLine.worker에 저장
+test_worker_search_requires_field_project_access,PASS,미배정 프로젝트 검색 403
+test_field_timesheet_worker_selection,PASS,기존 FIELD 출역부 근로자 선택 회귀
+test_e_card_imports,PASS,LABPAY 전자카드 회귀

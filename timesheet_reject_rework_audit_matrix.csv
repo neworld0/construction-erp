@@ -1,0 +1,5 @@
+Event,Result,Safe_Metadata
+FIELD 제출,TIMESHEET_SUBMIT,timesheet_id project_id line_count total_amount
+HQ 반려,TIMESHEET_REJECT,timesheet_id project_id work_date
+FIELD 반려 후 수정,TIMESHEET_EDITED_AFTER_REJECT,timesheet_id line_count worker_line_count
+FIELD 재제출,TIMESHEET_RESUBMIT,timesheet_id resolved_rate_count total_amount

@@ -1,0 +1,11 @@
+﻿worker_id,worker_name,default_labor_role_code,default_labor_role_name,active,search_visible,note
+12,김로컬,ORDINARY-WORKER,보통인부,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+4,김철수,LAND-WORKER,조경공,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+11,박영희,SIGNAL-WORKER,신호수,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+13,박포장,CIVIL-PAVING,포장공,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+6,오부택,LAND-WORKER,조경공,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+10,이영수,SIGNAL-CRANE,장비유도원,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+14,이장비,LAB-EQP,장비공,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+16,정도색,LAB-PNT,도색공,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+15,최다짐,LAB-CMP,다짐공,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."
+8,홍길동,CIVIL-PAVING,포장공,True,True,"주민등록번호, 연락처, 계좌번호는 포함하지 않습니다."

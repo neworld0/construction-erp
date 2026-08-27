@@ -1,0 +1,7 @@
+Area,Check_Item,Current_Status,Result,Severity,Evidence,Next
+Access,required inputs,11 MISSING,HOLD,P1,release1_staging_rerun_access_completeness_check.csv,complete Access Pack
+Application,local preflight,PASS,PASS,P0,release1_staging_rerun_12_local_manage_check.txt,retain evidence
+LABPAY,patch status,COMMITTED_8613d5b,PASS,P0,release1_staging_rerun_code_commit_verification.md,include 8613d5b in the staging deployment commit
+Host,Linux staging/Gunicorn/Nginx,NOT_EXECUTED,HOLD,P1,host verification docs,provide host
+Restore,isolated restore,NOT_EXECUTED,HOLD,P1,restore safety check,provide authority
+Security,host configuration,NOT_EXECUTED,HOLD,P1,security check,provide env status

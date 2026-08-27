@@ -1,0 +1,9 @@
+Artifact,Purpose,Status
+local_ops_reset_ceo_recent_06_discovery_notes.md,Source and policy discovery,PASS
+local_ops_reset_ceo_recent_root_cause.md,Root cause record,PASS
+local_ops_reset_ceo_recent_actions_snapshot.csv,AuditLog and ApprovalRequest read-only classification,PASS
+local_ops_reset_ceo_recent_dashboard_count_snapshot.csv,Current dashboard count snapshot,PASS
+local_ops_reset_ceo_recent_stale_approval_manifest.csv,Future reset stale approval diagnostics,PASS
+local_ops_reset_ceo_recent_before_after_matrix.csv,Dashboard behavior comparison,PASS
+local_ops_reset_ceo_recent_test_matrix.csv,Verification result summary,PASS
+local_ops_reset_ceo_recent_source_scan.txt,Changed-source integrity scan,PASS

@@ -1,0 +1,169 @@
+﻿apps\audit\tests\test_audit_logs.py:    return Project.objects.create(code="PRJ-AUD-001", name="Audit Project")
+apps\audit\tests\test_audit_logs.py:    cost_actual = CostActual.objects.create(
+apps\field\web_views.py:            progress = DailyProgress.objects.create(
+apps\field\web_views.py:                cost_actual = CostActual.objects.create(
+apps\inventory\services.py:        cost_actual = CostActual.objects.create(
+apps\schedule\tests\test_progress_api.py:    return Project.objects.create(code="PRJ-PG-001", name="Progress Project")
+apps\schedule\tests\test_progress_api.py:    DailyProgress.objects.create(
+apps\schedule\tests\test_progress_api.py:    DailyProgress.objects.create(
+apps\schedule\tests\test_progress_api.py:    DailyProgress.objects.create(
+apps\schedule\tests\test_progress_api.py:    DailyProgress.objects.create(
+apps\schedule\tests\test_progress_api.py:    DailyProgress.objects.create(
+apps\schedule\tests\test_plan_change_request_api.py:    return Project.objects.create(code="PRJ-PC-001", name="Plan Change Project")
+apps\schedule\tests\test_plan_change_request_api.py:    DailyProgress.objects.create(
+apps\evidence\tests\test_evidence_policy_gate.py:    return Project.objects.create(code="PRJ-EV-001", name="Evidence Project")
+apps\cost\tests\test_import_cbs_costitems.py:    CostItem.objects.create(
+apps\evidence\tests\test_resolve_project.py:    return Project.objects.create(code="PRJ-RES-001", name="Resolve Project")
+apps\evidence\tests\test_secure_download.py:    return Project.objects.create(code="PRJ-DL-001", name="Download Project A")
+apps\evidence\tests\test_secure_download.py:    return Project.objects.create(code="PRJ-DL-002", name="Download Project B")
+apps\cost\tests\test_costitem_api.py:    CostItem.objects.create(
+apps\cost\tests\test_costitem_api.py:    item = CostItem.objects.create(
+apps\contracts\tests\test_contract_snapshot_rotation.py:    return Project.objects.create(
+apps\field\tests\test_dailyreport_api.py:    return Project.objects.create(
+apps\field\tests\test_dailyreport_api.py:    return CostItem.objects.create(
+apps\field\tests\test_dailyreport_api.py:    inactive_item = CostItem.objects.create(
+apps\field\tests\test_field_progress.py:    project = Project.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    project = Project.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    WBSItem.objects.create(
+apps\field\tests\test_field_progress.py:    progress = DailyProgress.objects.create(
+apps\cost\tests\test_costactual_api.py:    return Project.objects.create(code="PRJ-CA-001", name="CostActual Project")
+apps\cost\tests\test_costactual_api.py:    return CostItem.objects.create(
+apps\contracts\tests\test_contract_change_api.py:    return Project.objects.create(code="PRJ-CC-001", name="Contract Change Project")
+apps\contracts\services.py:    return ContractSnapshot.objects.create(
+apps\cost\tests\test_accrual_cost.py:    return Project.objects.create(code="PRJ-AC-001", name="Accrual Project")
+apps\cost\tests\test_accrual_cost.py:        "labor": CostItem.objects.create(
+apps\cost\tests\test_accrual_cost.py:        "material": CostItem.objects.create(
+apps\cost\tests\test_accrual_cost.py:        "equip": CostItem.objects.create(
+apps\cost\tests\test_accrual_cost.py:    cost_actual = CostActual.objects.create(
+apps\labor\services.py:    return CostItem.objects.create(
+apps\labor\services.py:    worker = WorkerMaster.objects.create(
+apps\labor\tests\test_worker_master_model.py:    worker = WorkerMaster.objects.create(
+apps\labor\tests\test_worker_master_model.py:    worker_a = WorkerMaster.objects.create(
+apps\labor\tests\test_worker_master_model.py:    worker_b = WorkerMaster.objects.create(
+apps\labor\tests\test_worker_master_model.py:    worker = WorkerMaster.objects.create(
+apps\labor\tests\test_audit6_labpay_e2e.py:    return Project.objects.create(code=code, name=name, project_type="civil")
+apps\labor\tests\test_labor_closing_guards.py:    return Project.objects.create(code=code, name=code)
+apps\labor\tests\test_closing_confirmation_guards.py:    return Project.objects.create(code=code, name=code)
+apps\labor\tests\test_audit5_excel_reliability.py:    return Project.objects.create(code=code, name=name, project_type="civil")
+apps\labor\tests\test_e_card_imports.py:    project = Project.objects.create(code="PRJ-LAB-001", name="노무 업로드 현장")
+apps\labor\tests\test_e_card_imports.py:    project = Project.objects.create(code="PRJ-LAB-002", name="레거시 헤더 현장")
+apps\labor\tests\test_e_card_imports.py:    project = Project.objects.create(code=f"PRJ-{filename}", name="형식 검증 현장")
+apps\labor\tests\test_e_card_imports.py:    project = Project.objects.create(code=f"PRJ-{worker_name}", name="파싱 현장")
+apps\labor\tests\test_e_card_imports.py:    worker = WorkerMaster.objects.create(
+apps\labor\tests\test_e_card_imports.py:    worker = WorkerMaster.objects.create(
+apps\labor\tests\test_e_card_imports.py:    project = Project.objects.create(code="PRJ-EXC-001", name="헤더 별칭 현장")
+apps\labor\tests\test_e_card_imports.py:    project = Project.objects.create(code="PRJ-WORKER-DEL", name="근로자 사용현장")
+apps\labor\tests\test_audit2_labor_rbac.py:    return Project.objects.create(code=code, name=code)
+apps\master\api_views.py:            FavoriteCostItem.objects.create(
+apps\cost\serializers.py:        cost_actual = CostActual.objects.create(
+apps\cost\seed_civil_road_cbs.py:        item = CostItem.objects.create(
+apps\projects\tests\test_project_new_manual_create.py:    cost_item = CostItem.objects.create(
+apps\projects\tests\test_project_new_manual_create.py:    Project.objects.create(
+apps\projects\tests\test_project_new_manual_create.py:    cost_item = CostItem.objects.create(
+apps\projects\tests\test_project_import_commit.py:    project = Project.objects.create(
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(
+apps\projects\tests\test_project_import_commit.py:    project = Project.objects.create(code="PRJ-BUDGET-001", name="예산 합계 확인 공사", project_type="civil", status="draft")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=expense_item, category=BudgetCategory.OTHER, name="경비", planned_amount=1000)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.OTHER, name="이윤", planned_amount=2000)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=labor_item, category=BudgetCategory.LABOR, name="노무비", planned_amount=3000)
+apps\projects\tests\test_project_import_commit.py:    project = Project.objects.create(code="PRJ-REPAIR-001", name="CBS 보정 공사", project_type="civil", status="draft")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(
+apps\projects\tests\test_project_import_commit.py:    project = Project.objects.create(code="PRJ-PROFIT-001", name="이윤 분류 공사", project_type="civil", status="draft")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.LABOR, name="이윤", planned_amount=1000)
+apps\projects\tests\test_project_import_commit.py:    project = Project.objects.create(code="PRJ-BUCKET-001", name="버킷 합계 공사", project_type="civil", status="draft")
+apps\projects\tests\test_project_import_commit.py:        subcon_item = CostItem.objects.create(code="TEST-SUBCON-BUCKET", name="하도급 테스트", category="subcon", is_active=True)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=labor_item, category=BudgetCategory.LABOR, name="노무비", planned_amount=100)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=material_item, category=BudgetCategory.MATERIAL, name="재료비", planned_amount=200)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=subcon_item, category=BudgetCategory.SUBCON, name="하도급", planned_amount=300)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=expense_item, category=BudgetCategory.OTHER, name="경비", planned_amount=400)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=equipment_item, category=BudgetCategory.EQUIP, name="장비비", planned_amount=500)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.OTHER, name="이윤", planned_amount=600)
+apps\projects\tests\test_project_import_commit.py:    project = Project.objects.create(code="PRJ-REPAIR-002", name="카테고리 보정 공사", project_type="civil", status="draft")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.LABOR, name="", planned_amount=1000)
+apps\projects\tests\test_project_import_commit.py:    project = Project.objects.create(code="PRJ-REPAIR-EQUIP-001", name="장비 카테고리 보정 공사", project_type="civil", status="draft")
+apps\projects\tests\test_project_import_commit.py:    budget_item = BudgetItem.objects.create(project=project, cost_item=equipment_item, category=BudgetCategory.EQUIP, name="장비비", planned_amount=500)
+apps\projects\tests\test_project_import_budget_initial.py:    cost_item = CostItem.objects.create(code="WASTE-001", name="폐기물처리", category="other")
+apps\projects\tests\test_project_import_budget_initial.py:    equip_item = CostItem.objects.create(code="TEST-EQUIP", name="장비 항목", category="equip")
+apps\projects\tests\test_project_import_budget_initial.py:    overhead_item = CostItem.objects.create(code="TEST-OVERHEAD", name="간접 항목", category="other")
+apps\projects\tests\test_project_import_budget_initial.py:    item = CostItem.objects.create(code="TEST-OTHER-SUBCON", name="기타 CBS", category="other")
+apps\projects\tests\test_project_import_budget_initial.py:    project = Project.objects.create(code="PRJ-SUBCON-KEEP", name="하도급 유지 공사", project_type="civil", status="draft")
+apps\projects\tests\test_project_import_budget_initial.py:    item = CostItem.objects.create(code="TEST-OTHER-SUBCON-ROW", name="기타 CBS 행", category="other")
+apps\projects\tests\test_project_import_budget_initial.py:    budget_item = BudgetItem.objects.create(
+apps\projects\hq_views.py:                                            BudgetItem.objects.create(
+apps\projects\hq_views.py:                                            WBSItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    project = Project.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    expense_item = BudgetItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    wbs = WBSItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    expense_item = BudgetItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    item = BudgetItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    old_item = BudgetItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    BudgetItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    BudgetItem.objects.create(
+apps\projects\tests\test_project_budget_detail_save.py:    item = BudgetItem.objects.create(
+apps\finance\tests\test_revenue_recognition.py:    return Project.objects.create(code="PRJ-RR-001", name="Revenue Project")
+apps\finance\tests\test_revenue_recognition.py:    return ContractSnapshot.objects.create(
+apps\projects\tests\test_project_baseline_rejection.py:    project = Project.objects.create(
+apps\projects\tests\test_audit7_field_progress_e2e.py:    return Project.objects.create(
+apps\projects\tests\test_audit7_field_progress_e2e.py:    cost_item = CostItem.objects.create(
+apps\projects\tests\test_audit7_field_progress_e2e.py:    budget_item = BudgetItem.objects.create(
+apps\projects\tests\test_audit7_field_progress_e2e.py:    return WBSItem.objects.create(
+apps\projects\tests\test_project_api.py:    Project.objects.create(
+apps\projects\tests\test_project_api.py:    project = Project.objects.create(
+apps\finance\tests\test_profit_loss.py:    return Project.objects.create(code="PRJ-PL-001", name="ProfitLoss Project")
+apps\finance\tests\test_profit_loss.py:    return ContractSnapshot.objects.create(
+apps\finance\tests\test_profit_loss.py:    return CostItem.objects.create(
+apps\finance\tests\test_profit_loss.py:    return RevenueRecognition.objects.create(
+apps\finance\tests\test_profit_loss.py:    cost_actual = CostActual.objects.create(
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    return Project.objects.create(
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    return CostItem.objects.create(
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    return BudgetItem.objects.create(
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    return ContractSnapshot.objects.create(
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    return RevenueRecognition.objects.create(
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    actual = CostActual.objects.create(
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    return DailyProgress.objects.create(
+apps\risk\tests\test_risk_finding_api.py:    return Project.objects.create(code="PRJ-RISK-001", name="Risk Project")
+apps\closing\tests\test_closing_guards.py:    project = Project.objects.create(code="PRJ-CLOSE-001", name="Closed Project")
+apps\cost\management\commands\import_cbs_costitems.py:                        item = CostItem.objects.create(**payload["fields"])
+apps\ceo\tests\test_ceo_cash_summary.py:    return Project.objects.create(code="PRJ-CASH-001", name="Cash Project")
+apps\ceo\tests\test_ceo_pages.py:    project = Project.objects.create(code="PRJ-CEO-UI-001", name="CEO UI Project")
+apps\ceo\tests\test_ceo_report_export.py:    return Project.objects.create(code="PRJ-CSV-001", name="CSV Project")
+apps\ceo\tests\test_ceo_report_export.py:    ContractSnapshot.objects.create(
+apps\core\management\commands\seed_demo_3sites.py:            cost_actual = CostActual.objects.create(
+apps\core\management\commands\seed_demo_3sites_e2e.py:                entry = DailyProgress.objects.create(
+apps\core\management\commands\seed_demo_3sites_e2e.py:                cost = CostActual.objects.create(
+apps\core\management\commands\seed_demo_3sites_e2e.py:                snapshot = ContractSnapshot.objects.create(
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    align_cost = CostActual.objects.create(
+apps\core\management\commands\seed_demo_3sites_e2e.py:            WBSItem.objects.create(
+apps\core\management\commands\seed_demo_flow.py:            cost_actual = CostActual.objects.create(
+apps\core\management\commands\seed_demo_flow.py:            cost_actual = CostActual.objects.create(
+apps\core\rbac\tests\test_audit2_project_scope.py:    return Project.objects.create(code=code, name=name, project_type="civil")
+apps\core\rbac\tests\test_audit2_project_scope.py:    return WBSItem.objects.create(
+apps\core\rbac\tests\test_rbac_assignment_regression.py:    return Project.objects.create(code="PRJ-RBAC-A", name="RBAC Project A")
+apps\core\rbac\tests\test_rbac_assignment_regression.py:    return Project.objects.create(code="PRJ-RBAC-B", name="RBAC Project B")
+apps\core\rbac\tests\test_rbac_project_access.py:    return Project.objects.create(code="PRJ-RBAC-001", name="RBAC Project A")
+apps\core\rbac\tests\test_rbac_project_access.py:    return Project.objects.create(code="PRJ-RBAC-002", name="RBAC Project B")
+apps\core\tests\test_approval_costactual.py:    return Project.objects.create(code="PRJ-AP-001", name="Approval Project")
+apps\core\tests\test_approval_costactual.py:    return CostItem.objects.create(
+apps\core\tests\test_approval_daily_progress.py:    project = Project.objects.create(code="PRJ-DP-001", name="Progress Project")
+apps\core\tests\test_approval_daily_progress.py:    return DailyProgress.objects.create(
+apps\core\tests\test_atomic_flows.py:    return Project.objects.create(code="PRJ-AT-001", name="Atomic Project")
+apps\core\tests\test_audit1_template_links.py:    return Project.objects.create(
+apps\core\tests\test_audit1_template_links.py:    WBSItem.objects.create(
+apps\core\tests\test_audit1_url_integrity.py:    return Project.objects.create(code=code, name=name, project_type="civil")
+apps\core\tests\test_audit1_url_integrity.py:    WBSItem.objects.create(
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    return Project.objects.create(
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    return CostItem.objects.create(
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    return BudgetItem.objects.create(
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    return WBSItem.objects.create(
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    return ContractSnapshot.objects.create(
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    return RevenueRecognition.objects.create(
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    actual = CostActual.objects.create(
+apps\core\tests\test_demo_d3e4_compact.py:    project = Project.objects.create(code="D3E4-P1", name="D3E4 Project")

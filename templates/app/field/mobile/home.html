@@ -33,8 +33,8 @@
         <div class="mobile-status__value">{{ progress_status }}</div>
       </div>
       <div class="mobile-status">
-        <p class="mobile-status__label">보고서</p>
-        <div class="mobile-status__value">{{ report_status }}</div>
+        <p class="mobile-status__label">공사일보</p>
+        <div class="mobile-status__value">{{ daily_report_status }}</div>
       </div>
       <div class="mobile-status" style="grid-column: 1 / -1;">
         <p class="mobile-status__label">원가</p>
@@ -46,7 +46,7 @@
   <section class="mobile-card mobile-quicklinks">
     {% if project %}
     <a class="btn mobile-cta" href="/app/field/mobile/progress/?project_id={{ project.id }}">진행률 입력</a>
-    <a class="btn mobile-cta" href="/app/field/mobile/reports/?project_id={{ project.id }}">보고서 작성</a>
+    <a class="btn mobile-cta" href="/app/field/site-daily-logs/?project_id={{ project.id }}">공사일보 조회</a>
     <a class="btn mobile-cta" href="/app/field/mobile/costs/?project_id={{ project.id }}">원가 입력</a>
     <a class="btn mobile-cta" href="/app/field/mobile/inventory/issue?project_id={{ project.id }}">자재 투입</a>
     <a class="btn mobile-cta" href="/app/field/mobile/labor/timesheet?project_id={{ project.id }}">출역부 입력</a>

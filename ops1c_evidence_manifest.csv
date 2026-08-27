@@ -1,0 +1,5 @@
+Evidence_ID,Step,Evidence_Type,File_or_Screen,Description,Contains_PII,Storage_Note,Reviewer
+E-01,DB,JSON,ops1c_dashboard_context_dump.json,Read-only KPI source values,NO,Local demo,Codex
+E-02,Dashboard,CSV,ops1c_ceo_dashboard_value_matrix.csv,Expected and dashboard service values,NO,Local demo,Codex
+E-03,RBAC,CSV,ops1c_rbac_visibility_matrix.csv,Role route matrix,NO,Local demo,Codex
+E-04,Health,TXT,ops1c_13_15_pytest_baseline.txt,Baseline test result,NO,Local demo,Codex

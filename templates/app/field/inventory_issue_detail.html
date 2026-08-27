@@ -1,0 +1,7 @@
+{% extends "app/base_app.html" %}
+{% load utils %}
+{% block page_title %}자재 투입 상세{% endblock %}
+{% block content %}
+<div class="card"><h2 class="card-title">자재 투입 {{ issue.issue_no }}</h2><p class="muted">{{ issue.project.name }} · {{ issue.issue_date }} · <span class="status-badge {{ issue.status|field_status_class }}">{{ issue.status|field_status_label }}</span></p></div>
+<div class="card" style="margin-top:16px;"><table class="table"><tr><th>품목</th><th>CBS</th><th>수량</th><th>단가</th><th>금액</th><th>메모</th></tr>{% for line in issue.lines.all %}<tr><td>{{ line.item }}</td><td>{{ line.cbs }}</td><td>{{ line.qty }} {{ line.uom.code }}</td><td>{{ line.unit_cost|default:"-" }}</td><td>{{ line.amount|default:"-" }}</td><td>{{ line.memo }}</td></tr>{% endfor %}</table>{% if can_submit %}<form method="post" style="margin-top:16px;">{% csrf_token %}<button class="btn" name="action" value="submit">제출</button></form>{% else %}<p class="muted">제출 완료된 건입니다.</p>{% endif %}</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+Check_ID,Area,Route_or_Command,Expected,Actual,HTTP_Status,Elapsed_Seconds,Result,Severity,Notes
+R-01,Django,python manage.py check,PASS,PASS (local),-,-,PASS,P0,local preflight
+R-02,Migration,makemigrations --check --dry-run,No changes,No changes (local),-,-,PASS,P0,local preflight
+R-03,WSGI,staging WSGI import,WSGI_IMPORT_OK,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,host input missing
+R-04,Gunicorn,service status,active,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,host input missing
+R-05,Nginx,nginx -t,successful,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,host input missing
+R-06,Health,/healthz/,200 <2s,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,staging endpoint missing
+R-07,Auth,/login/,200 <3s,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,safe account missing
+R-08,CEO,/app/ceo/,200 <5s,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,safe account missing
+R-09,HQ,/app/hq/,200 <5s,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,safe account missing
+R-10,LABPAY,/app/hq/labor/e-card-imports/,200 <5s,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,safe account missing
+R-11,FIELD,assigned progress,200 <5s,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,safe account missing
+R-12,Static/media,proxy policy,approved,NOT_EXECUTED_ACCESS_GATE,-,-,HOLD,P1,host config missing

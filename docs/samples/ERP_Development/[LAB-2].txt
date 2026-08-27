@@ -1,0 +1,232 @@
+[LAB-2]
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+=====================================================
+[LAB-2 목표]
+=====================================================
+현장(FIELD)이 일자별 출역부(Timesheet)를 입력(임시저장/제출)하고,
+본사(HQ)가 검토/승인(또는 반려)할 수 있게 한다.
+
+핵심 정책:
+- 출역부는 “일자 + 프로젝트” 단위의 헤더 + 다건 라인 구조
+- 같은 날 여러 건(직종/인원/시간/작업내용) 라인을 입력 가능
+- 제출 후에는 FIELD 수정 불가(반려되면 수정 가능)
+- 월 마감(CLOSE-2) 이후 해당 월 출역부 생성/수정/제출/승인 전면 차단
+- 승인 후 인건비 실적 집계(LAB-4)에서 사용 가능하도록 단가 스냅샷을 저장
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- /app/field/ 탭 구조(임시저장/제출 UX) 존재 여부 확인 (진행률/보고서/원가 패턴 재사용)
+- RBAC 데코레이터/미들웨어 확인
+- CLOSE-2 가드 함수(assert_month_open(date)) 위치 확인
+- ApprovalRequest 같은 공용 승인 시스템 존재 여부 확인
+  - 있으면 재사용(권장)
+  - 없으면 Timesheet 자체 status로 승인 처리
+Discovery 결과를 코드 주석으로 남기고, 실제 파일 경로를 명시하라.
+
+=====================================================
+1) 모델 설계 (필수)
+=====================================================
+apps/labor/models.py
+
+[Timesheet]
+- id
+- sheet_no (CharField, unique, db_index=True)    # TS-YYYYMM-0001
+- project (FK Project)
+- work_date (DateField)                          # 기준일(마감 체크 기준)
+- status (choices):
+    "DRAFT"        # 임시저장
+    "SUBMITTED"    # 제출(현장)
+    "APPROVED"     # 승인(HQ)
+    "REJECTED"     # 반려(HQ)
+- note (TextField, blank=True)
+- created_by (FK User)
+- submitted_at (DateTimeField, null=True, blank=True)
+- approved_by (FK User, null=True, blank=True)
+- approved_at (DateTimeField, null=True, blank=True)
+- rejected_by (FK User, null=True, blank=True)
+- rejected_at (DateTimeField, null=True, blank=True)
+- reject_reason (TextField, blank=True)
+- created_at/updated_at
+
+제약:
+- (project, work_date, created_by) 유니크는 금지(같은 날 여러 장 필요할 수 있음)
+  대신: “기본은 1장” UX로 하되 여러 장 가능 구조 유지
+- 월 마감된 월은 Timesheet 생성/수정/상태전이 금지 (서비스에서 강제)
+
+[TimesheetLine]
+- id
+- timesheet (FK Timesheet, related_name="lines")
+- labor_role (FK LaborRole)
+- headcount (DecimalField(10,2) 또는 IntegerField)  # 인원수(0.5 가능하면 Decimal)
+- hours (DecimalField(10,2), null=True, blank=True) # 시간제면 사용(옵션)
+- rate_type (choices): "DAY" or "HOUR"              # LAB-1과 일치
+- unit_rate (IntegerField)                          # 제출 시점 스냅샷(필수)
+- amount (IntegerField)                             # 계산된 금액(원)
+- memo (CharField, blank=True)                      # 작업내용/비고
+
+계산 규칙(MVP):
+- rate_type="DAY": amount = round(headcount * unit_rate)
+  (headcount가 1.5면 1.5일 단가로 계산)
+- rate_type="HOUR": amount = round(headcount * hours * unit_rate)
+- unit_rate는 “제출 시점”에 get_applicable_rate(project, role, work_date)로 결정하여 고정 저장
+- 단가가 없으면 제출 차단(운영 안전) 또는 0 허용(품질 ESTIMATED) 중 택1
+  => MVP 권장: 제출 차단 + 에러: "직종 단가가 등록되지 않았습니다."
+
+=====================================================
+2) 번호 생성 (권장)
+=====================================================
+TimesheetNumberSequence(key="TS-YYYYMM", last_number) + select_for_update
+transaction.atomic으로 생성 시 동시성 안전 확보
+
+=====================================================
+3) 상태 머신/업무 규칙 (필수)
+=====================================================
+전이:
+- DRAFT -> SUBMITTED (FIELD 제출)
+- SUBMITTED -> APPROVED (HQ 승인)
+- SUBMITTED -> REJECTED (HQ 반려)
+- REJECTED -> DRAFT (FIELD가 수정 위해 되돌림) 또는 REJECTED 상태에서 수정 허용
+권장:
+- REJECTED 상태에서는 FIELD가 편집 가능 + “재제출” 버튼
+
+제한:
+- SUBMITTED/APPROVED에서는 FIELD 편집 금지
+- APPROVED 이후 변경/삭제 금지(정정은 CLOSE-3로)
+- 모든 전이/편집은 work_date 기준 월이 CLOSED면 차단(assert_month_open)
+
+=====================================================
+4) 서비스 레이어 (필수)
+=====================================================
+apps/labor/services.py
+
+함수:
+- create_timesheet(project, work_date, actor) -> Timesheet(DRAFT)
+- upsert_timesheet_lines(timesheet, lines_payload, actor)  # DRAFT/REJECTED만
+- submit_timesheet(timesheet, actor)
+   - assert_month_open(work_date)
+   - lines 검증(최소 1개)
+   - 각 line에 대해 unit_rate 스냅샷 채우기:
+     rate = get_applicable_rate(project, labor_role, work_date, rate_type)
+     없으면 ValidationError
+   - amount 계산 후 저장
+   - status=SUBMITTED, submitted_at
+   - AuditLog
+- approve_timesheet(timesheet, actor_hq)
+   - assert_month_open(work_date)
+   - status==SUBMITTED만
+   - status=APPROVED, approved_at/by
+   - AuditLog
+- reject_timesheet(timesheet, actor_hq, reason)
+   - status=REJECTED, reason 기록
+   - AuditLog
+
+주의:
+- submit 시점에 unit_rate를 고정하므로, 이후 단가표가 바뀌어도 과거 출역 금액은 유지됨(정합성)
+- 동시 편집 방지: select_for_update(timesheet) 사용 권장
+
+=====================================================
+5) RBAC (필수)
+=====================================================
+- FIELD:
+  - 본인 배정 프로젝트만 Timesheet 생성/조회/수정(DRAFT/REJECTED)/제출 가능
+  - 타 프로젝트 접근 403
+- HQ:
+  - 모든 프로젝트 조회 가능(또는 담당 프로젝트만 — 현재 정책에 맞춤)
+  - 승인/반려 가능
+  - DRAFT 수정은 금지(운영상 책임 분리)
+- CEO:
+  - 전부 가능(승인 대행 가능)
+
+=====================================================
+6) API (필수)
+=====================================================
+- GET  /api/labor/timesheets/?project=&status=&start=&end=
+- POST /api/labor/timesheets/                  # create DRAFT
+  body: {project_id, work_date, note}
+- PATCH /api/labor/timesheets/<id>/            # DRAFT/REJECTED 편집(노트)
+- PUT or PATCH /api/labor/timesheets/<id>/lines/   # 라인 저장(임시저장)
+- POST /api/labor/timesheets/<id>/submit/
+- POST /api/labor/timesheets/<id>/approve/     # HQ/CEO
+- POST /api/labor/timesheets/<id>/reject/      # HQ/CEO (reason 포함)
+
+라인 payload 예:
+{
+ "lines":[
+   {"labor_role_id":1,"headcount":2,"rate_type":"DAY","memo":"식재 작업"},
+   {"labor_role_id":3,"headcount":1.5,"rate_type":"DAY","memo":"굴삭기 보조"}
+ ]
+}
+
+submit 시 서버가 unit_rate/amount를 채워 반환:
+- 각 라인에 unit_rate/amount 포함
+- timesheet_total_amount 포함(합계)
+
+=====================================================
+7) UI 최소 구현 (권장, 기존 패턴 재사용)
+=====================================================
+FIELD 화면(출역부 탭 추가):
+- 상단: 날짜 선택(기본 오늘), 프로젝트 선택(배정된 프로젝트만)
+- 라인 반복 입력(직종 드롭다운/검색, 인원수, (옵션)시간, 메모)
+- 버튼:
+  - [임시저장] -> DRAFT 저장(또는 REJECTED에서 수정 저장)
+  - [제출] -> SUBMITTED 전환(제출 후 수정 불가)
+- 최근 입력 목록:
+  - 날짜, TS 번호, 상태, 합계금액, 상세(읽기/수정)
+- 상태별 메시지:
+  - SUBMITTED: "제출됨(승인 대기) — 수정 불가"
+  - APPROVED: "승인 완료 — 마감 전이라도 정정은 HQ 절차로"
+
+HQ 화면:
+- 승인 대기 목록(status=SUBMITTED)
+- 상세에서 라인/합계 확인 + 승인/반려 버튼
+- 반려 사유 입력
+
+한글/UTF-8 템플릿 깨짐 주의.
+
+=====================================================
+8) CLOSE-2 연계 (필수)
+=====================================================
+- work_date가 속한 월이 CLOSED면:
+  - 생성/임시저장/제출/승인/반려 전부 차단
+  메시지:
+  "YYYY년 M월은 마감되었습니다. 출역부 수정은 정정 절차로 처리해야 합니다."
+
+=====================================================
+9) AuditLog (필수)
+=====================================================
+이벤트:
+- TIMESHEET_CREATE
+- TIMESHEET_UPDATE
+- TIMESHEET_SUBMIT
+- TIMESHEET_APPROVE
+- TIMESHEET_REJECT
+- TIMESHEET_BLOCKED_CLOSED (선택)
+
+metadata:
+{timesheet_id, sheet_no, project_id, work_date, line_count, total_amount, status}
+
+=====================================================
+10) 테스트 시나리오 (필수)
+=====================================================
+1) FIELD: DRAFT 생성 + 라인 임시저장 OK
+2) 제출:
+   - 단가 미등록 직종 포함 시 제출 실패(에러 메시지)
+   - 단가 등록되면 unit_rate/amount 스냅샷 저장되고 SUBMITTED
+3) 제출 후 FIELD 수정 불가
+4) HQ: 승인/반려 가능, 반려 사유 저장
+5) 반려 후 FIELD 수정 가능 + 재제출 가능
+6) CLOSED 월 work_date인 경우 모든 동작 차단
+7) 권한: FIELD는 타 프로젝트 접근 403
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- Timesheet/Line 모델 + 마이그레이션 완료
+- 임시저장(DRAFT) + 제출(SUBMITTED) + HQ 승인/반려 구현
+- 제출 시 단가 스냅샷(unit_rate)과 금액(amount) 확정 저장
+- 월 마감(CLOSE-2) 이후 전면 차단
+- RBAC/AuditLog 적용
+- FIELD/HQ 최소 UI 제공(기존 탭 스타일 재사용)

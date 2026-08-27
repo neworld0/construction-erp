@@ -1,0 +1,8 @@
+﻿Rate_ID,Scope,Project_ID,Project_Name,Worker_ID,Worker_Name,LaborRole_Code,LaborRole_Name,Rate_Type,Daily_Rate,Hourly_Rate,Effective_From,Effective_To,Is_Active,Priority,Conflict_Group,Has_Overlap,Required_For_LOCAL_OPS,Notes
+7,ROLE_BASE,,,,,LAB-GEN,보통인부,DAY,160000,,2026-08-01,,True,40,7:DAY:ROLE_BASE::,False,True,LOCAL-OPS 기본 일단가
+8,ROLE_BASE,,,,,LAB-PAV,포장공,DAY,210000,,2026-08-01,,True,40,8:DAY:ROLE_BASE::,False,True,LOCAL-OPS 기본 일단가
+9,ROLE_BASE,,,,,LAB-EQP,장비공,DAY,250000,,2026-08-01,,True,40,9:DAY:ROLE_BASE::,False,True,LOCAL-OPS 기본 일단가
+10,ROLE_BASE,,,,,LAB-CMP,다짐공,DAY,220000,,2026-08-01,,True,40,10:DAY:ROLE_BASE::,False,True,LOCAL-OPS 기본 일단가
+11,ROLE_BASE,,,,,LAB-PNT,도색공,DAY,200000,,2026-08-01,,True,40,11:DAY:ROLE_BASE::,False,True,LOCAL-OPS 기본 일단가
+12,ROLE_BASE,,,,,ORDINARY-WORKER,보통인부,DAY,160000,,2026-08-01,,True,40,3:DAY:ROLE_BASE::,False,False,LOCAL-OPS 기본 일단가
+13,ROLE_BASE,,,,,CIVIL-PAVING,포장공,DAY,210000,,2026-08-01,,True,40,2:DAY:ROLE_BASE::,False,False,LOCAL-OPS 기본 일단가

@@ -18,28 +18,28 @@ def _validate_year_month(year: int, month: int) -> None:
         raise ValidationError("month must be between 1 and 12.")
 
 
-def get_closing_period(year: int, month: int) -> ClosingPeriod | None:
+def get_closing_period(year: int, month: int, *, legal_entity) -> ClosingPeriod | None:
     _validate_year_month(year, month)
-    return ClosingPeriod.objects.filter(year=year, month=month).first()
+    return ClosingPeriod.objects.filter(legal_entity=legal_entity, year=year, month=month).first()
 
 
-def is_month_closed(target_date: date) -> bool:
+def is_month_closed(target_date: date, *, legal_entity) -> bool:
     period = ClosingPeriod.objects.filter(
-        year=target_date.year, month=target_date.month
+        legal_entity=legal_entity, year=target_date.year, month=target_date.month
     ).first()
     return bool(period and period.status == ClosingStatus.CLOSED)
 
 
-def assert_month_open(target_date: date) -> None:
-    if is_month_closed(target_date):
+def assert_month_open(target_date: date, *, legal_entity) -> None:
+    if is_month_closed(target_date, legal_entity=legal_entity):
         raise PermissionDenied("Month is closed.")
 
 
-def close_month(year: int, month: int, actor, note: str | None = None) -> ClosingPeriod:
+def close_month(year: int, month: int, actor, *, legal_entity, note: str | None = None) -> ClosingPeriod:
     _validate_year_month(year, month)
     with transaction.atomic():
         period, _created = ClosingPeriod.objects.select_for_update().get_or_create(
-            year=year, month=month, defaults={"status": ClosingStatus.OPEN}
+            legal_entity=legal_entity, year=year, month=month, defaults={"status": ClosingStatus.OPEN}
         )
         if period.status == ClosingStatus.CLOSED:
             raise ValidationError("ClosingPeriod is already closed.")
@@ -54,7 +54,7 @@ def close_month(year: int, month: int, actor, note: str | None = None) -> Closin
             action="MONTH_CLOSED",
             object_type="ClosingPeriod",
             object_id=period.id,
-            meta={"year": year, "month": month},
+            meta={"legal_entity": legal_entity.code, "year": year, "month": month},
         )
         return period
 
@@ -105,7 +105,7 @@ def validate_project_close(project: Project, *, effective_date: date | None = No
         or getattr(project, "end_date", None)
         or date.today()
     )
-    if target_date and not is_month_closed(target_date):
+    if target_date and not is_month_closed(target_date, legal_entity=project.legal_entity):
         blocks.append("프로젝트 종료월이 월 마감되지 않았습니다.")
 
     site_warehouses = Warehouse.objects.filter(

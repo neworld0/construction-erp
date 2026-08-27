@@ -1,0 +1,3 @@
+Command,Result,Notes
+python manage.py check,PASS,0 issues
+pytest -q apps/labor/tests/test_timesheet_reject_rework_workflow.py,PASS,3 passed

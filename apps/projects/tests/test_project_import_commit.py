@@ -338,11 +338,11 @@ def test_save_blocks_when_budget_excel_has_unmatched_rows_without_confirm():
 
     assert response.status_code == 200
     assert not Project.objects.filter(name=PROJECT_NAME).exists()
-    assert BLOCK_MSG in content
+    assert "CBS \ubbf8\ub9e4\uce6d \ud589\uc774 \uc788\uc5b4 \uc608\uc0b0 \uae30\uc900\uc120\uc744 \uc800\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4." in content
 
 
 @pytest.mark.django_db
-def test_save_allows_partial_import_when_confirmed():
+def test_save_blocks_partial_import_even_when_confirmed():
     seed_civil_road_cbs()
     user = get_user_model().objects.create_user(username="partial-hq", password="pass")
     UserProfile.objects.create(user=user, role="hq")
@@ -371,11 +371,11 @@ def test_save_allows_partial_import_when_confirmed():
 
     response = hq_project_new(request)
 
-    assert response.status_code == 302
-    project = Project.objects.get(name=PARTIAL_NAME)
-    commit_log = AuditLog.objects.filter(project=project, action="PROJECT_IMPORT_COMMIT").latest("id")
-    assert commit_log.meta_json["partial_budget_import"] is True
-    assert commit_log.meta_json["unmatched_rows"] > 0
+    content = response.content.decode("utf-8")
+
+    assert response.status_code == 200
+    assert not Project.objects.filter(name=PARTIAL_NAME).exists()
+    assert "CBS \ubbf8\ub9e4\uce6d \ud589\uc774 \uc788\uc5b4 \uc608\uc0b0 \uae30\uc900\uc120\uc744 \uc800\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4." in content
 
 
 @pytest.mark.django_db

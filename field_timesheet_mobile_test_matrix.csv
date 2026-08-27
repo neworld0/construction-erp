@@ -1,0 +1,5 @@
+command,result,coverage
+python manage.py check,PASS,Django system check
+python manage.py makemigrations --check --dry-run,PASS,No migration changes
+pytest mobile and LABPAY regression suite,PASS,90 passed
+browser mobile screenshot,HOLD,This execution environment had no controllable browser connection

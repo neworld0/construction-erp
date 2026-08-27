@@ -1,0 +1,7 @@
+Calculation_ID,Item,Formula,Input_1,Input_2,Input_3,Expected_Result,Rounding,Notes
+CALC-01,Budget_Total,sum(BudgetItem.planned_amount),571022700,,,571022700,none,contract reconciliation
+CALC-02,WBS_Weight_Total,sum(WBSItem.weight),100.00,,,100.00,none,baseline total
+CALC-03,Dashboard_Weighted_Progress,sum(task weight x latest progress / 100),100.000,12.5 for paving task,45 x 12.5 / 100,5.625000,none,task-level 12.5 is not project total
+CALC-04,Recognized_Revenue,contract_amount x weighted_progress / 100,571022700.00,5.625000,,32120026.88,HALF_UP 2 decimal places,PROGRESS_BASED_PROVISIONAL
+CALC-05,Expected_Profit,recognized_revenue - approved cost,32120026.88,10000000.00,,22120026.88,none,dashboard accrual cost
+CALC-06,Expected_Margin,profit / recognized_revenue x 100,22120026.88,32120026.88,,68.86677574287260372305142978,display 2 decimal places,68.87 percent expected

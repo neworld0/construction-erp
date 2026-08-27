@@ -1,0 +1,9 @@
+Artifact,Purpose,Status
+local_ops_reset_hq_risk_08_discovery_notes.md,HQ and CEO risk source discovery,PASS
+local_ops_reset_hq_risk_root_cause.md,Root cause record,PASS
+local_ops_reset_hq_risk_findings_snapshot.csv,Read-only risk classification,PASS
+local_ops_reset_hq_risk_dashboard_count_snapshot.csv,HQ and CEO count snapshot,PASS
+local_ops_reset_hq_risk_cleanup_manifest.csv,Future reset cleanup candidate,PASS
+local_ops_reset_hq_risk_hq_ceo_before_after_matrix.csv,Dashboard comparison,PASS
+local_ops_reset_hq_risk_test_matrix.csv,Verification summary,PASS
+local_ops_reset_hq_risk_source_scan.txt,Changed-source integrity scan,PASS

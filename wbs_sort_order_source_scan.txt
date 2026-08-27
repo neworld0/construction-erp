@@ -1,0 +1,14 @@
+Scope:
+- apps/projects/forms.py
+- apps/projects/hq_views.py
+- templates/app/hq/project_new.html
+- apps/projects/tests/test_wbs_baseline_sort_order.py
+
+Checks:
+- No migration created.
+- No model schema change.
+- No RBAC code changed.
+- No Korean user-facing string added to Python source.
+- No sensitive data handled.
+
+OVERALL_SOURCE_SCAN_PASS: True

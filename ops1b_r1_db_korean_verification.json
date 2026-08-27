@@ -1,0 +1,70 @@
+{
+  "project_code": "OPS1B-RERUN-SAMPLE-001",
+  "project_name": "국도 유지보수 파일럿 공사",
+  "budget_rows": [
+    {
+      "id": 753,
+      "name": "토공 예산",
+      "planned_amount": "50000000"
+    },
+    {
+      "id": 754,
+      "name": "포장공사 예산",
+      "planned_amount": "250000000"
+    },
+    {
+      "id": 755,
+      "name": "배수공사 예산",
+      "planned_amount": "90000000"
+    },
+    {
+      "id": 756,
+      "name": "기타공정 예산",
+      "planned_amount": "181022700"
+    }
+  ],
+  "wbs_rows": [
+    {
+      "id": 25,
+      "name": "토공",
+      "weight": "20.00"
+    },
+    {
+      "id": 26,
+      "name": "포장공사",
+      "weight": "45.00"
+    },
+    {
+      "id": 27,
+      "name": "배수공사",
+      "weight": "20.00"
+    },
+    {
+      "id": 28,
+      "name": "기타공정",
+      "weight": "15.00"
+    }
+  ],
+  "task_rows": [
+    {
+      "id": 4,
+      "name": "토공",
+      "weight_percent": "20.000"
+    },
+    {
+      "id": 5,
+      "name": "포장공사",
+      "weight_percent": "45.000"
+    },
+    {
+      "id": 6,
+      "name": "배수공사",
+      "weight_percent": "20.000"
+    },
+    {
+      "id": 7,
+      "name": "기타공정",
+      "weight_percent": "15.000"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+Scenario,WBS_Code,WBS_Name,Before_Start_Date,Before_End_Date,After_Start_Date,After_End_Date,Date_Source,Result,Notes
+LOCAL_OPS_FALLBACK,WBS-01,현장 준비 및 안전관리,,,2026-08-14,2026-09-13,PROJECT_FALLBACK,PASS,Project period is used when Excel dates are blank
+LOCAL_OPS_FALLBACK,WBS-02,기존 포장 절삭,,,2026-08-14,2026-09-13,PROJECT_FALLBACK,PASS,Project period is used when Excel dates are blank
+EXPLICIT_WBS,WBS-01,현장 준비 및 안전관리,2026-08-14,2026-08-17,2026-08-14,2026-08-17,EXCEL,PASS,Explicit Excel dates are preserved

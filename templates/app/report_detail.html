@@ -2,25 +2,6 @@
 {% block page_title %}보고서 상세{% endblock %}
 {% block content %}
 <style>
-  .tabs {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-  .tab {
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    text-decoration: none;
-    color: var(--text);
-    font-size: 13px;
-  }
-  .tab.active {
-    background: var(--accent);
-    color: #0b1220;
-    border-color: var(--accent);
-  }
   .meta {
     color: var(--muted);
     font-size: 13px;
@@ -28,17 +9,8 @@
   }
 </style>
 
+<div class="field-page field-entry-page">
 <div class="card">
-  <div class="tabs">
-    <a class="tab" href="/app/field/?tab=progress&project_id={{ report.project.id }}">진행률</a>
-    <a class="tab active" href="/app/field/?tab=report&project_id={{ report.project.id }}">보고서</a>
-    <a class="tab" href="/app/field/?tab=cost&project_id={{ report.project.id }}">원가</a>
-    <a class="tab" href="/app/field/?tab=inventory_issue&project_id={{ report.project.id }}">자재 투입</a>
-    <a class="tab" href="/app/field/?tab=timesheet&project_id={{ report.project.id }}">출역부</a>
-  </div>
-</div>
-
-<div class="card" style="margin-top:12px;">
   <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
     {% if report_approved_back_url %}
       <a class="btn btn-outline" href="{{ report_approved_back_url }}">승인완료 목록</a>
@@ -52,6 +24,7 @@
   <p style="white-space:pre-wrap;">{{ report.content }}</p>
 
   {% include "components/attachments_panel.html" with attachments=report_existing_files can_edit=report_can_edit_attachments upload_url=report_attachment_upload_url delete_url=report_attachment_delete_url object_label="보고서" help_text=report_attachment_help_text %}
+</div>
 </div>
 {% endblock %}
 

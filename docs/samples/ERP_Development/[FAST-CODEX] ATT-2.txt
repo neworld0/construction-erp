@@ -1,0 +1,147 @@
+[FAST-CODEX] ATT-2: 진행률(Progress) 화면에 공통 첨부 컴포넌트 적용 (상세=인라인 미리보기+편집정책, 목록=‘사진 첨부됨’ 아이콘) + 한글 깨짐 회귀 체크
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+전제
+- 기존 설계/모델/URL 유지
+- DB 스키마 변경 금지
+- ATT-1(REV)에서 생성한 공통 컴포넌트 사용:
+  - templates/components/attachments_panel.html
+  - templates/components/attachment_badge.html
+- 이번 티켓은 “진행률 탭/진행률 상세/진행률 목록”에만 실제로 include 적용한다.
+- 첨부 편집 정책(필수):
+  - DRAFT, REJECTED: 제출 전까지 첨부 수정/교체/삭제 가능
+  - SUBMITTED, APPROVED: 첨부 변경 불가(조회만)
+  - 마감(CLOSE-2) 잠금이면 상태와 무관하게 변경 불가(조회만)
+
+목표
+1) 진행률 상세 화면: 사진 첨부를 새창 링크 대신 “인라인 미리보기”로 바로 표시
+2) 진행률 목록/최근입력: “사진 첨부됨” 아이콘(🖼) + 개수 표시(공통 배지 사용)
+3) 임시저장→제출, 제출→반려→재제출 흐름에서 첨부 변경 정책이 정확히 동작
+4) FIELD/HQ/CEO 한글 깨짐 회귀 체크(최소 확인) 포함
+
+------------------------------------------------------------
+1) Discovery (필수)
+------------------------------------------------------------
+먼저 진행률 관련 파일 위치/구조를 확인하고, 아래를 파악한다.
+
+- 진행률 화면 URL/템플릿:
+  - FIELD 진행률 탭이 포함된 템플릿(예: templates/field/dashboard.html)
+  - 진행률 상세 화면 템플릿(예: templates/field/progress_detail.html 또는 유사)
+  - 진행률 목록이 렌더되는 block/partial 위치
+- 진행률 데이터 모델/상태 필드:
+  - status 값이 실제로 DRAFT/SUBMITTED/APPROVED/REJECTED인지 확인(아니면 매핑)
+- 진행률 첨부 데이터 연결 방식:
+  - Evidence를 통해 연결되는지(object_type/object_id) 또는 직접 attachments 관계인지
+  - 진행률 1건에 대해 attachments 리스트를 어떻게 가져오는지(기존 코드 재사용)
+- 진행률 첨부 업로드/삭제/교체 엔드포인트:
+  - 이미 있다면 그 URL을 재사용
+  - 없다면: 진행률 “임시저장/수정” 처리에서 파일 업로드가 이미 되는지 확인하고 그 엔드포인트를 upload_url로 사용
+  - 삭제 API가 없으면, 이번 티켓에서는 “삭제 버튼 숨김(비활성)”으로 처리 가능(단, 교체/추가가 가능해야 함)
+
+------------------------------------------------------------
+2) 진행률 상세 화면: attachments_panel 적용
+------------------------------------------------------------
+2.1 상세 화면에서 attachments_panel include
+- 진행률 상세(또는 진행률 입력 후 상세로 진입하는 화면)에 아래 포함:
+  {% include "components/attachments_panel.html" with attachments=attachments can_edit=can_edit upload_url=upload_url delete_url=delete_url object_label="진행률" help_text=help_text %}
+
+2.2 view에서 컨텍스트 준비(필수)
+- attachments:
+  - 진행률 객체 기준으로 연결된 attachments list/queryset
+  - 중복 방지(가능하면): 동일 파일이 중복 표시되지 않게 unique 기준 적용(이름+size+created_at 등)
+- can_edit:
+  - 공통 정책 함수(ATT-1에서 만든 util)로 계산:
+    - is_closed_locked = (CLOSE-2/CLOSE-4 규칙으로 잠금 여부 판정)
+    - status = 진행률 객체 상태
+    - can_edit = policy(status, is_closed_locked)
+- upload_url:
+  - 진행률 첨부 업로드/교체를 처리하는 기존 URL
+  - 가능하면 진행률 상세 POST 또는 전용 업로드 URL
+- delete_url(선택):
+  - 삭제 엔드포인트가 있으면 연결
+  - 없으면 None으로 전달해 attachments_panel에서 삭제 버튼을 숨김
+
+2.3 “인라인 미리보기” 동작
+- 이미지 파일이면:
+  - 썸네일/미리보기를 <img>로 렌더
+  - 클릭 시 “원본 보기(새 탭)” 링크 제공(표준)
+- 비이미지는 리스트로만 표시 + target=_blank
+
+2.4 편집 가능 상태 안내(help_text)
+- can_edit=True:
+  - “임시저장/반려 상태에서는 제출 전까지 첨부를 수정할 수 있습니다.”
+- can_edit=False:
+  - “제출/승인/마감 상태에서는 첨부를 수정할 수 없습니다.”
+
+------------------------------------------------------------
+3) 진행률 목록(최근 입력/리스트): attachment_badge 적용
+------------------------------------------------------------
+3.1 목록 UI 변경
+- 진행률 목록의 각 row/card에 공통 배지 include:
+  {% include "components/attachment_badge.html" with attachments=row_attachments %}
+- row_attachments를 바로 넘기기 어렵다면:
+  - attachment_count, has_image 같은 값으로 단순 배지 렌더도 가능하지만,
+  - 우선은 공통 컴포넌트 사용을 권장(표준 유지)
+
+3.2 성능(N+1 금지)
+- 목록에서 각 행마다 attachments를 따로 조회하면 안 된다.
+- 방법(택1):
+  A) 진행률 목록 queryset에 prefetch_related(attachments/evidence->attachments) 적용
+  B) object_type/object_id 기반이면, 목록에 포함된 progress ids를 모아 attachments를 한번에 조회 후 dict로 매핑
+- 최종적으로 템플릿에는:
+  - row.attachments 또는 attachments_map[row.id] 형태로 전달
+
+3.3 “사진 첨부됨” 아이콘 규칙
+- attachment_badge 규칙을 그대로 사용:
+  - 이미지 포함 시 🖼 우선, 아니면 📎
+  - 개수 표시
+
+------------------------------------------------------------
+4) 상태 흐름 검증(필수)
+------------------------------------------------------------
+아래 케이스를 실제 화면/로직으로 확인하고, 문제 있으면 수정한다.
+
+케이스 A: DRAFT(임시저장)
+- 첨부 추가/교체/삭제(가능한 범위) 가능
+- 저장 후 상세/목록에서 배지와 미리보기 정상
+
+케이스 B: SUBMITTED(제출)
+- 첨부 변경 UI 숨김, 업로드/삭제 요청 서버 거부
+- 상세에서 미리보기/리스트는 정상 표시
+
+케이스 C: REJECTED(반려)
+- 첨부 변경 UI 다시 노출(수정/교체 가능)
+- 재제출 전까지 변경 가능
+- 재제출 후 다시 잠금
+
+케이스 D: CLOSED(마감 잠금)
+- 상태와 무관하게 첨부 변경 UI 숨김 + 서버 거부
+- 조회는 가능
+
+------------------------------------------------------------
+5) 한글 깨짐 회귀 체크(필수)
+------------------------------------------------------------
+- FIELD 진행률 화면(탭/상세/목록)에서:
+  - 버튼/라벨/상태 뱃지 한글이 깨지지 않는지 확인
+- HQ/CEO는 이번 티켓 범위가 아니지만, “회귀 체크”는 최소 1회 수행:
+  - /app/hq/ (또는 HQ 홈)
+  - /app/ceo/ (또는 CEO 홈)
+  - 한글 라벨이 깨지면 즉시 원인(템플릿 charset/정적파일 UTF-8) 스캔 후 최소 수정
+
+------------------------------------------------------------
+6) 완료 기준(Acceptance)
+------------------------------------------------------------
+- 진행률 상세에서 첨부 이미지가 인라인으로 보이고(미리보기), 원본은 새 탭으로 열 수 있다.
+- 진행률 목록에서 “첨부됨(🖼/📎) + 개수”가 각 행에 표시된다.
+- DRAFT/REJECTED에서는 첨부 변경 가능, SUBMITTED/APPROVED에서는 변경 불가, 마감 잠금이면 무조건 변경 불가가 정확히 동작한다.
+- 업로드/삭제 요청은 서버에서 can_edit 정책에 따라 안전하게 허용/거부된다.
+- N+1 없이 동작한다.
+- FIELD/HQ/CEO에서 한글 깨짐이 재현되지 않는다(최소 회귀 체크 통과).
+
+실행 지시
+1) Discovery로 진행률 템플릿/뷰/상태/첨부 연결/업로드 URL 구조를 확인하라.
+2) 진행률 상세에 attachments_panel include + 컨텍스트(attachments, can_edit, upload_url, delete_url)를 연결하라.
+3) 진행률 목록에 attachment_badge include + N+1 없는 attachments 매핑을 구현하라.
+4) 상태 흐름(A~D) 테스트를 통과하도록 조정하라.
+5) 한글 깨짐 회귀 체크를 통과하도록 최소 수정하라.

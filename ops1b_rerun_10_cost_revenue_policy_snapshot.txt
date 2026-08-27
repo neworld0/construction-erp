@@ -1,0 +1,4 @@
+﻿Policy_Area,Policy_Value,Status,Owner,Note
+원가 기준일,진행률 입력일,SANITIZED_TEMPLATE_DATA,HQ,원가 시드 10000000원
+수익 인식 방식,진행률 기준 잠정값,POLICY_PENDING,CEO,실운영 정책 확정 전
+마감월 수정 정책,마감 후 수정 차단,VERIFIED,HQ,Closing guard 회귀 확인

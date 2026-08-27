@@ -2,6 +2,33 @@
 {% block page_title %}창고 조회{% endblock %}
 {% block content %}
 <style>
+  /* Keep the FIELD work navigation consistent with the other FIELD screens. */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    min-height: 34px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #6b7280;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .tab.active {
+    background: var(--active-surface);
+    color: var(--active-text);
+    border-color: transparent;
+  }
   .table {
     width: 100%;
     border-collapse: collapse;
@@ -16,6 +43,50 @@
   .table thead th {
     font-weight: 600;
     color: var(--muted);
+  }
+  .field-warehouse-table td:last-child {
+    white-space: nowrap;
+  }
+  .field-warehouse-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 78px;
+    min-height: 32px;
+    padding: 6px 10px;
+    line-height: 18px;
+    white-space: nowrap;
+  }
+  @media (max-width: 900px) {
+    .field-warehouse-table,
+    .field-warehouse-table tbody,
+    .field-warehouse-table tr,
+    .field-warehouse-table td { display:block; width:100%; }
+    .table-wrap { overflow:visible; border:0; }
+    .table-wrap .field-warehouse-table { min-width:0; }
+    .field-warehouse-table thead { display:none; }
+    .field-warehouse-table tr {
+      margin:10px 0;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--panel-raised);
+    }
+    .field-warehouse-table td { padding:7px 0; border:0; white-space:normal; }
+    .field-warehouse-table td::before {
+      display:block;
+      margin-bottom:4px;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+    }
+    .field-warehouse-table td:nth-child(1)::before { content:"구분"; }
+    .field-warehouse-table td:nth-child(2)::before { content:"창고명"; }
+    .field-warehouse-table td:nth-child(3)::before { content:"코드"; }
+    .field-warehouse-table td:nth-child(4)::before { content:"프로젝트"; }
+    .field-warehouse-table td:nth-child(5)::before { content:"기본 위치"; }
+    .field-warehouse-table td:nth-child(6)::before { content:"처리"; }
   }
   .badge {
     display: inline-flex;
@@ -34,51 +105,57 @@
   }
 </style>
 
+<div class="field-page">
 <div class="card">
   <h2 class="card-title">창고 조회</h2>
   <p class="muted">배정된 현장 창고와 본사 창고를 확인합니다.</p>
 </div>
 
-<div class="card" style="margin-top: 18px;">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>구분</th>
-        <th>창고명</th>
-        <th>코드</th>
-        <th>프로젝트</th>
-        <th>기본 위치</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for warehouse in warehouses %}
+<div class="card">
+  <div class="table-wrap">
+    <table class="table field-warehouse-table">
+      <thead>
         <tr>
-          <td>
-            {% if warehouse.warehouse_type == "hq" %}
-              <span class="badge hq">HQ</span>
-            {% else %}
-              <span class="badge site">SITE</span>
-            {% endif %}
-          </td>
-          <td>{{ warehouse.name }}</td>
-          <td>{{ warehouse.code }}</td>
-          <td>{{ warehouse.project.name|default:"-" }}</td>
-          <td>
-            {% for loc in warehouse.locations.all %}
-              {% if loc.is_default %}
-                {{ loc.name }} ({{ loc.code }})
+          <th>구분</th>
+          <th>창고명</th>
+          <th>코드</th>
+          <th>프로젝트</th>
+          <th>기본 위치</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for warehouse in warehouses %}
+          <tr>
+            <td>
+              {% if warehouse.warehouse_type == "hq" %}
+                <span class="badge hq">HQ</span>
+              {% else %}
+                <span class="badge site">SITE</span>
               {% endif %}
-            {% empty %}
-              -
-            {% endfor %}
-          </td>
-        </tr>
-      {% empty %}
-        <tr>
-          <td colspan="5" class="muted">조회 가능한 창고가 없습니다.</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            </td>
+            <td>{{ warehouse.name }}</td>
+            <td>{{ warehouse.code }}</td>
+            <td>{{ warehouse.project.name|default:"-" }}</td>
+            <td>
+              {% for loc in warehouse.locations.all %}
+                {% if loc.is_default %}
+                  {{ loc.name }} ({{ loc.code }})
+                {% endif %}
+              {% empty %}
+                -
+              {% endfor %}
+            </td>
+            <td><a class="btn btn-outline field-warehouse-action" href="/app/field/inventory/warehouses/{{ warehouse.id }}/stock/">재고 조회</a></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="muted">조회 가능한 창고가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 </div>
 {% endblock %}

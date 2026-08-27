@@ -1,0 +1,155 @@
+[FAST-CODEX] CEO-APPROVED-LISTS: CEO 대시보드에서 “승인 완료(Approved) 목록” 5종(진행률/보고서/원가/자재투입/출역부) 제공 + 필터/정렬 + 객체 상세 이동 + 첨부 인라인 확인
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+전제
+- 기존 설계/모델/URL 유지
+- DB 스키마 변경 금지
+- 승인 체계는 기존 ApprovalRequest(또는 동등 모델) 기반이며, object_type/object_id(또는 content_type/object_id)로 원본 객체를 참조한다.
+- 첨부 표준은 ATT-1~ATT-5를 따른다:
+  - 객체 상세에서 attachments_panel로 인라인 미리보기 가능해야 함
+  - CEO 승인 완료 목록에서 항목 클릭 시 “승인 상세”가 아니라 “원본 객체 상세”로 이동해야 함(ATT-5 정책)
+- 마감(CLOSE-*) 잠금은 기존 규칙 유지(조회는 가능, 수정은 불가)
+- 한글 깨짐(인코딩) 회귀 테스트 필수
+
+목표
+1) CEO 대시보드(/app/ceo/dashboard/)에 “승인 완료(Approved) 보고/요청 목록” 진입 UI 제공
+2) 승인 완료 목록 화면(/app/ceo/approved/)을 신설(또는 기존 /app/ceo/approvals/ 확장)하여:
+   - 탭 또는 필터로 5종 타입을 전환:
+     - 진행률(Progress)
+     - 보고서(Report)
+     - 원가(CostActual)
+     - 자재투입(IssueToWork 또는 Inventory Issue)
+     - 출역부(Timesheet)
+   - 기간 필터(기본: 최근 30일)
+   - 프로젝트 필터(프로젝트 선택)
+   - 정렬(승인일시 desc 기본)
+   - 각 행 클릭 시 “원본 객체 상세”로 이동
+3) 원본 객체 상세 화면에서 첨부가 인라인으로 즉시 보임(없으면 CEO용 read-only 상세에 패널 include)
+4) 한글(상태/라벨/버튼/메시지) 깨짐 0
+
+------------------------------------------------------------
+1) Discovery (필수)
+------------------------------------------------------------
+1.1 승인 완료 데이터 소스 확인
+- 승인 모델 이름: ApprovalRequest(또는 유사)
+- 승인 상태 필드/값:
+  - APPROVED / REJECTED / SUBMITTED 등
+- 승인일시 필드:
+  - approved_at 우선, 없으면 updated_at/decided_at 등
+- 승인 대상 참조 방식:
+  - (A) object_type + object_id
+  - (B) content_type + object_id
+  - (C) GenericForeignKey target
+
+1.2 타입 매핑 확인(5종)
+- 진행률/보고서/원가/자재투입/출역부에 대응하는 object_type 값 또는 content_type 확인
+- “자재투입” 모델 확인:
+  - INV-5가 구현되어 있다면 IssueToWork
+  - 없다면 InventoryLedger의 “현장 투입” 유형(ISSUE) 또는 Transfer 이후 투입 이벤트
+  - 가장 확실한 ‘투입 기록 엔티티’ 1개를 선정하여 목록에 포함
+
+1.3 각 타입의 “CEO가 접근 가능한 원본 상세 URL” 확인
+- 기존 URL이 CEO 권한으로 접근 가능한지 우선 확인
+- 접근 불가하면, CEO 전용 read-only 상세 뷰를 최소로 추가(스키마 변경 없음)
+
+------------------------------------------------------------
+2) URL/네비게이션(UI)
+------------------------------------------------------------
+2.1 CEO 대시보드에 진입 버튼 추가
+- /app/ceo/dashboard/ 상단 또는 KPI 카드 근처에 버튼:
+  - "승인 완료 목록"
+  - href: /app/ceo/approved/
+
+2.2 신규 URL 라우팅 추가
+- /app/ceo/approved/  (목록)
+- (선택) /app/ceo/approved/<type>/ (type별 탭 URL) 또는 querystring 방식:
+  - /app/ceo/approved/?type=PROGRESS
+  - /app/ceo/approved/?type=REPORT
+  - /app/ceo/approved/?type=COST
+  - /app/ceo/approved/?type=ISSUE
+  - /app/ceo/approved/?type=TIMESHEET
+
+------------------------------------------------------------
+3) 승인 완료 목록 화면 구현(핵심)
+------------------------------------------------------------
+3.1 View 요구사항
+- RBAC: CEO만 접근 허용
+- 기본 필터:
+  - status = APPROVED
+  - 기간: 최근 30일(기본값)
+- 필터 파라미터:
+  - type (5종)
+  - project_id (선택)
+  - from/to (선택)
+- 정렬:
+  - approved_at desc (없으면 decided_at/updated_at desc)
+- 페이지네이션(있으면 20~50개)
+
+3.2 목록에 표시할 컬럼(공통)
+- 승인일시
+- 타입(한글 라벨: 진행률/보고서/원가/자재투입/출역부)
+- 프로젝트명
+- 기준일(대상 객체 date가 있으면)
+- 요약(대상 객체의 제목/메모/항목명 등)
+- 첨부 배지(선택, 성능 허용 시):
+  - 🖼/📎 + 개수 (attachment_badge 컴포넌트 재사용)
+
+3.3 “원본 객체 상세 URL” 생성(필수)
+- ApprovalRequest(또는 util)에 함수 추가(스키마 변경 없음):
+  - get_target_detail_url()
+- 타입별 매핑 규칙:
+  - PROGRESS -> 진행률 상세
+  - REPORT   -> 보고서 상세
+  - COST     -> 원가 상세
+  - ISSUE    -> 자재투입 상세
+  - TIMESHEET-> 출역부 상세
+- 반환 URL은 반드시 CEO가 접근 가능한 URL이어야 함.
+- 템플릿에서는 각 row를 detail_url로 링크 처리:
+  - <a href="{{ row.detail_url }}">...</a>
+
+3.4 성능 최소화
+- 목록에서 프로젝트명/요약을 만들기 위해 target_obj를 매 행마다 get() 하지 말 것(N+1 금지).
+- 방법 택1(가장 쉬운 쪽):
+  A) ApprovalRequest에 project_id/target_date/summary 캐시 필드가 이미 있으면 그것 사용
+  B) 없으면 “type별로 id 묶어서 한 번에 조회”:
+     - type별 object_id 리스트를 모아서 해당 모델을 filter(id__in=...) 1회 조회
+     - dict로 매핑하여 프로젝트명/요약/기준일을 구성
+- 첨부 배지도 N+1이 되면 OFF(옵션)로 두고, 추후 ATT-4B 방식으로 최적화
+
+------------------------------------------------------------
+4) 원본 객체 상세에서 첨부 인라인 확인 보장(필수)
+------------------------------------------------------------
+- 각 타입의 상세 템플릿에 attachments_panel이 이미 있으면 그대로 사용
+- 없으면 CEO용 read-only 상세 뷰/템플릿에 attachments_panel include 추가:
+  - can_edit=False 고정
+  - attachments는 기존 방식(Evidence 또는 direct)으로 조회
+- 링크 정책: 이미지 인라인 + 원본 새 탭, 비이미지 새 탭(ATT 표준)
+
+------------------------------------------------------------
+5) 한글/버튼/인코딩 회귀 테스트(필수)
+------------------------------------------------------------
+- /app/ceo/dashboard/ : 버튼 라벨(승인 완료 목록) 한글 정상
+- /app/ceo/approved/ : 탭/필터/테이블 헤더/빈 상태 문구 한글 정상
+- 상세 이동 후:
+  - 상태/잠금/안내 문구(“제출 후 수정 불가”, “마감 상태”) 한글 정상
+- meta charset UTF-8 및 템플릿 파일 UTF-8 저장 확인
+- i18n 관련 설정이 있으면 충돌 없는지 확인
+
+------------------------------------------------------------
+6) Done 기준(Acceptance)
+------------------------------------------------------------
+- CEO 대시보드에서 “승인 완료 목록”으로 이동 가능
+- 승인 완료 목록에서 5종(진행률/보고서/원가/자재투입/출역부)을 필터/탭으로 전환 가능
+- 각 행 클릭 시 Approval 상세가 아니라 원본 객체 상세로 이동
+- 원본 상세에서 첨부 인라인 미리보기 즉시 확인 가능
+- 한글 깨짐 0
+- DB 스키마 변경 없음
+
+구현 순서(권장)
+1) Discovery로 승인 모델/타입 매핑/자재투입 엔티티 확정
+2) /app/ceo/approved/ 뷰+템플릿+URL 추가
+3) type별 일괄 조회(dict 매핑)로 프로젝트명/요약 생성
+4) get_target_detail_url로 상세 이동 연결
+5) 상세 첨부 패널 누락 타입 보완(can_edit=False)
+6) 한글 회귀 테스트 수행 후 종료

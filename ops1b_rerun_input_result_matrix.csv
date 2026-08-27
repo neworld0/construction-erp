@@ -1,0 +1,14 @@
+Area,Input_Item,Source_File,ERP_Target,Required,Entered,Verified,Result,Issue_ID,Notes
+프로젝트,공사코드 공사명 계약기간,ops1a_project_master_template.csv,Project,Yes,Yes,Yes,PASS,-,project_id 17
+배정,FIELD 사용자 field1,ops1a_project_master_template.csv,ProjectAssignment,Yes,Yes,Yes,PASS,-,FIELD 화면 HTTP 200
+CBS,토공 포장공사 배수공사,ops1a_cbs_wbs_budget_template.csv,CostItem,Yes,Yes,Yes,PASS,-,3개 항목
+WBS,20 45 20 가중치,ops1a_cbs_wbs_budget_template.csv,WBSItem; ScheduleTask,Yes,Yes,Yes,PASS,OPS1BR-003,합계 85%
+예산,390000000,ops1a_cbs_wbs_budget_template.csv,BudgetItem,Yes,Yes,Yes,PASS,-,계약 차이 기록
+계약,571022700,ops1a_project_master_template.csv,ProjectContract; ContractSnapshot,Yes,Yes,Yes,PASS,-,version 1
+진행률,포장공사 12.5,ops1a_field_progress_plan_template.csv,DailyProgress,Yes,Yes,Yes,PASS,-,submitted
+원가,10000000,ops1a_cost_revenue_policy_template.csv,CostActual; CostActualLine,Yes,Yes,Yes,PASS,-,approved
+수익,진행률 기준 잠정값,ops1a_cost_revenue_policy_template.csv,RevenueRecognition,Yes,Yes,Yes,HOLD,OPS1BR-002,POLICY_PENDING
+CEO,KPI 대사,생성 seed,CEO dashboard,Yes,Yes,Yes,PASS,OPS1BR-003,진행률 가중 집계
+LABPAY,전자카드 XLSX,ops1a_e_card_file_checklist.csv,ElectronicCardImportBatch,Conditional,No,Yes,HOLD,OPS1BR-001,PII 형식값 감지
+Closing,마감 후 변경 차단,ops1a_pilot_validation_checklist.csv,ClosingPeriod,Yes,No,Yes,PASS,-,회귀 검증
+감사,FIELD 제출 감사 로그,생성 seed,AuditLog,Yes,Yes,Yes,PASS,-,DRAFT_SAVE SUBMIT

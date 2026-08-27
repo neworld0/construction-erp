@@ -1,0 +1,6 @@
+Scenario,WBS_Code,Provided_Sort_Order,Before_Result,After_Sort_Order,Sort_Order_Source,Save_Result
+Manual baseline,WBS-01,,sort_order required validation error,10,WBS_CODE,Saved
+Manual baseline,WBS-02,123,sort_order required validation error,123,EXPLICIT,Saved
+Manual baseline,WBS-99,,sort_order required validation error,990,WBS_CODE,Saved
+Manual baseline,TEMP-A,,sort_order required validation error,10,ROW_INDEX,Saved
+Excel initial,WBS-99,,implicit row index only,990,WBS_CODE,Preview ready

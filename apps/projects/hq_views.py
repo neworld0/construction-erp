@@ -10,6 +10,7 @@ import uuid
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
@@ -18,6 +19,7 @@ from django.forms import modelformset_factory
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.datastructures import MultiValueDict
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.utils.text import get_valid_filename
 
 try:
@@ -36,7 +38,7 @@ except ImportError:  # Backward-compat if constants aren't defined.
     BASELINE_SUBMIT = "BASELINE_SUBMIT"
 from apps.audit.services.logger import log_action
 from apps.core.rbac.models import ProjectAssignment, Role
-from apps.core.rbac.permissions import get_user_role, require_role
+from apps.core.rbac.permissions import get_current_legal_entity, get_user_legal_entities, get_user_role, require_project_access, require_role
 from apps.core.models import ApprovalRequest, ApprovalStatus
 from apps.cost.models import CostItem, CostItemAlias
 from apps.master.models import MasterTemplate, MasterTemplateCategory, MasterTemplateDomain
@@ -61,11 +63,13 @@ from .models import (
     Project,
     ProjectContract,
     ProjectContractStatus,
+    ProjectOperationalTestDateWindow,
+    ProjectCodeSequence,
     ProjectStatus,
     ProjectType,
     WBSItem,
 )
-from .services.baseline import is_baseline_locked
+from .services.baseline import get_project_baseline_workflow, is_baseline_locked
 from .services.wbs_baseline import (
     get_wbs_baseline_badge,
     get_wbs_baseline_history,
@@ -113,36 +117,55 @@ BUDGET_BUCKET_CATEGORIES = {
 }
 
 
-def _generate_project_code(project_type: str) -> str:
-    today = timezone.localdate().strftime("%Y%m%d")
+def resolve_wbs_sort_order(wbs_code, row_index, provided_sort_order=None):
+    """Resolve WBS ordering without requiring HQ users to enter a technical field."""
+    if provided_sort_order not in (None, ""):
+        return int(provided_sort_order)
+
+    match = re.search(r"\bWBS\s*[-_]\s*(\d+)\b", str(wbs_code or ""), re.IGNORECASE)
+    if match:
+        return int(match.group(1)) * 10
+    return int(row_index) * 10
+
+
+def _generate_project_code(legal_entity, project_type: str) -> str:
+    year = timezone.localdate().year
     type_prefix_map = {
-        ProjectType.LANDSCAPE: "L",
-        ProjectType.CIVIL: "C",
-        ProjectType.ARCH: "A",
+        ProjectType.LANDSCAPE: "LAND",
+        ProjectType.CIVIL: "CIV",
+        ProjectType.ARCH: "ARCH",
     }
     prefix = type_prefix_map.get(project_type, "P")
-
-    for _ in range(20):
-        suffix = uuid.uuid4().hex[:6].upper()
-        code = f"{prefix}-{today}-{suffix}"
-        if not Project.objects.filter(code=code).exists():
-            return code
-
-    return f"{prefix}-{today}-{uuid.uuid4().hex[:10].upper()}"
+    sequence, _ = ProjectCodeSequence.objects.select_for_update().get_or_create(
+        legal_entity=legal_entity,
+        project_type=project_type,
+        year=year,
+        defaults={"last_number": 0},
+    )
+    sequence.last_number += 1
+    sequence.save(update_fields=["last_number"])
+    return f"{legal_entity.code}-{prefix}-{year}-{sequence.last_number:03d}"
 
 
 @login_required
 def hq_project_list(request):
     require_role(request.user, [Role.HQ, Role.CEO])
-    projects = Project.objects.all().order_by("-created_at")
+    legal_entity = get_current_legal_entity(request)
+    if legal_entity is None:
+        projects_qs = Project.objects.none()
+    else:
+        projects_qs = Project.objects.filter(legal_entity=legal_entity).order_by("-created_at")
     recent_cutoff = timezone.now() - timedelta(days=1)
     recent_ids = set(
-        projects.filter(created_at__gte=recent_cutoff).values_list("id", flat=True)
+        projects_qs.filter(created_at__gte=recent_cutoff).values_list("id", flat=True)
     )
+    projects = list(projects_qs)
+    for project in projects:
+        project.baseline_workflow = get_project_baseline_workflow(project)
     return render(
         request,
         "app/hq_projects_list.html",
-        {"projects": projects, "recent_ids": recent_ids},
+        {"projects": projects, "recent_ids": recent_ids, "current_legal_entity": legal_entity},
     )
 
 
@@ -150,26 +173,29 @@ def hq_project_list(request):
 def hq_project_new(request):
     require_role(request.user, [Role.HQ, Role.CEO])
     action = request.POST.get("action") if request.method == "POST" else ""
-    project_type = (
-        request.POST.get("project_type")
-        if request.method == "POST"
-        else request.GET.get("project_type")
-    ) or ProjectType.LANDSCAPE
-    domain = _project_domain(project_type)
-    wbs_templates, wbs_template_notice = _get_templates_with_fallback(
-        domain, MasterTemplateCategory.WBS
+    request_data = request.POST if request.method == "POST" else request.GET
+    work_types = request_data.getlist("work_types") or [
+        request_data.get("project_type") or ProjectType.LANDSCAPE
+    ]
+    work_types = [value for value in work_types if value in ProjectType.values]
+    project_type = _primary_project_type(work_types)
+    wbs_templates, wbs_template_notice = _get_templates_for_work_types(
+        work_types, MasterTemplateCategory.WBS
     )
-    budget_templates, budget_template_notice = _get_templates_with_fallback(
-        domain, MasterTemplateCategory.BUDGET
+    budget_templates, budget_template_notice = _get_templates_for_work_types(
+        work_types, MasterTemplateCategory.BUDGET
     )
-    selected_wbs_template = _resolve_template_from_post(
-        (request.POST if request.method == "POST" else request.GET).get("wbs_template_id"),
-        wbs_templates,
-    ) or (wbs_templates[0] if request.method != "POST" and wbs_templates else None)
-    selected_budget_template = _resolve_template_from_post(
-        (request.POST if request.method == "POST" else request.GET).get("budget_template_id"),
-        budget_templates,
-    ) or (budget_templates[0] if request.method != "POST" and budget_templates else None)
+    selected_wbs_templates = _resolve_templates_from_post(
+        request_data.getlist("wbs_template_ids") or [request_data.get("wbs_template_id")], wbs_templates
+    )
+    selected_budget_templates = _resolve_templates_from_post(
+        request_data.getlist("budget_template_ids") or [request_data.get("budget_template_id")], budget_templates
+    )
+    if request.method != "POST":
+        selected_wbs_templates = selected_wbs_templates or wbs_templates[:1]
+        selected_budget_templates = selected_budget_templates or budget_templates[:1]
+    selected_wbs_template = selected_wbs_templates[0] if selected_wbs_templates else None
+    selected_budget_template = selected_budget_templates[0] if selected_budget_templates else None
 
     upload_refs = _collect_project_new_upload_refs(request)
     import_context = _build_project_import_context(
@@ -184,7 +210,7 @@ def hq_project_new(request):
     budget_template_warnings = []
     if request.method == "POST":
         form_files = _build_project_new_form_files(request, upload_refs)
-        project_form = ProjectOnboardingForm(request.POST)
+        project_form = ProjectOnboardingForm(request.POST, actor=request.user)
         contract_form = ProjectContractForm(
             request.POST,
             form_files,
@@ -194,13 +220,13 @@ def hq_project_new(request):
         if action in PROJECT_NEW_PREVIEW_ACTIONS:
             budget_initial = import_context["budget_form_initial"]
             if not budget_initial:
-                budget_initial, budget_template_warnings = _build_budget_initial_from_template(
-                    selected_budget_template
+                budget_initial, budget_template_warnings = _build_budget_initial_from_templates(
+                    selected_budget_templates
                 )
             wbs_initial = import_context["wbs_form_initial"]
             if not wbs_initial:
-                wbs_initial, wbs_items_notice = _build_wbs_initial_from_template(
-                    selected_wbs_template, project_type
+                wbs_initial, wbs_items_notice = _build_wbs_initial_from_templates(
+                    selected_wbs_templates, project_type
                 )
                 if wbs_items_notice:
                     wbs_template_notice = (
@@ -255,13 +281,22 @@ def hq_project_new(request):
                                 "계약내역서 Excel에서 저장 가능한 예산 라인이 없습니다.",
                             )
                             can_save = False
-                        elif (
-                            unmatched_rows > 0
-                            and request.POST.get("confirm_partial_budget_import") != "1"
-                        ):
+                        elif unmatched_rows > 0:
+                            unmatched_details = import_context.get(
+                                "budget_import_unmatched_details"
+                            ) or []
+                            row_numbers = ", ".join(
+                                str(item.get("source_row_no") or "-")
+                                for item in unmatched_details
+                            ) or "-"
+                            unmatched_amount = Decimal(
+                                str(import_context.get("budget_import_unmatched_amount") or 0)
+                            )
                             messages.error(
                                 request,
-                                "계약내역서 Excel에 CBS 미매칭 예산 행이 남아 있어 등록할 수 없습니다. CBS를 선택해 매핑하거나, 부분 등록 확인을 체크해 주세요.",
+                                "CBS \ubbf8\ub9e4\uce6d \ud589\uc774 \uc788\uc5b4 \uc608\uc0b0 \uae30\uc900\uc120\uc744 \uc800\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. "
+                                f"\ubbf8\ub9e4\uce6d \ud589: {row_numbers} / \ubbf8\ub9e4\uce6d \uae08\uc561: {unmatched_amount:,.0f}\uc6d0. "
+                                "CBS \ub9c8\uc2a4\ud130\ub97c \ub4f1\ub85d\ud558\uac70\ub098 \uc218\ub3d9 \ub9e4\ud551\ud574 \uc8fc\uc138\uc694.",
                             )
                             can_save = False
                         elif (
@@ -351,10 +386,17 @@ def hq_project_new(request):
                                 try:
                                     with transaction.atomic():
                                         project = project_form.save(commit=False)
+                                        selected_licenses = list(project_form.cleaned_data["contracting_licenses"])
+                                        project.work_types = work_types
+                                        project.project_type = project_type
+                                        project.contracting_license = selected_licenses[0]
+                                        project.contracting_license_snapshot = " | ".join(
+                                            f"{item.license_type} / {item.registration_number} / {item.registered_by} / 등록일 {item.registered_on:%Y-%m-%d}"
+                                            for item in selected_licenses
+                                        )
+                                        _resolve_wbs_baseline_dates(wbs_items, project)
                                         if not project.code:
-                                            project.code = _generate_project_code(
-                                                project.project_type
-                                            )
+                                            project.code = _generate_project_code(project.legal_entity, project.project_type)
                                         if not project.status:
                                             project.status = ProjectStatus.DRAFT
                                         if selected_wbs_template:
@@ -364,6 +406,7 @@ def hq_project_new(request):
                                                 selected_budget_template
                                             )
                                         project.save()
+                                        project.contracting_licenses.set(selected_licenses)
                                         create_site_warehouse(
                                             project, actor=request.user
                                         )
@@ -429,12 +472,12 @@ def hq_project_new(request):
                                                 action="create",
                                             )
     
-                                        for idx, item in enumerate(wbs_items, start=1):
+                                        for item in wbs_items:
                                             WBSItem.objects.create(
                                                 project=project,
                                                 name=item["name"],
                                                 weight=item["weight"],
-                                                sort_order=idx,
+                                                sort_order=item["sort_order"],
                                                 plan_start_date=item[
                                                     "plan_start_date"
                                                 ],
@@ -514,20 +557,7 @@ def hq_project_new(request):
                                         if upload_refs.get("budget_excel") or upload_refs.get(
                                             "commencement_excel"
                                         ):
-                                            partial_budget_import = bool(
-                                                upload_refs.get("budget_excel")
-                                                and int(
-                                                    import_context.get(
-                                                        "budget_import_unmatched_rows"
-                                                    )
-                                                    or 0
-                                                )
-                                                > 0
-                                                and request.POST.get(
-                                                    "confirm_partial_budget_import"
-                                                )
-                                                == "1"
-                                            )
+                                            partial_budget_import = False
                                             log_action(
                                                 actor=request.user,
                                                 action="PROJECT_IMPORT_COMMIT",
@@ -604,6 +634,8 @@ def hq_project_new(request):
                                         request, "프로젝트가 등록되었습니다."
                                     )
                                     return redirect(f"/app/hq/projects/{project.id}/")
+                                except ValidationError as exc:
+                                    messages.error(request, str(exc))
                                 except IntegrityError:
                                     logger.exception(
                                         "Failed to save project import budget rows due to integrity error."
@@ -614,11 +646,11 @@ def hq_project_new(request):
                                     )
     else:
         project_form = ProjectOnboardingForm(
-            initial={"status": ProjectStatus.DRAFT, "project_type": project_type}
+            initial={"status": ProjectStatus.DRAFT, "work_types": work_types}, actor=request.user
         )
         contract_form = ProjectContractForm(require_file=True)
-        budget_initial, budget_template_warnings = _build_budget_initial_from_template(
-            selected_budget_template
+        budget_initial, budget_template_warnings = _build_budget_initial_from_templates(
+            selected_budget_templates
         )
         if import_context["budget_form_initial"]:
             budget_initial = import_context["budget_form_initial"]
@@ -628,8 +660,8 @@ def hq_project_new(request):
             )
         budget_formset = _make_budget_formset(initial=budget_initial)
 
-        wbs_initial, wbs_items_notice = _build_wbs_initial_from_template(
-            selected_wbs_template, project_type
+        wbs_initial, wbs_items_notice = _build_wbs_initial_from_templates(
+            selected_wbs_templates, project_type
         )
         if import_context["wbs_form_initial"]:
             wbs_initial = import_context["wbs_form_initial"]
@@ -667,6 +699,8 @@ def hq_project_new(request):
             "budget_templates": budget_templates,
             "selected_wbs_template": selected_wbs_template,
             "selected_budget_template": selected_budget_template,
+            "selected_wbs_templates": selected_wbs_templates,
+            "selected_budget_templates": selected_budget_templates,
             **import_context,
         },
     )
@@ -1448,6 +1482,53 @@ def _pick_best_keyword_cost_item(candidates, *, name_keywords=(), token_keywords
 def _match_cost_item_for_import_row(row, cost_items, candidates=None):
     if candidates is None:
         candidates = _build_import_cost_item_candidates(cost_items)
+
+    # Contract-statement CBS codes are authoritative when supplied. Excel
+    # buckets still control the saved contract-budget category.
+    source_cbs_code = _normalize_import_text(row.get("cbs_code"))
+    if source_cbs_code:
+        source_code_key = _normalize_cost_key(source_cbs_code)
+        exact_matches = [
+            candidate["item"]
+            for candidate in candidates
+            if candidate["code_key"] == source_code_key and candidate["item"].is_active
+        ]
+        if len(exact_matches) == 1:
+            row["match_status"] = "EXACT_CODE"
+            row["match_reason"] = f"CBS \ucf54\ub4dc \uc77c\uce58: {source_cbs_code}"
+            return exact_matches[0]
+
+        fallback_matches = {}
+        fallback_method = ""
+        for value in (row.get("cbs_name"), row.get("item_name")):
+            value_key = _normalize_import_key(value)
+            if not value_key:
+                continue
+            for candidate in candidates:
+                if candidate["item"].code == "CIVIL-EXPENSE":
+                    continue
+                if value_key not in candidate["name_keys"]:
+                    continue
+                fallback_matches[candidate["item"].id] = candidate["item"]
+                if value_key == _normalize_import_key(candidate["item"].name):
+                    fallback_method = "NAME_FALLBACK"
+                elif not fallback_method:
+                    fallback_method = "ALIAS"
+        if len(fallback_matches) == 1:
+            row["match_status"] = fallback_method or "ALIAS"
+            row["match_reason"] = (
+                f"CBS \ucf54\ub4dc {source_cbs_code} \ubbf8\ub4f1\ub85d, "
+                "\uba85\uce6d/alias \ub300\uccb4 \ub9e4\uce6d"
+            )
+            return next(iter(fallback_matches.values()))
+
+        row["match_status"] = "UNMATCHED_CBS"
+        row["match_reason"] = (
+            f"CBS \ubbf8\ub9e4\uce6d (UNMATCHED_CBS): {source_cbs_code}. "
+            "CBS \ub9c8\uc2a4\ud130\ub97c \ub4f1\ub85d\ud558\uac70\ub098 \uc218\ub3d9 \ub9e4\ud551\ud574 \uc8fc\uc138\uc694."
+        )
+        return None
+
     target_name_key = _normalize_import_key(row.get("item_name"))
     if target_name_key == _normalize_import_key("이윤"):
         row["requires_manual_profit_mapping"] = True
@@ -1804,6 +1885,11 @@ def _row_has_bucket_breakdown(row):
 
 def _make_budget_bucket_note(row, bucket, bucket_amount):
     parts = [
+        f"\uc6d0\ubcf8\ud589\ubc88\ud638:{row.get('source_row_no') or row.get('row_no') or row.get('row_number') or '-'}",
+        f"WBS\ucf54\ub4dc:{row.get('wbs_code') or '-'}",
+        f"WBS\uba85:{row.get('wbs_name') or '-'}",
+        f"CBS\ucf54\ub4dc:{row.get('cbs_code') or '-'}",
+        f"CBS\uba85:{row.get('cbs_name') or '-'}",
         f"원본:{row.get('sheet_name') or '-'}:{row.get('row_no') or row.get('row_number') or '-'}",
         f"품명:{row.get('item_name') or '-'}",
     ]
@@ -1833,8 +1919,12 @@ def _build_budget_review_row(row, entry):
     return {
         "review_key": _make_budget_review_key(row["import_key"], entry["bucket"]),
         "source_import_key": row["import_key"],
-        "source_row_no": row.get("row_no") or row.get("row_number") or "",
+        "source_row_no": row.get("source_row_no") or row.get("row_no") or row.get("row_number") or "",
         "source_sheet_name": row.get("sheet_name") or "",
+        "source_wbs_code": row.get("wbs_code") or "",
+        "source_wbs_name": row.get("wbs_name") or "",
+        "source_cbs_code": row.get("cbs_code") or "",
+        "source_cbs_name": row.get("cbs_name") or "",
         "source_item_name": row.get("item_name") or "",
         "source_spec": row.get("spec") or "",
         "bucket": entry["bucket"],
@@ -1850,6 +1940,8 @@ def _build_budget_review_row(row, entry):
         "note": entry["note"],
         "status": "자동 매칭" if cost_item_id else "수동 확인 필요",
         "match_source": entry.get("match_source") or "auto",
+        "match_status": row.get("match_status") or "AUTO_MATCH",
+        "match_reason": row.get("match_reason") or "",
         "is_excluded": False,
         "warnings": list(entry.get("warnings") or []),
     }
@@ -2056,6 +2148,9 @@ def _split_import_row_by_work_item_buckets(row, base_cost_item, candidates):
     The resolved CostItem is the CBS used for execution tracking inside the
     bucket and must not override the official bucket category.
     """
+    if row.get("match_status") == "UNMATCHED_CBS" and base_cost_item is None:
+        return []
+
     entries = []
     for bucket, amount_field in BUDGET_BUCKET_AMOUNT_FIELDS.items():
         category = BUDGET_BUCKET_CATEGORIES[bucket]
@@ -2130,6 +2225,8 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
     matched_row_count = 0
     manual_matched_row_count = 0
     unmatched_row_count = 0
+    unmatched_details = []
+    source_upload_target_row_count = 0
     skipped_row_count = 0
     skipped_section_row_count = 0
     unmatched_labels = []
@@ -2168,6 +2265,8 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
         row["is_parent_summary"] = False
         row["matched_cost_item_id"] = None
         row["match_source"] = ""
+        row["match_status"] = ""
+        row["match_reason"] = ""
         row["budget_scope"] = "CONTRACT"
         row["skip_reason"] = ""
         row["is_owner_supplied"] = False
@@ -2205,6 +2304,7 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
             continue
 
         imported_total_amount += row_amount
+        source_upload_target_row_count += 1
 
         manual_cost_item = None
         manual_cost_item_id = manual_mapping.get(row["import_key"])
@@ -2241,6 +2341,9 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
             manual_cost_item = None
 
         cost_item = manual_cost_item or _match_cost_item_for_import_row(row, cost_items, candidates)
+        if manual_cost_item is not None:
+            row["match_status"] = "MANUAL"
+            row["match_reason"] = "\uc0ac\uc6a9\uc790 \uc218\ub3d9 CBS \ub9e4\ud551"
         if cost_item is None:
             if _row_has_bucket_breakdown(row):
                 split_entries = _split_import_row_by_work_item_buckets(
@@ -2377,7 +2480,9 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
                             PROFIT_MANUAL_MAPPING_WARNING
                         )
                     else:
-                        row_warnings.append("CBS 자동 매칭이 필요합니다.")
+                        row_warnings.append(
+                            row.get("match_reason") or "CBS \uc790\ub3d9 \ub9e4\uce6d\uc774 \ud544\uc694\ud569\ub2c8\ub2e4."
+                        )
                     unmatched_row_count += 1
                     unmatched_labels.append(
                         row.get("item_name") or row.get("code") or "예산 행"
@@ -2412,7 +2517,9 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
                         )
                     )
                 else:
-                    row_warnings.append("CBS 자동 매칭이 필요합니다.")
+                    row_warnings.append(
+                        row.get("match_reason") or "CBS \uc790\ub3d9 \ub9e4\uce6d\uc774 \ud544\uc694\ud569\ub2c8\ub2e4."
+                    )
                 unmatched_row_count += 1
                 unmatched_labels.append(
                     row.get("item_name") or row.get("code") or "예산 행"
@@ -2609,6 +2716,20 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
                     }
                 )
         row["warnings"] = row_warnings
+        if row.get("match_status") == "UNMATCHED_CBS":
+            unmatched_details.append(
+                {
+                    "source_row_no": row.get("source_row_no") or row.get("row_no") or row.get("row_number") or "",
+                    "wbs_code": row.get("wbs_code") or "",
+                    "wbs_name": row.get("wbs_name") or "",
+                    "cbs_code": row.get("cbs_code") or "",
+                    "cbs_name": row.get("cbs_name") or "",
+                    "item_name": row.get("item_name") or "",
+                    "amount": row_amount,
+                    "reason": row.get("match_reason") or "CBS \ubbf8\ub9e4\uce6d",
+                    "action": "CBS \ub9c8\uc2a4\ud130 \ub4f1\ub85d \ub610\ub294 \uc218\ub3d9 \ub9e4\ud551",
+                }
+            )
 
     total_construction_amount = explicit_total_construction_amount or (
         imported_total_amount + owner_supplied_amount
@@ -2700,10 +2821,12 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
 
     stats = {
         "budget_import_total_rows": len(rows),
+        "budget_import_source_upload_target_rows": source_upload_target_row_count,
         "budget_import_matched_rows": matched_row_count,
         "budget_import_auto_matched_rows": max(matched_row_count - manual_matched_row_count, 0),
         "budget_import_manual_matched_rows": manual_matched_row_count,
         "budget_import_unmatched_rows": unmatched_row_count,
+        "budget_import_unmatched_details": unmatched_details,
         "budget_import_skipped_rows": skipped_row_count,
         "budget_import_skipped_section_rows": skipped_section_row_count,
         "budget_form_initial_count": len(initial),
@@ -2765,7 +2888,48 @@ def _build_budget_initial_from_import_rows(rows, *, manual_mapping=None, manual_
         )
     return initial, warnings, stats
 
-def _build_wbs_initial_from_import_rows(rows):
+def resolve_wbs_baseline_dates(row, project):
+    """Resolve imported WBS dates without allowing an undated baseline."""
+    start_date = row.get("plan_start_date")
+    end_date = row.get("plan_end_date")
+    used_project_fallback = not (start_date and end_date)
+
+    if start_date is None:
+        start_date = getattr(project, "start_date", None)
+    if end_date is None:
+        end_date = getattr(project, "end_date", None)
+    if start_date is None or end_date is None:
+        raise ValidationError(
+            "WBS 기준선 기간을 설정할 수 없습니다. 프로젝트 착공일과 준공예정일을 먼저 입력해 주세요."
+        )
+    if start_date > end_date:
+        raise ValidationError("WBS 기준선 시작일은 종료일보다 늦을 수 없습니다.")
+
+    project_start_date = getattr(project, "start_date", None)
+    project_end_date = getattr(project, "end_date", None)
+    if project_start_date and project_end_date and (
+        start_date < project_start_date or end_date > project_end_date
+    ):
+        raise ValidationError("WBS 기준선 기간은 프로젝트 기간을 벗어날 수 없습니다.")
+
+    return start_date, end_date, (
+        "PROJECT_FALLBACK" if used_project_fallback else "EXCEL"
+    )
+
+
+def _resolve_wbs_baseline_dates(wbs_items, project):
+    defaulted_count = 0
+    for item in wbs_items:
+        start_date, end_date, date_source = resolve_wbs_baseline_dates(item, project)
+        item["plan_start_date"] = start_date
+        item["plan_end_date"] = end_date
+        item["wbs_date_source"] = date_source
+        if date_source == "PROJECT_FALLBACK":
+            defaulted_count += 1
+    return defaulted_count
+
+
+def _build_wbs_initial_from_import_rows(rows, project=None):
     original_weights = [Decimal(row.get("weight") or 0) for row in rows]
     original_sum = sum(original_weights, Decimal("0"))
     initial = []
@@ -2779,15 +2943,39 @@ def _build_wbs_initial_from_import_rows(rows):
                 ]
             )
         quantized_weight = _quantize_wbs_weight(row.get("weight"))
-        initial.append(
-            {
-                "name": row.get("name") or row.get("code") or "",
-                "weight": quantized_weight,
-                "sort_order": idx,
-                "plan_start_date": row.get("plan_start_date"),
-                "plan_end_date": row.get("plan_end_date"),
-            }
-        )
+        initial_row = {
+            "name": row.get("name") or row.get("code") or "",
+            "weight": quantized_weight,
+            "sort_order": resolve_wbs_sort_order(
+                row.get("code") or row.get("name"),
+                idx,
+                row.get("sort_order"),
+            ),
+            "plan_start_date": row.get("plan_start_date"),
+            "plan_end_date": row.get("plan_end_date"),
+        }
+        if project is not None:
+            try:
+                start_date, end_date, date_source = resolve_wbs_baseline_dates(
+                    initial_row, project
+                )
+            except ValidationError as exc:
+                warnings.append(str(exc))
+                row["wbs_date_source"] = "UNSET"
+                row["wbs_date_source_label"] = "미설정"
+            else:
+                initial_row["plan_start_date"] = start_date
+                initial_row["plan_end_date"] = end_date
+                initial_row["wbs_date_source"] = date_source
+                row["resolved_plan_start_date"] = start_date
+                row["resolved_plan_end_date"] = end_date
+                row["wbs_date_source"] = date_source
+                row["wbs_date_source_label"] = (
+                    "프로젝트 기간 기본값"
+                    if date_source == "PROJECT_FALLBACK"
+                    else "Excel"
+                )
+        initial.append(initial_row)
     rounded_sum = sum((Decimal(item["weight"] or 0) for item in initial), Decimal("0"))
     if initial and abs(original_sum - Decimal("100")) <= Decimal("0.1"):
         adjustment = _quantize_wbs_weight(Decimal("100") - rounded_sum)
@@ -2796,6 +2984,17 @@ def _build_wbs_initial_from_import_rows(rows):
                 Decimal(initial[-1]["weight"] or 0) + adjustment
             )
     return initial, warnings
+
+
+def _project_for_wbs_date_preview(post_data):
+    if not post_data:
+        return None
+    start_value = post_data.get("start_date") or ""
+    end_value = post_data.get("end_date") or ""
+    return Project(
+        start_date=parse_date(str(start_value)) if start_value else None,
+        end_date=parse_date(str(end_value)) if end_value else None,
+    )
 
 
 def _quantize_wbs_weight(value):
@@ -2837,10 +3036,12 @@ def _build_project_import_context(
         "budget_review_errors": [],
         "budget_match_options": _build_budget_match_options(selectable_cost_items),
         "budget_import_total_rows": 0,
+        "budget_import_source_upload_target_rows": 0,
         "budget_import_matched_rows": 0,
         "budget_import_auto_matched_rows": 0,
         "budget_import_manual_matched_rows": 0,
         "budget_import_unmatched_rows": 0,
+        "budget_import_unmatched_details": [],
         "budget_import_skipped_rows": 0,
         "budget_import_skipped_section_rows": 0,
         "budget_form_initial_count": 0,
@@ -2893,6 +3094,7 @@ def _build_project_import_context(
         "wbs_import_notice": "",
         "wbs_import_warnings": [],
         "wbs_form_initial": [],
+        "wbs_date_defaulted_count": 0,
         "import_warning_count": 0,
     }
     parsed_any = False
@@ -3034,7 +3236,15 @@ def _build_project_import_context(
             (
                 context["wbs_form_initial"],
                 context["wbs_import_warnings"],
-            ) = _build_wbs_initial_from_import_rows(result["rows"])
+            ) = _build_wbs_initial_from_import_rows(
+                result["rows"],
+                project=_project_for_wbs_date_preview(post_data),
+            )
+            context["wbs_date_defaulted_count"] = sum(
+                1
+                for row in context["wbs_form_initial"]
+                if row.get("wbs_date_source") == "PROJECT_FALLBACK"
+            )
         except Exception as exc:
             messages.error(request, f"착공계 파일을 읽지 못했습니다. {exc}")
     context["import_warning_count"] = (
@@ -3053,6 +3263,18 @@ def _build_project_import_context(
             meta={
                 "budget_rows": len(context["budget_preview_rows"]),
                 "wbs_rows": len(context["wbs_preview_rows"]),
+                "source_upload_target_row_count": int(
+                    context.get("budget_import_source_upload_target_rows") or 0
+                ),
+                "matched_row_count": int(context.get("budget_import_matched_rows") or 0),
+                "unmatched_cbs_row_count": int(
+                    context.get("budget_import_unmatched_rows") or 0
+                ),
+                "unmatched_amount": str(context.get("budget_import_unmatched_amount") or 0),
+                "unmatched_source_rows": [
+                    item.get("source_row_no")
+                    for item in context.get("budget_import_unmatched_details") or []
+                ],
                 "warning_count": context["import_warning_count"],
             },
         )
@@ -3102,12 +3324,19 @@ def _log_project_import_commit_actions(
             meta={
                 "committed_row_count": len(budget_items),
                 "preview_row_count": len(import_context["budget_preview_rows"]),
+                "source_upload_target_row_count": int(
+                    import_context.get("budget_import_source_upload_target_rows") or 0
+                ),
                 "matched_row_count": int(import_context.get("budget_import_matched_rows") or 0),
                 "unmatched_row_count": int(import_context.get("budget_import_unmatched_rows") or 0),
-                "partial_budget_import": bool(
-                    int(import_context.get("budget_import_unmatched_rows") or 0) > 0
-                    and request.POST.get("confirm_partial_budget_import") == "1"
+                "unmatched_amount": str(
+                    import_context.get("budget_import_unmatched_amount") or 0
                 ),
+                "unmatched_source_rows": [
+                    item.get("source_row_no")
+                    for item in import_context.get("budget_import_unmatched_details") or []
+                ],
+                "partial_budget_import": False,
                 "warning_count": (
                     len(import_context.get("budget_import_warnings") or [])
                     + sum(
@@ -3130,6 +3359,16 @@ def _log_project_import_commit_actions(
             meta={
                 "committed_row_count": len(wbs_items),
                 "preview_row_count": len(import_context["wbs_preview_rows"]),
+                "wbs_date_defaulted_count": sum(
+                    1
+                    for item in wbs_items
+                    if item.get("wbs_date_source") == "PROJECT_FALLBACK"
+                ),
+                "wbs_date_sources": sorted(
+                    {item.get("wbs_date_source") for item in wbs_items if item.get("wbs_date_source")}
+                ),
+                "project_start_date": str(project.start_date or ""),
+                "project_end_date": str(project.end_date or ""),
                 "warning_count": (
                     len(import_context.get("wbs_import_warnings") or [])
                     + sum(
@@ -3194,6 +3433,14 @@ def _project_domain(project_type):
     return mapping.get(project_type, MasterTemplateDomain.LANDSCAPE)
 
 
+def _primary_project_type(work_types):
+    """Keep a deterministic legacy primary type for codes and older reports."""
+    for project_type in (ProjectType.CIVIL, ProjectType.LANDSCAPE, ProjectType.ARCH):
+        if project_type in work_types:
+            return project_type
+    return ProjectType.LANDSCAPE
+
+
 def _get_active_templates(domain, category):
     return list(
         MasterTemplate.objects.filter(domain=domain, category=category, is_active=True)
@@ -3215,6 +3462,17 @@ def _get_templates_with_fallback(domain, category):
     return [], "선택 가능한 템플릿이 없어 기본 입력 행으로 표시합니다."
 
 
+def _get_templates_for_work_types(work_types, category):
+    domains = [_project_domain(project_type) for project_type in work_types]
+    templates = list(
+        MasterTemplate.objects.filter(domain__in=domains, category=category, is_active=True)
+        .order_by("domain", "-version", "id")
+    )
+    if templates:
+        return templates, "선택한 계약 공종의 템플릿만 표시합니다. 복합 공종은 여러 템플릿을 함께 선택할 수 있습니다."
+    return [], "선택한 공종에 사용할 수 있는 템플릿이 없어 기본 입력 행으로 표시합니다."
+
+
 def _resolve_template_from_post(template_id, templates):
     if not template_id:
         return None
@@ -3222,6 +3480,11 @@ def _resolve_template_from_post(template_id, templates):
         if str(template.id) == str(template_id):
             return template
     return None
+
+
+def _resolve_templates_from_post(template_ids, templates):
+    requested_ids = {str(template_id) for template_id in template_ids if template_id}
+    return [template for template in templates if str(template.id) in requested_ids]
 
 
 def _build_wbs_initial_from_template(template, project_type):
@@ -3243,6 +3506,29 @@ def _build_wbs_initial_from_template(template, project_type):
             }
         )
     return rows, ""
+
+
+def _build_wbs_initial_from_templates(templates, project_type):
+    if not templates:
+        return _default_wbs_rows(project_type), ""
+    rows = []
+    warnings = []
+    for template in templates:
+        template_rows, warning = _build_wbs_initial_from_template(template, project_type)
+        rows.extend(template_rows)
+        if warning:
+            warnings.append(warning)
+    total_weight = sum((Decimal(str(row.get("weight") or 0)) for row in rows), Decimal("0"))
+    if total_weight > 0:
+        normalized_total = Decimal("0")
+        for index, row in enumerate(rows):
+            if index == len(rows) - 1:
+                row["weight"] = Decimal("100") - normalized_total
+            else:
+                row["weight"] = (Decimal(str(row.get("weight") or 0)) * Decimal("100") / total_weight).quantize(Decimal("0.01"))
+                normalized_total += row["weight"]
+            row["sort_order"] = index + 1
+    return rows, " ".join(warnings)
 
 
 def _build_budget_initial_from_template(template):
@@ -3269,6 +3555,18 @@ def _build_budget_initial_from_template(template):
         else:
             warnings.append(f"CBS 자동 매칭 실패: {item.label}")
         rows.append(row)
+    return rows, warnings
+
+
+def _build_budget_initial_from_templates(templates):
+    if not templates:
+        return _default_landscape_budget_rows()
+    rows = []
+    warnings = []
+    for template in templates:
+        template_rows, template_warnings = _build_budget_initial_from_template(template)
+        rows.extend(template_rows)
+        warnings.extend(template_warnings)
     return rows, warnings
 
 
@@ -3444,7 +3742,7 @@ def _default_landscape_budget_rows():
 def _collect_wbs_items(formset):
     items = []
     weight_sum = Decimal("0")
-    for form in formset:
+    for row_index, form in enumerate(formset, start=1):
         if not form.cleaned_data:
             continue
         if form.cleaned_data.get("DELETE"):
@@ -3454,10 +3752,18 @@ def _collect_wbs_items(formset):
             continue
         weight = form.cleaned_data.get("weight") or Decimal("0")
         weight_sum += Decimal(weight)
+        provided_sort_order = form.cleaned_data.get("sort_order")
+        if provided_sort_order in (None, "") and form.instance.pk:
+            provided_sort_order = form.instance.sort_order
         items.append(
             {
                 "name": name,
                 "weight": weight,
+                "sort_order": resolve_wbs_sort_order(
+                    name,
+                    row_index,
+                    provided_sort_order,
+                ),
                 "plan_start_date": form.cleaned_data.get("plan_start_date"),
                 "plan_end_date": form.cleaned_data.get("plan_end_date"),
             }
@@ -3558,6 +3864,10 @@ def _is_effectively_empty_budget_form(cleaned_data):
 def hq_project_detail(request, project_id):
     require_role(request.user, [Role.HQ, Role.CEO])
     project = get_object_or_404(Project, id=project_id)
+    require_project_access(request.user, project.id)
+    if project.legal_entity_id != getattr(get_current_legal_entity(request), "id", None):
+        raise PermissionDenied("선택한 운영 법인의 프로젝트만 조회할 수 있습니다.")
+    baseline_workflow = get_project_baseline_workflow(project)
     contract = ProjectContract.objects.filter(project=project).first()
     role = get_user_role(request.user)
     _normalize_project_budget_categories(project)
@@ -3616,10 +3926,39 @@ def hq_project_detail(request, project_id):
 
     if request.method == "POST":
         action = request.POST.get("action")
+        if action == "update_billing_approval_policy":
+            if role != Role.HQ:
+                messages.error(request, "HQ만 기성 보고서 결재 정책을 변경할 수 있습니다.")
+                return redirect(f"/app/hq/projects/{project.id}/")
+            before = project.requires_ceo_billing_approval
+            project.requires_ceo_billing_approval = request.POST.get("requires_ceo_billing_approval") == "on"
+            project.save(update_fields=["requires_ceo_billing_approval", "updated_at"])
+            log_action(actor=request.user, action="PROJECT_BILLING_APPROVAL_POLICY_UPDATED", object_type="PROJECT", object_id=project.id, project=project, request=request, before={"requires_ceo_billing_approval": before}, after={"requires_ceo_billing_approval": project.requires_ceo_billing_approval})
+            messages.success(request, "기성 보고서 CEO 결재 정책을 저장했습니다.")
+            return redirect(f"/app/hq/projects/{project.id}/")
         if action == "submit_baseline":
-            if project.status != ProjectStatus.DRAFT:
+            if role != Role.HQ:
+                messages.error(request, "HQ만 프로젝트 기준선을 제출할 수 있습니다.")
+                return redirect(f"/app/hq/projects/{project.id}/")
+            if (
+                project.status != ProjectStatus.DRAFT
+                and not baseline_workflow.can_hq_resubmit
+            ):
                 messages.error(request, "제출은 임시저장 상태의 프로젝트에서만 가능합니다.")
                 return redirect(f"/app/hq/projects/{project.id}/")
+            latest_approval = (
+                ApprovalRequest.objects.filter(
+                    object_type="PROJECT_BASELINE",
+                    object_id=project.id,
+                )
+                .order_by("-updated_at", "-id")
+                .first()
+            )
+            is_resubmit = bool(
+                baseline_workflow.can_hq_resubmit
+                and latest_approval
+                and latest_approval.status == ApprovalStatus.REJECTED
+            )
             if contract is None or not contract.contract_file:
                 messages.error(request, "계약 파일을 먼저 등록해 주세요.")
                 return redirect(f"/app/hq/projects/{project.id}/")
@@ -3646,14 +3985,25 @@ def hq_project_detail(request, project_id):
             )
             log_action(
                 actor=request.user,
-                action=BASELINE_SUBMIT,
+                action="BASELINE_RESUBMIT" if is_resubmit else BASELINE_SUBMIT,
                 object_type="PROJECT",
                 object_id=project.id,
                 project=project,
                 request=request,
+                before={"status": ProjectStatus.DRAFT},
                 after={"status": project.status},
+                meta={
+                    "is_resubmit": is_resubmit,
+                    "previous_approval_id": latest_approval.id if latest_approval else None,
+                    "previous_approval_status": (
+                        latest_approval.status if latest_approval else ""
+                    ),
+                },
             )
-            messages.success(request, "기준선 제출이 완료되었습니다.")
+            messages.success(
+                request,
+                "기준선 재제출이 완료되었습니다." if is_resubmit else "기준선 제출이 완료되었습니다.",
+            )
             return redirect(f"/app/hq/projects/{project.id}/")
         if action == "approve_baseline":
             if role != Role.CEO:
@@ -3727,19 +4077,34 @@ def hq_project_detail(request, project_id):
             if assignment_form.is_valid():
                 user = assignment_form.cleaned_data["user"]
                 is_active = assignment_form.cleaned_data["is_active"]
+                assignment_type = assignment_form.cleaned_data["assignment_type"]
+                employee = getattr(user, "office_employee_profile", None)
+                if (
+                    employee is not None
+                    and employee.employment_legal_entity_id != project.legal_entity_id
+                    and assignment_type != ProjectAssignment.AssignmentType.OPERATIONS_SUPPORT
+                ):
+                    assignment_form.add_error(
+                        "assignment_type",
+                        "타 법인 소속 본사 직원은 ‘운영지원’으로만 배정할 수 있습니다.",
+                    )
+                    messages.error(request, "타 법인 소속 본사 직원은 운영지원으로 배정해 주세요.")
+                    return redirect(f"/app/hq/projects/{project.id}/")
                 assignment, created = ProjectAssignment.objects.get_or_create(
                     project=project,
                     user=user,
-                    defaults={"is_active": is_active},
+                    defaults={"is_active": is_active, "assignment_type": assignment_type},
                 )
                 before = None
                 audit_action = ASSIGNMENT_ADD
                 if not created:
                     before = {
                         "is_active": assignment.is_active,
+                        "assignment_type": assignment.assignment_type,
                     }
                     assignment.is_active = is_active
-                    assignment.save(update_fields=["is_active"])
+                    assignment.assignment_type = assignment_type
+                    assignment.save(update_fields=["is_active", "assignment_type"])
                     audit_action = ASSIGNMENT_UPDATE
                 log_action(
                     actor=request.user,
@@ -3752,6 +4117,7 @@ def hq_project_detail(request, project_id):
                     after={
                         "user_id": user.id,
                         "is_active": assignment.is_active,
+                        "assignment_type": assignment.assignment_type,
                     },
                 )
                 messages.success(request, "프로젝트 배정을 저장했습니다.")
@@ -3830,6 +4196,7 @@ def hq_project_detail(request, project_id):
                         "app/hq_project_detail.html",
                         {
                             "project": project,
+                            "baseline_workflow": baseline_workflow,
                             "contract": contract,
                             "assignments": assignments,
                             "assignment_form": assignment_form,
@@ -3937,13 +4304,21 @@ def hq_project_detail(request, project_id):
             for form in wbs_formset:
                 form.fields["parent"].queryset = wbs_qs
             if wbs_formset.is_valid():
-                for form in wbs_formset:
+                for row_index, form in enumerate(wbs_formset, start=1):
                     if form.cleaned_data.get("DELETE"):
                         if form.instance.pk:
                             form.instance.delete()
                         continue
                     item = form.save(commit=False)
                     item.project = project
+                    provided_sort_order = form.cleaned_data.get("sort_order")
+                    if provided_sort_order in (None, "") and form.instance.pk:
+                        provided_sort_order = form.instance.sort_order
+                    item.sort_order = resolve_wbs_sort_order(
+                        item.name,
+                        row_index,
+                        provided_sort_order,
+                    )
                     item.save()
                 messages.success(request, "WBS 기준선을 저장했습니다.")
                 return redirect(f"/app/hq/projects/{project.id}/")
@@ -3954,6 +4329,7 @@ def hq_project_detail(request, project_id):
         "app/hq_project_detail.html",
         {
             "project": project,
+        "baseline_workflow": baseline_workflow,
             "contract": contract,
         "assignments": assignments,
         "assignment_form": assignment_form,
@@ -3984,6 +4360,9 @@ def hq_project_detail(request, project_id):
 def hq_wbs_change_new(request, project_id):
     require_role(request.user, [Role.HQ])
     project = get_object_or_404(Project, id=project_id)
+    require_project_access(request.user, project.id)
+    if project.legal_entity_id != getattr(get_current_legal_entity(request), "id", None):
+        raise PermissionDenied("선택한 운영 법인의 WBS만 변경할 수 있습니다.")
     role = get_user_role(request.user)
     return render_wbs_change_form(
         request,
@@ -3992,3 +4371,34 @@ def hq_wbs_change_new(request, project_id):
         template_name="app/common/wbs_change_form.html",
         back_url=f"/app/hq/projects/{project.id}/",
     )
+
+
+@login_required
+def hq_project_operational_test_date_window(request, project_id):
+    require_role(request.user, [Role.HQ])
+    project = get_object_or_404(Project, id=project_id)
+    require_project_access(request.user, project.id)
+    if project.legal_entity_id != getattr(get_current_legal_entity(request), "id", None):
+        raise PermissionDenied("선택한 운영 법인의 프로젝트만 설정할 수 있습니다.")
+    window = ProjectOperationalTestDateWindow.objects.filter(project=project).first()
+    if request.method == "POST":
+        try:
+            start_date = parse_date(request.POST.get("start_date") or "")
+            end_date = parse_date(request.POST.get("end_date") or "")
+            expires_on = parse_date(request.POST.get("expires_on") or "")
+            reason = (request.POST.get("reason") or "").strip()
+            if not start_date or not end_date or not expires_on or not reason:
+                raise ValidationError("허용 시작일·종료일·자동 해제일과 테스트 사유를 모두 입력해 주세요.")
+            candidate = window or ProjectOperationalTestDateWindow(project=project, configured_by=request.user)
+            candidate.start_date, candidate.end_date, candidate.expires_on = start_date, end_date, expires_on
+            candidate.reason = reason
+            candidate.is_enabled = request.POST.get("is_enabled") == "1"
+            candidate.configured_by = request.user
+            candidate.full_clean()
+            candidate.save()
+            log_action(actor=request.user, action="PROJECT_TEST_DATE_WINDOW_CONFIGURED", object_type="ProjectOperationalTestDateWindow", object_id=candidate.id, project=project, request=request, after={"is_enabled": candidate.is_enabled, "start_date": str(start_date), "end_date": str(end_date), "expires_on": str(expires_on), "reason": reason})
+            messages.success(request, "프로젝트 운영 테스트 날짜 허용 기간을 저장했습니다.")
+            return redirect(f"/app/hq/projects/{project.id}/operational-test-date-window/")
+        except ValidationError as exc:
+            messages.error(request, str(exc))
+    return render(request, "app/hq/project_operational_test_date_window.html", {"project": project, "window": window, "today": timezone.localdate()})

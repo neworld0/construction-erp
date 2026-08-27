@@ -1,0 +1,19 @@
+프롬프트 작성 순서
+
+1  CLOSE-1 
+2  CLOSE-2
+3  (CLOSE-3) ← 선택
+4  INV-1
+5  INV-2
+6  INV-3
+7  INV-4
+8  (INV-5) ← 옵션
+9  LAB-1
+10 LAB-2
+11 LAB-3
+12 LAB-4
+13 CLOSE-4
+
+
+
+

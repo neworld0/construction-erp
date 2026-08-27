@@ -1,0 +1,12 @@
+﻿LaborRole_ID,Code,Name,Category,Is_Active,Sort_Order,Has_Default_Rate,Used_By_Worker_Count,Visible_In_Worker_Form,Required_For_LOCAL_OPS,Gap,Notes
+2,CIVIL-PAVING,포장공,SKILLED,True,0,False,3,True,False,,
+6,CLEAN-WORKER,청소정리,,True,0,False,0,True,False,,
+3,ORDINARY-WORKER,보통인부,UNSKILLED,True,0,False,2,True,False,,
+5,SIGNAL-CRANE,장비유도원,SKILLED,True,0,False,2,True,False,,
+4,SIGNAL-WORKER,신호수,UNSKILLED,True,0,False,1,True,False,,
+7,LAB-GEN,보통인부,UNSKILLED,True,10,False,0,True,True,,
+1,LAND-WORKER,조경공,SKILLED,True,10,False,2,True,False,,
+8,LAB-PAV,포장공,SKILLED,True,20,False,0,True,True,,
+9,LAB-EQP,장비공,OPERATOR,True,30,False,0,True,True,,
+10,LAB-CMP,다짐공,SKILLED,True,40,False,0,True,True,,
+11,LAB-PNT,도색공,SKILLED,True,50,False,0,True,True,,

@@ -1,0 +1,7 @@
+Area,Validation_Item,Required,Expected_Result,Status
+프로젝트,프로젝트 생성,Yes,고유 코드로 프로젝트 생성,READY
+배정,FIELD 접근,Yes,field1이 배정 현장만 접근,READY
+예산,계약 대사,Yes,계약금액과 예산 차이 기록,READY
+진행률,임시저장 및 제출,Yes,포장공사 12.5 입력,READY
+원가,원가 집계,Yes,10000000원 반영,READY
+수익,수익 seed,Yes,잠정 진행률 기준 반영,POLICY_PENDING

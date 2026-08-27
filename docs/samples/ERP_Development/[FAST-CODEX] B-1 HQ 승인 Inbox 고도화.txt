@@ -1,0 +1,154 @@
+[FAST-CODEX] B-1: HQ 승인 Inbox 고도화 (통합 승인함 + 필터/정렬 + Quick Action + 지연/마감 가드)
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+목표
+- HQ가 승인해야 하는 모든 항목을 “하나의 승인함(Inbox)”에서 빠르게 처리할 수 있게 고도화한다.
+- 승인함은 타입(일일보고/원가/변경요청/출역/재고이동/정정 등)을 통합 리스트로 제공하고,
+  필터/정렬/지연(24h/48h)/마감(CLOSE) 가드/퀵액션(승인·반려)을 제공한다.
+- 기존 설계(ApprovalRequest, Risk Engine, ClosingPeriod, AuditLog, RBAC)를 유지하며 “표시/처리 UI”만 강화한다.
+- DB 스키마 변경 없이 구현한다.
+
+전제(변경 금지)
+- 기존 모델/상태/권한/마감(CLOSE)/감사로그(AuditLog) 로직 변경 금지
+- CEO 승인/퀵액션 영역과 역할 충돌 금지
+  - HQ는 “HQ 권한 범위에서의 승인”만 처리
+  - CEO 전용 최종 승인(있는 경우)은 HQ Inbox에서 ‘승인’ 버튼을 숨기고 ‘검토 요청’ 또는 ‘상세 보기’만 제공
+- 기존 URL 구조 유지:
+  - 이미 HQ Inbox 화면이 있으면 그 URL을 그대로 사용
+  - 없다면 신규로 /app/hq/inbox/ 를 추가하되, /app/hq/에서 접근 링크를 제공
+- N+1 쿼리 금지
+- 마감 후 수정 금지(CLOSE-2) 원칙은 반드시 지킨다(마감 후 승인/반려도 정책에 따라 제한)
+
+구현 범위
+- URL: /app/hq/inbox/ (신규 또는 기존)
+- View: hq_inbox_view (hq/views.py 또는 해당 모듈)
+- Template: hq_inbox.html (신규 또는 기존 템플릿 확장)
+- (권장) hq/inbox.py : inbox row 빌더(타입 매핑/링크/라벨/정렬 키)
+- (권장) hq/actions.py : approve/reject 액션 핸들러(기존 승인 로직 래핑)
+
+1) 데이터 소스(필수)
+- “승인 대기”의 소스는 반드시 기존 승인 체계를 그대로 사용한다.
+- 우선순위:
+  A) ApprovalRequest 모델이 존재하면 그것을 1차 소스로 사용
+  B) 타입별 모델에 status=SUBMITTED 같은 필드가 있고 ApprovalRequest가 없다면, 기존 HQ 대시보드에서 쓰는 ‘승인 대기 쿼리’를 그대로 재사용
+- Inbox row가 최소 아래 필드를 갖도록 구성:
+  - request_id (ApprovalRequest.id 또는 대체키)
+  - type_code (DAILY_REPORT / COST / CHANGE / TIMESHEET / TRANSFER / ADJUSTMENT …)
+  - type_label (한글)
+  - project_id, project_name
+  - submitted_by (표시용)
+  - submitted_at (또는 created_at)
+  - age_hours (지연 계산)
+  - status (PENDING/APPROVED/REJECTED 등)
+  - is_overdue_24h / is_overdue_48h
+  - is_locked_by_closing (마감 잠금 여부)
+  - detail_url (상세 보기 링크)
+  - can_approve / can_reject (권한 및 마감/정책 기반)
+
+2) 타입 매핑(필수)
+- 아래 타입은 “있으면” 포함하고, 없는 타입은 자동 생략:
+  - 일일보고(DailyReport)
+  - 원가(CostActual)
+  - 변경요청(ChangeOrder / WBSChangeRequest / PlanChangeRequest 등)
+  - 출역(Timesheet)
+  - 재고이동(Transfer)
+  - 정정(Adjustment) (CLOSE-3 구현 이후라면)
+- type_label 한글:
+  - 일일보고, 원가, 변경요청, 출역부, 재고이동, 정정
+
+3) 화면 UI 요구(필수)
+- 상단: 필터 바
+  - [전체] [일일보고] [원가] [변경요청] [출역부] [재고이동] [정정] (존재하는 타입만 표시)
+  - 상태 필터: “대기만 / 전체”(기본은 대기만)
+  - 지연 필터: “48h+”, “24h+”
+  - 프로젝트 필터: 드롭다운(배정된/전체 프로젝트 중 HQ 권한 범위)
+  - 검색: 프로젝트명/작성자/키워드(간단 contains)
+- 본문: 통합 테이블 또는 카드 리스트(PC 기준)
+  컬럼(권장):
+  - 제출일시
+  - 타입
+  - 프로젝트
+  - 작성자
+  - 요약(짧게)
+  - 지연(24h/48h 뱃지)
+  - 마감(LOCKED 뱃지)
+  - 액션(상세/승인/반려)
+- 빈 상태:
+  - “승인 대기 항목이 없습니다.” + “정상” 톤의 안내
+
+4) 정렬 규칙(필수)
+- 기본 정렬은 “업무 우선순위”:
+  1) 마감 관련/정정(Adjustment) 대기(있다면) 상단
+  2) 변경요청(Change*) 
+  3) 원가(Cost)
+  4) 재고이동(Transfer)
+  5) 출역(Timesheet)
+  6) 일일보고(DailyReport)
+- 동점일 때:
+  - 48h+ 먼저, 그 다음 24h+, 그 다음 오래된 제출 먼저(오름차순)
+
+5) 지연(Overdue) 뱃지(필수)
+- submitted_at 기준:
+  - 24h+ → 🟠 “24h+”
+  - 48h+ → 🔴 “48h+”
+- UI에서 type 뱃지 옆에 표시
+
+6) 마감/잠금 가드(필수)
+- 각 row에 대해 “해당 프로젝트/월이 CLOSED” 또는 “프로젝트 마감 CLOSED”이면:
+  - can_approve/can_reject를 정책에 맞게 제한
+  - 기본 원칙:
+    - 마감 후에는 입력/수정이 금지이므로, 승인함에 남아 있는 제출 건은 ‘처리 정책’을 명확히 한다.
+- 권장 정책(안전):
+  A) 마감 상태에서 대기 건이 있으면:
+     - HQ에서는 승인/반려 버튼 비활성 + “마감 상태로 인해 처리 불가” 표시
+     - “CEO 정정(Adjustment) 요청 생성” 링크 제공(있으면)
+  B) 마감 OPEN이면 기존대로 승인/반려 가능
+- 구현 시: 기존 CLOSE-1~4의 규칙을 그대로 참조해서 locked 여부를 계산(새 규칙 만들지 말 것)
+
+7) Quick Action(승인/반려) (필수)
+- 각 row에 [승인], [반려] 버튼 제공(가능한 경우)
+- 반려 시:
+  - 모달 또는 인라인 입력으로 “반려 사유(필수)” 입력
+- 처리 후:
+  - 같은 페이지에서 목록이 즉시 갱신(redirect with message or htmx/partial 가능)
+  - 성공 토스트/알림 표시
+- AuditLog 연계:
+  - 승인/반려는 AuditLog에 기록되도록(이미 기록되면 추가 구현 없음)
+
+8) 상세 보기(필수)
+- [상세] 버튼은 항상 제공
+- detail_url 규칙:
+  - ApprovalRequest.detail_url이 있으면 사용
+  - 없으면 object_type/object_id 기반으로 해당 객체 상세로 이동
+  - 없으면 최소한 “읽기 전용 상세(요약 + 원본 링크)” 페이지를 제공(단, 스키마 변경 금지)
+
+9) 권한(RBAC) (필수)
+- HQ role만 접근 가능
+- HQ라도 프로젝트 범위 제한이 있으면 그 범위 내 row만 노출
+- CEO 전용 승인 대상인 row는:
+  - can_approve=false 처리
+  - “CEO 승인 필요” 뱃지 표시 + [상세]만 제공(또는 [CEO로 전달] 같은 링크가 이미 있으면 제공)
+
+10) 성능(필수)
+- 필터/정렬 적용 시에도 쿼리 최소화
+- select_related/prefetch로 프로젝트/작성자 정보를 한번에 가져오기
+- 페이지네이션(권장): 기본 50건, ?page=
+
+11) 완료 기준(Acceptance)
+- /app/hq/inbox/ (또는 기존 Inbox URL)에서 승인 대기 항목이 통합 리스트로 보인다.
+- 타입/프로젝트/지연 필터가 동작한다.
+- 24h+/48h+ 뱃지가 정확히 표시된다.
+- 마감(LOCKED) 상태에서 승인/반려가 안전하게 제한된다.
+- 승인/반려 Quick Action이 동작하고 AuditLog가 남는다.
+- N+1 없이 빠르게 로딩된다.
+
+개발자 테스트(간단)
+- (케이스1) 일일보고 1건 제출 → Inbox에 표시 → 승인 가능
+- (케이스2) 원가 1건 제출 + 25h 경과 → 24h+ 뱃지
+- (케이스3) 변경요청 1건 + 55h 경과 → 48h+ + 상단 정렬
+- (케이스4) 월 마감 CLOSED 이후 대기 건 존재 → 승인/반려 비활성 + 안내 표시
+
+위 요구사항을 만족하도록 구현하세요.
+먼저 프로젝트 내 기존 ApprovalRequest/승인 대기 집계 코드와 URL을 Discovery로 확인하고,
+그 구조를 재사용하여 Inbox 리스트/필터/퀵액션/마감가드를 추가하세요.

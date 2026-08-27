@@ -5,13 +5,19 @@
 {% block content %}
 <div class="card">
   <h2 class="card-title">월 마감 요청 생성</h2>
-  <p class="muted">마감 요청은 CEO 승인 후 실행됩니다.</p>
+  <p class="muted">기본은 HQ 단독 확정입니다. 인력 분리 통제가 가능한 경우 HQ 2단계 통제를 선택하고, 중요 예외·준공 관련 월은 CEO 예외 승인을 선택합니다.</p>
 </div>
 
 <div class="card" style="margin-top: 18px;">
   <form method="post">
     {% csrf_token %}
     <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+      <label>
+        법인
+        <select class="input" name="legal_entity_id" required>
+          {% for entity in legal_entities %}<option value="{{ entity.id }}" {% if current_legal_entity and current_legal_entity.id == entity.id %}selected{% endif %}>{{ entity.name }}</option>{% endfor %}
+        </select>
+      </label>
       <label>
         연도
         <input class="input" type="number" name="year" placeholder="예: 2026" required />
@@ -20,13 +26,21 @@
         월
         <input class="input" type="number" name="month" min="1" max="12" placeholder="1~12" required />
       </label>
+      <label>
+        마감 확정 방식
+        <select class="input" name="approval_policy" required>
+          {% for value, label in approval_policies %}
+            <option value="{{ value }}" {% if value == "HQ_SINGLE" %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
       <label style="grid-column: 1 / -1;">
         비고
         <textarea class="input" name="note" rows="3" placeholder="선택 사항"></textarea>
       </label>
     </div>
     <div style="margin-top:16px; display:flex; gap:8px;">
-      <button class="btn" type="submit">요청 생성</button>
+      <button class="btn" type="submit">마감 요청 생성</button>
       <a class="btn btn-outline" href="/app/hq/closing/">취소</a>
     </div>
   </form>

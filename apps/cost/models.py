@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, Sum
 
@@ -141,6 +142,15 @@ class CostActualStatus(models.TextChoices):
     CLOSED = "closed", "Closed"
 
 
+class CostVATTreatment(models.TextChoices):
+    """How a cost line's VAT is treated in management profit and loss."""
+
+    DEDUCTIBLE = "DEDUCTIBLE", "과세 · 매입세액 공제"
+    EXEMPT = "EXEMPT", "면세 · VAT 없음"
+    NON_DEDUCTIBLE = "NON_DEDUCTIBLE", "불공제 · VAT 포함 원가"
+    LEGACY_UNCLASSIFIED = "LEGACY_UNCLASSIFIED", "기존자료 · VAT 구분 필요"
+
+
 class CostActual(models.Model):
     project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
     report_date = models.DateField()
@@ -180,14 +190,29 @@ class CostActualLine(models.Model):
     description = models.CharField(max_length=255, blank=True, default="")
     quantity = models.DecimalField(max_digits=14, decimal_places=3, default=0)
     unit_price = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    # amount is the operational/cash amount entered by FIELD, always gross.
     amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    vat_treatment = models.CharField(max_length=24, choices=CostVATTreatment.choices, default=CostVATTreatment.DEDUCTIBLE)
+    supply_amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    vat_amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    accounting_cost_amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        quantity = self.quantity or Decimal("0")
-        unit_price = self.unit_price or Decimal("0")
-        self.amount = quantity * unit_price
+        quantity = Decimal(str(self.quantity or 0))
+        unit_price = Decimal(str(self.unit_price or 0))
+        self.amount = (quantity * unit_price).quantize(Decimal("0.01"))
+        if self.vat_treatment == CostVATTreatment.DEDUCTIBLE:
+            self.supply_amount = (self.amount / Decimal("1.10")).quantize(Decimal("0.01"))
+            self.vat_amount = self.amount - self.supply_amount
+            self.accounting_cost_amount = self.supply_amount
+        else:
+            # VAT-exempt, non-deductible and legacy-unclassified lines remain
+            # full cost until an HQ evidence-based correction is made.
+            self.supply_amount = self.amount
+            self.vat_amount = Decimal("0")
+            self.accounting_cost_amount = self.amount
         super().save(*args, **kwargs)
         self.cost_actual.recalculate_total()
 
@@ -237,8 +262,17 @@ class RevenueRecognition(models.Model):
             total_amount = getattr(snapshot, "total_contract_amount", None)
             if total_amount is None:
                 total_amount = getattr(snapshot, "total_amount", Decimal("0"))
+        if not total_amount:
+            contract = getattr(self.project, "contract", None)
+            total_amount = getattr(contract, "contract_amount", None) or getattr(
+                self.project, "contract_amount", Decimal("0")
+            )
+        # Project/contract imports are VAT-inclusive. Revenue and profit use
+        # the VAT-exclusive supply amount; billing and cash records retain the
+        # VAT-inclusive contractual total.
+        supply_amount = (Decimal(total_amount or 0) / Decimal("1.10")).quantize(Decimal("0.01"))
         progress_ratio = (self.progress_percent or Decimal("0")) / Decimal("100")
-        self.recognized_revenue = (total_amount or Decimal("0")) * progress_ratio
+        self.recognized_revenue = (supply_amount * progress_ratio).quantize(Decimal("0.01"))
 
         snapshot_field = self._meta.get_field("contract_snapshot")
         filter_kwargs = {"project": self.project, "as_of_date__lt": self.as_of_date}
@@ -255,6 +289,61 @@ class RevenueRecognition(models.Model):
         previous_amount = previous.recognized_revenue if previous else Decimal("0")
         self.delta_revenue = self.recognized_revenue - previous_amount
 
+        super().save(*args, **kwargs)
+
+
+class RevenueRecognitionTrigger(models.TextChoices):
+    MONTHLY_CLOSE = "MONTHLY_CLOSE", "Monthly close"
+    PROGRESS_BILLING_CLOSE = "PROGRESS_BILLING_CLOSE", "Progress billing close"
+    TAX_INVOICE = "TAX_INVOICE", "Tax invoice issued"
+
+
+class RevenueRecognitionClose(models.Model):
+    """Immutable monthly/billing-close evidence for a recognized revenue total."""
+
+    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+    revenue_recognition = models.OneToOneField(
+        RevenueRecognition, on_delete=models.PROTECT, related_name="close_snapshot"
+    )
+    recognition_date = models.DateField()
+    period_year = models.IntegerField()
+    period_month = models.IntegerField()
+    trigger_type = models.CharField(max_length=32, choices=RevenueRecognitionTrigger.choices)
+    approved_progress_percent = models.DecimalField(max_digits=6, decimal_places=3)
+    contract_amount_snapshot = models.DecimalField(max_digits=16, decimal_places=2)
+    cumulative_earned_revenue = models.DecimalField(max_digits=16, decimal_places=2)
+    previously_recognized_revenue = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    recognized_revenue_amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    cumulative_cost_snapshot = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    previously_recognized_cost = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    recognized_cost_amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, default="RECOGNIZED")
+    memo = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="revenue_recognition_closes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "period_year", "period_month", "trigger_type"],
+                name="uniq_revenue_recognition_close_period",
+            )
+        ]
+        ordering = ["-recognition_date", "-id"]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            original = type(self).objects.get(pk=self.pk)
+            locked_fields = (
+                "project_id", "revenue_recognition_id", "recognition_date", "period_year",
+                "period_month", "trigger_type", "approved_progress_percent", "contract_amount_snapshot",
+                "cumulative_earned_revenue", "previously_recognized_revenue", "recognized_revenue_amount",
+                "cumulative_cost_snapshot", "previously_recognized_cost", "recognized_cost_amount", "status", "memo",
+            )
+            if any(getattr(self, field) != getattr(original, field) for field in locked_fields):
+                raise ValidationError("인식 완료된 매출·원가 스냅샷은 정정 절차 없이 수정할 수 없습니다.")
         super().save(*args, **kwargs)
 
 

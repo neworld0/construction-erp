@@ -12,7 +12,7 @@
 {% endcomment %}
 
 {% if attachments or can_edit %}
-  <section class="card" style="padding:16px; margin-top:12px;">
+  <section class="card field-attachments-panel" style="padding:16px; margin-top:12px;">
     <div class="section-title" style="margin-bottom:8px;">
       첨부 파일{% if object_label %} ({{ object_label }}){% endif %}
     </div>
@@ -31,7 +31,7 @@
           {% with file_name=f.original_name|default:f.file.name %}
           {% with lower_name=file_name|lower %}
           {% with open_href=f.open_url|default:f.file.url %}
-          <article class="card" style="padding:10px;">
+          <article class="card field-attachment-item" style="padding:10px;">
             <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
               <div style="font-weight:600; overflow-wrap:anywhere;">{{ file_name }}</div>
               <div style="display:flex; gap:8px; align-items:flex-start;">

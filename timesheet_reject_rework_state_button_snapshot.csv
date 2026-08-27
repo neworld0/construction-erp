@@ -1,0 +1,2 @@
+﻿Timesheet_ID,Status,Expected_Status,FIELD_Can_Edit_Expected,FIELD_Can_Edit_Actual,FIELD_Can_Resubmit_Expected,FIELD_Can_Resubmit_Actual,HQ_Can_Review_Expected,HQ_Can_Review_Actual,Rejection_Reason_Visible,Edit_Button_Rendered,Save_Button_Rendered,Resubmit_Button_Rendered,Missing_Reason,Fix_Target
+3,SUBMITTED,SUBMITTED,False,False,False,False,True,True,False,False,False,False,,apps/labor/services.py + FIELD timesheet template

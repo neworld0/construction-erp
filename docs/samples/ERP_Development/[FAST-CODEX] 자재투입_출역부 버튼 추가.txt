@@ -1,0 +1,48 @@
+[FAST-CODEX] FIELD-APPROVED-ADD-ISSUE-TIMESHEET (Compact)
+
+Target
+- /app/field/approved/?type=all&from=...&to=...
+Add 2 types for FIELD approved list:
+- 자재투입 (IssueToWork or equivalent)
+- 출역부 (Timesheet)
+
+STOP
+- No schema change
+- ≤5 files
+- 1 run max
+- No refactor/design changes (add buttons + list only)
+
+Tasks
+1) UI
+- In field approved page template, add 2 buttons next to 기존(진행률/보고서/원가):
+  [자재투입] [출역부]
+- Keep existing query params (from/to/type)
+
+2) Backend
+- Extend existing approved list view/query to include two new types:
+  - ISSUE: IssueToWork if exists, else fallback to InventoryLedger "ISSUE" event if that is what your system uses
+  - TIMESHEET: Timesheet approvals
+- Use same filter rules as existing types:
+  - status == APPROVED (or existing approved condition)
+  - project in FIELD assigned projects only
+  - approved_at between from/to
+- Ensure type=all includes the 2 new types in the combined list
+
+3) Row rendering
+- In list table, show these new rows with minimal summary:
+  - 자재투입: [프로젝트] [승인일] [품목/수량/단위 또는 요약] [첨부 배지(optional)]
+  - 출역부:   [프로젝트] [승인일] [직종/인원/일수 또는 요약] [첨부 배지(optional)]
+- Clicking row goes to original object detail (same policy as existing):
+  - IssueToWork detail URL (discover existing route)
+  - Timesheet detail URL (discover existing route)
+
+Discovery (only if needed)
+- Find object_type/content_type values used for approvals for IssueToWork/Timesheet
+- Find detail URL patterns for IssueToWork/Timesheet
+- If IssueToWork not implemented, do not error: hide button or show empty list with “자재투입 기능 미구현” (pick one, keep simple)
+
+DONE
+- Buttons appear
+- type=all shows approved items incl. Issue/Timesheet within date range
+- RBAC: FIELD sees only assigned projects
+- No schema change

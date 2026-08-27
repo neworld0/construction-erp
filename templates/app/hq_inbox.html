@@ -20,8 +20,9 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 14px;">
         <a class="btn {% if approved_kind == 'all' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=all">전체 {{ approved_counts.all|default:0 }}</a>
         <a class="btn {% if approved_kind == 'progress' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=progress">진행률 {{ approved_counts.progress|default:0 }}</a>
-        <a class="btn {% if approved_kind == 'report' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=report">보고서 {{ approved_counts.report|default:0 }}</a>
+        <a class="btn {% if approved_kind == 'report' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=report">기존 현장보고 {{ approved_counts.report|default:0 }}</a>
         <a class="btn {% if approved_kind == 'cost' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=cost">원가 {{ approved_counts.cost|default:0 }}</a>
+        <a class="btn {% if approved_kind == 'material' %}btn-primary{% else %}btn-outline{% endif %}" href="?scope=approved&kind=material">자재투입 {{ approved_counts.material|default:0 }}</a>
       </div>
     {% endif %}
     {% if items %}

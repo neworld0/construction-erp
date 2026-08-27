@@ -1,0 +1,5 @@
+Command,Result,Notes
+python manage.py check,PASS,System check identified no issues
+python manage.py makemigrations --check --dry-run,PASS,No changes detected
+pytest -q apps/labor/tests/test_labor_role_master_dropdown.py apps/labor/tests/test_e_card_imports.py,PASS,47 passed; two unrelated Django deprecation warnings
+python manage.py seed_labor_roles,PASS,Created five canonical LOCAL-OPS roles

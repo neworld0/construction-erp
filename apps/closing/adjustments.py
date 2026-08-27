@@ -25,11 +25,11 @@ from .models import (
 )
 
 
-def _validate_closed_period(year: int, month: int) -> None:
+def _validate_closed_period(year: int, month: int, *, legal_entity) -> None:
     if not (1 <= month <= 12):
         raise ValidationError("month must be between 1 and 12.")
     is_closed = ClosingPeriod.objects.filter(
-        year=year, month=month, status=ClosingStatus.CLOSED
+        legal_entity=legal_entity, year=year, month=month, status=ClosingStatus.CLOSED
     ).exists()
     if not is_closed:
         raise ValidationError("마감된 월에만 정정할 수 있습니다.")
@@ -47,7 +47,7 @@ def create_adjustment(
     cbs: CostItem | None = None,
     target_ref=None,
 ) -> Adjustment:
-    _validate_closed_period(period_year, period_month)
+    _validate_closed_period(period_year, period_month, legal_entity=project.legal_entity)
     with transaction.atomic():
         adjustment = Adjustment(
             target_type=target_type,
@@ -87,7 +87,7 @@ def create_adjustment(
 def submit_adjustment(adjustment: Adjustment, *, actor, request=None) -> Adjustment:
     if adjustment.status not in (AdjustmentStatus.DRAFT, AdjustmentStatus.REJECTED):
         raise ValidationError("Only draft or rejected adjustments can be submitted.")
-    _validate_closed_period(adjustment.period_year, adjustment.period_month)
+    _validate_closed_period(adjustment.period_year, adjustment.period_month, legal_entity=adjustment.project.legal_entity)
     adjustment.status = AdjustmentStatus.SUBMITTED
     adjustment.save(update_fields=["status", "updated_at"])
     try:

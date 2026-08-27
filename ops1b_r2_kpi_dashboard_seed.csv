@@ -1,0 +1,2 @@
+Project_Code,Contract_Amount,Budget_Total,WBS_Weight_Total,Task_Progress_Percent,Dashboard_Weighted_Progress_Percent,Cost_Total,Recognized_Revenue,Expected_Profit,Expected_Margin,CEO_Dashboard_Value,Difference,Explanation,OPS1C_Action
+OPS1B-RERUN-SAMPLE-001,571022700.00,571022700,100.00,12.500,5.625000,10000000.00,32120026.88,22120026.88,68.87,PASS,0,R1 weighted progress revenue policy,reconcile dashboard against seed

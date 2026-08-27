@@ -1,0 +1,143 @@
+[FAST-CODEX] FIELD-APPROVED-LISTS: Field 사용자도 “Approved된 진행률/보고서/원가 목록”을 볼 수 있도록 기능 추가
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+전제
+- 기존 설계/URL/모델/권한 구조 유지
+- DB 스키마 변경 금지
+- Approved 상태 판정은 기존 승인 모델/필드(예: status == APPROVED) 기반
+- attachments_panel, attachment_badge 공통 컴포넌트를 사용
+- 한글 깨짐(UTF-8) 회귀 테스트 포함
+
+목표
+1) Field 대시보드 또는 별도 메뉴로 “승인 완료(Approved) 진행률/보고서/원가 리스트” 제공
+2) Field는 배정된 프로젝트만 보도록 RBAC 적용
+3) 목록에서 각 행 클릭 시 “원본 객체 상세”로 이동
+4) 상세에서 첨부 인라인 확인 가능
+5) 한글 UI/버튼/레이블 깨짐 0
+
+------------------------------------------------------------
+1) Discovery (필수)
+------------------------------------------------------------
+1.1 승인 완료 조건 확인
+- ApprovalRequest 또는 해당 도메인 객체의 status 필드값 중 Approved 값을 확인
+- 승인 완료 대상 타입(진행률/보고서/원가) object_type 또는 content_type 이름 확인
+
+1.2 Field 권한 범위 확인
+- ProjectAssignment 또는 Field Project 리스트를 가져오는 함수/관계 확인
+- Field 사용자가 자신 할당 프로젝트만 목록에 보도록 쿼리 필터링 구조 파악
+
+1.3 상세 URL 패턴 확인
+- 각 객체 타입별 상세 URL 형식 파악(진행률/보고서/원가)
+- CEO/Field 권한에서 동일 상세 URL이 접근 가능한지 확인
+
+------------------------------------------------------------
+2) UI/네비게이션 (Field)
+------------------------------------------------------------
+2.1 메뉴/탭 추가
+- Field 대시보드(/app/field/) 또는 탐색 메뉴에 버튼/탭 추가:
+  - “승인 완료 진행률”
+  - “승인 완료 보고서”
+  - “승인 완료 원가”
+
+2.2 통합 Approved 목록 라우팅
+- URL 예시:
+  - /app/field/approved/?type=progress
+  - /app/field/approved/?type=report
+  - /app/field/approved/?type=cost
+- QueryString으로 type/type별 기간 필터 지정 가능
+
+------------------------------------------------------------
+3) View/쿼리 구현
+------------------------------------------------------------
+3.1 승인된 목록 쿼리
+- 기본 필터:
+  - status == APPROVED(또는 승인 완료 값)
+  - project_id IN Field 할당 프로젝트 리스트
+- Optional 필터:
+  - type별 분리(progress/report/cost)
+  - 기간(from/to) 기본 최근 30일
+
+Pseudo Query(예시)
+approved_items = ApprovalRequest.objects.filter(
+status="APPROVED",
+project__in=field_assigned_projects,
+object_type=selected_type,
+approved_at__gte=from_date,
+approved_at__lte=to_date,
+).order_by("-approved_at")
+
+
+3.2 목록 컬럼
+| 컬럼 | 설명 |
+|---|---|
+| 승인일시 | approved_at |
+| 프로젝트 | project.name |
+| 기준일 | 대상 객체 날짜 |
+| 요약 | 제목/메모/진행률 값 |
+| 첨부 배지 | attachment_badge 포함 |
+
+3.3 attachment_badge 적용
+- 각 row에:
+{% include "components/attachment_badge.html" with attachments=row_attachments %}
+
+- 이미지 우선(🖼), 아니면 📎 + 개수
+
+------------------------------------------------------------
+4) 상세 이동 및 상세 페이지 포함
+------------------------------------------------------------
+4.1 상세 URL 매핑
+- 리스트의 각각 row에 아래 URL을 detail_url로 붙임:
+<a href="{{ row.get_target_detail_url }}">상세 보기</a>
+- get_target_detail_url 함수는 ApprovalRequest 또는 util에서 생성(스키마 변경 불가 경우 view logic에서 매핑)
+
+4.2 상세 페이지
+- 기존 상세 뷰를 그대로 사용
+- attachments_panel include로 첨부 인라인 표시
+  - can_edit=False (Field에서 조회만)
+  - upload_url=None / delete_url=None
+
+4.3 권한 방어
+- 다른 프로젝트의 approved 객체는 목록/상세에서 볼 수 없음
+- URL 접근 시 RBAC 체크
+
+------------------------------------------------------------
+5) 한글 UI/버튼/레이블 회귀 체크
+------------------------------------------------------------
+Field 목록/상세에서 아래 항목을 점검:
+- “승인 완료” 라벨이 깨지지 않는가
+- 버튼/필터/상태 뱃지 한글
+- 첨부 미리보기/아이콘 한글 툴팁
+- meta charset UTF-8 선언 확인
+
+템플릿 파일이 UTF-8로 저장되었는지 체크
+
+------------------------------------------------------------
+6) Acceptance(완료 기준)
+------------------------------------------------------------
+- Field 화면에서 메뉴/탭 클릭으로 “Approved된 진행률/보고서/원가” 목록 진입 가능
+- Field는 할당된 프로젝트만 보임
+- 목록에서 각 항목은 프로젝트/기준일/요약/첨부 배지 표시
+- 목록에서 상세로 이동 시 원본 객체 상세로 이동
+- 상세에서 첨부 인라인 확인 가능
+- 한글 라벨/버튼/상태표기 0 깨짐
+- DB 스키마 변경 없이 동작
+
+------------------------------------------------------------
+7) Implementation Notes
+------------------------------------------------------------
+- project list for field 사용 중복 제거
+field_assigned_projects = request.user.assignments.values_list("project_id", flat=True)
+- 객체별 target_detail_url 생성 util 권장
+def get_target_detail_url(approval):
+if approval.object_type == "PROGRESS":
+return f"/app/field/progress/{approval.object_id}/"
+...
+- 목록에서 attachments를 미리 로딩(prefetch 또는 object_id list -> attachments query -> map)하면 성능 개선
+
+실행 순서(권장)
+1) Discovery로 승인 모델/타입/상세 URL 확인
+2) 목록 URL/뷰/템플릿 구현
+3) attachment_badge 포함
+4) 상세 이동/상세 페이지 첨부 인라인 확인
+5) 한글 회귀 테스트

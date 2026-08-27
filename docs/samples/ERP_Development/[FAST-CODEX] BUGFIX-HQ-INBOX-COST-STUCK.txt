@@ -1,0 +1,79 @@
+[FAST-CODEX] BUGFIX-HQ-INBOX-COST-STUCK: CEO 승인 완료된 원가(Cost) 승인요청이 HQ Inbox(/app/hq/inbox/)에서 사라지지 않는 문제 수정 (토큰 최소/Discovery 포함)
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+STOP RULE (필수)
+- 스키마 변경 금지
+- 수정 파일 최대 4개
+- 테스트/서버 재시작 최대 1회
+- 리팩터/기능추가/성능개선 금지 (버그만 고친다)
+- 불확실하면 “진행률/보고서와 동일 패턴”으로만 맞춘다
+
+현상
+- CEO가 같은 시각(예: 2026-02-12 09:01) 진행률/보고서/원가 3건을 모두 승인
+- HQ Inbox(/app/hq/inbox/)에서 진행률/보고서는 사라지지만, 원가 승인요청만 계속 남음
+- 기대: CEO 승인 완료되면 HQ Inbox에서 제거되어야 함(최소 표시/필터 기준 동일)
+
+목표
+- CEO가 승인(APPROVED)한 원가 승인요청이 HQ Inbox에서 즉시 제거되도록 “필터/상태전파/타입매핑”을 진행률/보고서와 동일하게 맞춤
+
+1) 최소 재현/진단(Discovery)
+A. HQ Inbox 코드 확인
+- /app/hq/inbox/ 의 view(또는 service/query)에서 “진행률/보고서/원가”를 가져오는 분기 로직을 찾는다.
+- 특히 원가 쿼리만:
+  - 승인 상태 필터가 다르거나(예: status != APPROVED 대신 decided_at is null 등)
+  - object_type 값이 다르거나(예: COST vs COST_ACTUAL)
+  - 대상 객체(CostActual)의 status 필터를 별도로 보고 있는지 확인한다.
+
+B. DB 상태 확인(쉘에서 1회)
+- CEO 승인 직후, 해당 원가 건에 대해 아래를 확인:
+  1) ApprovalRequest(또는 승인 엔티티)의 status/approved_at/decided_at 값
+  2) target 객체(CostActual 등)의 status 값(있다면)
+  3) HQ Inbox가 사용하는 “pending 조건”에 걸리는 필드가 여전히 남아있는지
+
+C. 비교 기준 확보
+- 진행률/보고서 승인 완료 건 1개씩을 같은 방식으로 조회해서,
+  원가와 무엇이 다른지(필드/값/타입) 차이를 1~2개로 좁힌다.
+
+2) 수정 원칙(가장 단순한 쪽 선택)
+아래 중 “진행률/보고서와 100% 동일하게” 만들 수 있는 최소 수정안을 선택:
+
+옵션 1) HQ Inbox 필터 수정(권장, 최소 침습)
+- HQ Inbox에서 원가 항목을 가져오는 queryset 조건을 진행률/보고서 조건과 동일하게 맞춘다.
+- 예:
+  - pending 조건이 “ApprovalRequest.status in (SUBMITTED, …) AND role=HQ”라면 원가도 동일하게
+  - 제거 조건이 “ApprovalRequest.status == APPROVED(또는 decided_at not null)”라면 원가도 동일하게
+
+옵션 2) CEO 승인 시 상태 전파 누락 보정(원가만 누락된 경우)
+- CEO가 ApprovalRequest를 APPROVED로 바꿀 때,
+  원가 target(CostActual)의 status도 APPROVED(또는 내부 완료 상태)로 전파해야 한다면,
+  진행률/보고서 승인 처리 코드를 참고하여 원가에도 동일 전파를 추가한다.
+- 단, 스키마 변경 없이 existing status 필드가 있을 때만.
+- status 필드가 없다면 “ApprovalRequest 기준으로 Inbox 제거”로 해결(옵션 1).
+
+옵션 3) object_type/타입 매핑 불일치 수정(자주 발생)
+- 진행률/보고서/원가가 ApprovalRequest.object_type 값을 사용하는데,
+  원가만 생성 시 object_type 값이 다르거나(hq inbox가 COST_ACTUAL을 보는데 실제는 COST),
+  이로 인해 “승인 처리된 row”와 “inbox 조회 row”가 서로 다른 타입을 보고 있을 수 있다.
+- 해결:
+  - Inbox 쪽 또는 생성/승인 쪽 매핑을 하나로 통일(진행률/보고서 매핑 기준에 맞춤)
+
+3) 적용 범위(최소)
+- 변경 파일 후보(Discovery 후 실제 파일만 수정):
+  - hq inbox view/query 파일 1개
+  - approvals 처리 파일(CEO approve action) 1개 (필요 시)
+  - object_type 매핑 util 1개 (필요 시)
+- 템플릿 변경 불필요(버그는 백엔드 상태/필터 문제)
+
+4) 검증(1회)
+- 동일 재현 절차로 진행:
+  1) 원가 1건 제출 → HQ inbox에 나타남 확인
+  2) CEO가 승인 처리
+  3) HQ inbox에서 원가 항목이 제거되는지 확인
+- 가능하면 Django shell에서 해당 ApprovalRequest가 APPROVED이고, HQ inbox queryset에 더 이상 포함되지 않는지 확인
+
+DONE 기준
+- CEO 승인 완료된 원가 승인요청이 HQ Inbox에서 즉시 사라진다.
+- 진행률/보고서 동작은 회귀 없음.
+- 스키마 변경 없음.
+- 수정 파일 ≤ 4, 테스트/재시작 ≤ 1.

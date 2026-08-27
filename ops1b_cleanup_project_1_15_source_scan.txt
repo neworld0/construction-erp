@@ -1,0 +1,9 @@
+FILE: ops1b_cleanup_project_1_15_report.md
+FILE_SCAN_PASS: True
+FILE: ops1b_cleanup_project_1_15_manifest.csv
+FILE_SCAN_PASS: True
+FILE: ops1b_cleanup_project_1_15_dependent_manifest.csv
+FILE_SCAN_PASS: True
+FILE: ops1b_cleanup_project_1_15_ceo_visibility_check.csv
+FILE_SCAN_PASS: True
+OVERALL_SOURCE_SCAN_PASS: True

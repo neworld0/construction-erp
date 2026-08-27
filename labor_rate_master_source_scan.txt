@@ -1,0 +1,11 @@
+Scope: apps/labor/role_master.py; apps/labor/rate_master.py; apps/labor/management/commands/seed_labor_rates.py; apps/labor/services.py submit path; apps/labor/web_views.py error rendering; focused tests; diagnostic.
+
+Rate model: existing LaborRateTable reused
+Migration: none
+Hardcoded production rates: only apps/labor/rate_master.py seed specification
+FIELD rate-management permission: unchanged, HQ/CEO only
+Sensitive data in rate API, seed, diagnostic: none
+Diagnostic worker display: name only; no resident number, phone, account, or address
+Changed Korean literals: UTF-8 readable; replacement character count is zero in changed source files
+Existing unrelated legacy mojibake outside the changed submit and seed sections was not changed by this task.
+OVERALL_SOURCE_SCAN_PASS: True

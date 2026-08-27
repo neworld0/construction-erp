@@ -1,0 +1,9 @@
+Role,Route,Expected,Actual_Status,Contains_Protected_Data,Result,Notes
+ANONYMOUS,/app/ceo/,302/403,NOT_EXECUTED_ACCESS_GATE,NO,HOLD,staging endpoint missing
+CEO,/app/ceo/,200,NOT_EXECUTED_ACCESS_GATE,safe test account,HOLD,input missing
+HQ,/app/hq/,200,NOT_EXECUTED_ACCESS_GATE,safe test account,HOLD,input missing
+HQ,/app/hq/labor/e-card-imports/,200,NOT_EXECUTED_ACCESS_GATE,masked LABPAY,HOLD,input missing
+FIELD,assigned progress,200,NOT_EXECUTED_ACCESS_GATE,assigned project,HOLD,input missing
+FIELD,/app/ceo/,403,NOT_EXECUTED_ACCESS_GATE,NO,HOLD,input missing
+FIELD,/app/hq/labor/e-card-imports/,403,NOT_EXECUTED_ACCESS_GATE,NO,HOLD,input missing
+FIELD,HQ project/budget,403,NOT_EXECUTED_ACCESS_GATE,NO,HOLD,input missing

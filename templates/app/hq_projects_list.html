@@ -29,13 +29,13 @@
     font-size: 13px;
     color: var(--muted);
     letter-spacing: 0.02em;
-    background: rgba(15, 23, 42, 0.35);
+    background: var(--panel-raised);
     position: sticky;
     top: 0;
     z-index: 1;
   }
   .hq-projects-table tbody tr:hover {
-    background: rgba(56, 189, 248, 0.06);
+    background: #e8f2fa;
   }
   .hq-projects-table a {
     text-decoration: none;
@@ -46,14 +46,14 @@
     gap: 6px;
     padding: 2px 8px;
     border-radius: 999px;
-    background: rgba(148, 163, 184, 0.15);
+    background: var(--panel-raised);
   }
   .hq-projects-table .recent-pill {
     margin-left: 8px;
     padding: 2px 8px;
     border-radius: 999px;
-    background: rgba(56, 189, 248, 0.2);
-    color: #38bdf8;
+    background: #e0f2fe;
+    color: #0369a1;
     font-size: 12px;
   }
 </style>
@@ -65,7 +65,7 @@
     </div>
     <a class="btn" href="/app/hq/projects/new/">신규 공사 등록</a>
   </div>
-  <table class="hq-projects-table">
+  <div class="table-wrap"><table class="hq-projects-table">
     <thead>
       <tr>
         <th>프로젝트명</th>
@@ -83,7 +83,7 @@
             <span class="recent-pill">최근 등록</span>
           {% endif %}
         </td>
-        <td><span class="status-pill badge {{ project.status }}">{{ project.status }}</span></td>
+        <td><span class="status-pill badge {{ project.status }}">{{ project.baseline_workflow.label }}</span></td>
         <td>{{ project.start_date }}</td>
         <td>{{ project.end_date }}</td>
       </tr>
@@ -91,6 +91,6 @@
       <tr><td colspan="4">등록된 프로젝트가 없습니다.</td></tr>
       {% endfor %}
     </tbody>
-  </table>
+  </table></div>
 </div>
 {% endblock %}

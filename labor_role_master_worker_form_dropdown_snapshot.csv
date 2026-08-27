@@ -1,0 +1,12 @@
+﻿URL,Role_Code,Role_Name,Rendered_In_Dropdown,Selected_Allowed,Notes
+/app/hq/labor/workers/new/,CIVIL-PAVING,포장공,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,CLEAN-WORKER,청소정리,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,ORDINARY-WORKER,보통인부,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,SIGNAL-CRANE,장비유도원,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,SIGNAL-WORKER,신호수,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,LAB-GEN,보통인부,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,LAND-WORKER,조경공,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,LAB-PAV,포장공,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,LAB-EQP,장비공,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,LAB-CMP,다짐공,YES,YES,Active LaborRole
+/app/hq/labor/workers/new/,LAB-PNT,도색공,YES,YES,Active LaborRole

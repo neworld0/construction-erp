@@ -1,0 +1,1 @@
+﻿DB_KOREAN_VERIFICATION_WRITTEN=ops1b_r1_db_korean_verification.json

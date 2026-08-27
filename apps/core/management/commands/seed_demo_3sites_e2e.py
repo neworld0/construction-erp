@@ -357,6 +357,7 @@ class Command(BaseCommand):
 
         UserProfile = _safe_get_model("core", "UserProfile")
         ProjectAssignment = _safe_get_model("core", "ProjectAssignment")
+        LegalEntity = _safe_get_model("core", "LegalEntity")
         Project = _safe_get_model("projects", "Project")
         ProjectContract = _safe_get_model("projects", "ProjectContract")
         WBSItem = _safe_get_model("projects", "WBSItem")
@@ -423,6 +424,7 @@ class Command(BaseCommand):
         labor_summary = self._ensure_labor_masters(LaborRole, LaborRateTable, start_date, hq_user)
         budget_cbs = cbs_items[: min(max(10, len(cbs_items)), 20)]
 
+        asan = LegalEntity.objects.get(code="ASAN")
         projects_by_key = {}
         project_rows = []
         for spec in project_specs:
@@ -430,6 +432,7 @@ class Command(BaseCommand):
                 code=spec["code"],
                 defaults={
                     "name": spec["name"],
+                    "legal_entity": asan,
                     "project_type": spec["project_type"],
                     "start_date": start_date,
                     "end_date": spec["end_date"],
@@ -439,6 +442,7 @@ class Command(BaseCommand):
                 },
             )
             project.name = spec["name"]
+            project.legal_entity = asan
             project.project_type = spec["project_type"]
             project.start_date = start_date
             project.end_date = spec["end_date"]
@@ -517,6 +521,7 @@ class Command(BaseCommand):
                 )
 
         payroll_batch, _ = PayrollBatch.objects.get_or_create(
+            legal_entity=asan,
             period_year=year,
             period_month=month_no,
             defaults={
@@ -530,6 +535,7 @@ class Command(BaseCommand):
             payroll_batch.batch_no = f"PAY-{year}{month_no:02d}-HQ"
         if not payroll_batch.created_by_id:
             payroll_batch.created_by = hq_user
+        payroll_batch.legal_entity = asan
         payroll_batch.note = "D3E-2 HQ payroll allocation"
         payroll_batch.save()
         PayrollLine.objects.update_or_create(
@@ -1216,16 +1222,17 @@ class Command(BaseCommand):
             return {"seeded": False, "reason": "finance or contract models unavailable"}
 
         month_end = date(year, month, monthrange(year, month)[1])
-        account, _ = CashAccount.objects.get_or_create(
-            name="Demo Main Account",
-            defaults={"bank_name": "Demo Bank", "masked_account_no": "000-***-0000", "is_active": True},
-        )
         default_cost_item = CostItem.objects.filter(is_active=True).order_by("sort_order", "id").first()
         if default_cost_item is None:
             return {"seeded": False, "reason": "active CostItem not found"}
 
         rows = []
         for project in projects:
+            account, _ = CashAccount.objects.get_or_create(
+                legal_entity=project.legal_entity,
+                name="Demo Main Account",
+                defaults={"bank_name": "Demo Bank", "masked_account_no": "000-***-0000", "is_active": True},
+            )
             approved_progress = (
                 DailyProgress.objects.filter(
                     project=project,

@@ -1,0 +1,123 @@
+{
+  "guard": {
+    "engine": "django.db.backends.postgresql",
+    "name": "construction_erp_demo",
+    "host": "127.0.0.1",
+    "engine_ok": true,
+    "host_ok": true,
+    "name_ok": true,
+    "name_safe": true,
+    "passed": true
+  },
+  "project_count": 0,
+  "unhandled_direct_project_relations": [],
+  "project_relations": {
+    "core.ProjectAssignment": [
+      "project"
+    ],
+    "projects.BudgetItem": [
+      "project"
+    ],
+    "projects.WBSItem": [
+      "project"
+    ],
+    "projects.WBSChangeRequest": [
+      "project"
+    ],
+    "projects.ApprovalPackage": [
+      "project"
+    ],
+    "projects.ProjectContract": [
+      "project"
+    ],
+    "field.DailyReport": [
+      "project"
+    ],
+    "cost.CostActual": [
+      "project"
+    ],
+    "cost.RevenueRecognition": [
+      "project"
+    ],
+    "finance.CashEvent": [
+      "project"
+    ],
+    "schedule.SchedulePlan": [
+      "project"
+    ],
+    "schedule.DailyProgress": [
+      "project"
+    ],
+    "schedule.PlanChangeRequest": [
+      "project"
+    ],
+    "contracts.ContractChange": [
+      "project"
+    ],
+    "contracts.ContractSnapshot": [
+      "project"
+    ],
+    "risk.RiskFinding": [
+      "project"
+    ],
+    "audit.AuditLog": [
+      "project"
+    ],
+    "reports.FieldReport": [
+      "project"
+    ],
+    "master.FavoriteCostItem": [
+      "project"
+    ],
+    "closing.ProjectClose": [
+      "project"
+    ],
+    "closing.Adjustment": [
+      "project"
+    ],
+    "inventory.Warehouse": [
+      "project"
+    ],
+    "inventory.Transfer": [
+      "project"
+    ],
+    "inventory.IssueToWork": [
+      "project"
+    ],
+    "labor.LaborRateTable": [
+      "project"
+    ],
+    "labor.LaborWorkLedger": [
+      "actual_project",
+      "report_project"
+    ],
+    "labor.LaborMonthlyPayroll": [
+      "project",
+      "report_project"
+    ],
+    "labor.ElectronicCardImportBatch": [
+      "project"
+    ],
+    "labor.ElectronicCardWorkDay": [
+      "card_project"
+    ],
+    "labor.LaborReconciliationResult": [
+      "project"
+    ],
+    "labor.LaborConfirmedWorkDay": [
+      "actual_project",
+      "report_project",
+      "card_project"
+    ],
+    "labor.LaborExcelExportBatch": [
+      "project"
+    ],
+    "labor.Timesheet": [
+      "project"
+    ],
+    "labor.PayrollAllocationLine": [
+      "project"
+    ]
+  },
+  "result": "LOCAL_OPS_RESET_DRYRUN_PASS"
+}

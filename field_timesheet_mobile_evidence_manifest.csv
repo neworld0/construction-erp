@@ -1,0 +1,12 @@
+artifact,purpose
+field_timesheet_mobile_06_discovery_notes.md,실제 view template field 구조 확인
+field_timesheet_mobile_07_mobile_ui_diagnostic.md,모바일 전후 진단과 브라우저 제한 기록
+field_timesheet_mobile_09_privacy_rbac_notes.md,개인정보 권한 마감 보호 계약
+field_timesheet_mobile_root_cause.md,문제 원인
+field_timesheet_mobile_ui_decision.md,카드형 UI 결정
+field_timesheet_mobile_before_after_matrix.csv,전후 변화
+field_timesheet_mobile_required_fields_matrix.csv,필수 입력 가시성
+field_timesheet_mobile_privacy_matrix.csv,PII 노출 방지
+field_timesheet_mobile_test_matrix.csv,검증 결과
+field_timesheet_mobile_source_scan.txt,소스 안전성 검사
+field_timesheet_mobile_report.md,운영 요약

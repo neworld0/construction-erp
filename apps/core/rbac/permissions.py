@@ -3,7 +3,7 @@ import os
 
 from django.core.exceptions import PermissionDenied
 
-from .models import ProjectAssignment, Role, UserProfile
+from .models import LegalEntity, ProjectAssignment, Role, UserLegalEntityMembership, UserProfile
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,14 @@ def require_role(user, allowed_roles: list[str], request=None) -> None:
 
 
 def can_view_project(user, project_id) -> bool:
+    # A role alone must not bypass the legal-entity ownership boundary when a
+    # user types a project URL directly.
+    from apps.projects.models import Project
+
+    project = Project.objects.filter(id=project_id).only("legal_entity_id").first()
+    if project is None or not can_access_legal_entity(user, project.legal_entity_id):
+        return False
+
     role = _get_role(user)
     if role in (Role.CEO, Role.HQ):
         return True
@@ -78,3 +86,46 @@ def can_view_project(user, project_id) -> bool:
 def require_project_access(user, project_id) -> None:
     if not can_view_project(user, project_id):
         raise PermissionDenied("Project access denied.")
+
+
+def get_user_legal_entities(user):
+    """Return only explicitly active entity memberships; role never implies membership."""
+    if user is None or not getattr(user, "is_authenticated", False):
+        return LegalEntity.objects.none()
+    return LegalEntity.objects.filter(
+        memberships__user=user,
+        memberships__is_active=True,
+        is_active=True,
+    ).distinct().order_by("code")
+
+
+def can_access_legal_entity(user, legal_entity) -> bool:
+    entity_id = getattr(legal_entity, "id", legal_entity)
+    return get_user_legal_entities(user).filter(id=entity_id).exists()
+
+
+def require_legal_entity_access(user, legal_entity, request=None) -> None:
+    if can_access_legal_entity(user, legal_entity):
+        return
+    logger.warning(
+        "Legal entity RBAC deny: user=%s entity=%s path=%s",
+        getattr(user, "username", None),
+        getattr(legal_entity, "id", legal_entity),
+        getattr(request, "path", None),
+    )
+    raise PermissionDenied("Legal entity access denied.")
+
+
+def get_current_legal_entity(request):
+    """Resolve a membership-scoped context without granting transaction access.
+
+    The current entity is a convenience for defaults and navigation. Every
+    transaction remains protected by its own legal-entity access check.
+    """
+    entities = get_user_legal_entities(getattr(request, "user", None))
+    selected_id = request.session.get("current_legal_entity_id") if hasattr(request, "session") else None
+    if selected_id:
+        selected = entities.filter(id=selected_id).first()
+        if selected:
+            return selected
+    return entities.first()

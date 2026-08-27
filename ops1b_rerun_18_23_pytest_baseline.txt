@@ -1,0 +1,32 @@
+﻿.........................................................                [100%]
+============================== warnings summary ===============================
+apps\inventory\models.py:35
+  C:\projects\construction-erp\apps\inventory\models.py:35: RemovedInDjango60Warning: CheckConstraint.check is deprecated in favor of `.condition`.
+    models.CheckConstraint(
+
+apps/core/tests/test_audit9_operational_smoke_matrix.py::test_audit9_release_preflight_has_no_pending_migration_or_debug_artifact_contract
+  C:\projects\construction-erp\apps\inventory\migrations\0001_initial.py:67: RemovedInDjango60Warning: CheckConstraint.check is deprecated in favor of `.condition`.
+    constraint=models.CheckConstraint(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+57 passed, 2 warnings in 22.01s
+pytest : Exception ignored in atexit callback: <function cleanup_numbered_dir at 0x000001EB47E628E0>
+At line:20 char:1
++ pytest -q apps/core/tests/test_audit9_operational_smoke_matrix.py app ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception ignor...0001EB47E628E0>:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Traceback (most recent call last):
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\_pytest\pathlib.py", line 374, in cleanup_numbered_dir
+    cleanup_dead_symlinks(root)
+  File "C:\projects\construction-erp\.venv\Lib\site-packages\_pytest\pathlib.py", line 359, in cleanup_dead_symlinks
+    if not left_dir.resolve().exists():
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\commo\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 860, in exists
+    self.stat(follow_symlinks=follow_symlinks)
+  File "C:\Users\commo\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 840, in stat
+    return os.stat(self, follow_symlinks=follow_symlinks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] �׼����� �źεǾ����ϴ�: 'C:\\Users\\Public\\Documents\\ESTsoft\\CreatorTemp\\pytest-of-�̱�ȣ\\
+pytest-current'

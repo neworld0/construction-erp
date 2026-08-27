@@ -1,0 +1,5 @@
+﻿Issue_ID,Area,Severity,P0_P1_P2,Description,Evidence,Workaround,Required_Before_OPS1C,Required_Before_Full_Rollout,Followup_Prompt
+OPS1BR-001,LABPAY 전자카드,High,P1,후보 XLSX에서 주민번호 전화번호 계좌번호 형식값이 감지되어 안전 업로드 불가,ops1b_rerun_ecard_safety_check.txt,완전 마스킹된 XLSX 제공,No,Yes,LABPAY-SAFE-ECARD-REHEARSAL
+OPS1BR-002,수익 인식 정책,High,P1,잠정 진행률 기준 수익만 생성돼 실제 인식 정책 미확정,ops1a_cost_revenue_policy_template.csv,CEO와 HQ가 기준일 승인 조정 정책 확정,Yes,Yes,OPS1C-KPI-RECONCILIATION
+OPS1BR-003,WBS 기준선,Medium,P1,WBS 가중치가 85%로 미세분화 공정 15%가 없음,ops1a_cbs_wbs_budget_template.csv,남은 공정 기준선 등록 또는 100% 정책 승인,Yes,Yes,PROJECT-WBS-BASELINE-COMPLETE
+OPS1BR-004,테스트 환경,Low,P2,pytest 종료 시 Windows Public Documents 임시 폴더 접근 경고,ops1b_rerun_18_23_pytest_baseline.txt,pytest 임시 경로 프로젝트 내부로 고정,No,No,TEST-ENV-PYTEST-TEMP

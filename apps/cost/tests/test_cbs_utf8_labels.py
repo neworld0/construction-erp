@@ -6,7 +6,7 @@ from django.test import RequestFactory
 
 from apps.core.rbac.models import Role, UserProfile
 from apps.cost.models import CostItem
-from apps.cost.seed_civil_road_cbs import seed_civil_road_cbs
+from apps.cost.seed_civil_road_cbs import CIVIL_ROAD_CBS_SPECS, seed_civil_road_cbs
 from apps.master.web_views import ceo_cbs_list_view
 from apps.projects.forms import BudgetItemForm
 
@@ -43,6 +43,25 @@ def test_cost_item_korean_display_helpers_do_not_return_mojibake():
         assert "�" not in item.get_category_label_ko()
         assert "�" not in item.get_cost_type_display_ko()
         assert "�" not in item.get_work_type_display_ko()
+
+
+@pytest.mark.django_db
+def test_civil_seed_creates_canonical_code_when_legacy_item_has_same_name():
+    CostItem.objects.create(
+        code="LEGACY-EQUIPMENT",
+        name="장비비",
+        category="equip",
+        is_active=True,
+    )
+
+    seed_civil_road_cbs()
+
+    expected_codes = {spec["code"] for spec in CIVIL_ROAD_CBS_SPECS}
+    seeded_codes = set(
+        CostItem.objects.filter(code__in=expected_codes, is_active=True).values_list("code", flat=True)
+    )
+    assert seeded_codes == expected_codes
+    assert CostItem.objects.filter(code="LEGACY-EQUIPMENT").exists()
 
 
 def _build_request(user):

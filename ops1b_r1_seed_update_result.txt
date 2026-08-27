@@ -1,0 +1,15 @@
+﻿SEED_UPDATE_PASS
+project_id=17
+contract_amount=571022700.00
+budget_before=390000000
+budget_after=571022700
+wbs_before=85.00
+wbs_after=100.00
+task_weight_before=85.000
+task_weight_after=100.000
+revenue_before=71377837.50
+revenue_after=32120026.88
+weighted_progress=5.625000
+cost_total=10000000.00
+profit_after=22120026.88
+margin_after=68.87

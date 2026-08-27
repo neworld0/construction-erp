@@ -35,16 +35,6 @@ class AdjustmentForm(forms.ModelForm):
         self.user = user
         self.role = role
 
-        closed_periods = ClosingPeriod.objects.filter(
-            status=ClosingStatus.CLOSED
-        ).order_by("-year", "-month")
-        self.fields["period"].choices = [
-            (f"{period.year}-{period.month:02d}", f"{period.year}년 {period.month}월")
-            for period in closed_periods
-        ]
-        if not self.fields["period"].choices:
-            self.fields["period"].choices = [("", "마감된 월이 없습니다.")]
-
         if role == Role.FIELD and user:
             project_ids = ProjectAssignment.objects.filter(
                 user=user, is_active=True
@@ -53,6 +43,12 @@ class AdjustmentForm(forms.ModelForm):
         else:
             self.fields["project"].queryset = Project.objects.all()
         self.fields["project"].label = "프로젝트"
+
+        closed_periods = ClosingPeriod.objects.filter(status=ClosingStatus.CLOSED).order_by("-year", "-month")
+        self.fields["period"].choices = [
+            (f"{period.year}-{period.month:02d}", f"{period.legal_entity.name} · {period.year}년 {period.month}월")
+            for period in closed_periods
+        ] or [("", "마감된 월이 없습니다.")]
 
         self.fields["target_type"].choices = TARGET_TYPE_CHOICES
         self.fields["target_type"].label = "대상"
@@ -94,8 +90,11 @@ class AdjustmentForm(forms.ModelForm):
             month = int(month_str)
         except ValueError as exc:
             raise ValidationError("마감 월 형식이 올바르지 않습니다.") from exc
+        project = self.cleaned_data.get("project")
+        if project is None:
+            raise ValidationError("프로젝트를 먼저 선택하세요.")
         is_closed = ClosingPeriod.objects.filter(
-            year=year, month=month, status=ClosingStatus.CLOSED
+            legal_entity=project.legal_entity, year=year, month=month, status=ClosingStatus.CLOSED
         ).exists()
         if not is_closed:
             raise ValidationError("마감된 월만 선택할 수 있습니다.")

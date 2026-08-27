@@ -1,0 +1,9 @@
+Artifact,Purpose,Status
+local_ops_reset_risk_08_discovery_notes.md,Risk model and CEO/reset discovery,PASS
+local_ops_reset_risk_root_cause.md,Root cause record,PASS
+local_ops_reset_risk_findings_snapshot.csv,Read-only finding classification,PASS
+local_ops_reset_risk_project_count_snapshot.csv,Project and risk count snapshot,PASS
+local_ops_reset_risk_cleanup_manifest.csv,Future reset cleanup candidates,PASS
+local_ops_reset_risk_ceo_before_after_matrix.csv,CEO behavior comparison,PASS
+local_ops_reset_risk_test_matrix.csv,Verification results,PASS
+local_ops_reset_risk_source_scan.txt,Changed-source UTF-8 and scope scan,PASS

@@ -1,0 +1,5 @@
+Issue_ID,Area,Severity,P0_P1_P2,Before_Status,After_Status,Description,Workaround,Required_Before_OPS1C,Required_Before_Full_Rollout,Followup_Prompt
+OPS1BR-001,LABPAY 전자카드,High,P1,HOLD,HOLD,안전한 비식별 전자카드 XLSX가 없음,완전 마스킹 파일 제공,No,Yes,LABPAY-REAL-1
+OPS1BR-002,수익 인식 정책,High,P1,POLICY_PENDING,RESOLVED_FOR_OPS1C,가중 진행률 기준 잠정 정책 정의,OPS1C에서 dashboard와 seed 대사,No,Yes,FINANCE-REVENUE-POLICY-FINALIZE
+OPS1BR-003,WBS 기준선,Medium,P1,85_PERCENT,RESOLVED,기타공정 15%와 residual budget 추가,실 운영 공정으로 세분화 검토,No,Yes,PROJECT-WBS-DETAIL-REFINEMENT
+OPS1BR-004,테스트 환경,Low,P2,WARNING,WARNING,pytest 임시 폴더 접근 경고,프로젝트 내부 temp 경로 사용,No,No,TEST-ENV-PYTEST-TEMP

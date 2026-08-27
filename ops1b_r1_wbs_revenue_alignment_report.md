@@ -1,0 +1,87 @@
+# OPS-1B-R1 WBS 기준선 및 수익 인식 정책 정렬
+
+## 1. 종합 결론
+
+- OPS-1B-R1 상태: PASS
+- 적용 정책: POLICY A, 기타공정 15% 및 계약-예산 잔액 기준선 추가
+- OPS-1C 진행 가능 여부: 가능
+- P0: 0건
+- P1: 1건
+- P2: 1건
+
+비식별 파일럿 `OPS1B-RERUN-SAMPLE-001`에 residual WBS/예산을 idempotent하게 추가하고, 수익 인식을 작업 진행률이 아닌 가중 대시보드 진행률 기준으로 정렬했다. WBS와 ScheduleTask 가중치, 예산과 계약금액, RevenueRecognition과 CEO dashboard 값이 모두 대사된다.
+
+## 2. 기존 OPS-1B-RERUN 보류 사유
+
+기존 기준선은 토공 20%, 포장공사 45%, 배수공사 20%로 합계 85%였다. 예산은 390000000원으로 계약금액보다 181022700원 작았다. 수익 71377837.50원은 작업 진행률 12.5%를 계약금액에 직접 적용한 잠정값이었다.
+
+## 3. 적용한 WBS 정책
+
+POLICY A를 적용했다. `기타공정`을 pilot-only residual work package로 추가했다.
+
+| Item | Current Weight | Budget | Role | Status |
+|---|---:|---:|---|---|
+| 토공 | 20% | 50000000 | 기존 공정 | 유지 |
+| 포장공사 | 45% | 250000000 | 기존 공정 | 유지 |
+| 배수공사 | 20% | 90000000 | 기존 공정 | 유지 |
+| 기타공정 | 15% | 181022700 | 계약-예산 잔액 공정 | 추가 |
+| 합계 | 100% | 571022700 | 파일럿 기준선 | 완료 |
+
+## 4. WBS before/after
+
+WBSItem과 ScheduleTask 모두 85%에서 100%로 정렬했다. 기존 작업의 진행률을 변경하지 않았으므로 포장공사 작업 진행률은 12.5%로 유지된다. 대시보드 총 진행률은 45% x 12.5% = 5.625%다.
+
+## 5. 예산 before/after
+
+- Before: 390000000원
+- Residual budget: 181022700원
+- After: 571022700원
+- Contract-budget difference: 181022700원에서 0원으로 변경
+
+## 6. 수익 인식 정책
+
+정책명은 `PROGRESS_BASED_PROVISIONAL`이다.
+
+`recognized_revenue = contract_amount x dashboard_progress_percent / 100`
+
+수익 기준은 가중 대시보드 진행률이며, 계약금액은 활성 ProjectContract/ContractSnapshot 기준이다. 원가는 승인 CostActualLine 합계다. 반올림은 소수점 둘째 자리다. 이는 OPS-1C용 잠정 정책이며 최종 회계정책은 아니다.
+
+## 7. KPI 재계산 결과
+
+- Contract amount: 571022700원
+- Dashboard weighted progress: 5.625%
+- Recognized revenue before: 71377837.50원
+- Recognized revenue after: 32120026.88원
+- Cost total: 10000000.00원
+- Expected profit after: 22120026.88원
+- Expected margin after: 68.87%
+
+## 8. ERP dashboard 대사 준비값
+
+로컬 demo DB의 CEO dashboard는 진행률 5.625000%, 수익 32120026.88원, 원가 10000000.00원, 이익 22120026.88원, 이익률 약 68.87%를 반환했다. KPI seed의 값과 차이는 0이다.
+
+## 9. 남은 HOLD 항목
+
+전자카드 후보 XLSX는 PII 형식값이 감지되어 사용하지 않았다. `OPS1BR-001`은 안전한 비식별 전자카드 파일 확보까지 별도 보류다.
+
+## 10. LABPAY/e-card 별도 보류
+
+LABPAY는 본 R1 범위에 포함하지 않았다. WorkerMaster를 생성하지 않았고, CWMA 파일을 업로드하거나 파싱하지 않았다.
+
+## 11. P0/P1/P2 분류
+
+- P0: 없음
+- P1: OPS1BR-001 안전 전자카드 파일 필요
+- P2: pytest 종료 시 Windows 임시 경로 권한 경고. 회귀 22개는 통과했다.
+
+## 12. OPS-1C 진행 가능 여부
+
+가능. WBS/예산/수익 대사 기준이 확정됐고 dashboard 값도 재계산 seed와 일치한다. 전자카드 보류는 별도 `LABPAY-REAL-1`로 분리한다.
+
+## 13. 한글 UTF-8 / 개인정보 검증
+
+R1 산출물 source scan은 PASS다. 파일에는 주민등록번호, 전화번호, 계좌번호 원문을 기록하지 않았다.
+
+## 14. 최종 판정
+
+PASS. OPS-1C KPI reconciliation을 진행할 수 있다. production code와 migration은 변경하지 않았다.

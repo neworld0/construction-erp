@@ -1,0 +1,6 @@
+﻿file_found= True
+sheet_count= 1
+raw_rrn_count= 6
+raw_phone_count= 6
+raw_account_like_count= 6
+SAFE_FOR_RERUN_UPLOAD= False

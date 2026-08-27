@@ -1,0 +1,10 @@
+﻿# Restore drill report
+
+- restore executed: NO
+- target DB: NOT_PROVIDED
+- migration state: NOT_EXECUTED
+- project count: NOT_EXECUTED
+- AuditLog count: NOT_EXECUTED
+- raw PII printed: NO
+- cleanup performed: NO
+- Result: HOLD. Safe stop before any restore operation because the Access Pack is incomplete.

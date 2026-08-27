@@ -1,0 +1,20 @@
+record_group,current_count,current_attribution_basis,dry_run_classification,automatic_action,required_hq_evidence
+Projects,1,HQ confirmed contract owner,ASAN,Assign in project conversion,Existing project contract legal entity: ASAN
+Project contracts,1,Project,ASAN,Follow confirmed project entity,Existing project contract legal entity: ASAN
+Project budgets and WBS,34,Project,ASAN,Follow confirmed project entity,Existing project contract legal entity: ASAN
+Project-linked cost actuals and lines,42,Project,ASAN,Follow confirmed project entity; preserve VAT snapshots,Existing project contract legal entity: ASAN
+Revenue recognition,2,Project,ASAN,Follow confirmed project entity; preserve recognition snapshots,Existing project contract legal entity: ASAN
+Warehouses,2,HQ confirmed ownership,ASAN,Assign in warehouse conversion,Central and site warehouse ownership: ASAN
+Stock and inventory ledger,60,Warehouse,ASAN,Follow confirmed warehouse entity,Central and site warehouse ownership: ASAN
+Transfers and transfer lines,26,Source/destination warehouses,ASAN,Validate same entity after assignment,Central and site warehouse ownership: ASAN
+Material issues and lines,20,Project plus warehouse,ASAN,Validate project/warehouse same entity,Confirmed project and warehouse ownership: ASAN
+Daily worker masters,10,HQ confirmed employer,ASAN,Assign in labor conversion,Daily worker employer: ASAN
+Timesheets and lines,26,Project plus worker,ASAN,Validate employer/project relation,Confirmed project and worker employer: ASAN
+Office employees,3,HQ confirmed employer,ASAN,Assign in office payroll conversion,Office employee employer: ASAN
+Office payroll runs and payslips,36,HQ confirmed employer,ASAN,Assign in office payroll conversion,Existing payroll employer: ASAN
+Payroll allocation batch,1,HQ confirmed employer and project owner,ASAN,Assign in payroll allocation conversion,Existing payroll employer and project owner: ASAN
+Closing periods,3,HQ confirmed closing owner,ASAN,Assign in closing conversion,Existing closing owner: ASAN
+Finance cash/billing/expense records,40,Project or standalone record,NEEDS_REVIEW,Derive only project-linked records after project review; review standalone records,Invoice/bank/cash owner
+Progress and field reports,31,Project,DERIVE_AFTER_PROJECT_REVIEW,Follow confirmed project entity,Confirmed project attribution
+Cost and item masters,334,Global master,GROUP_SHARED,Keep shared master; do not treat as statutory ownership,Master-data governance approval
+Audit logs,1849,Generic target,RETAIN_UNCHANGED,Do not rewrite historical audit events,No action; future entity context only

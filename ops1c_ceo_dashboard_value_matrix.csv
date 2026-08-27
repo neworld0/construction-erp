@@ -1,0 +1,10 @@
+KPI,Expected_Value,Dashboard_Value,Difference,Tolerance,Result,Source,Notes
+Contract_Amount,571022700,571022700.00,0.00,1,PASS,ProjectContract,OPS-1B-R1 approved seed
+Budget_Total,571022700,571022700,0,1,PASS,BudgetItem planned_amount sum,OPS-1B-R1 approved seed
+Contract_Budget_Difference,0,0.00,0.00,1,PASS,ProjectContract - BudgetItem sum,OPS-1B-R1 approved seed
+WBS_Weight_Total,100,100.00,0.00,1,PASS,WBSItem weight sum,OPS-1B-R1 approved seed
+Dashboard_Weighted_Progress,5.625,5.625000,0.000000,0.01,PASS,CEO dashboard _bulk_progress,OPS-1B-R1 approved seed
+Cost_Total,10000000,10000000.00,0.00,1,PASS,approved/closed CostActualLine,OPS-1B-R1 approved seed
+Recognized_Revenue,32120026.88,32120026.88,0.00,1,PASS,latest active-snapshot RevenueRecognition,OPS-1B-R1 approved seed
+Expected_Profit,22120026.88,22120026.88,0.00,1,PASS,CEO dashboard recognized_revenue - accrual_cost,OPS-1B-R1 approved seed
+Expected_Margin,68.87,68.86677574287260372305142978,-0.00322425712739627694857022,0.05,PASS,CEO dashboard profit / recognized_revenue,OPS-1B-R1 approved seed

@@ -46,12 +46,14 @@ def _empty_summary():
 
 def _build_summary(lines_queryset):
     summary = _empty_summary()
-    total = lines_queryset.aggregate(total=Sum("amount"))["total"] or Decimal("0")
+    # P&L cost excludes deductible input VAT. Operational totals and cash
+    # disbursements continue to use CostActualLine.amount (gross).
+    total = lines_queryset.aggregate(total=Sum("accounting_cost_amount"))["total"] or Decimal("0")
     summary["total_cost"] = total
 
     by_category = (
         lines_queryset.values("cost_item__category")
-        .annotate(total=Sum("amount"))
+        .annotate(total=Sum("accounting_cost_amount"))
         .order_by()
     )
     for row in by_category:

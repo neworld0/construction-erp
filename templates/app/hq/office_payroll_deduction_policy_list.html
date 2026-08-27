@@ -1,0 +1,41 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}자동 공제 정책 관리{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="card" style="max-width:920px">
+    <h2>자동 공제 정책 관리</h2>
+    <p class="hint">연도별 자동계산 기준입니다. 이미 저장된 급여명세서는 변경되지 않으며, 임시저장 급여대장에서 ‘공제 자동계산’을 다시 실행할 때 적용됩니다.</p>
+    <form method="get" style="display:flex;gap:8px;align-items:end;margin:14px 0"><label>적용 연도<input class="input" type="number" name="year" value="{{ selected_year }}" min="2000" max="2100"></label><button class="btn btn-outline">조회</button><a class="btn btn-outline" href="/app/hq/labor/office-payroll/">급여대장 목록</a></form>
+    <form method="post">{% csrf_token %}
+      <input type="hidden" name="year" value="{{ selected_year }}">
+      <table class="table"><thead><tr><th>공제 항목</th><th>자동 계산 기준</th><th>공제율(%)</th></tr></thead><tbody>
+        <tr><td>국민연금</td><td>기본급 + 상여</td><td><input class="input" type="number" step="0.00001" min="0" max="100" name="national_pension_rate" value="{{ rate_percentages.national_pension_rate }}" required></td></tr>
+        <tr><td>건강보험</td><td>기본급 + 상여</td><td><input class="input" type="number" step="0.00001" min="0" max="100" name="health_insurance_rate" value="{{ rate_percentages.health_insurance_rate }}" required></td></tr>
+        <tr><td>노인장기요양보험</td><td>자동 계산된 건강보험료</td><td><input class="input" type="number" step="0.00001" min="0" max="100" name="long_term_care_rate" value="{{ rate_percentages.long_term_care_rate }}" required></td></tr>
+        <tr><td>고용보험</td><td>기본급 + 상여</td><td><input class="input" type="number" step="0.00001" min="0" max="100" name="employment_insurance_rate" value="{{ rate_percentages.employment_insurance_rate }}" required></td></tr>
+        <tr><td>소득세</td><td colspan="2">근로소득 간이세액표와 직원별 공제대상 가족 수·8~20세 자녀 수·80/100/120% 선택비율로 자동 계산됩니다.</td></tr>
+      </tbody></table>
+      <p class="hint">지방소득세는 자동 계산된 소득세의 10%로 계산합니다. 개인별 가족 수·선택비율은 본사 급여명세서 화면의 ‘직원별 소득세 적용 정보’에서 관리합니다.</p>
+      <button class="btn" type="submit">{{ selected_year }}년 정책 저장</button>
+    </form>
+  </div>
+  <div class="card" style="margin-top:14px;max-width:920px">
+    <h3>자녀 세액공제 기준</h3>
+    {% if active_tax_table %}
+      <p class="hint">적용 기준표: {{ active_tax_table.effective_from|date:"Y-m-d" }} 시행 · {{ active_tax_table.source_name }}. 이 값은 해당 기준표로 자동계산하는 임시저장 급여대장에만 반영됩니다.</p>
+      <form method="post" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_child_tax_credit">
+        <input type="hidden" name="income_tax_table_version_id" value="{{ active_tax_table.id }}">
+        <label>자녀 1명 월 공제액(원)<input class="input" type="number" min="0" name="child_credit_one" value="{{ active_tax_table.child_credit_one }}" required></label>
+        <label>자녀 2명 월 공제액(원)<input class="input" type="number" min="0" name="child_credit_two" value="{{ active_tax_table.child_credit_two }}" required></label>
+        <label>3명 이상 추가 1명당 월 공제액(원)<input class="input" type="number" min="0" name="child_credit_per_additional" value="{{ active_tax_table.child_credit_per_additional }}" required></label>
+        <button class="btn" type="submit">자녀 공제 기준 저장</button>
+      </form>
+    {% else %}
+      <p class="hint">활성화된 근로소득 간이세액표가 없습니다. 공식 간이세액표를 먼저 등록해 주세요.</p>
+    {% endif %}
+  </div>
+  <div class="card" style="margin-top:14px;max-width:920px"><h3>등록 이력</h3><table class="table"><thead><tr><th>연도</th><th>국민연금</th><th>건강보험</th><th>장기요양</th><th>고용보험</th></tr></thead><tbody>{% for item in policies %}<tr><td><a href="?year={{ item.year }}">{{ item.year }}</a></td><td>{{ item.national_pension_rate|floatformat:5 }}</td><td>{{ item.health_insurance_rate|floatformat:5 }}</td><td>{{ item.long_term_care_rate|floatformat:5 }}</td><td>{{ item.employment_insurance_rate|floatformat:5 }}</td></tr>{% empty %}<tr><td colspan="5">등록된 정책이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

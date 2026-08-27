@@ -1,0 +1,8 @@
+﻿ops1a_cbs_wbs_budget_template.csv
+ops1a_cost_revenue_policy_template.csv
+ops1a_data_gap_and_workaround_register.csv
+ops1a_e_card_file_checklist.csv
+ops1a_field_progress_plan_template.csv
+ops1a_labor_worker_template.csv
+ops1a_pilot_validation_checklist.csv
+ops1a_project_master_template.csv

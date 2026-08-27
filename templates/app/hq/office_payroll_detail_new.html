@@ -1,0 +1,102 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}본사 급여대장{% endblock %}
+{% block content %}
+<style>
+  .office-payroll-table { min-width: 1580px; table-layout: fixed; }
+  .office-payroll-table .employee-column { width: 200px; min-width: 200px; }
+  .office-payroll-table .base-pay-column { width: 100px; min-width: 100px; }
+  .office-payroll-table .amount-column { width: 60px; min-width: 60px; }
+  .office-payroll-table .summary-column { width: 120px; min-width: 120px; }
+  .office-payroll-table th, .office-payroll-table td { padding: 8px 6px; text-align: center; overflow-wrap: anywhere; }
+  .office-payroll-table .employee-cell { text-align: left; white-space: normal; }
+  .office-payroll-table .input { width: 60px; min-width: 60px; max-width: 60px; padding: 8px 4px; text-align: right; }
+  .office-payroll-table .base-pay-input { width: 100px; min-width: 100px; max-width: 100px; }
+</style>
+<div class="container">
+  <div class="card">
+    <h2>{{ run.period_year }}년 {{ run.period_month }}월 본사 급여대장</h2>
+    <p class="hint">지급일자: {{ run.payment_date|date:"Y년 n월 j일" }}</p>
+    <p class="hint">정책: 국민연금 {{ policy.national_pension_rate }} · 건강보험 {{ policy.health_insurance_rate }} · 장기요양 {{ policy.long_term_care_rate }} · 고용보험 {{ policy.employment_insurance_rate }}</p>
+    <p class="hint">식대 200,000원과 주유대 100,000원은 전 직원 공통 비과세 지급 항목입니다. 자동계산 결과는 저장 전 검토·수정할 수 있으며, 확정 후에는 정정 절차가 필요합니다.</p>
+    <a class="btn btn-outline" href="/app/hq/labor/office-payroll/">목록</a>
+  </div>
+
+  {% if run.status != 'VOID' %}
+  <form method="post" class="card" style="margin-top:12px">{% csrf_token %}
+    <h3>급여대장 폐기(삭제)</h3>
+    {% if can_void %}
+      <p class="hint">폐기된 급여대장은 일반 목록에서 제거되지만, 폐기 사유와 감사 이력은 보존됩니다. 같은 월 급여대장은 새로 만들 수 있습니다.</p>
+      <label>폐기 사유 <input class="input" name="void_reason" required maxlength="500" placeholder="예: 테스트용 급여대장"></label>
+      <button class="btn btn-outline" name="action" value="void" onclick="return confirm('이 급여대장을 폐기하시겠습니까? 폐기 후에는 일반 목록에서 보이지 않습니다.');">급여대장 폐기(삭제)</button>
+    {% else %}
+      <p class="hint">현재 삭제할 수 없습니다: {{ void_block_reason }}</p>
+      <button class="btn btn-outline" type="button" disabled>급여대장 폐기(삭제)</button>
+    {% endif %}
+  </form>
+  {% endif %}
+
+  {% if editable %}
+  <div class="card" style="margin-top:12px"><form method="post">{% csrf_token %}
+    <select class="input" name="employee_id">{% for employee in employees %}<option value="{{ employee.id }}">{{ employee }}</option>{% endfor %}</select>
+    <button class="btn" name="action" value="add_employee">직원 추가</button>
+  </form></div>
+  {% endif %}
+
+  {% if run.status == 'APPROVED' or run.status == 'PAID' %}
+  {% if corrections %}
+  <div class="card" style="margin-top:12px">
+    <h3>급여 정정 요청 현황</h3>
+    <p class="hint">승인 전 정정값은 원본 급여대장에 아직 반영되지 않습니다. 요청을 열어 승인 상태를 확인하고, 승인 완료 후 ‘승인 정정 적용’을 실행해 주세요.</p>
+    <table class="table"><thead><tr><th>요청번호</th><th>상태</th><th>정정 사유</th><th>요청자</th><th>처리</th></tr></thead><tbody>
+      {% for correction in corrections %}<tr><td>#{{ correction.id }}</td><td>{{ correction.get_status_display }}</td><td>{{ correction.reason|default:"-" }}</td><td>{{ correction.requested_by.username }}</td><td><a class="btn btn-outline" href="/app/hq/labor/office-payroll/corrections/{{ correction.id }}/">{% if correction.status == 'APPROVED' %}승인 정정 적용{% else %}정정 요청 보기{% endif %}</a></td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  {% endif %}
+  <div class="card" style="margin-top:12px">
+    <h3>공식 파일 다운로드</h3>
+    <p class="hint">확정 또는 지급 완료된 급여 기준으로 출력됩니다. 다운로드 이력은 감사 로그에 남습니다.</p>
+    <p><a class="btn btn-outline" href="/app/hq/labor/office-payroll/{{ run.id }}/downloads/payroll.xlsx">급여대장 엑셀</a> <a class="btn btn-outline" href="/app/hq/labor/office-payroll/{{ run.id }}/downloads/payroll.pdf">급여대장 PDF</a></p>
+    <table class="table"><thead><tr><th>직원</th><th>급여명세서</th></tr></thead><tbody>{% for s in slips %}<tr><td>{{ s.employee }}</td><td><a class="btn btn-outline" href="/app/hq/labor/office-payroll/{{ run.id }}/payslips/{{ s.id }}/downloads/payslip.xlsx">엑셀</a> <a class="btn btn-outline" href="/app/hq/labor/office-payroll/{{ run.id }}/payslips/{{ s.id }}/downloads/payslip.pdf">PDF</a></td></tr>{% endfor %}</tbody></table>
+  </div>
+  {% endif %}
+
+  <form method="post">{% csrf_token %}
+    {% if preview_calculated %}<input type="hidden" name="save_auto_calculation_snapshot" value="1">{% endif %}
+    <div class="card" style="margin-top:12px;overflow:auto">
+      <table class="table office-payroll-table"><colgroup><col class="employee-column"><col class="base-pay-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="amount-column"><col class="summary-column"><col class="summary-column"><col class="summary-column"></colgroup><thead><tr>
+        <th rowspan="2">직원</th><th colspan="6">지급 항목</th><th colspan="7">공제 항목</th><th colspan="3">집계</th>
+      </tr><tr>
+        <th>기본급</th><th>식대<br>(비과세)</th><th>주유대<br>(비과세)</th><th>현장수당</th><th>연장수당</th><th>상여</th><th>소득세</th><th>지방세</th><th>국민연금</th><th>건강보험</th><th>장기요양</th><th>고용보험</th><th>기타</th><th>총지급</th><th>공제</th><th>실지급</th>
+      </tr></thead><tbody>
+      {% for s in slips %}<tr>
+        <td class="employee-cell">{{ s.employee }}{% if preview_calculated %}<br><small class="hint">간이세액표 {{ s.auto_tax_withholding_ratio }}% 적용</small>{% endif %}</td>
+        <td><input class="input base-pay-input" name="slip-{{ s.id }}-base_pay" value="{{ s.base_pay }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-meal_allowance_pay" value="{{ s.meal_allowance_pay }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-fuel_allowance_pay" value="{{ s.fuel_allowance_pay }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-site_allowance_pay" value="{{ s.site_allowance_pay }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-overtime_pay" value="{{ s.overtime_pay }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-bonus_pay" value="{{ s.bonus_pay }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-income_tax" value="{{ s.income_tax }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-local_income_tax" value="{{ s.local_income_tax }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-national_pension" value="{{ s.national_pension }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-health_insurance" value="{{ s.health_insurance }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-long_term_care" value="{{ s.long_term_care }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-employment_insurance" value="{{ s.employment_insurance }}" {% if not editable %}disabled{% endif %}></td>
+        <td><input class="input" name="slip-{{ s.id }}-other_deduction" value="{{ s.other_deduction }}" {% if not editable %}disabled{% endif %}></td>
+        <td>{{ s.gross_pay|intcomma }}</td><td>{{ s.total_deduction|intcomma }}</td><td>{{ s.net_pay|intcomma }}</td>
+      </tr>{% empty %}<tr><td colspan="17">직원을 추가해 주세요.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+    {% if editable %}
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-outline" name="action" value="recalculate">공제 자동계산</button><button class="btn btn-outline" name="action" value="save">수정 저장</button><button class="btn" name="action" value="submit">검토 요청</button></div>
+    {% elif run.status == 'SUBMITTED' %}
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-outline" name="action" value="withdraw_submission">검토 요청 회수</button><button class="btn" name="action" value="approve">확정</button></div>
+    {% elif run.status == 'APPROVED' %}
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" name="action" value="paid">지급 완료</button><a class="btn btn-outline" href="/app/hq/labor/office-payroll/{{ run.id }}/corrections/new/">급여 정정 요청</a></div>
+    {% elif run.status == 'PAID' %}
+      <div style="margin-top:12px"><a class="btn btn-outline" href="/app/hq/labor/office-payroll/{{ run.id }}/corrections/new/">급여 정정 요청</a></div>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

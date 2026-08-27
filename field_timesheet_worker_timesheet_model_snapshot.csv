@@ -1,0 +1,3 @@
+﻿Model,Has_Project,Has_Work_Date,Has_WBS,Has_WorkerMaster_FK,Has_LaborRole_FK,Has_Headcount,Has_Hours,Has_Rate_Type,Has_Memo,Suitable_For_Worker_Level_Attendance,Notes
+TimesheetLine,Via Timesheet,Via Timesheet,No,Yes,Yes,Yes (work unit),Yes,Yes,Yes,Yes,Canonical FIELD attendance source before HQ confirmation.
+LaborWorkLedger,Yes,Yes,No,Yes,Yes,Yes (work unit),Yes,No,Yes,No,HQ ledger and reconciliation source; FIELD does not write it directly.

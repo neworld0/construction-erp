@@ -1,10 +1,13 @@
 import base64
 import hashlib
-from decimal import Decimal, ROUND_HALF_UP
+from datetime import date
+from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+
+from apps.core.rbac.models import default_asan_legal_entity_id
 
 
 _SENSITIVE_PREFIX = "enc1:"
@@ -139,6 +142,13 @@ class LaborRateTable(models.Model):
     project = models.ForeignKey(
         "projects.Project",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="labor_rates",
+    )
+    worker = models.ForeignKey(
+        "labor.WorkerMaster",
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="labor_rates",
@@ -891,6 +901,50 @@ class LaborExcelExportStatus(models.TextChoices):
     DISCARDED = "DISCARDED", "폐기"
 
 
+class LaborComplianceExportType(models.TextChoices):
+    WORK_CONFIRMATION = "WORK_CONFIRMATION", "근로내용확인신고"
+    DAILY_WAGE_STATEMENT = "DAILY_WAGE_STATEMENT", "일용노무비지급명세서"
+
+
+def _labor_compliance_export_upload_to(instance, filename):
+    return (
+        "labor/compliance_exports/"
+        f"{instance.year_month.year:04d}/{instance.year_month.month:02d}/{filename}"
+    )
+
+
+class LaborComplianceExport(models.Model):
+    """Closed-month statutory/export snapshot.  It is deliberately immutable source data."""
+
+    export_type = models.CharField(max_length=32, choices=LaborComplianceExportType.choices)
+    year_month = models.DateField(db_index=True)
+    project = models.ForeignKey(
+        "projects.Project", on_delete=models.PROTECT, related_name="labor_compliance_exports"
+    )
+    generated_file = models.FileField(upload_to=_labor_compliance_export_upload_to)
+    generated_filename = models.CharField(max_length=255)
+    source_summary = models.JSONField(default=dict, blank=True)
+    generated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="labor_compliance_exports_generated",
+    )
+    generated_at = models.DateTimeField(auto_now_add=True)
+    downloaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="labor_compliance_exports_downloaded",
+    )
+    downloaded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-generated_at", "-id"]
+        indexes = [
+            models.Index(fields=["export_type", "year_month", "project"]),
+        ]
+
+    def __str__(self):
+        return f"{self.export_type} {self.year_month:%Y-%m} {self.project_id}"
+
+
 def _labor_excel_export_upload_to(instance, filename):
     year_month = getattr(instance, "year_month", None)
     if year_month:
@@ -1039,6 +1093,13 @@ class TimesheetLine(models.Model):
     timesheet = models.ForeignKey(
         Timesheet, on_delete=models.CASCADE, related_name="lines"
     )
+    worker = models.ForeignKey(
+        WorkerMaster,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="timesheet_lines",
+    )
     labor_role = models.ForeignKey(
         LaborRole, on_delete=models.PROTECT, related_name="timesheet_lines"
     )
@@ -1047,6 +1108,16 @@ class TimesheetLine(models.Model):
     rate_type = models.CharField(
         max_length=10, choices=LaborRateType.choices, default=LaborRateType.DAY
     )
+    applied_rate = models.ForeignKey(
+        LaborRateTable,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="applied_timesheet_lines",
+    )
+    applied_rate_scope = models.CharField(max_length=24, blank=True, default="")
+    applied_rate_effective_from = models.DateField(null=True, blank=True)
+    applied_rate_resolved_at = models.DateTimeField(null=True, blank=True)
     unit_rate = models.BigIntegerField()
     amount = models.BigIntegerField()
     memo = models.CharField(max_length=255, blank=True)
@@ -1090,6 +1161,20 @@ class PayrollAllocationBatch(models.Model):
         default=PayrollAllocationStatus.DRAFT,
     )
     total_amount = models.BigIntegerField()
+    legal_entity = models.ForeignKey(
+        "core.LegalEntity",
+        on_delete=models.PROTECT,
+        related_name="payroll_allocation_batches",
+        default=default_asan_legal_entity_id,
+        help_text="이 급여 원가를 부담하는 고용 법인입니다.",
+    )
+    office_payroll_run = models.OneToOneField(
+        "OfficePayrollRun",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="project_allocation_batch",
+    )
     note = models.TextField(blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -1120,8 +1205,8 @@ class PayrollAllocationBatch(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["period_year", "period_month"],
-                name="uniq_payroll_batch_period",
+                fields=["legal_entity", "period_year", "period_month"],
+                name="uniq_payroll_batch_entity_period",
             )
         ]
         ordering = ["-period_year", "-period_month", "-id"]
@@ -1166,3 +1251,363 @@ class PayrollAllocationLine(models.Model):
 
     def __str__(self) -> str:
         return f"{self.batch.batch_no} - {self.project_id}"
+
+
+class OfficePayrollStatus(models.TextChoices):
+    DRAFT = "DRAFT", "임시저장"
+    SUBMITTED = "SUBMITTED", "검토 대기"
+    APPROVED = "APPROVED", "확정"
+    PAID = "PAID", "지급 완료"
+    REJECTED = "REJECTED", "반려"
+    VOID = "VOID", "폐기"
+
+
+class OfficePayrollCorrectionStatus(models.TextChoices):
+    DRAFT = "DRAFT", "임시저장"
+    SUBMITTED = "SUBMITTED", "승인 대기"
+    APPROVED = "APPROVED", "승인 완료"
+    REJECTED = "REJECTED", "반려"
+    APPLIED = "APPLIED", "적용 완료"
+
+
+class OfficeEmployeeProfile(models.Model):
+    """HQ employee master for confidential payroll; separate from FIELD workers."""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="office_employee_profile")
+    employment_legal_entity = models.ForeignKey(
+        "core.LegalEntity",
+        on_delete=models.PROTECT,
+        related_name="office_employees",
+        default=default_asan_legal_entity_id,
+        help_text="근로계약·급여·원천세·4대보험을 부담하는 고용 법인입니다.",
+    )
+    employee_no = models.CharField(max_length=40, unique=True)
+    department = models.CharField(max_length=100, blank=True, default="")
+    birth_date_encrypted = models.CharField(max_length=255, blank=True, default="")
+    birth_date_masked = models.CharField(max_length=16, blank=True, default="")
+    tax_dependent_count = models.PositiveSmallIntegerField(default=1)
+    tax_child_count_8_to_20 = models.PositiveSmallIntegerField(default=0)
+    tax_withholding_ratio = models.PositiveSmallIntegerField(default=100, help_text="근로소득 간이세액표 원천징수 선택비율(80/100/120)")
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["employee_no"]
+
+    def __str__(self):
+        return f"{self.employee_no} - {self.user.get_full_name() or self.user.username}"
+
+    @property
+    def birth_date(self):
+        raw_value = _unprotect_sensitive_value(self.birth_date_encrypted, "office-employee-birth-date")
+        try:
+            return date.fromisoformat(raw_value) if raw_value else None
+        except ValueError:
+            return None
+
+    def set_birth_date(self, value):
+        if not value:
+            self.birth_date_encrypted = ""
+            self.birth_date_masked = ""
+            return
+        birth_date = value if isinstance(value, date) else date.fromisoformat(str(value))
+        self.birth_date_encrypted = _protect_sensitive_value(birth_date.isoformat(), "office-employee-birth-date")
+        self.birth_date_masked = f"{birth_date.year:04d}-**-**"
+
+    def is_national_pension_eligible_for_month(self, year, month):
+        """The month of the 60th birthday remains contributory."""
+        birth_date = self.birth_date
+        if birth_date is None:
+            return True
+        return date(year, month, 1) <= date(birth_date.year + 60, birth_date.month, 1)
+
+
+class IncomeTaxTableVersion(models.Model):
+    effective_from = models.DateField(unique=True)
+    source_name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=False)
+    child_credit_one = models.PositiveIntegerField(default=12500)
+    child_credit_two = models.PositiveIntegerField(default=29160)
+    child_credit_per_additional = models.PositiveIntegerField(default=25000)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="income_tax_table_versions_created")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-effective_from"]
+
+
+class IncomeTaxTableRow(models.Model):
+    version = models.ForeignKey(IncomeTaxTableVersion, on_delete=models.CASCADE, related_name="rows")
+    monthly_pay_from = models.PositiveIntegerField()
+    monthly_pay_to = models.PositiveIntegerField()
+    dependent_count = models.PositiveSmallIntegerField()
+    income_tax = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["version", "monthly_pay_from", "dependent_count"], name="uniq_income_tax_table_row")]
+        indexes = [models.Index(fields=["version", "dependent_count", "monthly_pay_from"])]
+
+
+def resolve_monthly_income_tax(*, taxable_pay, employee, pay_date):
+    """Resolve the NTS table amount and retain the inputs used for the result."""
+    version = IncomeTaxTableVersion.objects.filter(is_active=True, effective_from__lte=pay_date).order_by("-effective_from").first()
+    if version is None:
+        raise ValidationError("적용일 기준의 근로소득 간이세액표가 등록되지 않았습니다. HQ가 공식 표를 등록해 주세요.")
+    family_count = min(max(int(employee.tax_dependent_count or 1), 1), 11)
+    row = IncomeTaxTableRow.objects.filter(version=version, dependent_count=family_count, monthly_pay_from__lte=taxable_pay, monthly_pay_to__gt=taxable_pay).order_by("-monthly_pay_from").first()
+    if row is None:
+        raise ValidationError("월 과세급여에 해당하는 근로소득 간이세액표 구간이 없습니다.")
+    ratio = int(employee.tax_withholding_ratio or 100)
+    if ratio not in (80, 100, 120):
+        raise ValidationError("원천징수 선택비율은 80%, 100%, 120%만 가능합니다.")
+    child_count = int(employee.tax_child_count_8_to_20 or 0)
+    if child_count == 1:
+        child_credit = version.child_credit_one
+    elif child_count == 2:
+        child_credit = version.child_credit_two
+    elif child_count >= 3:
+        child_credit = version.child_credit_two + (child_count - 2) * version.child_credit_per_additional
+    else:
+        child_credit = 0
+    tax_after_child_credit = max(int(row.income_tax) - child_credit, 0)
+    tax_amount = int(
+        (Decimal(tax_after_child_credit) * Decimal(ratio) / Decimal("100")).quantize(
+            Decimal("1"), rounding=ROUND_DOWN
+        )
+    )
+    return tax_amount, version, {
+        "dependent_count": family_count,
+        "child_count_8_to_20": child_count,
+        "withholding_ratio": ratio,
+        "child_tax_credit": child_credit,
+    }
+
+
+class OfficeEmployeeNumberSequence(models.Model):
+    year = models.IntegerField(unique=True)
+    last_number = models.PositiveIntegerField(default=0)
+
+
+class OfficePayrollRun(models.Model):
+    period_year = models.IntegerField()
+    period_month = models.IntegerField()
+    legal_entity = models.ForeignKey(
+        "core.LegalEntity",
+        on_delete=models.PROTECT,
+        related_name="office_payroll_runs",
+        default=default_asan_legal_entity_id,
+        help_text="본사 직원 급여를 지급하는 고용 법인입니다.",
+    )
+    status = models.CharField(max_length=12, choices=OfficePayrollStatus.choices, default=OfficePayrollStatus.DRAFT)
+    note = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="office_payroll_runs_created")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="office_payroll_runs_approved")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    voided_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="office_payroll_runs_voided")
+    voided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # A voided run remains as an audit record, but must not prevent HQ from
+        # preparing a replacement payroll register for the same month.
+        constraints = [
+            models.UniqueConstraint(
+                fields=["legal_entity", "period_year", "period_month"],
+                condition=~models.Q(status="VOID"),
+                name="uniq_active_office_payroll_run_entity_period",
+            )
+        ]
+        ordering = ["-period_year", "-period_month", "-id"]
+
+    @property
+    def gross_total(self):
+        return self.slips.aggregate(total=models.Sum("gross_pay"))["total"] or 0
+
+    @property
+    def deduction_total(self):
+        return self.slips.aggregate(total=models.Sum("total_deduction"))["total"] or 0
+
+    @property
+    def net_total(self):
+        return self.slips.aggregate(total=models.Sum("net_pay"))["total"] or 0
+
+    @property
+    def payment_date(self):
+        """Regular payday: the fifth day of the month after the payroll period."""
+        if self.period_month == 12:
+            return date(self.period_year + 1, 1, 5)
+        return date(self.period_year, self.period_month + 1, 5)
+
+
+class OfficePayrollCorrection(models.Model):
+    """Audited correction package for a finalized office payroll run."""
+
+    run = models.ForeignKey(OfficePayrollRun, on_delete=models.PROTECT, related_name="corrections")
+    status = models.CharField(max_length=12, choices=OfficePayrollCorrectionStatus.choices, default=OfficePayrollCorrectionStatus.DRAFT)
+    reason = models.TextField(blank=True, default="")
+    rejection_reason = models.TextField(blank=True, default="")
+    original_snapshot = models.JSONField(default=list)
+    proposed_snapshot = models.JSONField(default=list)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="office_payroll_corrections_requested")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="office_payroll_corrections_approved")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    applied_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="office_payroll_corrections_applied")
+    applied_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-id"]
+        indexes = [models.Index(fields=["run", "status"])]
+
+    def __str__(self):
+        return f"급여대장 #{self.run_id} 정정 #{self.id}"
+
+
+class OfficePayrollDeductionPolicy(models.Model):
+    """Effective-dated, HQ-maintained employee deduction assumptions."""
+    year = models.IntegerField(unique=True)
+    national_pension_rate = models.DecimalField(max_digits=7, decimal_places=5, default=Decimal("0.04750"))
+    health_insurance_rate = models.DecimalField(max_digits=7, decimal_places=5, default=Decimal("0.03595"))
+    long_term_care_rate = models.DecimalField(max_digits=7, decimal_places=5, default=Decimal("0.13140"))
+    employment_insurance_rate = models.DecimalField(max_digits=7, decimal_places=5, default=Decimal("0.00900"))
+    income_tax_rate = models.DecimalField(max_digits=7, decimal_places=5, default=Decimal("0.00000"))
+    meal_allowance_default = models.BigIntegerField(default=200_000)
+    fuel_allowance_default = models.BigIntegerField(default=100_000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-year"]
+
+
+def _round_down_to_tens(value):
+    """Return a won amount after discarding a remainder below ten won."""
+    return int(
+        (Decimal(value) / Decimal("10")).quantize(Decimal("1"), rounding=ROUND_DOWN)
+        * Decimal("10")
+    )
+
+
+class OfficePayslip(models.Model):
+    run = models.ForeignKey(OfficePayrollRun, on_delete=models.CASCADE, related_name="slips")
+    employee = models.ForeignKey(OfficeEmployeeProfile, on_delete=models.PROTECT, related_name="payslips")
+    base_pay = models.BigIntegerField(default=0)
+    meal_allowance_pay = models.BigIntegerField(default=200_000)
+    fuel_allowance_pay = models.BigIntegerField(default=100_000)
+    # Existing generic allowances are migrated to this field without changing
+    # their amount, so historical payroll totals and audit evidence remain valid.
+    site_allowance_pay = models.BigIntegerField(default=0)
+    overtime_pay = models.BigIntegerField(default=0)
+    bonus_pay = models.BigIntegerField(default=0)
+    income_tax = models.BigIntegerField(default=0)
+    local_income_tax = models.BigIntegerField(default=0)
+    national_pension = models.BigIntegerField(default=0)
+    health_insurance = models.BigIntegerField(default=0)
+    long_term_care = models.BigIntegerField(default=0)
+    employment_insurance = models.BigIntegerField(default=0)
+    other_deduction = models.BigIntegerField(default=0)
+    gross_pay = models.BigIntegerField(default=0)
+    total_deduction = models.BigIntegerField(default=0)
+    net_pay = models.BigIntegerField(default=0)
+    auto_income_tax = models.BigIntegerField(default=0)
+    auto_local_income_tax = models.BigIntegerField(default=0)
+    auto_national_pension = models.BigIntegerField(default=0)
+    auto_national_pension_eligible = models.BooleanField(default=True)
+    auto_health_insurance = models.BigIntegerField(default=0)
+    auto_long_term_care = models.BigIntegerField(default=0)
+    auto_employment_insurance = models.BigIntegerField(default=0)
+    # Snapshot the official table and employee inputs used for an automatic
+    # calculation. Later master-data changes must not obscure how a reviewed
+    # or finalized payslip was calculated.
+    auto_income_tax_table_version = models.ForeignKey(
+        IncomeTaxTableVersion,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="calculated_payslips",
+    )
+    auto_tax_dependent_count = models.PositiveSmallIntegerField(default=1)
+    auto_tax_child_count_8_to_20 = models.PositiveSmallIntegerField(default=0)
+    auto_tax_withholding_ratio = models.PositiveSmallIntegerField(default=100)
+    auto_child_tax_credit = models.BigIntegerField(default=0)
+    auto_calculated_at = models.DateTimeField(null=True, blank=True)
+    issued_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["run", "employee"], name="uniq_office_payslip_run_employee")]
+        ordering = ["employee__employee_no"]
+
+    def recalculate_totals(self):
+        """Refresh derived totals in memory so HQ can review a draft calculation."""
+        earnings = (
+            (self.base_pay or 0)
+            + (self.meal_allowance_pay or 0)
+            + (self.fuel_allowance_pay or 0)
+            + (self.site_allowance_pay or 0)
+            + (self.overtime_pay or 0)
+            + (self.bonus_pay or 0)
+        )
+        deductions = (self.income_tax or 0) + (self.local_income_tax or 0) + (self.national_pension or 0) + (self.health_insurance or 0) + (self.long_term_care or 0) + (self.employment_insurance or 0) + (self.other_deduction or 0)
+        if earnings < 0 or deductions < 0:
+            raise ValidationError("급여와 공제액은 0 이상이어야 합니다.")
+        self.gross_pay, self.total_deduction, self.net_pay = earnings, deductions, earnings - deductions
+
+    def save(self, *args, **kwargs):
+        self.recalculate_totals()
+        super().save(*args, **kwargs)
+
+    def apply_auto_deductions(self, policy):
+        """Populate reviewable defaults. HQ may replace the actual deduction fields."""
+        from django.utils import timezone
+
+        # Fixed meal and fuel benefits are the company's non-taxable items.
+        # Other cash compensation is taxable remuneration and is included in
+        # the statutory-insurance calculation base.
+        insurance_base = Decimal(
+            (self.base_pay or 0)
+            + (self.site_allowance_pay or 0)
+            + (self.overtime_pay or 0)
+            + (self.bonus_pay or 0)
+        )
+        self.auto_national_pension_eligible = self.employee.is_national_pension_eligible_for_month(self.run.period_year, self.run.period_month)
+        self.auto_national_pension = int((insurance_base * policy.national_pension_rate).quantize(Decimal("1"), rounding=ROUND_DOWN)) if self.auto_national_pension_eligible else 0
+        # Health-insurance notices use amounts rounded down to the nearest ten
+        # won.  Long-term care follows the rounded health-insurance amount.
+        self.auto_health_insurance = _round_down_to_tens(insurance_base * policy.health_insurance_rate)
+        self.auto_long_term_care = _round_down_to_tens(Decimal(self.auto_health_insurance) * policy.long_term_care_rate)
+        self.auto_employment_insurance = int((insurance_base * policy.employment_insurance_rate).quantize(Decimal("1"), rounding=ROUND_DOWN))
+        # Company policy: monthly meal and fuel allowances are fixed non-taxable
+        # benefits.  They remain part of gross pay, but are excluded from the
+        # income-tax table base and social-insurance base.
+        taxable_pay = int(
+            (self.base_pay or 0)
+            + (self.site_allowance_pay or 0)
+            + (self.overtime_pay or 0)
+            + (self.bonus_pay or 0)
+        )
+        self.auto_income_tax, version, tax_inputs = resolve_monthly_income_tax(
+            taxable_pay=taxable_pay,
+            employee=self.employee,
+            pay_date=date(self.run.period_year, self.run.period_month, 1),
+        )
+        self.auto_income_tax_table_version = version
+        self.auto_tax_dependent_count = tax_inputs["dependent_count"]
+        self.auto_tax_child_count_8_to_20 = tax_inputs["child_count_8_to_20"]
+        self.auto_tax_withholding_ratio = tax_inputs["withholding_ratio"]
+        self.auto_child_tax_credit = tax_inputs["child_tax_credit"]
+        self.auto_local_income_tax = int((Decimal(self.auto_income_tax) * Decimal("0.1")).quantize(Decimal("1"), rounding=ROUND_DOWN))
+        self.income_tax = self.auto_income_tax
+        self.local_income_tax = self.auto_local_income_tax
+        self.national_pension = self.auto_national_pension
+        self.health_insurance = self.auto_health_insurance
+        self.long_term_care = self.auto_long_term_care
+        self.employment_insurance = self.auto_employment_insurance
+        self.auto_calculated_at = timezone.now()

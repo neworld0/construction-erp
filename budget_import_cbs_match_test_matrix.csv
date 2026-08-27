@@ -1,0 +1,9 @@
+﻿Check,Result,Evidence
+Django system check,PASS,python manage.py check
+Migration drift,PASS,python manage.py makemigrations --check --dry-run
+Focused/import regression,PASS,"79 passed, 2 known deprecation warnings"
+11 upload-target source rows,PASS,test_contract_statement_parser_keeps_all_11_upload_target_rows
+Missing CBS stays unmatched,PASS,test_missing_cbs_rows_are_reported_as_unmatched_not_dropped
+Exact CBS code match,PASS,test_all_rows_import_when_exact_cbs_masters_exist
+Alias fallback diagnostic,PASS,test_cbs_name_alias_fallback_is_auditable
+Partial import block,PASS,test_save_blocks_partial_import_even_when_confirmed

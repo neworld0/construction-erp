@@ -45,12 +45,17 @@
 <div class="card">
   <h2 class="card-title">출역부 상세</h2>
   <p class="muted">{{ timesheet.project.name }} | {{ timesheet.work_date }} | {{ timesheet.sheet_no }}</p>
+  <p class="muted">상태: {% if timesheet.status == "REJECTED" %}반려됨{% elif timesheet.status == "SUBMITTED" %}HQ 검토 대기{% elif timesheet.status == "APPROVED" %}승인 완료{% else %}임시저장{% endif %}</p>
+  {% if timesheet.status == "REJECTED" and timesheet.reject_reason %}
+    <div class="muted">반려 사유: {{ timesheet.reject_reason }}</div>
+  {% endif %}
 </div>
 
 <div class="card" style="margin-top:18px;">
   <table class="table">
     <thead>
       <tr>
+        <th>근로자</th>
         <th>직종</th>
         <th>인원수</th>
         <th>시간</th>
@@ -63,6 +68,7 @@
     <tbody>
       {% for line in timesheet.lines.all %}
         <tr>
+          <td>{{ line.worker.name|default:"집계 입력" }}</td>
           <td>{{ line.labor_role.name }}</td>
           <td>{{ line.headcount }}</td>
           <td>{{ line.hours }}</td>

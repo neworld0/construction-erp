@@ -1,0 +1,6 @@
+Evidence_ID,Step,Evidence_Type,File,Description,Contains_Secret,Contains_PII,Reviewer,Notes
+RR-E01,Access gate,CSV,release1_staging_rerun_access_completeness_check.csv,missing-input stop gate,NO,NO,release owner,no host action
+RR-E02,Local preflight,TXT,release1_staging_rerun_12_local_manage_check.txt,Django check,NO,NO,release owner,pass
+RR-E03,Host,MD,release1_staging_rerun_host_identity_check.md,no fabricated host facts,NO,NO,infra,hold
+RR-E04,Restore,MD,release1_staging_rerun_restore_drill_report.md,safe no-op result,NO,NO,DB owner,hold
+RR-E05,Security,MD,release1_staging_rerun_security_check.md,no secret/PII,NO,NO,security,hold

@@ -1,0 +1,5 @@
+Scope: LABOR-TIMESHEET-REJECT-REWORK-01 changed timesheet workflow service, FIELD/HQ templates, focused tests, and a read-only diagnostic.
+Privacy: no resident number, account number, phone number, or worker sensitive data is rendered or logged by this patch.
+Migration: none.
+Closing: monthly/project close remains the highest-priority edit block.
+OVERALL_SOURCE_SCAN_PASS: True

@@ -3,18 +3,14 @@
 {% block content %}
 <style>
   :root {
-    --card: #101a2b;
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --primary: #38bdf8;
-    --border: rgba(148, 163, 184, 0.2);
+    --primary: var(--action);
   }
   .container { display: grid; gap: 16px; }
   .card {
-    background: var(--card);
+    background: var(--panel);
     border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   }
   .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
   .tab {
@@ -28,7 +24,7 @@
   }
   .tab.active {
     background: var(--primary);
-    color: #0b1220;
+    color: var(--action-text);
     border-color: var(--primary);
   }
   .filters {
@@ -58,7 +54,7 @@
     padding: 10px 12px;
     font-weight: 700;
     background: var(--primary);
-    color: #0b1220;
+    color: var(--action-text);
     cursor: pointer;
     text-decoration: none;
     text-align: center;
@@ -88,20 +84,43 @@
   .nav-right .btn-outline {
     background: transparent !important;
     border: 1px solid rgba(148, 163, 184, 0.4) !important;
-    color: #f8fafc !important;
+    color: var(--text) !important;
   }
   .nav-right form .btn {
-    background: #38bdf8 !important;
+    background: var(--action) !important;
     border: 1px solid transparent !important;
-    color: #0b1220 !important;
+    color: var(--action-text) !important;
+  }
+  @media (max-width: 900px) {
+    .field-records-table,
+    .field-records-table tbody,
+    .field-records-table tr,
+    .field-records-table td { display:block; width:100%; }
+    .field-records-table thead { display:none; }
+    .field-records-table tr {
+      margin:10px 0;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--panel-raised);
+    }
+    .field-records-table td { padding:7px 0; border:0; }
+    .field-records-table td::before {
+      display:block;
+      margin-bottom:4px;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+    }
+    .approved-records-table td:nth-child(1)::before { content:"승인일"; }
+    .approved-records-table td:nth-child(2)::before { content:"프로젝트"; }
+    .approved-records-table td:nth-child(3)::before { content:"요약"; }
+    .approved-records-table td:nth-child(4)::before { content:"첨부"; }
+    .approved-records-table td:nth-child(5)::before { content:"상세"; }
   }
 </style>
 
-<div class="container">
-  <div class="card">
-    {% include "components/field_tabs.html" with active_tab="approved" project_id=filters.project_id %}
-  </div>
-
+<div class="container field-page">
   <div class="card">
     <h3 style="margin:0 0 10px 0;">승인 완료 목록</h3>
     <p class="hint" style="margin:0;">Field 할당 프로젝트 기준으로 승인 완료된 항목을 조회합니다.</p>
@@ -153,7 +172,7 @@
 
   <div class="card">
     <div style="margin-bottom:8px;" class="hint">총 {{ count }}건</div>
-    <table>
+    <table class="field-records-table approved-records-table">
       <thead>
         <tr>
           <th>승인일</th>

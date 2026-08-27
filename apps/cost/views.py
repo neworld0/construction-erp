@@ -99,6 +99,15 @@ class CostActualViewSet(viewsets.ModelViewSet):
         cost_actual.approved_by = request.user
         cost_actual.approved_at = timezone.now()
         cost_actual.save(update_fields=["status", "approved_by", "approved_at"])
+        # CostActual owns the approval lifecycle.  Its DailyReport source is
+        # retained for input provenance and must not stay submitted after a
+        # direct API approval.
+        if cost_actual.source_daily_report_id:
+            from apps.field.models import DailyReport, DailyReportStatus
+
+            DailyReport.objects.filter(id=cost_actual.source_daily_report_id).update(
+                status=DailyReportStatus.APPROVED,
+            )
         emit_event(
             "COST_APPROVED",
             "COST_ACTUAL",
@@ -213,9 +222,7 @@ class RevenueRecognitionView(GenericAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
-        serializer = RevenueRecognitionCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        record = serializer.save()
         return Response(
-            RevenueRecognitionSerializer(record).data, status=status.HTTP_201_CREATED
+            {"detail": "실제 매출은 HQ 월마감 매출·원가 인식 화면에서만 생성할 수 있습니다."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )

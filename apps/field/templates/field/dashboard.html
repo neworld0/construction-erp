@@ -1,23 +1,18 @@
 ﻿{% extends "app/base_app.html" %}
-{% load humanize %}
+{% load humanize utils %}
 {% block page_title %}현장 일일 업무{% endblock %}
 {% block content %}
 <style>
   :root {
-    --card: #101a2b;
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --primary: #38bdf8;
-    --border: rgba(148, 163, 184, 0.2);
-    --warning: #f59e0b;
-    --success: #16a34a;
+    --primary: var(--action);
+    --warning: var(--warn);
   }
   .container { display: grid; gap: 16px; }
   .card {
-    background: var(--card);
+    background: var(--panel);
     border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   }
   .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
   .tab {
@@ -30,9 +25,18 @@
   }
   .tab.active {
     background: var(--primary);
-    color: #0b1220;
+    color: var(--action-text);
     border-color: var(--primary);
   }
+  /* The copy action is a button which also uses the legacy tab class.
+     Treat it as an action, not as an inactive navigation tab. */
+  button.tab {
+    background: var(--action);
+    color: var(--action-text);
+    border-color: var(--action);
+    cursor: pointer;
+  }
+  button.tab:hover { background: var(--action-hover); }
   form { display: grid; gap: 10px; }
   label { font-size: 13px; color: var(--muted); }
   input, select, textarea, button {
@@ -58,12 +62,23 @@
   }
   button {
     background: var(--primary);
-    color: #0b1220;
+    color: var(--action-text);
     border: 0;
     cursor: pointer;
     font-weight: 600;
   }
   button[disabled] { cursor: not-allowed; opacity: 0.6; }
+  /* Keep the shared application-header controls out of the broad field-form
+     button rule above.  Their fixed-height container must not clip labels. */
+  .nav-right .btn,
+  .nav-right form .btn {
+    box-sizing: border-box;
+    min-height: 32px;
+    height: 32px;
+    padding: 6px 10px;
+    line-height: 18px;
+    white-space: nowrap;
+  }
   .notice {
     padding: 10px 12px;
     border-radius: 8px;
@@ -155,20 +170,51 @@
     height: 100%;
     background: var(--primary);
   }
+  @media (max-width: 900px) {
+    .field-records-table,
+    .field-records-table tbody,
+    .field-records-table tr,
+    .field-records-table td { display: block; width: 100%; }
+    .field-records-table thead { display: none; }
+    .field-records-table tr {
+      margin: 10px 0;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-raised);
+    }
+    .field-records-table td { padding: 7px 0; border: 0; }
+    .field-records-table td::before {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .progress-records-table td:nth-child(1)::before { content: "날짜"; }
+    .progress-records-table td:nth-child(2)::before { content: "태스크"; }
+    .progress-records-table td:nth-child(3)::before { content: "진행률"; }
+    .progress-records-table td:nth-child(4)::before { content: "메모"; }
+    .progress-records-table td:nth-child(5)::before { content: "상태"; }
+    .retro-progress-records-table td:nth-child(1)::before { content: "대상일"; }
+    .retro-progress-records-table td:nth-child(2)::before { content: "요청 사유"; }
+    .retro-progress-records-table td:nth-child(3)::before { content: "상태"; }
+    .retro-progress-records-table td:nth-child(4)::before { content: "처리 의견"; }
+    .report-records-table td:nth-child(1)::before { content: "날짜"; }
+    .report-records-table td:nth-child(2)::before { content: "제목"; }
+    .report-records-table td:nth-child(3)::before { content: "상태"; }
+    .report-records-table td:nth-child(4)::before { content: "첨부"; }
+    .report-records-table td:nth-child(5)::before { content: "작성자"; }
+    .report-records-table td:nth-child(6)::before { content: "작성일"; }
+    .cost-records-table td:nth-child(1)::before { content: "날짜"; }
+    .cost-records-table td:nth-child(2)::before { content: "원가 항목"; }
+    .cost-records-table td:nth-child(3)::before { content: "금액"; }
+    .cost-records-table td:nth-child(4)::before { content: "첨부"; }
+    .cost-records-table td:nth-child(5)::before { content: "상태"; }
+  }
 </style>
 
-<div class="container">
-  <div class="card">
-    <div class="tabs">
-      <a class="tab {% if tab == 'progress' %}active{% endif %}" href="/app/field/?tab=progress{% if project %}&project_id={{ project.id }}{% endif %}">진행률</a>
-      <a class="tab {% if tab == 'report' %}active{% endif %}" href="/app/field/?tab=report{% if project %}&project_id={{ project.id }}{% endif %}">보고서</a>
-      <a class="tab {% if tab == 'cost' %}active{% endif %}" href="/app/field/?tab=cost{% if project %}&project_id={{ project.id }}{% endif %}">원가</a>
-      <a class="tab" href="/app/field/inventory/issues/">자재 투입</a>
-      <a class="tab" href="/app/field/labor/timesheets/">출역부</a>
-      <a class="tab" href="/app/field/approved/{% if project %}?project_id={{ project.id }}{% endif %}">승인완료</a>
-    </div>
-  </div>
-
+<div class="container field-page">
   <div class="card">
     <form method="get" action="/app/field/">
       <input type="hidden" name="tab" value="{{ tab }}" />
@@ -179,7 +225,7 @@
         <option value="{{ p.id }}" {% if project and p.id == project.id %}selected{% endif %}>{{ p.name }}</option>
         {% endfor %}
       </select>
-      <button type="submit" id="project_load_btn">로드</button>
+      <button type="submit" id="project_load_btn" class="btn">로드</button>
     </form>
   </div>
 
@@ -200,6 +246,39 @@
   {% endif %}
 
   {% if tab == "progress" %}
+  {% if retro_request_context %}
+  <div class="card notice">
+    <h3>소급 입력 요청</h3>
+    <div class="inline-grid">
+      <div><strong>현장</strong><div class="hint">{{ project.name }}</div></div>
+      <div><strong>대상일</strong><div class="hint">{{ retro_request_context.target_date|date:"Y-m-d" }}</div></div>
+      <div><strong>요청자</strong><div class="hint">{{ request.user.username }}</div></div>
+    </div>
+    {% if retro_request_context.retro_request %}
+      <p style="margin:12px 0 4px;">상태: <span class="status-badge {{ retro_request_context.retro_request.status|field_status_class }}">{{ retro_request_context.retro_request.status|field_status_label }}</span></p>
+      {% if retro_request_context.retro_request.review_comment %}
+      <div class="hint">처리 의견: {{ retro_request_context.retro_request.review_comment }}</div>
+      {% endif %}
+      {% if retro_request_context.retro_request.status == "APPROVED" %}
+      <div class="hint" style="margin-top:6px;">승인된 대상일의 진행률을 저장한 뒤 제출하면 승인 권한이 사용 완료됩니다.</div>
+      {% elif retro_request_context.retro_request.status == "PENDING" %}
+      <div class="hint" style="margin-top:6px;">HQ 승인 대기 중입니다. 동일한 요청은 중복 생성되지 않습니다.</div>
+      {% endif %}
+    {% endif %}
+    {% if not retro_request_context.retro_request or retro_request_context.retro_request.status == "REJECTED" or retro_request_context.retro_request.status == "USED" %}
+    <form method="post" style="margin-top:12px;">
+      {% csrf_token %}
+      <input type="hidden" name="tab" value="progress" />
+      <input type="hidden" name="project_id" value="{{ project.id }}" />
+      <input type="hidden" name="action" value="retro_request" />
+      <input type="hidden" name="retro_target_date" value="{{ retro_request_context.target_date|date:'Y-m-d' }}" />
+      <label for="retro_reason">요청 사유</label>
+      <textarea id="retro_reason" name="retro_reason" rows="2" required></textarea>
+      <div class="form-actions"><button type="submit">소급 입력 요청</button></div>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
   {% if show_today_progress_banner %}
   <div class="card notice">
     ⚠️ 오늘 진행률이 아직 제출되지 않았습니다.
@@ -217,7 +296,7 @@
     {% if progress_tasks_unavailable_message %}
     <div class="notice" style="margin-top:10px;">{{ progress_tasks_unavailable_message }}</div>
     {% endif %}
-    <form method="post" enctype="multipart/form-data" id="progress_form">
+    <form method="post" enctype="multipart/form-data" id="progress_form" class="field-entry-form">
       {% csrf_token %}
       <input type="hidden" name="tab" value="progress" />
       <input type="hidden" name="project_id" value="{{ project.id }}" />
@@ -241,7 +320,7 @@
             min="{{ progress_min_date }}"
             max="{{ progress_max_date }}"
           />
-          <div class="hint">오늘/어제만 입력 가능합니다. 소급 입력은 HQ 요청이 필요합니다.</div>
+          <div class="hint">{% if test_date_window %}운영 테스트 허용 기간: {{ test_date_window.start_date|date:"Y-m-d" }} ~ {{ test_date_window.end_date|date:"Y-m-d" }} ({{ test_date_window.expires_on|date:"Y-m-d" }} 자동 해제){% else %}일반 입력은 오늘/어제만 가능합니다. 이전 날짜는 HQ 소급 입력 승인이 필요합니다.{% endif %}</div>
         </div>
         <div>
           <label for="task_id">작업</label>
@@ -307,10 +386,28 @@
     {% include "components/attachments_panel.html" with attachments=progress_existing_files can_edit=progress_can_edit_attachments upload_url=progress_attachment_upload_url delete_url=progress_attachment_delete_url hidden_fields=progress_attachment_hidden_fields file_input_name="progress_photo" object_label="진행률" help_text=progress_attachment_help_text %}
   </div>
   {% endif %}
+  {% if retroactive_progress_requests %}
+  <div class="card">
+    <h3>내 진행률 소급 입력 요청</h3>
+    <table class="field-records-table retro-progress-records-table">
+      <thead><tr><th>대상일</th><th>요청 사유</th><th>상태</th><th>처리 의견</th></tr></thead>
+      <tbody>
+        {% for item in retroactive_progress_requests %}
+        <tr>
+          <td>{{ item.target_date|date:"Y-m-d" }}</td>
+          <td>{{ item.reason }}</td>
+          <td><span class="status-badge {{ item.status|field_status_class }}">{{ item.status|field_status_label }}</span></td>
+          <td>{{ item.review_comment|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
   <div class="card">
     {% if not progress_focus_mode %}
     <h3>진행률 목록</h3>
-    <table>
+    <table class="field-records-table progress-records-table">
       <thead>
         <tr>
           <th>날짜</th>
@@ -328,6 +425,9 @@
             <a href="/app/field/progress/{{ entry.id }}/edit/">{{ entry.report_date }}</a>
             {% else %}
             {{ entry.report_date }}
+            {% if entry.status == "approved" %}
+            <div style="margin-top:5px;"><a class="hint" href="/app/field/progress/{{ entry.id }}/correction/">정정·취소 요청</a></div>
+            {% endif %}
             {% endif %}
           </td>
           <td>{{ entry.task.name }}</td>
@@ -359,7 +459,7 @@
             <div class="hint" style="margin-top:4px; color:#fca5a5;">사유: {{ entry.reject_reason }}</div>
             {% endif %}
             {% else %}
-            <span class="badge-status">{{ entry.status }}</span>
+            <span class="status-badge {{ entry.status|field_status_class }}">{{ entry.status|field_status_label }}</span>
             {% endif %}
             </div>
           </td>
@@ -426,7 +526,7 @@
   </div>
   <div class="card">
     <h3>보고서 목록</h3>
-    <table>
+    <table class="field-records-table report-records-table">
       <thead>
         <tr>
           <th>날짜</th>
@@ -449,7 +549,7 @@
             {% endif %}
           </td>
           <td>
-            <span class="badge {{ report.display_status }}">{{ report.display_status }}</span>
+            <span class="status-badge {{ report.display_status|field_status_class }}">{{ report.display_status|field_status_label }}</span>
             {% if report.display_status == "REJECTED" and report.reject_reason %}
             <div class="hint" style="margin-top:4px; color:#fca5a5;">반려 사유: {{ report.reject_reason }}</div>
             {% endif %}
@@ -490,7 +590,7 @@
   {% if not cost_focus_mode %}
   <div class="card">
     <h3>원가 입력</h3>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" class="field-entry-form">
       {% csrf_token %}
       <input type="hidden" name="tab" value="cost" />
       <input type="hidden" name="project_id" value="{{ project.id }}" />
@@ -505,6 +605,18 @@
       <p class="hint">제출됨(승인 대기) - 수정 불가</p>
       {% endif %}
       {% endif %}
+      <label for="report_date">원가 발생일</label>
+      <input
+        id="report_date"
+        name="report_date"
+        type="date"
+        value="{% if cost_draft %}{{ cost_draft.report_date|date:'Y-m-d' }}{% else %}{{ now }}{% endif %}"
+        max="{{ progress_max_date }}"
+        required
+        {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %}
+      />
+      {% if test_date_window %}<div class="hint">운영 테스트 허용 기간: {{ test_date_window.start_date|date:"Y-m-d" }} ~ {{ test_date_window.end_date|date:"Y-m-d" }} ({{ test_date_window.expires_on|date:"Y-m-d" }} 자동 해제)</div>{% endif %}
+      <div class="hint">원가가 발생한 날짜를 선택하세요. 마감된 기간은 저장하거나 제출할 수 없습니다.</div>
       <label for="cost_item_search">원가 항목(CBS)</label>
       <input
         id="cost_item_search"
@@ -542,14 +654,23 @@
           <input id="quantity" name="quantity" type="text" inputmode="decimal" autocomplete="off" value="{% if cost_draft_line %}{{ cost_draft_line.quantity|floatformat:3 }}{% endif %}" required {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %} />
         </div>
         <div>
-          <label for="unit_price">단가</label>
+          <label for="unit_price">단가(VAT 포함)</label>
           <input id="unit_price" name="unit_price" type="text" inputmode="numeric" autocomplete="off" value="{% if cost_draft_line %}{{ cost_draft_line.unit_price|floatformat:0|intcomma }}{% endif %}" required {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %} />
+        </div>
+        <div>
+          <label for="vat_treatment">부가세 처리</label>
+          <select id="vat_treatment" name="vat_treatment" {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %}>
+            <option value="DEDUCTIBLE" {% if not cost_draft_line or cost_draft_line.vat_treatment == "DEDUCTIBLE" %}selected{% endif %}>과세 · 매입세액 공제</option>
+            <option value="EXEMPT" {% if cost_draft_line and cost_draft_line.vat_treatment == "EXEMPT" %}selected{% endif %}>면세 · VAT 없음</option>
+            <option value="NON_DEDUCTIBLE" {% if cost_draft_line and cost_draft_line.vat_treatment == "NON_DEDUCTIBLE" %}selected{% endif %}>불공제 · VAT 포함 원가</option>
+          </select>
         </div>
         <div>
           <label for="amount">금액</label>
           <input id="amount" name="amount" type="text" readonly value="{% if cost_draft_line %}{{ cost_draft_line.amount|floatformat:0|intcomma }}{% endif %}" />
         </div>
       </div>
+      <div class="hint">단가는 VAT 포함으로 입력합니다. 공제 가능 거래는 손익에 공급가액만 반영됩니다.</div>
       <label for="memo">메모</label>
       <textarea id="memo" name="memo" rows="2" {% if cost_draft and cost_draft.status != "draft" and cost_draft.status != "rejected" %}disabled{% endif %}>{% if cost_draft_line %}{{ cost_draft_line.description }}{% endif %}</textarea>
       <label for="evidence_file">증빙 파일(선택)</label>
@@ -612,7 +733,7 @@
 
     {% if not cost_focus_mode %}
     <h3>원가 목록</h3>
-    <table>
+    <table class="field-records-table cost-records-table">
       <thead>
         <tr>
           <th>날짜</th>
@@ -639,7 +760,7 @@
             {% include "components/attachment_badge.html" with attachments=report.attachments %}
           </td>
           <td>
-            <span class="badge {{ report.status }}">{{ report.status }}</span>
+            <span class="status-badge {{ report.status|field_status_class }}">{{ report.status|field_status_label }}</span>
             {% if report.status == "rejected" and report.reject_reason %}
             <div class="hint" style="margin-top:4px; color:#fca5a5;">반려 사유: {{ report.reject_reason }}</div>
             {% endif %}

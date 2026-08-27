@@ -92,7 +92,8 @@
 <div class="card">
   <h3>프로젝트 상세</h3>
   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-    {% if project.status == "draft" %}
+    {% if baseline_workflow.is_rejected %}
+      <span class="badge rejected">{{ baseline_workflow.label }}</span>
       <span class="badge draft">임시저장</span>
     {% elif project.status == "submitted" %}
       <span class="badge submitted">제출됨</span>
@@ -112,10 +113,12 @@
       {% endif %}
     </div>
   {% endif %}
-  <div class="mb-3"><strong>프로젝트명</strong> {{ project.name }}</div>
+  <div class="mb-3"><strong>프로젝트명:</strong> {{ project.name }}</div>
+  <div class="mb-3"><strong>프로젝트 코드:</strong> {{ project.code|default:"-" }}</div>
   <div class="mb-3">
     <strong>상태:</strong>
-    {% if project.status == "draft" %}
+    {% if baseline_workflow.is_rejected %}
+      <span class="badge rejected">{{ baseline_workflow.label }}</span>
       <span class="badge draft">임시저장</span>
     {% elif project.status == "submitted" %}
       <span class="badge submitted">제출됨</span>
@@ -123,15 +126,25 @@
       <span class="badge approved">승인됨</span>
     {% endif %}
   </div>
-  <div class="mb-3"><strong>시작일</strong> {{ project.start_date }}</div>
-  <div class="mb-3"><strong>종료일</strong> {{ project.end_date }}</div>
+  <div class="mb-3"><strong>시작일:</strong> {{ project.start_date }}</div>
+  <div class="mb-3"><strong>종료일:</strong> {{ project.end_date }}</div>
+  <form method="post" style="margin:12px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_billing_approval_policy" />
+    <label><input type="checkbox" name="requires_ceo_billing_approval" {% if project.requires_ceo_billing_approval %}checked{% endif %} {% if role != "hq" %}disabled{% endif %}> 일반 기성 보고서도 CEO 결재 필수</label>
+    {% if role == "hq" %}<button class="btn btn-outline" type="submit">결재 정책 저장</button>{% endif %}
+  </form>
   <div style="display:flex; gap:8px; flex-wrap:wrap;">
     <a class="btn btn-outline" href="/app/hq/projects/{{ project.id }}/approval-packages/">패키지 목록</a>
-    {% if project.status == "draft" %}
+    {% if role == "hq" %}<a class="btn btn-outline" href="/app/hq/projects/{{ project.id }}/operational-test-date-window/">운영 테스트 날짜 설정</a>{% endif %}
+  {% if baseline_workflow.is_rejected and baseline_workflow.rejection_reason %}
+    <div class="alert alert-danger" style="margin-bottom:12px;">반려 사유: {{ baseline_workflow.rejection_reason }}</div>
+  {% endif %}
+  {% if role == "hq" and project.status == "draft" or baseline_workflow.can_hq_resubmit and role == "hq" %}
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="submit_baseline" />
-        <button class="btn" type="submit">제출</button>
+        <button class="btn" type="submit">{% if baseline_workflow.can_hq_resubmit %}재제출{% else %}제출{% endif %}</button>
       </form>
     {% elif project.status == "submitted" and role == "ceo" %}
       <form method="post">
@@ -153,8 +166,8 @@
   <h3>계약 정보</h3>
   {% if contract %}
     <div class="mb-3"><strong>계약 금액:</strong> {{ contract.contract_amount|intcomma }}</div>
-    <div class="mb-3"><strong>계약 시작일</strong> {{ contract.contract_start_date }}</div>
-    <div class="mb-3"><strong>계약 종료일</strong> {{ contract.contract_end_date }}</div>
+    <div class="mb-3"><strong>계약 시작일:</strong> {{ contract.contract_start_date }}</div>
+    <div class="mb-3"><strong>계약 종료일:</strong> {{ contract.contract_end_date }}</div>
     <div class="mb-3">
       <strong>계약 파일:</strong>
       {% if contract.contract_file %}
@@ -230,8 +243,8 @@
         {{ assignment_form.user }}
       </div>
       <div>
-        <label for="id_role_in_project">역할(프로젝트)</label>
-        {{ assignment_form.role_in_project }}
+        <label for="id_assignment_type">배정 구분</label>
+        {{ assignment_form.assignment_type }}
       </div>
       <div>
         <label for="id_is_active">활성</label>
@@ -246,14 +259,14 @@
   <div class="table">
     <div class="row header assignment">
       <div>사용자</div>
-      <div>역할</div>
+      <div>배정 구분</div>
       <div>상태</div>
       <div>관리</div>
     </div>
     {% for assignment in assignments %}
       <div class="row assignment">
         <div>{{ assignment.user.username }}</div>
-        <div>{{ assignment.role_in_project|default:"-" }}</div>
+        <div>{{ assignment.get_assignment_type_display }}</div>
         <div>
           {% if assignment.is_active %}
             <span class="badge approved">활성</span>

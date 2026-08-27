@@ -1,7 +1,9 @@
 from django import forms
+from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from apps.cost.models import CostActual, CostItem
+from apps.core.rbac.models import LegalEntity
 from apps.projects.models import Project
 
 from .models import (
@@ -39,8 +41,18 @@ class LaborRoleForm(forms.ModelForm):
 
 
 class LaborRateForm(forms.ModelForm):
-    scope_type = forms.ChoiceField(choices=LaborRateScope.choices)
-    rate_type = forms.ChoiceField(choices=LaborRateType.choices)
+    scope_type = forms.ChoiceField(
+        choices=[
+            (LaborRateScope.GLOBAL, "기본 또는 근로자 단가"),
+            (LaborRateScope.PROJECT, "프로젝트 단가"),
+        ]
+    )
+    rate_type = forms.ChoiceField(
+        choices=[
+            (LaborRateType.DAY, "일 단가"),
+            (LaborRateType.HOUR, "시간 단가"),
+        ]
+    )
 
     class Meta:
         model = LaborRateTable
@@ -53,6 +65,7 @@ class LaborRateForm(forms.ModelForm):
             "effective_to",
             "scope_type",
             "project",
+            "worker",
             "is_active",
             "note",
         ]
@@ -60,6 +73,18 @@ class LaborRateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["project"].queryset = Project.objects.order_by("name")
+        worker_queryset = WorkerMaster.objects.filter(active=True).select_related(
+            "default_labor_role"
+        )
+        if self.instance and self.instance.pk and self.instance.worker_id:
+            worker_queryset = worker_queryset | WorkerMaster.objects.filter(
+                id=self.instance.worker_id
+            ).select_related("default_labor_role")
+        self.fields["worker"].queryset = worker_queryset.order_by("name", "id")
+        self.fields["worker"].label_from_instance = lambda worker: (
+            f"{worker.name}"
+            + (f" / {worker.default_labor_role.name}" if worker.default_labor_role else "")
+        )
         self.fields["currency"].required = False
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "input")
@@ -84,10 +109,19 @@ class LaborRateForm(forms.ModelForm):
 class PayrollBatchForm(forms.ModelForm):
     class Meta:
         model = PayrollAllocationBatch
-        fields = ["period_year", "period_month", "total_amount", "note"]
+        fields = ["legal_entity", "period_year", "period_month", "total_amount", "note"]
 
     def __init__(self, *args, **kwargs):
+        actor = kwargs.pop("actor", None)
         super().__init__(*args, **kwargs)
+        if actor is not None:
+            from apps.core.rbac.permissions import get_user_legal_entities
+
+            self.fields["legal_entity"].queryset = get_user_legal_entities(actor)
+        else:
+            self.fields["legal_entity"].queryset = LegalEntity.objects.filter(is_active=True)
+        if self.instance and self.instance.pk:
+            self.fields["legal_entity"].disabled = True
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "input")
 
@@ -144,8 +178,15 @@ class WorkerMasterForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["default_labor_role"].queryset = LaborRole.objects.order_by("sort_order", "code")
         instance = getattr(self, "instance", None)
+        role_queryset = LaborRole.objects.filter(is_active=True)
+        if instance and instance.pk and instance.default_labor_role_id:
+            role_queryset = role_queryset | LaborRole.objects.filter(
+                id=instance.default_labor_role_id
+            )
+        self.fields["default_labor_role"].queryset = role_queryset.order_by(
+            "sort_order", "code"
+        )
         if instance and instance.pk:
             if instance.rrn_masked:
                 self.fields["rrn"].help_text = f"현재 값: {instance.rrn_masked}"

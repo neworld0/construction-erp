@@ -1,0 +1,6 @@
+Test,Scope,Expected_Result,Status
+test_imported_wbs_baseline_defaults_dates_from_project_when_excel_dates_missing,HQ registration,WBS dates use project period,Added
+test_imported_wbs_baseline_preserves_explicit_wbs_dates,Import interpretation,Explicit dates are preserved,Added
+test_imported_wbs_without_row_dates_requires_project_dates,Validation,Undated WBS is blocked,Added
+test_project_registration_blocks_undated_wbs_when_project_dates_are_missing,HQ registration,No Project or WBS is committed,Added
+test_schedule_tasks_created_from_wbs_have_project_fallback_dates,FIELD schedule bootstrap,Task dates use WBS or project dates,Added

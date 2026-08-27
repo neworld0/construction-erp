@@ -1,0 +1,3 @@
+﻿85 objects imported automatically (use -v 2 for details).
+
+{'project_id': 17, 'project_code': 'OPS1B-RERUN-SAMPLE-001', 'field_progress_rows': 1, 'plan_count': 1, 'task_count': 3, 'dashboard_progress': '5.625000', 'dashboard_revenue': '71377837.50', 'dashboard_cost': '10000000.00', 'dashboard_profit': '61377837.50', 'dashboard_margin': '85.99004908211179695658333723', 'audit_actions': ['DRAFT_SAVE', 'SUBMIT', 'DRAFT_SAVE', 'SUBMIT']}

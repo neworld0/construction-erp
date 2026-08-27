@@ -11,7 +11,6 @@ from django.utils import timezone
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import get_user_role
 from apps.cost.models import CostActual
-from apps.reports.models import FieldReport
 from apps.schedule.models import DailyProgress
 
 from .web_views import (
@@ -81,15 +80,6 @@ def _status_today_progress(project, user, today):
     return "미제출"
 
 
-def _status_today_report(project, user, today):
-    qs = FieldReport.objects.filter(project=project, created_by=user, report_date=today)
-    if qs.filter(status__in=["SUBMITTED", "APPROVED"]).exists():
-        return "제출"
-    if qs.filter(status="DRAFT").exists():
-        return "임시저장"
-    return "미작성"
-
-
 def _status_today_cost(project, user, today):
     qs = CostActual.objects.filter(
         project=project,
@@ -122,7 +112,7 @@ def field_mobile_home(request):
                 "project": None,
                 "today": today,
                 "progress_status": "미제출",
-                "report_status": "미작성",
+                "daily_report_status": "자동 취합",
                 "cost_status": "미입력",
             },
         )
@@ -132,7 +122,7 @@ def field_mobile_home(request):
         "project": project,
         "today": today,
         "progress_status": _status_today_progress(project, request.user, today),
-        "report_status": _status_today_report(project, request.user, today),
+        "daily_report_status": "자동 취합",
         "cost_status": _status_today_cost(project, request.user, today),
     }
     return render(request, "app/field/mobile/home.html", context)
@@ -172,18 +162,7 @@ def field_mobile_reports(request):
     _ensure_mobile_field(request)
     _projects, project = _resolve_mobile_project(request)
     project_qs = _project_qs(project)
-    return render(
-        request,
-        "app/field/mobile/link_hub.html",
-        {
-            "title": "모바일 보고서",
-            "subtitle": "한 손으로 보고서를 작성하고 목록을 확인하세요.",
-            "primary_label": "보고서 작성",
-            "primary_url": f"/app/reports/new/{project_qs}",
-            "secondary_label": "보고서 목록",
-            "secondary_url": f"/app/reports/{project_qs}",
-        },
-    )
+    return redirect(f"/app/field/site-daily-logs/{project_qs}")
 
 
 @login_required

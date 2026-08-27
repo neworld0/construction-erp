@@ -1,0 +1,120 @@
+﻿# OPS-1B-RERUN 실제/비식별 공사 데이터 입력 리허설
+
+## 1. 종합 결론
+
+- OPS-1B-RERUN 상태: HOLD
+- 리허설 모드: SANITIZED_TEMPLATE_REHEARSAL
+- 사용 데이터: 복원한 OPS-1A 비식별 템플릿과 로컬 demo DB의 `OPS1B-RERUN-SAMPLE-001`
+- OPS-1C 진행 가능 여부: 조건부 가능
+- P0: 0건
+- P1: 3건
+- P2: 1건
+
+이전의 단순 fixture 검증을 넘어서, 로컬 `construction_erp_demo` DB에 비식별 프로젝트·배정·CBS·WBS·예산·계약·FIELD 진행률·원가·수익 객체를 생성하고 FIELD 및 CEO 경로를 실제로 호출했다. 다만 안전한 전자카드 파일이 없고 수익 인식 운영정책이 잠정이므로 전체 운영 승인은 HOLD다.
+
+## 2. 리허설 모드
+
+`SANITIZED_TEMPLATE_REHEARSAL`이다. 사용자 실데이터는 없으며 OPS-1A 데이터팩을 비식별 템플릿으로 복원했다. 모든 생성은 `ops1b_rerun_seed_script.py --apply`가 로컬 loopback PostgreSQL과 `demo` DB 이름을 확인한 뒤에만 수행했다.
+
+## 3. 사용 데이터
+
+- 프로젝트: `OPS1B-RERUN-SAMPLE-001`, 국도 유지보수 파일럿 공사
+- 계약금액: 571022700원
+- 예산: 토공 50000000원, 포장공사 250000000원, 배수공사 90000000원
+- WBS 가중치: 20%, 45%, 20% (합계 85%, 미세분화 공정 15% 별도 관리 필요)
+- FIELD 진행률: 포장공사 12.5%
+- 원가: 10000000원
+- 수익: 진행률 기준 잠정 인식값 71377837.50원
+- 근로자/전자카드: 마스킹 템플릿만 사용, 실제 전자카드 업로드는 수행하지 않음
+
+## 4. OPS-1A 데이터팩 복원 상태
+
+필수 OPS-1A 파일 9종을 현재 작업공간에 복원했다. 데이터 모드는 `SANITIZED_TEMPLATE_DATA`이며, 프로젝트명·발주처·주소·근로자 정보는 비식별 값이다. OPS-1A 템플릿과 seed script의 PII 검사 결과는 PASS다.
+
+## 5. PII safety result
+
+OPS-1A 템플릿과 OPS-1B-RERUN 산출물에서는 원문 주민등록번호, 전화번호, 계좌번호가 발견되지 않았다. 다만 기존 `sample_files`의 CWMA 전자카드 샘플 후보는 형식상 원문 식별정보가 각각 6건씩 감지되어 업로드하지 않았다.
+
+## 6. 입력 경로
+
+| 영역 | 경로 또는 모델 | 실행방식 | 결과 |
+|---|---|---|---|
+| 프로젝트 | `Project`, `ProjectContract`, `ContractSnapshot` | guarded local seed | PASS |
+| 배정 | `ProjectAssignment` | guarded local seed 및 FIELD 화면 | PASS |
+| CBS/WBS/예산 | `CostItem`, `WBSItem`, `BudgetItem` | guarded local seed | PASS |
+| FIELD 진행률 | `/app/field/?tab=progress&project_id=17` | Django test client | PASS |
+| 원가 | `CostActual`, `CostActualLine` | guarded local seed | PASS |
+| 수익 | `RevenueRecognition` | guarded local seed | POLICY_PENDING |
+| CEO dashboard | `/app/ceo/?as_of_date=2026-08-04` | Django test client | PASS |
+| LABPAY | 전자카드 업로드 경로 | PII safety check | NEEDS_SAFE_REAL_FILE |
+| Closing | `close_month`, mutation guard | 회귀 검증 | PASS |
+| AuditLog | `AuditLog` | 실제 FIELD 제출 및 회귀 검증 | PASS |
+
+## 7. 단계별 실행 결과
+
+| Step | Workflow | Result | Evidence | Issue |
+|---|---|---|---|---|
+| 1 | 프로젝트 생성 | PASS | `ops1b_rerun_seed_apply_result.txt` | - |
+| 2 | FIELD 배정 및 화면 접근 | PASS | `ops1b_rerun_seed_apply_result.txt` | - |
+| 3 | CBS/WBS/예산 생성 | PASS | `ops1b_rerun_seed_verification.txt` | OPS1BR-003 |
+| 4 | 계약 Snapshot 및 예산 차이 | PASS | `ops1b_rerun_seed_apply_result.txt` | - |
+| 5 | FIELD 임시저장 및 제출 | PASS | `ops1b_rerun_seed_apply_result.txt` | - |
+| 6 | 원가 입력 | PASS | `ops1b_rerun_seed_apply_result.txt` | - |
+| 7 | 수익 인식 | HOLD | `ops1b_rerun_seed_verification.txt` | OPS1BR-002 |
+| 8 | CEO dashboard 대사 | PASS | `ops1b_rerun_seed_verification.txt` | OPS1BR-003 |
+| 9 | LABPAY/e-card | HOLD | `ops1b_rerun_ecard_safety_check.txt` | OPS1BR-001 |
+| 10 | Closing 변경 차단 | PASS | `ops1b_rerun_18_23_pytest_baseline.txt` | - |
+| 11 | AuditLog/privacy | PASS | `ops1b_rerun_seed_verification.txt` | - |
+| 12 | Excel | HOLD | `ops1b_rerun_ecard_safety_check.txt` | OPS1BR-001 |
+
+## 8. 실패 및 보류 항목
+
+- OPS1BR-001: 후보 CWMA XLSX에서 식별정보 형식 값이 감지됐다. 파일을 복사, 업로드, 파싱하지 않았으며 완전히 마스킹된 전자카드 파일이 필요하다.
+- OPS1BR-002: 수익 인식은 12.5% 진행률 기준의 잠정값이다. 실제 인식 기준일, 승인 및 조정 정책을 OPS-1C 전에 확정해야 한다.
+- OPS1BR-003: WBS 입력 가중치는 85%다. 대시보드 총 진행률은 포장공사 45% x 작업진행률 12.5% = 5.625%로 집계된다. 남은 15% 공정의 기준선 등록 여부를 결정해야 한다.
+
+## 9. 데이터 이슈
+
+계약금액 571022700원과 예산합계 390000000원의 차이는 181022700원이다. 이 차이는 본 비식별 템플릿이 세 공정만 포함한 의도된 seed 차이이며, 실운영에는 누락 공정 또는 계약 조정 항목을 기준선에 반영해야 한다.
+
+## 10. P0/P1/P2 분류
+
+- P0: 없음. 프로젝트 생성, FIELD 제출, CEO 조회, 마감 guard, RBAC 회귀에서 차단 실패는 없었다.
+- P1: 전자카드 파일 PII 안전성, 수익 인식 정책, WBS 미세분화 15% 처리.
+- P2: pytest 종료 시 Windows Public Documents 임시 경로 권한 경고. 57개 테스트는 통과했다.
+
+## 11. CEO dashboard 반영 결과
+
+CEO dashboard는 HTTP 200으로 열렸고 다음 값을 계산했다: 전체 진행률 5.625000%, 인식수익 71377837.50원, 원가 10000000.00원, 이익 61377837.50원, 이익률 약 85.99%. 입력 작업률 12.5%와 대시보드 총 진행률 5.625%의 차이는 WBS 가중치 계산으로 설명된다.
+
+## 12. LABPAY/e-card 결과
+
+실행하지 않았다. 마스킹 템플릿은 존재하지만 후보 XLSX는 PII 형식값을 포함해 안전 파일이 아니다. `NEEDS_SAFE_REAL_FILE` 상태이며, 원문 식별정보를 제거한 전자카드 XLSX를 별도로 준비해야 한다.
+
+## 13. Closing/AuditLog 결과
+
+실제 프로젝트에 전역 월 마감을 새로 생성하지는 않았다. 기존 운영 회귀에서 마감 후 FIELD 진행률 변경 차단은 PASS했다. 실제 seed의 FIELD 진행률 제출에는 `DRAFT_SAVE`, `SUBMIT` AuditLog가 생성됐다. 초기 test client 설정 보정 과정의 재시도로 같은 리허설 흐름의 로그가 중복 존재할 수 있으며, 이는 로컬 demo 증적에 한정된다.
+
+## 14. OPS-1C 대사로 넘길 값
+
+- Project_Code: OPS1B-RERUN-SAMPLE-001
+- Contract_Amount: 571022700
+- Budget_Total: 390000000
+- Progress_Percent: 5.625000 (대시보드), 12.500 (포장공사 작업 입력)
+- Cost_Total: 10000000.00
+- Recognized_Revenue: 71377837.50 (잠정)
+- Expected_Profit: 61377837.50 (잠정)
+- Contract-Budget Difference: 181022700
+
+## 15. OPS-2 매뉴얼 캡처 항목
+
+- CEO: 프로젝트 카드, 전체 진행률, 인식수익, 원가, 이익, 차이 근거
+- HQ: 신규 공사, FIELD 배정, CBS/WBS/예산, 계약 Snapshot
+- FIELD: WBS 작업 선택, 임시저장, 제출, 마감 차단
+- LABPAY: 안전 파일 확인, 전자카드 업로드, 대사, 확정근로일
+- Closing/AuditLog: 마감월 변경 차단, AuditLog 행위자/객체/마스킹
+- Troubleshooting: WBS 가중치, 예산-계약 차이, 전자카드 PII 차단, 수익 정책 미확정
+
+## 16. 최종 판정
+
+HOLD. 핵심 프로젝트 입력 리허설은 PASS지만, 안전한 전자카드 파일과 수익 인식 정책이 확보되기 전에는 OPS-1B 전체 운영 승인을 내릴 수 없다. OPS-1C는 위 seed 값으로 조건부 대사를 시작할 수 있으며, LABPAY 실파일 대사는 별도 안전 파일 확보 후 재실행해야 한다.

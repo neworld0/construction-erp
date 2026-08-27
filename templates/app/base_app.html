@@ -6,12 +6,52 @@
     <title>{% block page_title %}ERP{% endblock %}</title>
     <style>
       :root {
+        --bg: #e9eef4;
+        --panel: #f8fafc;
+        --panel-raised: #f1f5f9;
+        --text: #1e293b;
+        --muted: #526174;
+        --accent: #0e7490;
+        --action: #0f4c81;
+        --action-hover: #0b3b65;
+        --action-text: #ffffff;
+        --primary: #0f4c81;
+        --active-surface: #e0f2fe;
+        --active-text: #075985;
+        --warn: #d97706;
+        --success: #15803d;
+        --danger: #dc2626;
+        --border: #cbd5e1;
+        --border-strong: #aebdce;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --space-1: 6px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+      }
+      body.theme-dark {
         --bg: #0b1220;
         --panel: #101a2b;
+        --panel-raised: #14213a;
         --text: #f8fafc;
         --muted: #94a3b8;
         --accent: #38bdf8;
+        /* Keep action labels light in dark mode as well.  A deeper blue
+           action surface is more legible than dark type on sky blue. */
+        --action: #1d4ed8;
+        --action-hover: #2563eb;
+        --action-text: #ffffff;
+        /* Primary is an action surface.  Keep it identical to the shared
+           button token so page-local forms cannot render a different blue. */
+        --primary: #1d4ed8;
+        --active-surface: #1d4ed8;
+        --active-text: #ffffff;
         --warn: #f59e0b;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --border: rgba(148, 163, 184, 0.22);
+        --border-strong: rgba(148, 163, 184, 0.42);
       }
       * {
         box-sizing: border-box;
@@ -24,8 +64,9 @@
           "Segoe UI", sans-serif;
       }
       header {
-        padding: 16px 24px;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        padding: var(--space-3) 24px;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel);
       }
       .nav {
         display: flex;
@@ -42,6 +83,22 @@
         gap: 8px;
         height: 32px;
       }
+      .nav-left form {
+        display: inline-flex;
+        align-items: center;
+        height: 32px;
+        margin: 0;
+      }
+      header .nav-left form .input {
+        box-sizing: border-box;
+        min-height: 32px;
+        height: 32px;
+        margin: 0;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        line-height: 22px;
+      }
+      header .nav-left form .nav-link { line-height: 32px; white-space: nowrap; }
       .brand {
         font-weight: 700;
         color: var(--text);
@@ -80,10 +137,10 @@
         height: 32px;
         padding: 0 12px;
         line-height: 32px;
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         border: 0;
-        background: var(--accent);
-        color: #0b1220;
+        background: var(--action);
+        color: var(--action-text);
         font-weight: 600;
         cursor: pointer;
         text-decoration: none;
@@ -91,45 +148,191 @@
       }
       .btn-outline {
         background: transparent;
-        border: 1px solid rgba(148, 163, 184, 0.4);
+        border: 1px solid var(--border-strong);
         color: var(--text);
       }
+      .btn.btn-primary,
+      .btn.primary {
+        background:var(--action) !important;
+        color:var(--action-text) !important;
+      }
+      .btn:hover { background:var(--action-hover); filter:none; }
+      .btn-outline:hover { background:var(--panel-raised); color:var(--text); }
+      .btn:focus-visible,
+      .input:focus-visible,
+      .form-control:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .btn[disabled],
+      .btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.55; }
       .nav-right form {
         display: inline-flex;
         align-items: center;
         height: 32px;
         margin: 0;
       }
+      /* Shared header actions must not inherit form/button styles from page content. */
+      .nav-right.app-global-actions {
+        height: auto;
+        min-height: 32px;
+        flex-wrap: wrap;
+      }
+      header .app-global-actions .app-global-action {
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        margin: 0 !important;
+        padding: 0 12px !important;
+        line-height: 1 !important;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        text-decoration: none !important;
+      }
+      header .app-global-actions .app-global-action--secondary {
+        background: transparent !important;
+        border: 1px solid rgba(148, 163, 184, 0.4) !important;
+        color: var(--text) !important;
+      }
+      header .app-global-actions .app-global-action--primary {
+        background: var(--action) !important;
+        border: 1px solid transparent !important;
+        color: var(--action-text) !important;
+      }
+      header .app-global-actions form {
+        display: inline-flex !important;
+        align-items: center !important;
+        width: auto !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        margin: 0 !important;
+      }
       main {
-        padding: 20px;
+        padding: 20px 24px 32px;
       }
       .card {
         background: var(--panel);
-        border-radius: 12px;
-        padding: 16px;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
       }
+      .card-title, .section-title { font-weight: 700; color: var(--text); }
+      .hint, .muted { color: var(--muted); }
+      .input,
       .alert {
         padding: 10px 12px;
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         font-size: 13px;
         margin-bottom: 12px;
       }
       .alert-danger {
-        background: rgba(239, 68, 68, 0.2);
-        color: #f87171;
+        background: #fef2f2;
+        color: #b91c1c;
       }
+      .alert-success { background: #f0fdf4; color: #166534; }
+      .alert-warning { background: #fffbeb; color: #92400e; }
+      .status-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 58px; min-height: 26px; padding: 4px 10px;
+        border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 999px;
+        background: #f1f5f9; color: #334155;
+        font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap;
+      }
+      .status-badge.status-draft { background: #e0f2fe; border-color: #7dd3fc; color: #0369a1; }
+      .status-badge.status-submitted, .status-badge.status-pending { background: #fef3c7; border-color: #fcd34d; color: #a16207; }
+      .status-badge.status-approved { background: #dcfce7; border-color: #86efac; color: #15803d; }
+      .status-badge.status-rejected { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+      .status-badge.status-closed, .status-badge.status-locked, .status-badge.status-final { background: #e2e8f0; border-color: #cbd5e1; color: #475569; }
+      .status-badge.status-voided, .status-badge.status-cancelled { background: #f1f5f9; border-color: #cbd5e1; color: #64748b; }
       .form-control {
         padding: 10px 12px;
         border-radius: 8px;
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        background: transparent;
+        border: 1px solid var(--border);
+        background: var(--panel-raised);
         color: var(--text);
         width: 100%;
       }
+      .input {
+        min-height: 40px;
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--panel-raised);
+        color: var(--text);
+      }
+      .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+      .table-wrap table { margin: 0; min-width: 640px; }
+      .table-grid { width: 100%; border-collapse: collapse; }
+      .table-grid th, .table-grid td { padding: 10px; border: 1px solid var(--border); text-align: left; vertical-align: middle; }
+      .table-grid th { color: var(--muted); background: rgba(15, 23, 42, 0.64); font-size: 12px; }
+      .erp-table-wrap { overflow-x: auto; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
+      .erp-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px; }
+      .erp-table th, .erp-table td { padding: 11px 12px; border: 1px solid var(--border); text-align: left; vertical-align: middle; }
+      .erp-table thead th { background: var(--panel-raised); color: var(--text); font-size: 12px; font-weight: 800; white-space: nowrap; }
+      .erp-table tbody tr:nth-child(even) { background: #f4f7fb; }
+      .erp-table tbody tr:hover { background: #e8f2fa; }
+      .erp-table .number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .erp-table .empty-row { padding: 22px; color: var(--muted); text-align: center; }
+      body.theme-dark .erp-table tbody tr:nth-child(even) { background: rgba(15, 23, 42, .24); }
+      body.theme-dark .erp-table tbody tr:hover { background: rgba(56, 189, 248, .10); }
+      .empty-state { padding: 22px 16px; color: var(--muted); text-align: center; }
+      .field-tabs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .field-tabs .field-tab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 36px;
+        padding: 7px 11px;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .field-tabs .field-tab:hover { border-color: var(--accent); color: var(--text); }
+      .field-tabs .field-tab.active { border-color: var(--accent); background: var(--active-surface); color: var(--active-text); }
+      .field-tab__icon { font-size: 14px; line-height: 1; }
+      .field-tab__mobile-break { display:none; }
+      .field-page { width:100%; max-width:1320px; margin:0 auto; display:grid; gap:16px; }
+      .field-page > .card { min-width:0; }
+      .field-global-nav { margin-bottom:16px; }
+      .field-global-nav .field-tabs { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:8px; }
+      .field-global-nav .field-tabs .field-tab { width:100%; min-width:0; min-height:42px; padding:7px 8px; }
+      .field-entry-page { max-width:1040px; }
+      .field-entry-header { padding:18px; border-left:4px solid var(--accent); }
+      .field-entry-header h2, .field-entry-header h3 { margin:0; }
+      .field-entry-header .muted, .field-entry-header .hint { display:block; margin-top:6px; }
+      .field-entry-form { display:grid; gap:16px; }
+      .field-form-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
+      .field-form-field { display:grid; gap:6px; min-width:0; }
+      .field-form-field--full { grid-column:1 / -1; }
+      .field-form-field label { color:var(--muted); font-size:12px; font-weight:700; }
+      .field-form-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-top:14px; border-top:1px solid var(--border); }
+      .field-form-actions .btn, .field-form-actions button { min-height:38px; }
+      .field-attachments-panel { margin-top:0 !important; }
+      .field-attachment-item { background:var(--panel-raised); border:1px solid var(--border); }
       input[type="date"] {
         color-scheme: dark;
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><path d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 8H5v10h14V10zM5 8h14V6H5v2z'/></svg>");
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23334155'><path d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 8H5v10h14V10zM5 8h14V6H5v2z'/></svg>");
         background-repeat: no-repeat;
         background-position: right 10px center;
         background-size: 16px 16px;
@@ -143,6 +346,12 @@
       input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 0;
       }
+      body.theme-dark input[type="date"] {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><path d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 8H5v10h14V10zM5 8h14V6H5v2z'/></svg>");
+      }
+      body:not(.theme-dark) input[type="date"] {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23334155'><path d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 8H5v10h14V10zM5 8h14V6H5v2z'/></svg>") !important;
+      }
       input[type="month"] {
         color-scheme: dark;
       }
@@ -151,7 +360,7 @@
       }
       select,
       option {
-        background: #0f172a;
+        background: var(--panel);
         color: var(--text);
       }
       .form-label {
@@ -163,6 +372,65 @@
       .mb-3 {
         margin-bottom: 12px;
       }
+      .app-layout { display: flex; min-height: calc(100vh - 57px); }
+      .hq-sidebar { position: sticky; top: 0; align-self: stretch; flex: 0 0 248px; min-height: calc(100vh - 57px); max-height: calc(100vh - 57px); overflow-y: auto; padding: 18px 12px; border-right: 1px solid var(--border); background: var(--panel); }
+      .hq-sidebar__title { padding: 0 10px 10px; color: var(--muted); font-size: 13px; font-weight: 800; letter-spacing: .04em; }
+      .hq-sidebar__group { margin: 0 0 16px; }
+      .hq-sidebar__label { padding: 0 10px 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+      .hq-sidebar a { display:block; padding:10px; border-radius:8px; color:var(--text); font-size:14px; font-weight:650; text-decoration:none; }
+      .hq-sidebar a:hover { background:#e2eaf3; color:#075985; }
+      .hq-sidebar a.is-active { background:#dbeafe; color:#075985; box-shadow:inset 3px 0 0 #0284c7; }
+      .hq-sidebar__entity { margin:0 8px 16px; padding:9px 10px; border:1px solid var(--border); border-radius:8px; background:var(--panel-raised); color:var(--muted); font-size:11px; line-height:1.45; }
+      .hq-sidebar__entity strong { display:block; color:var(--text); font-size:12px; }
+      .hq-positive-message { color:#166534; font-weight:700; }
+      .app-layout > main { flex: 1 1 auto; min-width: 0; }
+      /* HQ 목록은 템플릿별 구현 차이와 무관하게 동일한 ERP 표 형식으로 보인다. */
+      .hq-sidebar + main table { width:100%; border-collapse:collapse; border:1px solid var(--border-strong); font-size:13px; }
+      .hq-sidebar + main table th,
+      .hq-sidebar + main table td { padding:10px 12px; border:1px solid var(--border); vertical-align:middle; }
+      .hq-sidebar + main table thead th { background:var(--panel-raised); color:var(--text); font-size:12px; font-weight:800; white-space:nowrap; }
+      .hq-sidebar + main table tbody tr:nth-child(even) { background:color-mix(in srgb, var(--panel-raised) 55%, transparent); }
+      .hq-sidebar + main table tbody tr:hover { background:color-mix(in srgb, var(--primary) 8%, var(--panel)); }
+      .hq-sidebar + main table .num,
+      .hq-sidebar + main table .number { text-align:right; font-variant-numeric:tabular-nums; }
+      .theme-toggle { min-width: 72px; }
+      body.theme-dark .alert-danger { background: rgba(239, 68, 68, .2); color: #fca5a5; }
+      body.theme-dark .alert-success { background: rgba(34, 197, 94, .16); color: #86efac; }
+      body.theme-dark .alert-warning { background: rgba(245, 158, 11, .16); color: #fcd34d; }
+      body.theme-dark .hq-sidebar a:hover { background: rgba(56,189,248,.16); color: #bae6fd; }
+      body.theme-dark .hq-sidebar a.is-active { background:rgba(56,189,248,.18); color:#bae6fd; box-shadow:inset 3px 0 0 #38bdf8; }
+      body.theme-dark .hq-positive-message { color:#86efac; }
+      @media (max-width: 640px) {
+        .hq-sidebar { display: none; }
+        .app-layout { min-height: 0; }
+        header { padding: 10px 12px; }
+        .nav { align-items: flex-start; }
+        .nav-left { width: 100%; height: auto; min-height: 32px; flex-wrap: wrap; }
+        .nav-left form { flex: 1 1 100%; max-width: none; }
+        .nav-left form select { flex: 1 1 auto; min-width: 0 !important; }
+        .nav-right.app-global-actions { width: 100%; gap: 6px; }
+        header .app-global-actions .app-global-action,
+        header .app-global-actions form { flex: 1 1 calc(25% - 5px) !important; }
+        header .app-global-actions .app-global-action { padding: 0 6px !important; font-size: 11px !important; }
+        main { padding: 14px 12px 28px; }
+        .card { padding: 14px; border-radius: 10px; }
+        .field-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+        .field-tabs .field-tab { min-width: 0; min-height: 54px; padding: 7px 4px; flex-direction: column; gap: 4px; font-size: 10px; text-align: center; white-space: normal; }
+        .field-tab__icon { font-size: 16px; }
+        .field-tab__mobile-break { display:inline; }
+        .field-page { max-width:none; }
+        .field-entry-header { padding:14px; }
+        .field-form-grid { grid-template-columns:1fr; gap:10px; }
+        .field-form-field--full { grid-column:auto; }
+        .field-form-actions { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); }
+        .field-form-actions .btn, .field-form-actions button { width:100%; justify-content:center; }
+      }
+      @media (min-width: 641px) and (max-width: 900px) {
+        .field-global-nav .field-tabs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:7px; }
+        .field-global-nav .field-tabs .field-tab { min-width:0; min-height:50px; padding:7px 4px; flex-direction:column; gap:4px; font-size:10px; text-align:center; white-space:normal; }
+        .field-global-nav .field-tab__icon { font-size:16px; }
+        .field-global-nav .field-tab__mobile-break { display:inline; }
+      }
     </style>
     {% block extra_head %}{% endblock %}
   </head>
@@ -173,22 +441,173 @@
           <a class="brand" href="/app/">
             <span class="brand-mark" aria-label="ASAN">ASAN ERP</span>
           </a>
+          {% if current_legal_entity %}
+          {% if request.user.is_authenticated and request.user.profile.role == 'ceo' and has_group_entity_scope %}
+          <form method="post" action="/app/legal-entity/switch/" style="display:flex;align-items:center;gap:6px;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="nav-link" for="legal-entity-switch">운영 법인</label>
+            <select id="legal-entity-switch" class="input" name="entity_scope" onchange="this.form.submit()" aria-label="CEO 운영 법인 및 그룹 집계 범위" style="width:auto;min-width:170px;padding:6px 28px 6px 8px;">
+              <option value="ASAN" {% if current_entity_scope == "ASAN" %}selected{% endif %}>아산</option>
+              <option value="MISAN" {% if current_entity_scope == "MISAN" %}selected{% endif %}>미산</option>
+              <option value="GROUP" {% if current_entity_scope == "GROUP" or not current_entity_scope %}selected{% endif %}>아미산(그룹합산)</option>
+            </select>
+            <noscript><button class="btn btn-outline" type="submit">전환</button></noscript>
+          </form>
+          {% else %}
+          <form method="post" action="/app/legal-entity/switch/" style="display:flex;align-items:center;gap:6px;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="nav-link" for="legal-entity-switch">운영 법인</label>
+            <select id="legal-entity-switch" class="input" name="legal_entity_id" onchange="this.form.submit()" aria-label="운영 법인 전환" style="width:auto;min-width:150px;padding:6px 28px 6px 8px;">
+              {% for entity in accessible_legal_entities %}
+              <option value="{{ entity.id }}" {% if entity.id == current_legal_entity.id %}selected{% endif %}>{{ entity.legal_name }}</option>
+              {% endfor %}
+            </select>
+            <noscript><button class="btn btn-outline" type="submit">전환</button></noscript>
+          </form>
+          {% endif %}
+          {% endif %}
+          {% if request.user.is_authenticated and request.user.profile.role == 'ceo' %}
+          <a class="nav-link" href="/app/hq/legal-entity-access/">법인 권한 관리</a>
+          {% endif %}
         </div>
-        <div class="nav-right">
-  <a class="btn btn-outline" href="/">홈페이지로</a>
+        <div class="nav-right app-global-actions">
+  <button class="btn btn-outline app-global-action app-global-action--secondary theme-toggle" type="button" id="theme-toggle" aria-pressed="false">다크 모드</button>
+  <button class="btn btn-outline app-global-action app-global-action--secondary" type="button" id="app-back-button">이전 화면</button>
+  <a class="btn btn-outline app-global-action app-global-action--secondary" href="/">홈페이지로</a>
   {% if request.user.is_authenticated %}
   <form method="post" action="/logout/">
     {% csrf_token %}
-    <button class="btn" type="submit">로그아웃</button>
+    <button class="btn app-global-action app-global-action--primary" type="submit">로그아웃</button>
   </form>
   {% endif %}
 </div>
       </div>
     </header>
+    <div class="app-layout">
+    {% if request.user.is_authenticated and request.user.profile.role == 'hq' %}
+    <aside class="hq-sidebar" aria-label="HQ 업무 메뉴">
+      <div class="hq-sidebar__title">HQ 업무 메뉴</div>
+      {% if current_legal_entity %}<div class="hq-sidebar__entity">운영 법인<strong>{{ current_legal_entity.legal_name }}</strong></div>{% endif %}
+      <div class="hq-sidebar__group">
+        <div class="hq-sidebar__label">운영</div>
+        <a href="/app/hq/">운영 허브</a>
+        <a href="/app/hq/projects/">프로젝트·계약</a>
+        <a href="/app/hq/site-daily-logs/">공사일보</a>
+        <a href="/app/hq/reconciliation/">준공·월마감 대사</a>
+        <a href="/app/hq/closing/">월 마감 관리</a>
+        <a href="/app/hq/billing/reports/">기성·준공 보고서</a>
+      </div>
+      <div class="hq-sidebar__group">
+        <div class="hq-sidebar__label">승인·재무</div>
+        <a href="/app/hq/labor/timesheets/">출역부 승인</a>
+        <a href="/app/hq/progress/retro-requests/">진행률 소급 요청</a>
+        <a href="/app/hq/finance/expense-executions/?status=open">비용 집행 관리</a>
+        <a href="/app/hq/billing/reports/settlements/">발주처 확정·세금계산서</a>
+      </div>
+      <div class="hq-sidebar__group">
+        <div class="hq-sidebar__label">노무·자재</div>
+        <a href="/app/hq/labor/workers/">근로자 관리</a>
+        <a href="/app/hq/labor/rates/">직종 단가</a>
+        <a href="/app/hq/labor/office-payroll/">본사 급여</a>
+        <a href="/app/hq/master/warehouses/">창고 관리</a>
+        <a href="/app/hq/master/items/">품목 관리</a>
+      </div>
+      <div class="hq-sidebar__group">
+        <div class="hq-sidebar__label">기준정보</div>
+        <a href="/app/hq/legal-entity/licenses/">법인·면허</a>
+        <a href="/app/hq/master/labor/roles/">직종 관리</a>
+        {% if cbs_url %}<a href="{{ cbs_url }}">CBS 관리</a>{% endif %}
+      </div>
+    </aside>
+    {% endif %}
     <main>
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if 'error' in message.tags %}alert-danger{% endif %}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      {% if request.user.profile.role == 'field' and '/app/field/mobile/' not in request.path %}
+        <div class="field-page field-global-nav">
+          <div class="card">
+            {% include "components/field_tabs.html" with project_id=request.GET.project_id %}
+          </div>
+        </div>
+      {% endif %}
       {% block content %}{% endblock %}
     </main>
+    </div>
     <script>
+      (function () {
+        const sidebarLinks = Array.from(document.querySelectorAll(".hq-sidebar a[href]"));
+        if (sidebarLinks.length) {
+          const pathname = window.location.pathname;
+          const matched = sidebarLinks
+            .filter(function (link) {
+              const target = new URL(link.href, window.location.origin).pathname;
+              return target === "/app/hq/" ? pathname === target : pathname.indexOf(target) === 0;
+            })
+            .sort(function (left, right) { return right.href.length - left.href.length; })[0];
+          if (matched) {
+            matched.classList.add("is-active");
+            matched.setAttribute("aria-current", "page");
+          }
+        }
+      })();
+      (function () {
+        const pathname = window.location.pathname;
+        let activeTab = "";
+        if (pathname.indexOf("/app/field/inventory/warehouses/") === 0) activeTab = "warehouse";
+        else if (pathname.indexOf("/app/field/inventory/") === 0) activeTab = "inventory";
+        else if (pathname.indexOf("/app/field/labor/timesheets/") === 0) activeTab = "timesheet";
+        else if (pathname.indexOf("/app/field/approved/") === 0) activeTab = "approved";
+        else if (pathname.indexOf("/app/field/") === 0) activeTab = new URLSearchParams(window.location.search).get("tab") || "progress";
+        if (!activeTab) return;
+        document.querySelectorAll(".field-tabs [data-field-tab]").forEach(function (tab) {
+          const isActive = tab.getAttribute("data-field-tab") === activeTab;
+          tab.classList.toggle("active", isActive);
+          if (isActive) tab.setAttribute("aria-current", "page");
+          else tab.removeAttribute("aria-current");
+        });
+      })();
+      (function () {
+        const key = "asan-erp-theme";
+        const button = document.getElementById("theme-toggle");
+        const applyTheme = function (theme) {
+          const isDark = theme === "dark";
+          document.body.classList.toggle("theme-dark", isDark);
+          if (button) {
+            button.textContent = isDark ? "밝은 모드" : "다크 모드";
+            button.setAttribute("aria-pressed", String(isDark));
+          }
+        };
+        try { applyTheme(window.localStorage.getItem(key) || "light"); } catch (_error) { applyTheme("light"); }
+        if (button) {
+          button.addEventListener("click", function () {
+            const next = document.body.classList.contains("theme-dark") ? "light" : "dark";
+            try { window.localStorage.setItem(key, next); } catch (_error) {}
+            applyTheme(next);
+          });
+        }
+      })();
+      (function () {
+        const backButton = document.getElementById("app-back-button");
+        if (!backButton) return;
+        backButton.addEventListener("click", function () {
+          let fallback = "/app/field/";
+          if (window.location.pathname.indexOf("/app/ceo/") === 0) fallback = "/app/ceo/";
+          else if (window.location.pathname.indexOf("/app/hq/") === 0) fallback = "/app/hq/";
+          try {
+            const referrer = document.referrer ? new URL(document.referrer) : null;
+            if (referrer && referrer.origin === window.location.origin && window.history.length > 1) {
+              window.history.back();
+              return;
+            }
+          } catch (_error) {}
+          window.location.assign(fallback);
+        });
+      })();
       document.querySelectorAll('input[type="date"]').forEach(function (input) {
         input.addEventListener("click", function () {
           if (typeof input.showPicker === "function") {

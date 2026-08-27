@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import require_role
+from apps.core.rbac.permissions import get_user_role
 from apps.contracts.models import ContractChange
 from apps.projects.models import (
     ApprovalPackage,
@@ -18,7 +19,7 @@ from apps.projects.services.approval_package import approve_package, reject_pack
 
 @login_required
 def ceo_approval_package_list(request):
-    require_role(request.user, [Role.CEO])
+    require_role(request.user, [Role.CEO, Role.HQ])
     status_filter = (request.GET.get("status") or "submitted").lower()
     qs = ApprovalPackage.objects.select_related("project", "created_by").order_by(
         "-created_at"
@@ -32,13 +33,14 @@ def ceo_approval_package_list(request):
     context = {
         "packages": qs,
         "status_filter": status_filter,
+        "ceo_read_only": get_user_role(request.user) != Role.CEO,
     }
     return render(request, "ceo/approval_package_list.html", context)
 
 
 @login_required
 def ceo_approval_package_detail(request, package_id):
-    require_role(request.user, [Role.CEO])
+    require_role(request.user, [Role.CEO, Role.HQ])
     package = get_object_or_404(ApprovalPackage, id=package_id)
     items = list(package.items.all())
     item_rows = []
@@ -75,6 +77,7 @@ def ceo_approval_package_detail(request, package_id):
         {
             "package": package,
             "items": item_rows,
+            "ceo_read_only": get_user_role(request.user) != Role.CEO,
         },
     )
 

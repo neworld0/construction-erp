@@ -1,0 +1,13 @@
+Artifact,Purpose
+scripts/local_ops_reset_project_data.py,Guarded local reset implementation
+local_ops_reset_dryrun_project_manifest.csv,Project deletion target manifest
+local_ops_reset_dryrun_dependency_manifest.csv,Project-scoped dependency counts
+local_ops_reset_dryrun_media_manifest.csv,Preserved media references
+local_ops_reset_dryrun_result.txt,Dry-run guard outcome
+local_ops_reset_apply_deleted_counts.csv,Applied deletion counts
+local_ops_reset_apply_postcheck.csv,Remaining project-scoped row check
+local_ops_reset_apply_result.txt,Apply outcome
+local_ops_reset_24_route_smoke_matrix.csv,Local route smoke
+local_ops_reset_rollback_note.md,Backup and restore instructions
+local_ops_reset_new_project_registration_checklist.md,Operator registration checklist
+local_ops_reset_report.md,Operational summary

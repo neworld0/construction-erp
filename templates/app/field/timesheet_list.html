@@ -1,16 +1,17 @@
 ﻿{% extends "app/base_app.html" %}
+{% load utils %}
 {% block page_title %}출역부{% endblock %}
 {% block content %}
 <style>
   .nav-right .btn-outline {
     background: transparent !important;
     border: 1px solid rgba(148, 163, 184, 0.4) !important;
-    color: #f8fafc !important;
+    color: var(--text) !important;
   }
   .nav-right form .btn {
-    background: #38bdf8 !important;
+    background: var(--action) !important;
     border: 1px solid transparent !important;
-    color: #0b1220 !important;
+    color: var(--action-text) !important;
   }
   .table {
     width: 100%;
@@ -32,13 +33,13 @@
     padding: 8px 14px;
     border-radius: 10px;
     border: 1px solid var(--border);
-    background: var(--card);
+    background: var(--panel);
     color: var(--text);
     cursor: pointer;
   }
   .btn.primary {
-    background: var(--accent);
-    color: #04111f;
+    background: var(--action);
+    color: var(--action-text);
     border-color: transparent;
   }
   .actions {
@@ -72,16 +73,41 @@
     line-height: 1.2;
   }
   .tab.active {
-    background: var(--accent);
-    color: #04111f;
+    background: var(--active-surface);
+    color: var(--active-text);
     border-color: transparent;
+  }
+  @media (max-width: 900px) {
+    .timesheet-list-table,
+    .timesheet-list-table tbody,
+    .timesheet-list-table tr,
+    .timesheet-list-table td { display: block; width: 100%; }
+    .timesheet-list-table thead { display: none; }
+    .timesheet-list-table tr {
+      margin: 10px 0;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-raised);
+    }
+    .timesheet-list-table td { padding: 7px 0; border: 0; }
+    .timesheet-list-table td::before {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .timesheet-list-table td:nth-child(1)::before { content: "작성일"; }
+    .timesheet-list-table td:nth-child(2)::before { content: "프로젝트"; }
+    .timesheet-list-table td:nth-child(3)::before { content: "출역부 번호"; }
+    .timesheet-list-table td:nth-child(4)::before { content: "첨부"; }
+    .timesheet-list-table td:nth-child(5)::before { content: "상태"; }
+    .timesheet-list-table td:nth-child(6)::before { content: "처리"; }
   }
 </style>
 
-<div class="card" style="margin-bottom: 12px;">
-  {% include "components/field_tabs.html" with active_tab="timesheet" project_id=request.GET.project_id %}
-</div>
-
+<div class="field-page">
 <div class="card">
   <h2 class="card-title">출역부 목록</h2>
   <p class="muted">현장 출역부를 조회하고 임시저장/제출 현황을 확인합니다.</p>
@@ -90,8 +116,8 @@
   </div>
 </div>
 
-<div class="card" style="margin-top:18px;">
-  <table class="table">
+<div class="card">
+  <table class="table timesheet-list-table">
     <thead>
       <tr>
         <th>작성일</th>
@@ -111,7 +137,7 @@
           <td>
             {% include "components/attachment_badge.html" with attachments=sheet.attachments %}
           </td>
-          <td>{{ sheet.status }}</td>
+          <td><span class="status-badge {{ sheet.status|field_status_class }}">{{ sheet.status|field_status_label }}</span></td>
           <td>
             <a class="btn" href="/app/field/labor/timesheets/{{ sheet.id }}/">보기</a>
           </td>
@@ -123,6 +149,7 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
 </div>
 {% endblock %}
 

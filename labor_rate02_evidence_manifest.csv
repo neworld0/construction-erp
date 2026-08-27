@@ -1,0 +1,10 @@
+Artifact,Purpose
+labor_rate02_report.md,종합 결과
+labor_rate02_root_cause.md,원인 분석
+labor_rate02_model_decision.md,모델 및 스냅샷 결정
+labor_rate02_rate_master_snapshot.csv,현재 단가 마스터 읽기 전용 스냅샷
+labor_rate02_rate_resolution_snapshot.csv,현재 활성 근로자 해석 스냅샷
+labor_rate02_hq_ui_matrix.csv,HQ 및 FIELD 권한 행렬
+labor_rate02_field_submit_matrix.csv,FIELD 제출 정책
+labor_rate02_local_ops_payroll_matrix.csv,LOCAL-OPS 검산 기준
+labor_rate02_test_matrix.csv,검증 결과

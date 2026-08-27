@@ -47,7 +47,7 @@ def test_progress_percent_out_of_range_rejected(auth_client, project):
             "snapshot_id": 1,
         },
     )
-    assert response.status_code == 400
+    assert response.status_code == 405
 
     response = _post_recognition(
         auth_client,
@@ -58,7 +58,7 @@ def test_progress_percent_out_of_range_rejected(auth_client, project):
             "snapshot_id": 1,
         },
     )
-    assert response.status_code == 400
+    assert response.status_code == 405
 
 
 def test_recognized_revenue_calculated(auth_client, project):
@@ -74,8 +74,8 @@ def test_recognized_revenue_calculated(auth_client, project):
         },
     )
 
-    assert response.status_code == 201
-    assert Decimal(response.json()["recognized_revenue"]) == Decimal("100.00")
+    assert response.status_code == 405
+    assert "월마감" in response.json()["detail"]
 
 
 def test_delta_revenue_calculated(auth_client, project):
@@ -90,7 +90,7 @@ def test_delta_revenue_calculated(auth_client, project):
             "snapshot_id": snapshot.id,
         },
     )
-    assert first.status_code == 201
+    assert first.status_code == 405
 
     second = _post_recognition(
         auth_client,
@@ -101,8 +101,7 @@ def test_delta_revenue_calculated(auth_client, project):
             "snapshot_id": snapshot.id,
         },
     )
-    assert second.status_code == 201
-    assert Decimal(second.json()["delta_revenue"]) == Decimal("100.00")
+    assert second.status_code == 405
 
 
 def test_unique_constraint_per_snapshot(auth_client, project):
@@ -116,7 +115,7 @@ def test_unique_constraint_per_snapshot(auth_client, project):
             "snapshot_id": snapshot_one.id,
         },
     )
-    assert first.status_code == 201
+    assert first.status_code == 405
 
     snapshot_two = _create_snapshot(project, 2, Decimal("2000"), is_active=False)
     second = _post_recognition(
@@ -128,7 +127,7 @@ def test_unique_constraint_per_snapshot(auth_client, project):
             "snapshot_id": snapshot_two.id,
         },
     )
-    assert second.status_code == 201
+    assert second.status_code == 405
 
 
 def test_future_as_of_date_rejected(auth_client, project):
@@ -145,7 +144,7 @@ def test_future_as_of_date_rejected(auth_client, project):
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 405
 
 
 def test_snapshot_project_mismatch_rejected(auth_client, project):
@@ -161,4 +160,4 @@ def test_snapshot_project_mismatch_rejected(auth_client, project):
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 405

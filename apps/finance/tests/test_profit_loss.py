@@ -9,6 +9,7 @@ from apps.cost.models import (
     CostActualLine,
     CostActualStatus,
     CostItem,
+    CostVATTreatment,
     RevenueRecognition,
 )
 from apps.core.rbac.models import UserProfile
@@ -72,6 +73,7 @@ def _create_cost(project, cost_item, quantity, unit_price):
         cost_item=cost_item,
         quantity=quantity,
         unit_price=unit_price,
+        vat_treatment=CostVATTreatment.EXEMPT,
     )
     return cost_actual
 
@@ -100,9 +102,9 @@ def test_profit_calculation(auth_client, project, cost_item):
     response = auth_client.get(f"/api/profit-loss/?project_id={project.id}")
     data = response.json()
 
-    assert Decimal(data["recognized_revenue"]) == Decimal("100.00")
+    assert Decimal(str(data["recognized_revenue"])) == Decimal("90.91")
     assert Decimal(data["accrual_cost"]) == Decimal("200")
-    assert Decimal(data["profit"]) == Decimal("-100.00")
+    assert Decimal(str(data["profit"])) == Decimal("-109.09")
 
 
 def test_margin_percent_when_revenue_positive(auth_client, project, cost_item):
@@ -113,10 +115,10 @@ def test_margin_percent_when_revenue_positive(auth_client, project, cost_item):
     response = auth_client.get(f"/api/profit-loss/?project_id={project.id}")
     data = response.json()
 
-    assert Decimal(data["recognized_revenue"]) == Decimal("200.00")
+    assert Decimal(str(data["recognized_revenue"])) == Decimal("181.82")
     assert Decimal(data["accrual_cost"]) == Decimal("100")
-    assert Decimal(data["profit"]) == Decimal("100.00")
-    assert Decimal(data["margin_percent"]).quantize(Decimal("0.01")) == Decimal("50.00")
+    assert Decimal(str(data["profit"])) == Decimal("81.82")
+    assert Decimal(str(data["margin_percent"])).quantize(Decimal("0.01")) == Decimal("45.00")
 
 
 def test_snapshot_separation(auth_client, project):
@@ -129,8 +131,8 @@ def test_snapshot_separation(auth_client, project):
     response_one = auth_client.get(f"/api/profit-loss/?snapshot_id={snapshot_one.id}")
     response_two = auth_client.get(f"/api/profit-loss/?snapshot_id={snapshot_two.id}")
 
-    assert Decimal(response_one.json()["recognized_revenue"]) == Decimal("100.00")
-    assert Decimal(response_two.json()["recognized_revenue"]) == Decimal("200.00")
+    assert Decimal(str(response_one.json()["recognized_revenue"])) == Decimal("90.91")
+    assert Decimal(str(response_two.json()["recognized_revenue"])) == Decimal("181.82")
 
 
 def test_project_uses_active_snapshot(auth_client, project):
@@ -143,4 +145,4 @@ def test_project_uses_active_snapshot(auth_client, project):
     response = auth_client.get(f"/api/profit-loss/?project_id={project.id}")
     data = response.json()
 
-    assert Decimal(data["recognized_revenue"]) == Decimal("200.00")
+    assert Decimal(str(data["recognized_revenue"])) == Decimal("181.82")

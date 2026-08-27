@@ -7,6 +7,7 @@ from apps.core.rbac.models import Role
 from apps.core.rbac.permissions import require_role
 from apps.projects.models import Project
 from .services.dashboard import get_ceo_project_summary, get_ceo_projects_list
+from .services.progress_comparison import build_project_progress_timeline
 from apps.projects.services.wbs_baseline import (
     get_wbs_baseline_badge,
     get_wbs_baseline_history,
@@ -36,6 +37,7 @@ def project_detail_page(request, project_id):
     project = Project.objects.filter(id=project_id).first()
     wbs_badge = get_wbs_baseline_badge(project) if project else {}
     wbs_history = get_wbs_baseline_history(project) if project else []
+    progress_timeline = build_project_progress_timeline(project, as_of_date or date.today()) if project else {}
 
     context = {
         "summary": summary,
@@ -43,5 +45,6 @@ def project_detail_page(request, project_id):
         "project": project,
         "wbs_badge": wbs_badge,
         "wbs_history": wbs_history,
+        "progress_timeline": progress_timeline,
     }
     return render(request, "ceo/project_detail.html", context)

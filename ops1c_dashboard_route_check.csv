@@ -1,0 +1,6 @@
+Route,Role,HTTP_Status,Contains_Project_Code,Contains_Project_Name,Contains_Expected_Value,Result,Notes
+/app/ceo/,CEO,200,False,True,True,PASS,CEO role-session smoke; 2FA device not fabricated
+/app/ceo/?as_of_date=2026-08-04,CEO,200,False,True,True,PASS,CEO role-session smoke; 2FA device not fabricated
+/app/ceo/projects/,CEO,200,False,True,True,PASS,CEO role-session smoke; 2FA device not fabricated
+/app/ceo/projects/17/kpi/,CEO,200,False,True,True,PASS,CEO role-session smoke; 2FA device not fabricated
+/app/ceo/projects/,HQ,200,False,True,True,PASS,CEO role-session smoke; 2FA device not fabricated

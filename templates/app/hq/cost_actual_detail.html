@@ -64,6 +64,25 @@
     {% endif %}
   </div>
 
+  {% if can_correct_report_date %}
+  <div class="card" style="display:grid; gap:10px;">
+    <div class="section-title">원가 발생일 정정</div>
+    <div class="hint">제출된 원가의 날짜를 정정하면 FIELD 재제출 상태로 전환됩니다. 승인 완료·마감 원가는 정정 절차를 이용해 주세요.</div>
+    <form method="post" action="/app/hq/costs/{{ cost_actual.id }}/correct-date/" style="display:grid; gap:10px; max-width:480px;">
+      {% csrf_token %}
+      <div>
+        <label for="report_date">정정할 발생일</label>
+        <input id="report_date" name="report_date" type="date" value="{{ cost_actual.report_date|date:'Y-m-d' }}" max="{{ correction_max_date }}" required>
+      </div>
+      <div>
+        <label for="reason">정정 사유</label>
+        <textarea id="reason" name="reason" rows="2" required placeholder="예: 현장 전표의 발생일 오기"></textarea>
+      </div>
+      <div><button type="submit" class="btn btn-outline">날짜 정정</button></div>
+    </form>
+  </div>
+  {% endif %}
+
   <div class="card">
     <div class="section-title">{{ labels.lines }}</div>
     {% if lines %}
@@ -75,6 +94,8 @@
             <th style="text-align:right;">{{ labels.quantity }}</th>
             <th style="text-align:right;">{{ labels.unit_price }}</th>
             <th style="text-align:right;">{{ labels.amount }}</th>
+            <th style="text-align:center;">VAT 처리</th>
+            <th style="text-align:right;">손익 원가</th>
           </tr>
         </thead>
         <tbody>
@@ -85,6 +106,8 @@
               <td style="text-align:right;">{{ line.quantity|floatformat:3 }}</td>
               <td style="text-align:right;">{{ line.unit_price|intcomma }}</td>
               <td style="text-align:right;">{{ line.amount|intcomma }}</td>
+              <td style="text-align:center;">{{ line.get_vat_treatment_display }}</td>
+              <td style="text-align:right;">{{ line.accounting_cost_amount|intcomma }}</td>
             </tr>
           {% endfor %}
         </tbody>

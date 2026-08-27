@@ -6,7 +6,7 @@
     --card: #101a2b;
     --text: #f8fafc;
     --muted: #94a3b8;
-    --primary: #38bdf8;
+    --primary: var(--action);
     --border: rgba(148, 163, 184, 0.2);
     --warning: #f59e0b;
   }
@@ -20,17 +20,17 @@
     padding: 20px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
   }
-  form {
+  .evidence-edit-form {
     display: grid;
     gap: 12px;
   }
-  label {
+  .evidence-edit-form label {
     font-size: 13px;
     color: var(--muted);
   }
-  input,
-  textarea,
-  button {
+  .evidence-edit-form input,
+  .evidence-edit-form textarea,
+  .evidence-edit-form button {
     padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -39,9 +39,9 @@
     background: transparent;
     color: var(--text);
   }
-  button {
+  .evidence-edit-form button {
     background: var(--primary);
-    color: #0b1220;
+    color: var(--action-text);
     border: 0;
     cursor: pointer;
     font-weight: 600;
@@ -61,7 +61,7 @@
     {% if error %}
     <div class="notice">{{ error }}</div>
     {% endif %}
-    <form method="post" enctype="multipart/form-data">
+    <form class="evidence-edit-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <label for="title">제목</label>
       <input id="title" name="title" value="{{ evidence.title }}" required />

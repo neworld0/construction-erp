@@ -1,0 +1,7 @@
+Issue_ID,Area,P0_P1_P2,Current_Status,Required_Before_Staging,Required_Before_Production,Next_Action,Notes
+RR-01,Access Pack,P1,INCOMPLETE,YES,YES,complete 11 required inputs,blocks rerun
+RR-02,Host,P1,NOT_PROVIDED,YES,YES,provide Linux staging host and authority,
+RR-03,Restore,P1,NOT_AUTHORIZED,YES,YES,provide isolated DB and CREATEDB/pre-created approval,
+RR-04,Media,P1,PENDING,YES,YES,approve media backup/access policy,
+RR-05,LABPAY,P2,SAFE_REAL_FILE_PENDING,NO,YES,sanitized real-file verification,separate gate
+RR-06,Finance,P1,REVENUE_POLICY_PENDING,NO,YES,finance policy approval,separate gate

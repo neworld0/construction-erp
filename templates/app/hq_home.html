@@ -4,45 +4,43 @@
 {% block page_title %}HQ 대시보드{% endblock %}
 
 {% block content %}
+<style>
+  .hq-todo-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--panel-raised); }
+  .hq-recent-actions { display:grid; gap:7px; padding:0; margin:0; list-style:none; }
+  .hq-recent-actions li { padding:9px 10px; border-left:3px solid var(--accent); background:var(--panel-raised); border-radius:0 8px 8px 0; }
+  .hq-list-title { color:var(--text); font-weight:700; }
+  .hq-list-meta { display:block; margin-top:4px; color:var(--muted); font-size:12px; }
+  .hq-list-action { margin-top:8px; }
+  .hq-risk-list { display:grid; gap:7px; }
+  .hq-risk-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px; border-left:3px solid var(--accent); border-radius:0 8px 8px 0; background:var(--panel-raised); }
+  .hq-risk-badge { padding:2px 8px; border-radius:999px; font-size:11px; }
+  .hq-risk-badge--category, .hq-risk-badge--med { background:#dbeafe; color:#1d4ed8; }
+  .hq-risk-badge--critical, .hq-risk-badge--stale { background:#fee2e2; color:#b91c1c; }
+  .hq-risk-badge--high, .hq-risk-badge--warning { background:#fef3c7; color:#92400e; }
+  .hq-risk-badge--low { background:#e2e8f0; color:#475569; }
+  .hq-home-title { margin:0; font-size:24px; letter-spacing:-.02em; }
+  .hq-home-summary { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; min-width:250px; }
+  .hq-home-summary__item { padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--panel-raised); }
+  .hq-home-summary__label { color:var(--muted); font-size:11px; font-weight:700; }
+  .hq-home-summary__value { margin-top:4px; color:var(--text); font-size:18px; font-weight:800; }
+  @media (max-width:640px) {
+    .hq-todo-row { align-items:flex-start; flex-direction:column; gap:8px; }
+    .hq-todo-row > div:last-child { width:100%; justify-content:space-between; }
+    .hq-home-summary { width:100%; min-width:0; }
+  }
+</style>
 <div class="container">
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-      <div>
-        <div style="font-size:20px; font-weight:700;">HQ 대시보드</div>
-        <div class="hint">승인 대기/리스크 현황을 빠르게 확인하세요.</div>
-      </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a class="btn btn-outline" href="/app/hq/projects/">프로젝트 목록</a>
-        {% if cbs_url %}
-        <a class="btn btn-outline" href="{{ cbs_url }}">CBS 관리</a>
-        {% endif %}
-        <a class="btn btn-outline" href="/app/hq/closing/">월 마감 관리</a>
-        <a class="btn btn-outline" href="/app/hq/master/warehouses/">창고 관리</a>
-        <a class="btn btn-outline" href="/app/hq/master/items/">품목 관리</a>
-        <a class="btn btn-outline" href="/app/hq/master/labor/roles/">직종 관리</a>
-        <a class="btn btn-outline" href="/app/hq/master/labor/rates/">직종 단가표</a>
-        <a class="btn btn-outline" href="/app/hq/labor/workers/">근로자 관리</a>
-        <a class="btn btn-outline" href="/app/hq/labor/work-ledger/">노무원장 관리</a>
-        <a class="btn btn-outline" href="/app/hq/labor/timesheets/">출역부 승인</a>
-        <a class="btn btn-outline" href="/app/hq/labor/reporting-map/">신고용 현장 매핑</a>
-        <a class="btn btn-outline" href="/app/hq/labor/e-card-imports/">전자카드 업로드 배치</a>
-        <a class="btn btn-outline" href="/app/hq/labor/monthly-payroll/">월 급여 요약</a>
-        <a class="btn btn-outline" href="/app/hq/labor/payroll-allocation/">급여 배부</a>
-      </div>
-    </div>
-  </div>
-
   <div class="card" style="margin-bottom:16px;">
     <div class="card-title" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
       <div style="min-width:240px; flex:1;">
-        <div style="font-size:18px; font-weight:700;">HQ 운영 허브</div>
-        <div class="hint">오늘 처리해야 할 핵심 업무를 요약합니다.</div>
+        <h1 class="hq-home-title">HQ 홈</h1>
+        <div class="hint">선택한 운영 법인의 오늘 처리할 업무입니다. 상세 업무는 좌측 메뉴에서 선택하세요.</div>
         <div style="margin-top:12px; display:grid; gap:8px;">
           {% if todo_all_clear %}
-            <div style="font-weight:600; color:#86efac;">🟢 오늘의 HQ 업무가 모두 정상입니다.</div>
+            <div class="hq-positive-message">🟢 오늘의 HQ 업무가 모두 정상입니다.</div>
           {% endif %}
           {% for item in todo_items %}
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border:1px solid rgba(148,163,184,0.2); border-radius:10px;">
+            <div class="hq-todo-row">
               <div style="display:flex; align-items:center; gap:8px;">
                 <span>{{ item.icon }}</span>
                 <span>{{ item.text }}</span>
@@ -57,20 +55,16 @@
           {% endfor %}
         </div>
       </div>
-      <div style="min-width:220px;">
-        <div style="font-weight:600; margin-bottom:8px;">바로가기</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          {% for link in quick_links %}
-            <a class="btn btn-outline" href="{{ link.url }}">{{ link.label }}</a>
-          {% endfor %}
-        </div>
+      <div class="hq-home-summary" aria-label="오늘의 운영 현황">
+        <div class="hq-home-summary__item"><div class="hq-home-summary__label">처리 대기</div><div class="hq-home-summary__value">{% if todo_all_clear %}0{% else %}{{ todo_items|length }}{% endif %}건</div></div>
+        <div class="hq-home-summary__item"><div class="hq-home-summary__label">최근 승인</div><div class="hq-home-summary__value">{{ recent_actions|length }}건</div></div>
       </div>
     </div>
 
     <div style="margin-top:16px;">
       <div style="font-weight:600; margin-bottom:6px;">최근 승인 처리</div>
       {% if recent_actions %}
-        <ul class="list">
+        <ul class="list hq-recent-actions">
           {% for item in recent_actions %}
             <li>
               {{ item.action }} /
@@ -87,14 +81,13 @@
 
   <div class="container" style="grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:24px; margin-top:18px;">
     <div class="card" id="pending-reports" style="scroll-margin-top:80px;">
-      <div class="section-title">승인 대기 일일보고</div>
+      <div class="section-title">승인 대기 진행률</div>
       {% if pending_reports %}
-        <ul class="list">
+        <ul class="list hq-recent-actions">
           {% for item in pending_reports %}
             <li>
-              {{ item.project.name }} / {{ item.reporter.username }}
-              <span class="muted">{{ item.report_date }}</span>
-              <span class="muted">관리자</span>
+              <strong>{{ item.project.name }}</strong>{% if item.task %} / {{ item.task.name }}{% endif %} / {{ item.reporter.username }}
+              <span class="muted">작성일 {{ item.report_date }} · {{ item.progress_percent }}% · 승인 대기</span>
             </li>
           {% endfor %}
         </ul>
@@ -106,13 +99,12 @@
     <div class="card" id="pending-costs" style="scroll-margin-top:80px;">
       <div class="section-title">승인 대기 원가</div>
       {% if pending_costs %}
-        <ul class="list">
+        <ul class="list hq-recent-actions">
           {% for item in pending_costs %}
             <li>
-              {{ item.project.name }}
-              <span class="muted">{{ item.report_date }}</span>
-              <span class="muted">{{ item.total_amount|intcomma }}</span>
-              <span class="muted">관리자</span>
+              <span class="hq-list-title">{{ item.project.name }}</span>
+              <span class="hq-list-meta">발생일 {{ item.report_date }} · {{ item.total_amount|intcomma }}원 · 승인 대기</span>
+              <div class="hq-list-action"><a class="btn btn-outline" style="height:26px;" href="/app/hq/costs/{{ item.id }}/">상세·날짜 정정</a></div>
             </li>
           {% endfor %}
         </ul>
@@ -121,22 +113,55 @@
       {% endif %}
     </div>
 
+    <div class="card" id="pending-material-requests" style="scroll-margin-top:80px;">
+      <div class="section-title">승인 대기 품목 요청</div>
+      {% if pending_material_requests %}
+        <ul class="list hq-recent-actions">
+          {% for item in pending_material_requests %}
+            <li>
+              <span class="hq-list-title">{{ item.project.name }} / {{ item.item_name }}</span>
+              <span class="hq-list-meta">요청자 {{ item.requested_by.username }} · 승인 대기</span>
+            </li>
+          {% endfor %}
+        </ul>
+        <a class="btn btn-outline" href="/app/hq/inventory/material-requests/">품목 요청 처리</a>
+      {% else %}
+        <div class="muted">대기 항목이 없습니다.</div>
+      {% endif %}
+    </div>
+
+    <div class="card" id="expense-executions" style="scroll-margin-top:80px;">
+      <div class="section-title">비용 집행 대상</div>
+      <div class="hint" style="margin:4px 0 10px;">CEO 승인 원가를 HQ가 지급 예정·지급 완료로 관리합니다.</div>
+      {% if expense_executions %}
+        <ul class="list hq-recent-actions">
+          {% for item in expense_executions %}
+            <li>
+              <span class="hq-list-title">{{ item.cost_actual.project.name }} / {{ item.amount_snapshot|intcomma }}원</span>
+              <span class="hq-list-meta">{{ item.get_status_display }}{% if item.scheduled_date %} · 예정 {{ item.scheduled_date|date:"Y-m-d" }}{% endif %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+        <a class="btn btn-outline" href="/app/hq/finance/expense-executions/?status=open">비용 집행 처리</a>
+      {% else %}
+        <div class="muted">CEO 승인 후 처리할 비용 집행 대상이 없습니다.</div>
+      {% endif %}
+    </div>
+
     <div class="card" id="pending-changes" style="scroll-margin-top:80px;">
       <div class="section-title">승인 대기 변경요청</div>
       {% if pending_plan_changes or pending_contract_changes %}
-        <ul class="list">
+        <ul class="list hq-recent-actions">
           {% for item in pending_plan_changes %}
             <li>
-              {{ item.project.name }} (계획 변경)
-              <span class="muted">{{ item.requested_at|date:"Y-m-d" }}</span>
-              <span class="muted">관리자</span>
+              <span class="hq-list-title">{{ item.project.name }} (계획 변경)</span>
+              <span class="hq-list-meta">요청일 {{ item.requested_at|date:"Y-m-d" }} · 승인 대기</span>
             </li>
           {% endfor %}
           {% for item in pending_contract_changes %}
             <li>
-              {{ item.project.name }} (계약 변경)
-              <span class="muted">{{ item.submitted_at|date:"Y-m-d" }}</span>
-              <span class="muted">관리자</span>
+              <span class="hq-list-title">{{ item.project.name }} (계약 변경)</span>
+              <span class="hq-list-meta">요청일 {{ item.submitted_at|date:"Y-m-d" }} · 승인 대기</span>
             </li>
           {% endfor %}
         </ul>
@@ -151,33 +176,33 @@
         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
           <span class="muted">OPEN {{ risk_summary.open_total|default:0 }}건</span>
           {% if risk_summary.critical %}
-            <span style="padding:2px 8px; border-radius:999px; background:#7f1d1d; color:#fecaca; font-size:11px;">CRITICAL {{ risk_summary.critical }}</span>
+            <span class="hq-risk-badge hq-risk-badge--critical">CRITICAL {{ risk_summary.critical }}</span>
           {% endif %}
           {% if risk_summary.high %}
-            <span style="padding:2px 8px; border-radius:999px; background:#78350f; color:#fde68a; font-size:11px;">HIGH {{ risk_summary.high }}</span>
+            <span class="hq-risk-badge hq-risk-badge--high">HIGH {{ risk_summary.high }}</span>
           {% endif %}
         </div>
       </div>
       {% if risk_cards %}
-        <div style="display:grid; gap:10px;">
+        <div class="hq-risk-list">
           {% for item in risk_cards %}
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px; border:1px solid rgba(148,163,184,0.2); border-radius:10px;">
+            <div class="hq-risk-row">
               <div style="min-width:0;">
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
-                  <span style="padding:2px 8px; border-radius:999px; background:rgba(59,130,246,0.18); color:#93c5fd; font-size:11px;">{{ item.category_label }}</span>
+                  <span class="hq-risk-badge hq-risk-badge--category">{{ item.category_label }}</span>
                   {% if item.severity == "CRITICAL" %}
-                    <span style="padding:2px 8px; border-radius:999px; background:#7f1d1d; color:#fecaca; font-size:11px;">CRITICAL</span>
+                    <span class="hq-risk-badge hq-risk-badge--critical">CRITICAL</span>
                   {% elif item.severity == "HIGH" %}
-                    <span style="padding:2px 8px; border-radius:999px; background:#78350f; color:#fde68a; font-size:11px;">HIGH</span>
+                    <span class="hq-risk-badge hq-risk-badge--high">HIGH</span>
                   {% elif item.severity == "MED" %}
-                    <span style="padding:2px 8px; border-radius:999px; background:#1e3a8a; color:#bfdbfe; font-size:11px;">MED</span>
+                    <span class="hq-risk-badge hq-risk-badge--med">MED</span>
                   {% else %}
-                    <span style="padding:2px 8px; border-radius:999px; background:rgba(148,163,184,0.2); color:#e2e8f0; font-size:11px;">LOW</span>
+                    <span class="hq-risk-badge hq-risk-badge--low">LOW</span>
                   {% endif %}
                   {% if item.stale_48h %}
-                    <span style="padding:2px 8px; border-radius:999px; background:rgba(239,68,68,0.18); color:#fca5a5; font-size:11px;">48h+</span>
+                    <span class="hq-risk-badge hq-risk-badge--stale">48h+</span>
                   {% elif item.stale_24h %}
-                    <span style="padding:2px 8px; border-radius:999px; background:rgba(245,158,11,0.18); color:#facc15; font-size:11px;">24h+</span>
+                    <span class="hq-risk-badge hq-risk-badge--warning">24h+</span>
                   {% endif %}
                 </div>
                 <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
@@ -198,7 +223,7 @@
         </div>
       {% else %}
         <div style="padding:6px 0;">
-          <div style="font-weight:600; color:#86efac;">🟢 현재 OPEN 리스크가 없습니다.</div>
+          <div class="hq-positive-message">현재 확인할 운영 리스크가 없습니다.</div>
           <div class="muted">제출·승인·마감 흐름이 정상입니다.</div>
         </div>
       {% endif %}

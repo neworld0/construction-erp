@@ -1,0 +1,129 @@
+CODEX PROMPT — CEO 승인 대기 Quick Action (Dashboard Inline)
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+목표
+CEO 대시보드 /app/ceo/ 의 “승인 대기” 영역을 단순 요약이 아니라 **즉시 처리 가능한 승인함(Quick Action)**으로 고도화한다.
+•	승인 대기 건을 리스트로 표시(최대 N=5, 기본 5)
+•	각 행에 [상세] [승인] [반려] 버튼 제공
+•	반려는 사유 입력 필수(모달/프롬프트)
+•	처리 시:
+o	기존 승인 로직 재사용
+o	AuditLog 기록
+o	마감(CLOSE-2) 이후 입력/수정 차단 정책과 충돌 없게 동작
+•	CEO 권한만 접근/실행 가능 (RBAC)
+________________________________________
+0) 전제(Do not change)
+•	기존 모델/승인 워크플로우/ApprovalRequest 구조 변경 금지
+•	기존 HQ 승인함/엔드포인트가 있다면 가능한 재사용
+•	URL /app/ceo/ 유지
+•	CEO는 “최종 승인자” 성격이므로, 승인 처리 시 actor=CEO로 기록
+•	마감된 기간(ClosingPeriod CLOSED)은 Quick Action 수행 금지(또는 정책에 맞게 제한)
+o	금지 시: 사용자에게 명확한 안내 메시지
+________________________________________
+1) 구현 범위(파일)
+•	CEO dashboard view: ceo/views.py (컨텍스트: approvals_inbox)
+•	CEO dashboard template: ceo_dashboard.html (승인 대기 카드 UI 확장)
+•	(신규) CEO Quick Action endpoints (POST):
+o	/app/ceo/approvals/approve/
+o	/app/ceo/approvals/reject/
+•	(권장) 공용 서비스 함수: approvals/services.py 또는 ceo/approval_actions.py
+o	HQ quick action과 중복 제거(공유 함수로 정리)
+________________________________________
+2) 승인 대기 데이터(대상)
+CEO가 최종적으로 결재해야 하는 “승인 대기”를 리스트로 보여준다.
+우선순위 대상(최소):
+1.	ChangeOrder / WBS 변경 승인 패키지(T10-5-5 포함)
+2.	정정(Adjustment, CLOSE-3)
+3.	CBS 변경 승인(CBS-SAFE-2)
+4.	기타 CEO 결재 대상 ApprovalRequest
+구현 방식:
+•	시스템에 ApprovalRequest 모델이 있으면 그중 status=PENDING + approver_role=CEO 로 필터
+•	ApprovalRequest가 없고 각 모델에 status만 있으면, CEO 승인 대상 모델을 Discovery로 찾아 PENDING만 수집
+•	수집 결과를 “표준 승인 아이템” 형태로 normalize:
+o	object_type, object_id, project, title, submitted_at, submitted_by, risk_badges[], detail_url
+정렬:
+•	CRITICAL/High 리스크 먼저
+•	그 다음 오래된 순(지연 우선)
+•	그 다음 최신순
+표시 개수:
+•	기본 5개
+•	“전체 보기” 링크 제공:
+o	/app/ceo/approvals/ (없으면 간단 리스트 페이지 추가 가능—선택)
+________________________________________
+3) UI 요구사항(CEO Dashboard)
+“승인 대기” 카드 내부를 아래로 변경:
+3-1) 요약 줄
+•	“총 승인대기 n건” 배지 유지
+•	n>0이면 “지금 처리하기” 버튼 표시(앵커로 리스트로 스크롤)
+3-2) 리스트 렌더링(최대 5건)
+각 행(row) 구성:
+•	프로젝트명 (없으면 “전사”)
+•	승인 유형(변경요청/정정/CBS 변경 등)
+•	제목/요약 (짧게)
+•	제출자 + 제출시각(YYYY-MM-DD HH:mm)
+•	리스크 배지(있다면): CRITICAL/HIGH/증빙누락/마감임박 등
+•	우측 버튼:
+o	[상세] → detail_url
+o	[승인] → POST
+o	[반려] → 사유 입력 후 POST
+빈 상태(0건):
+•	“승인 대기 항목이 없습니다.” + 보조 문구
+•	카드 레이아웃 유지
+________________________________________
+4) Quick Action 엔드포인트(필수)
+4-1) 요청 스펙
+POST 파라미터:
+•	object_type (예: CHANGE_ORDER, ADJUSTMENT, CBS_CHANGE, APPROVAL_REQUEST)
+•	object_id
+•	action = approve | reject
+•	reason (reject 시 필수)
+보안:
+•	CSRF 필수
+•	CEO 권한 체크(RBAC)
+•	POST only
+4-2) 처리 로직
+•	대상 객체 로드
+•	마감/잠금 정책 검사(CLOSE-2, CLOSE-4 등)
+o	금지면 403 또는 메시지 + redirect
+•	승인 시:
+o	기존 승인 워크플로우 수행(ApprovalRequest 상태 APPROVED, 연결된 객체 상태 업데이트)
+•	반려 시:
+o	reason 저장(가능한 위치: ApprovalRequest.note 또는 대상 객체의 reject_reason)
+o	상태 REJECTED 업데이트
+•	AuditLog 기록:
+o	actor=현재 사용자(CEO)
+o	action=APPROVE/REJECT
+o	object_type/object_id
+o	metadata에 reason, 이전 상태, 이후 상태
+처리 후:
+•	/app/ceo/로 redirect
+•	성공/실패 메시지 표시
+________________________________________
+5) 반려 사유 입력 UX(필수)
+템플릿에 간단 모달 추가(권장). 최소 구현은 JS prompt()도 허용하지만, 가능하면 모달로 구현.
+•	[반려] 클릭 → 모달 열림
+•	사유 입력 필수(빈 값 불가)
+•	제출 → POST
+________________________________________
+6) 중복 방지/재사용(권장)
+HQ Inbox quick action이 이미 존재한다면:
+•	공용 승인 서비스 함수를 만들고 CEO/HQ에서 호출
+•	object_type/object_id 기반 normalize 함수 공유
+________________________________________
+7) 완료 기준(Acceptance)
+•	CEO로 /app/ceo/ 접속 시 승인 대기 리스트가 보인다
+•	[상세] 클릭 시 기존 상세 승인 페이지로 이동한다
+•	[승인] 클릭 시 승인 처리되고 목록에서 제거되거나 상태가 바뀐다
+•	[반려] 클릭 시 사유 입력이 필수이며 반려 처리된다
+•	AuditLog가 남는다
+•	마감된 기간은 Quick Action이 차단된다(정책에 맞는 메시지)
+•	권한 없는 사용자는 엔드포인트 접근 불가(403)
+________________________________________
+8) 테스트 시나리오
+1.	CEO 승인 대기(ChangeOrder 또는 Adjustment) 1건 생성
+2.	CEO 대시보드에 1건 표시 확인
+3.	승인 → 상태 반영 + 목록 갱신 확인
+4.	반려 → 사유 저장 + 상태 반영 확인
+5.	마감(CLOSED)로 만든 후 승인 시도 → 차단 확인
+

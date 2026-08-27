@@ -59,13 +59,32 @@ class DailyProgress(models.Model):
     status = models.CharField(
         max_length=20,
         choices=[
-            ("draft", "Draft"),
-            ("submitted", "Submitted"),
-            ("approved", "Approved"),
-        ],
+                ("draft", "Draft"),
+                ("submitted", "Submitted"),
+                ("approved", "Approved"),
+                ("rejected", "Rejected"),
+                ("voided", "Voided"),
+            ],
         default="submitted",
     )
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_daily_progresses",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rejected_daily_progresses",
+    )
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    reject_reason = models.TextField(blank=True, default="")
     note = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -101,6 +120,88 @@ class DailyProgress(models.Model):
 
     def __str__(self) -> str:
         return f"{self.project_id} {self.task_id} {self.report_date}"
+
+
+class ProgressCorrectionType(models.TextChoices):
+    CORRECT = "CORRECT", "Correct"
+    CANCEL = "CANCEL", "Cancel"
+
+
+class ProgressCorrectionStatus(models.TextChoices):
+    HQ_REVIEW = "HQ_REVIEW", "HQ Review"
+    CEO_REVIEW = "CEO_REVIEW", "CEO Review"
+    APPROVED = "APPROVED", "Approved"
+    REJECTED = "REJECTED", "Rejected"
+
+
+class ProgressCorrectionRequest(models.Model):
+    """Immutable request record for changing an already approved progress row."""
+
+    original_progress = models.ForeignKey(
+        DailyProgress, on_delete=models.PROTECT, related_name="correction_requests"
+    )
+    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+    correction_type = models.CharField(max_length=10, choices=ProgressCorrectionType.choices)
+    proposed_progress_percent = models.DecimalField(
+        max_digits=6, decimal_places=3, null=True, blank=True
+    )
+    proposed_note = models.TextField(blank=True, default="")
+    reason = models.TextField()
+    # Snapshots make the pre-correction approved value independently auditable.
+    original_report_date = models.DateField()
+    original_progress_percent = models.DecimalField(max_digits=6, decimal_places=3)
+    original_note = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=16,
+        choices=ProgressCorrectionStatus.choices,
+        default=ProgressCorrectionStatus.HQ_REVIEW,
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="requested_progress_corrections"
+    )
+    hq_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="hq_reviewed_progress_corrections",
+    )
+    hq_review_comment = models.TextField(blank=True, default="")
+    hq_reviewed_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="approved_progress_corrections",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["status", "project"]),
+            models.Index(fields=["original_progress", "status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["original_progress"],
+                condition=Q(status__in=["HQ_REVIEW", "CEO_REVIEW"]),
+                name="uq_active_progress_correction",
+            )
+        ]
+
+    def clean(self):
+        if self.correction_type == ProgressCorrectionType.CORRECT:
+            if self.proposed_progress_percent is None:
+                raise ValidationError({"proposed_progress_percent": "정정 진행률을 입력해 주세요."})
+            if not 0 <= self.proposed_progress_percent <= 100:
+                raise ValidationError({"proposed_progress_percent": "진행률은 0~100 사이여야 합니다."})
+        elif self.proposed_progress_percent is not None:
+            raise ValidationError({"proposed_progress_percent": "취소 요청에는 진행률을 입력할 수 없습니다."})
+        return super().clean()
 
 
 class PlanChangeType(models.TextChoices):

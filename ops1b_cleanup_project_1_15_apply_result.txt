@@ -1,0 +1,8 @@
+MODE: APPLY
+DB_GUARD: PASS {'engine': 'django.db.backends.postgresql', 'host': '127.0.0.1', 'database': 'construction_erp_demo'}
+DELETED_PROJECT_IDS: [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]
+REMAINING_TARGET_IDS: []
+PRESERVED_AUDIT_ROWS_SET_NULL: 480
+PROTECTED_PROJECT_ID_17_EXISTS: True
+PROTECTED_PROJECT_CODE_EXISTS: True
+APPLY_PASS

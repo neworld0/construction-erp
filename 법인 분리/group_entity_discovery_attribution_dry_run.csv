@@ -1,0 +1,20 @@
+record_group,current_count,current_attribution_basis,dry_run_classification,automatic_action,required_hq_evidence
+Projects,1,None,NEEDS_REVIEW,Do not assign automatically,External contract owner or contract tax-invoice issuer
+Project contracts,1,Project,DERIVE_AFTER_PROJECT_REVIEW,Follow confirmed project entity,Confirmed project attribution
+Project budgets and WBS,34,Project,DERIVE_AFTER_PROJECT_REVIEW,Follow confirmed project entity,Confirmed project attribution
+Project-linked cost actuals and lines,42,Project,DERIVE_AFTER_PROJECT_REVIEW,Follow confirmed project entity; preserve VAT snapshots,Confirmed project attribution
+Revenue recognition,2,Project,DERIVE_AFTER_PROJECT_REVIEW,Follow confirmed project entity; preserve recognition snapshots,Confirmed project attribution
+Warehouses,2,One site warehouse may derive from project; central warehouse has no owner,NEEDS_REVIEW,Do not assign automatically,Warehouse stock ownership and purchase evidence
+Stock and inventory ledger,60,Warehouse,DERIVE_AFTER_WAREHOUSE_REVIEW,Follow confirmed warehouse entity,Confirmed warehouse attribution
+Transfers and transfer lines,26,Source/destination warehouses,NEEDS_REVIEW,Review both warehouse owners and identify any cross-entity movement,Warehouse attribution and transaction evidence
+Material issues and lines,20,Project plus warehouse,DERIVE_AFTER_PROJECT_AND_WAREHOUSE_REVIEW,Validate same entity before attribution,Project and warehouse attribution
+Daily worker masters,10,None,NEEDS_REVIEW,Do not infer employer from worker identity or current project,Employment contract/payroll employer
+Timesheets and lines,26,Project plus worker,DERIVE_AFTER_PROJECT_AND_WORKER_REVIEW,Validate employer/project relation,Employment and project attribution
+Office employees,3,None,NEEDS_REVIEW,Do not infer from login account,Employment contract/payroll employer
+Office payroll runs and payslips,36,None,NEEDS_REVIEW,Do not infer employer from creator or approver,Payroll ledger and payment evidence
+Payroll allocation batch,1,Period plus project lines,NEEDS_REVIEW,Review legal employer and project allocation basis,Payroll employer and allocation approval
+Closing periods,3,Global month,NEEDS_REVIEW,Do not clone/assign before statutory closing owner is confirmed,Closing approval and legal entity accounting owner
+Finance cash/billing/expense records,40,Project or standalone record,NEEDS_REVIEW,Derive only project-linked records after project review; review standalone records,Invoice/bank/cash owner
+Progress and field reports,31,Project,DERIVE_AFTER_PROJECT_REVIEW,Follow confirmed project entity,Confirmed project attribution
+Cost and item masters,334,Global master,GROUP_SHARED,Keep shared master; do not treat as statutory ownership,Master-data governance approval
+Audit logs,1849,Generic target,RETAIN_UNCHANGED,Do not rewrite historical audit events,No action; future entity context only

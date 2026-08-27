@@ -1,0 +1,22 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}법인 권한 관리{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="card">
+    <h2>HQ 법인 관장 권한</h2>
+    <p class="hint">CEO만 설정할 수 있습니다. 두 법인을 모두 선택하면 그룹 HQ가 되며, 선택한 법인의 운영 업무를 관장할 수 있습니다.</p>
+  </div>
+  <div class="card" style="margin-top:12px;overflow:auto">
+    <table class="table"><thead><tr><th>HQ 사용자</th>{% for entity in entities %}<th>{{ entity.legal_name }}</th>{% endfor %}<th>현재 범위</th><th>저장</th></tr></thead><tbody>
+      {% for profile in hq_profiles %}
+      <tr>
+        <td><form id="entity-form-{{ profile.user_id }}" method="post">{% csrf_token %}<input type="hidden" name="user_id" value="{{ profile.user_id }}"></form>{{ profile.user.username }}</td>
+        {% for entity in entities %}<td><label><input form="entity-form-{{ profile.user_id }}" type="checkbox" name="legal_entity_ids" value="{{ entity.id }}" {% for membership in profile.user.legal_entity_memberships.all %}{% if membership.legal_entity_id == entity.id and membership.is_active %}checked{% endif %}{% endfor %}> 관장</label></td>{% endfor %}
+        <td>{% for membership in profile.user.legal_entity_memberships.all %}{% if membership.is_active %}{{ membership.legal_entity.code }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}</td>
+        <td><button form="entity-form-{{ profile.user_id }}" class="btn btn-outline">저장</button></td>
+      </tr>
+      {% empty %}<tr><td colspan="5">HQ 사용자가 없습니다.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</div>
+{% endblock %}

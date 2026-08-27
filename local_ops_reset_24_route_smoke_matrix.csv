@@ -1,0 +1,6 @@
+﻿Route,Role,Expected,Actual_Status,Result,Notes
+/app/hq/projects/,HQ,non-500,302,PASS,
+/app/hq/projects/new/,HQ,non-500,302,PASS,
+/app/ceo/,CEO,non-500,302,PASS,
+/app/field/,FIELD,non-500,200,PASS,
+/app/hq/labor/e-card-imports/,HQ,non-500,302,PASS,

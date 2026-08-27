@@ -1,0 +1,6 @@
+Timesheet_State,Closed,FIELD_Edit,FIELD_Resubmit,HQ_Approve,HQ_Reject,Expected_Result
+DRAFT,NO,YES,NO,NO,NO,FIELD 입력 가능
+SUBMITTED,NO,NO,NO,YES,YES,HQ 검토 대기
+REJECTED,NO,YES,YES,NO,NO,FIELD 재작업 가능
+APPROVED,NO,NO,NO,NO,NO,승인 완료 잠금
+REJECTED,YES,NO,NO,NO,NO,마감 우선 차단

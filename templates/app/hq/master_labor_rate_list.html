@@ -1,7 +1,7 @@
 {% extends "app/base_app.html" %}
 {% load humanize %}
 
-{% block page_title %}직종 단가표{% endblock %}
+{% block page_title %}노무 관리 · 직종 단가{% endblock %}
 
 {% block content %}
 <style>
@@ -34,20 +34,20 @@
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
   .table-wrap {
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid var(--border);
-    overflow: hidden;
+    overflow-x: auto;
   }
 </style>
 
 <div class="card">
   <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
     <div>
-      <div style="font-size:20px; font-weight:700;">직종 단가표</div>
-      <div class="hint">프로젝트/회사 공통 단가를 관리합니다.</div>
+      <div style="font-size:20px; font-weight:700;">노무 관리 · 직종 단가</div>
+      <div class="hint">근로자·프로젝트·적용기간 기준으로 출역 단가를 관리합니다.</div>
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <a class="btn" href="/app/hq/master/labor/rates/new/">단가 신규 등록</a>
+      <a class="btn" href="/app/hq/labor/rates/new/">단가 신규 등록</a>
       <a class="btn btn-outline" href="/app/hq/master/labor/roles/">직종 관리</a>
     </div>
   </div>
@@ -82,6 +82,17 @@
       </select>
     </label>
     <label>
+      근로자
+      <select class="input" name="worker">
+        <option value="">전체</option>
+        {% for worker in workers %}
+          <option value="{{ worker.id }}" {% if worker_id == worker.id|stringformat:"s" %}selected{% endif %}>
+            {{ worker.name }}{% if worker.default_labor_role %} / {{ worker.default_labor_role.name }}{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
       활성
       <select class="input" name="active">
         <option value="" {% if active == "" %}selected{% endif %}>전체</option>
@@ -98,25 +109,32 @@
     <table class="table">
       <thead>
         <tr>
-          <th>직종</th>
-          <th>범위</th>
+          <th>적용범위</th>
+          <th>우선순위</th>
           <th>프로젝트</th>
+          <th>근로자</th>
+          <th>노무역할</th>
+          <th>단가유형</th>
           <th>기간</th>
-          <th>단가(원)</th>
+          <th>단가</th>
           <th>활성</th>
+          <th>비고</th>
           <th>관리</th>
         </tr>
       </thead>
       <tbody>
         {% for rate in rates %}
           <tr>
-            <td>{{ rate.labor_role.code }} - {{ rate.labor_role.name }}</td>
-            <td>{{ rate.scope_type }} / {{ rate.rate_type }}</td>
+            <td>{{ rate.rate_scope_label }}</td>
+            <td>{{ rate.rate_priority }}</td>
             <td>{{ rate.project.name|default:"-" }}</td>
+            <td>{{ rate.worker.name|default:"-" }}</td>
+            <td>{{ rate.labor_role.code }} - {{ rate.labor_role.name }}</td>
+            <td>{% if rate.rate_type == "DAY" %}일 단가{% else %}시간 단가{% endif %}</td>
             <td>
               {{ rate.effective_from }}{% if rate.effective_to %} ~ {{ rate.effective_to }}{% else %} ~ (무기한){% endif %}
             </td>
-            <td>{{ rate.unit_rate|intcomma }}</td>
+            <td>{{ rate.unit_rate|intcomma }}원</td>
             <td>
               {% if rate.is_active %}
                 <span class="badge on">활성</span>
@@ -124,9 +142,10 @@
                 <span class="badge off">비활성</span>
               {% endif %}
             </td>
+            <td>{{ rate.note|default:"-" }}</td>
             <td style="display:flex; gap:6px; flex-wrap:wrap;">
-              <a class="btn btn-outline" href="/app/hq/master/labor/rates/{{ rate.id }}/edit/">수정</a>
-              <form method="post" action="/app/hq/master/labor/rates/{{ rate.id }}/toggle/">
+              <a class="btn btn-outline" href="/app/hq/labor/rates/{{ rate.id }}/edit/">수정</a>
+              <form method="post" action="/app/hq/labor/rates/{{ rate.id }}/toggle/">
                 {% csrf_token %}
                 <button class="btn btn-outline" type="submit">
                   {% if rate.is_active %}비활성{% else %}활성{% endif %}
@@ -136,7 +155,7 @@
           </tr>
         {% empty %}
           <tr>
-            <td colspan="7">조회 결과가 없습니다.</td>
+            <td colspan="12">조회 결과가 없습니다.</td>
           </tr>
         {% endfor %}
       </tbody>

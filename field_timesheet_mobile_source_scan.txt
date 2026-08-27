@@ -1,0 +1,11 @@
+Scope: templates/app/field/timesheet_form.html; apps/labor/tests/test_field_timesheet_mobile_ui.py; FIELD timesheet search integration references.
+
+Korean UTF-8: PASS
+Replacement character in changed production template: none
+Suspicious production mojibake in changed template: none
+Raw resident number, account, phone, address in production template: none
+Worker search response contract: id, text, role_id only
+Test fixtures use synthetic identifiers only to verify that rendered HTML does not expose them.
+Migration created: none
+Unrelated application logic changed: none
+OVERALL_SOURCE_SCAN_PASS: True

@@ -51,10 +51,11 @@ def resolve_target_date_for_evidence(evidence):
 def is_project_or_month_locked(*, project, target_date: date | None) -> bool:
     if project is not None and getattr(getattr(project, "close", None), "status", None) == "CLOSED":
         return True
-    if target_date is not None:
+    legal_entity = getattr(project, "legal_entity", None) if project is not None else None
+    if target_date is not None and legal_entity is not None:
         from apps.closing.services import is_month_closed
 
-        return is_month_closed(target_date)
+        return is_month_closed(target_date, legal_entity=legal_entity)
     return False
 
 

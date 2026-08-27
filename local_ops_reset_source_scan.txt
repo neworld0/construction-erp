@@ -1,0 +1,11 @@
+Source scan scope:
+- scripts/local_ops_reset_project_data.py
+- local_ops_reset evidence artifacts
+
+Checks:
+- No migration file created
+- No Korean double-question mojibake marker found
+- No media deletion was requested or performed
+- Production/staging/live database tokens are rejected by the guard
+
+OVERALL_SOURCE_SCAN_PASS: True

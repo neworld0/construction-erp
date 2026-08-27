@@ -1,0 +1,22 @@
+domain,model_or_flow,current_ownership_source,current_state,proposed_legal_entity_rule,migration_risk,responsible_module
+Project,projects.Project,None,confirmed,contracting legal entity must be required on every project,CRITICAL,apps.projects
+Contract and budget,projects.ProjectContract/BudgetItem/WBSItem,Project FK,confirmed,derive from project legal entity,HIGH,apps.projects
+Project approval,projects.ApprovalPackage,Project FK,confirmed,derive from project legal entity and keep project approval history,HIGH,apps.projects
+Cost, cost.CostActual/CostActualLine/RevenueRecognition,Project FK,confirmed,derive from project legal entity; do not alter VAT snapshots,HIGH,apps.cost
+Cost master,cost.CostItem/CostItemAlias,Global code master,confirmed,group-shared master; legal-entity availability policy only if required,MEDIUM,apps.cost
+Warehouse,inventory.Warehouse,Project FK only for site warehouse; HQ warehouse has no owner,confirmed,require legal entity on every warehouse; site warehouse must equal project entity,CRITICAL,apps.inventory
+Inventory stock and ledger,inventory.Stock/InventoryLedger,Warehouse and item references,confirmed,derive from warehouse legal entity; block cross-entity internal transfer,CRITICAL,apps.inventory
+Material issue,inventory.IssueToWork/IssueToWorkLine,Project and warehouse references,confirmed,project entity must equal warehouse entity,HIGH,apps.inventory
+Inventory transfer,inventory.Transfer/TransferLine,Source and destination warehouse references,confirmed,same-entity only; cross-entity movement becomes intercompany transaction,CRITICAL,apps.inventory
+Daily worker master,labor.WorkerMaster,None,confirmed,employing legal entity required or approved multi-entity/secondment relationship,CRITICAL,apps.labor
+Timesheet and labour ledger,labor.Timesheet/TimesheetLine/LaborWorkLedger,Project and worker references,confirmed,project entity plus employer entity validation; cross-entity path requires approved service/secondment,HIGH,apps.labor
+Labour rates,labor.LaborRateTable,Global or project scope,confirmed,group template allowed; resolved snapshot must be legal-entity compatible,HIGH,apps.labor
+Project payroll allocation,labor.PayrollAllocationBatch/Line,Year-month global unique and project line,confirmed,legal entity must be included in period uniqueness; allocation lines may use only same entity projects,CRITICAL,apps.labor
+Office employee and payroll,labor.OfficeEmployeeProfile/OfficePayrollRun/OfficePayslip,None; payroll period global unique,confirmed,employee employer entity and payroll run entity required; uniqueness becomes entity-year-month,CRITICAL,apps.labor
+Labour compliance export,labor.LaborComplianceExport,Project reference,confirmed,derive project/employer entity and show entity in export header,HIGH,apps.labor
+Closing,closing.ClosingPeriod,Global year-month unique,confirmed,legal entity required; uniqueness becomes entity-year-month,CRITICAL,apps.closing
+Project close and adjustment,closing.ProjectClose/Adjustment,Project FK,confirmed,derive from project legal entity; retain correction and close history,HIGH,apps.closing
+Cash and billing,finance.CashAccount/CashEvent/AdvancePayment/ProgressBilling/BillingReport/TaxInvoice/ExpenseExecution,Project or standalone account depending on model,confirmed,require legal entity on standalone finance records; derive project-linked records,HIGH,apps.finance
+Progress and field reports,schedule.DailyProgress/field.DailyReport/reports.FieldReport,Project FK,confirmed,derive from project legal entity,MEDIUM,apps.schedule/apps.field/apps.reports
+User profile and assignment,core.UserProfile/ProjectAssignment,Role plus project assignment,confirmed,add entity membership and enforce it before project access,CRITICAL,apps.core.rbac
+Audit log,audit.AuditLog,Generic object reference,confirmed,retain immutable log; add legal_entity context to future actions where safely derivable,HIGH,apps.audit

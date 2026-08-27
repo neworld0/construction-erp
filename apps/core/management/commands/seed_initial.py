@@ -3,7 +3,7 @@ import os
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
-from apps.core.rbac.models import ProjectAssignment, Role, UserProfile
+from apps.core.rbac.models import LegalEntity, ProjectAssignment, Role, UserProfile
 from apps.projects.models import Project
 
 
@@ -42,8 +42,9 @@ class Command(BaseCommand):
         field_user.save(update_fields=["password"])
         UserProfile.objects.get_or_create(user=field_user, defaults={"role": Role.FIELD})
 
+        asan = LegalEntity.objects.get(code="ASAN")
         project, project_created = Project.objects.get_or_create(
-            code=project_code, defaults={"name": project_name}
+            code=project_code, defaults={"name": project_name, "legal_entity": asan}
         )
 
         assignment, assignment_created = ProjectAssignment.objects.get_or_create(

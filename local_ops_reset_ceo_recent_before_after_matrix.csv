@@ -1,0 +1,4 @@
+Scenario,Project_Count,Active_Project_Count,AuditLog_Approval_Count,Valid_Current_Approval_Count,Stale_Approval_Count,Dashboard_Displayed_Recent_Count,Empty_State_Displayed,Result,Notes
+Before dashboard filter,0,0,16,0,26,up to 3,NO,FAIL,HQ could render projectless AuditLog rows and CEO could render unresolved ApprovalRequest fallbacks.
+After dashboard filter,0,0,16,0,26,0,YES,PASS,AuditLog and ApprovalRequest history remains preserved but excluded from current dashboards.
+Active project regression,1,1,1,1,0,1,NO,PASS,Valid active project approval remains visible on HQ and CEO dashboards.

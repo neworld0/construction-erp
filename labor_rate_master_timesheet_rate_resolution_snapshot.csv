@@ -1,0 +1,3 @@
+﻿Timesheet_ID,Timesheet_Date,Worker,LaborRole,Rate_Type,Expected_Rate,Resolved_Rate,Missing_Rate,Submit_Blocked,Error_Message,Result
+3,2026-08-14,김로컬,보통인부,DAY,,160000,False,False,,RATE_RESOLVED
+3,2026-08-14,박포장,포장공,DAY,,210000,False,False,,RATE_RESOLVED

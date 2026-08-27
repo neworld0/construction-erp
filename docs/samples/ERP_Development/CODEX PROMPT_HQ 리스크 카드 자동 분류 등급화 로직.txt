@@ -1,0 +1,134 @@
+CODEX PROMPT - HQ 리스크 카드 자동 분류/등급화 로직
+
+목표
+- HQ 대시보드(/app/hq/)의 “리스크” 영역을 단순 OPEN 목록이 아니라,
+  자동 분류(카테고리) + 등급화(Severity) + 우선순위 정렬까지 적용한 “리스크 카드”로 고도화한다.
+- 기존 Risk Engine / Evidence / Approval / Closing 설계는 유지하고, “표시용 분류/등급화”만 추가한다.
+- DB 스키마 변경 없이 구현한다.
+
+전제(변경 금지)
+- 기존 모델/상태/권한/마감/감사로그 로직 변경 금지
+- HQ 화면 URL/기존 레이아웃 유지(카드 내부 정보 강화)
+- 리스크 생성/계산 로직(Risk Engine)이 있으면 그대로 사용
+- 리스크가 0건이어도 카드 레이아웃 유지
+
+구현 범위
+- HQ dashboard view(컨텍스트 구성): hq/views.py 또는 해당 view
+- (권장) hq/risk_cards.py 유틸 파일: 순수 함수로 분류/등급화/정렬 처리
+- hq_home.html 템플릿: 리스크 카드 리스트 렌더링(최대 N=5) + “더보기” 링크
+
+입력 데이터(기존 결과 재사용)
+- 기존에 “OPEN 리스크”로 집계되는 소스(예: Risk, RiskEvent, RiskSignal, RiskAssessment, RiskEngine 출력 등)를 사용
+- 각 리스크는 최소 아래 필드를 확보(없으면 매핑/추정):
+  - id
+  - project (프로젝트명/ID)
+  - created_at 또는 detected_at
+  - updated_at (있으면)
+  - status (OPEN/CLOSED)
+  - reason_code 또는 message(원인/설명)
+  - object_type/object_id(관련 데이터: CostActual, Evidence, DailyReport, Timesheet, InventoryLedger, Transfer, ChangeOrder, ClosingPeriod 등)
+  - severity(있으면), 없으면 아래 규칙으로 산정
+
+핵심: 자동 분류(Category) 규칙
+리스크를 아래 카테고리 중 하나로 자동 매핑한다.
+(1) EVIDENCE: 증빙 누락/파일 오류/접근 권한 문제
+(2) COST: 원가 이상치/음수/비정상 급증/비활성 CBS 사용/잠금 CBS 변경 시도
+(3) PROGRESS: 진행률 지연/역행/비정상 점프
+(4) INVENTORY: 재고 음수/미일치/이동 미승인/투입 누락
+(5) LABOR: 출역 누락/단가표 미정/급여 배부 누락
+(6) APPROVAL: 승인 지연/반려 후 미조치/승인 체인 깨짐
+(7) CLOSING: 마감 임박/마감 후 입력 시도/정정 필요
+(8) CHANGE: 설계/계약 변경 승인 지연/패키지 승인 누락
+(9) DATA: 기타 데이터 품질(미정/추정 과다, 필수값 누락)
+
+매핑 방법(우선순위)
+A) reason_code가 있으면 code prefix로 매핑(예: EVIDENCE_* → EVIDENCE)
+B) object_type 기준 매핑
+   - Evidence/Upload/FileAccess → EVIDENCE
+   - CostActual/DailyReportLine(COST) → COST
+   - ProgressEntry/WBSProgress → PROGRESS
+   - InventoryLedger/Stock/Transfer/IssueToWork → INVENTORY
+   - Timesheet/PayrollAllocation → LABOR
+   - ApprovalRequest → APPROVAL
+   - ClosingPeriod/Adjustment → CLOSING
+   - ChangeOrder/PlanChangeRequest/WBSChangeRequest → CHANGE
+C) 없으면 message 키워드로 매핑(“증빙”, “파일”, “재고”, “출역”, “마감”, “승인”, “지연” 등)
+
+Severity(등급) 산정 규칙 (CRITICAL/HIGH/MED/LOW)
+리스크의 “긴급도”를 자동 산정해 뱃지로 표시하고 정렬에 사용한다.
+
+기본 규칙:
+1) CRITICAL:
+   - 마감(CLOSED) 이후 입력/수정 시도 감지(CLOSE-2 위반)
+   - 재고 음수(Stock < 0) 또는 원장 불일치가 지속
+   - 금액 이상치(예: 프로젝트 예산 대비 단일 원가가 X% 초과) *X는 기존 정책값 있으면 사용, 없으면 20% 기본
+   - 승인 48h+ 지연 + 중요 카테고리(CLOSING/CHANGE/COST)
+2) HIGH:
+   - 승인 24h+ 지연
+   - 증빙 누락 + 제출 상태
+   - 진행률 지연(계약 경과 대비 gap <= -15%p) 또는 역행
+   - 비활성 CBS 사용 시도(선택 제한을 뚫고 들어온 케이스)
+3) MED:
+   - 데이터 품질 “미정/추정” 비중이 높아 KPI 신뢰 저하(선택된 프로젝트 기준)
+   - 경미한 불일치/누락(제출 전)
+4) LOW:
+   - 단순 주의/가이드 수준(임시저장 상태, 아직 제출 전)
+
+지연 시간 계산(있으면 적용)
+- now 또는 HQ 화면 기준일 기준으로:
+  - age_hours = (now - detected_at).hours
+- age_hours >= 48 → “stale_48h = True”
+- age_hours >= 24 → “stale_24h = True”
+- stale 여부는 severity 상향과 카드 표시(배지)에 반영
+
+리스크 카드 표시 필드(템플릿 요구)
+각 카드(row)에 아래를 표시:
+- [Severity 배지] (CRITICAL=빨강, HIGH=주황, MED=노랑, LOW=회색)
+- [Category 배지] (EVIDENCE/COST/PROGRESS/INVENTORY/LABOR/APPROVAL/CLOSING/CHANGE/DATA)
+- 프로젝트명
+- 1줄 요약(title): 사람이 읽을 수 있도록 짧게
+  - 우선 message를 30자 내로 truncate
+  - 없으면 “{Category} 이슈 감지”
+- detected_at(YYYY-MM-DD HH:mm)
+- stale 배지: “24h+”, “48h+”
+- 액션 버튼:
+  - [상세] (리스크 상세 또는 관련 객체 상세로 링크)
+  - (선택) [관련 승인함] (APPROVAL/CLOSING/CHANGE 카테고리면 링크 제공)
+
+정렬(우선순위)
+- 1순위: Severity (CRITICAL > HIGH > MED > LOW)
+- 2순위: stale_48h 먼저, 그 다음 stale_24h
+- 3순위: 최신 detected_at 내림차순
+
+표시 개수
+- HQ 대시보드에는 최대 5개만 표시
+- “전체 리스크 보기” 링크 제공:
+  - 기존 페이지가 있으면 연결
+  - 없으면 /app/hq/risks/ 간단 목록 페이지 추가(선택)
+
+빈 상태(0건)
+- “OPEN 리스크가 없습니다.” 문구 + “제출/승인/마감 흐름 정상” 보조 문구
+- 카드 레이아웃 유지
+
+성능 요구
+- N+1 쿼리 금지
+- 가능한 한 Risk 소스 1회 쿼리 + annotate로 필요한 필드 확보
+- category/severity는 파이썬 유틸에서 순수 함수로 처리 가능(단, 필드 접근 최소화)
+
+완료 기준(Acceptance)
+- /app/hq/에서 리스크 영역에 “카테고리+등급+지연”이 표시된다.
+- CRITICAL/HIGH/MED/LOW 뱃지가 일관되게 적용된다.
+- 리스크가 여러 개일 때 우선순위 정렬이 적용된다.
+- 리스크 0건이어도 UI가 깨지지 않는다.
+- 기존 Risk Engine 결과/상태 로직은 변경되지 않는다.
+
+간단 테스트
+- 증빙 누락 리스크 1개 생성 → Category=EVIDENCE, Severity=HIGH(제출 상태면)
+- 마감 후 입력 시도 리스크 1개 → Severity=CRITICAL, Category=CLOSING
+- 승인 지연 30h → Severity=HIGH, stale_24h 표시
+- 승인 지연 60h → Severity=CRITICAL 또는 HIGH+stale_48h(정책 적용)
+
+이 요구사항을 만족하도록:
+(1) HQ dashboard에서 OPEN 리스크 소스를 가져오고,
+(2) risk_cards.py에서 category/severity/stale/정렬을 계산하고,
+(3) 템플릿에 카드 리스트를 렌더링하여 완료하세요.

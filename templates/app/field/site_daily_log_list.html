@@ -1,0 +1,6 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}공사일보{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header"><h2>공사일보</h2><a class="btn" href="/app/field/site-daily-logs/new/">공사일보 작성</a></div><p class="muted">작업·물량·장비와 증빙 참조를 기록합니다. 원가·재고·출역은 기존 원천을 새로 만들지 않고 대사에만 사용합니다.</p></div>
+<div class="card" style="margin-top:16px"><table class="data-table"><thead><tr><th>기준일</th><th>프로젝트</th><th>상태</th><th>처리</th></tr></thead><tbody>{% for log in logs %}<tr><td>{{ log.report_date }}</td><td>{{ log.project.name }}</td><td>{{ log.get_status_display }}</td><td><a class="btn btn-outline" href="/app/field/site-daily-logs/{{ log.id }}/">보기</a></td></tr>{% empty %}<tr><td colspan="4">작성한 공사일보가 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

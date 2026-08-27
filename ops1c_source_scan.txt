@@ -1,0 +1,13 @@
+FILE: ops1c_kpi_reconciliation_report.md
+FILE_SCAN_PASS: True
+FILE: ops1c_ceo_dashboard_value_matrix.csv
+FILE_SCAN_PASS: True
+FILE: ops1c_manual_calculation_workpaper.csv
+FILE_SCAN_PASS: True
+FILE: ops1c_dashboard_route_check.csv
+FILE_SCAN_PASS: True
+FILE: ops1c_kpi_difference_register.csv
+FILE_SCAN_PASS: True
+FILE: ops1c_rbac_visibility_matrix.csv
+FILE_SCAN_PASS: True
+OVERALL_SOURCE_SCAN_PASS: True

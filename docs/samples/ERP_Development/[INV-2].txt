@@ -1,0 +1,181 @@
+[INV-2]
+
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+
+=====================================================
+[INV-2 목표]
+=====================================================
+재고/구매/현장투입의 기준이 되는 “품목 마스터(ItemMaster)”를 구축한다.
+
+요구사항:
+- 품목 코드(code) 기반 표준화
+- 기본 단위(uom) 및 규격(spec) 관리
+- 카테고리/활성여부/검색 최적화
+- HQ가 생성/수정, FIELD는 조회/검색만
+- 향후 INV-3(원장/현재고), INV-4(이동), INV-5(투입)에서 FK로 참조할 수 있게 설계
+
+MVP에서는 “제조사/브랜드” 분기 금지(필드가 있더라도 필수 아님)
+규격은 텍스트로 시작하되(예: "H-Beam 200x200x8x12"), 향후 확장 가능.
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- inventory app 구조 확인(models.py, api.py, templates 등)
+- 기존 코드 체계(CBS/CostItem 코드, AuditLog 방식, RBAC 데코레이터) 확인
+- 현재 프로젝트에 “Unit/CodeTable” 공용모델이 있으면 재사용 검토(강제 아님)
+Discovery 결과를 코드 주석으로 남기고, 파일 경로를 명시.
+
+=====================================================
+1) 모델 설계 (필수)
+=====================================================
+apps/inventory/models.py
+
+[UoM] (권장: 단위 테이블)
+- id
+- code (CharField, unique)    # EA, M, M2, M3, KG, TON, SET, BOX ...
+- name (CharField)            # 한글명: 개, m, ㎡, ㎥, kg, 톤, 세트, 박스
+- is_active (BooleanField, default=True)
+- created_at/updated_at
+
+[ItemCategory] (권장)
+- id
+- name (CharField, unique)    # 예: "조경자재", "토목자재", "건축자재", "공구/소모품"
+- parent (FK self, null=True, blank=True)  # 2단 카테고리 확장용
+- sort_order (IntegerField, default=0)
+- is_active (BooleanField, default=True)
+
+[ItemMaster]
+- id
+- code (CharField, unique, db_index=True)   # 예: MAT-LS-000123
+- name (CharField, db_index=True)           # 예: "식재용 배합토"
+- category (FK ItemCategory, null=True, blank=True)
+- uom (FK UoM)                               # 기본 단위
+- spec (CharField or TextField, blank=True)  # 규격(텍스트)
+- description (TextField, blank=True)
+- is_active (BooleanField, default=True)
+- barcode (CharField, blank=True, db_index=True)  # 선택
+- created_at/updated_at
+- created_by (FK User, null=True, blank=True)
+- updated_by (FK User, null=True, blank=True)
+
+제약/정책:
+- code는 사람이 읽을 수 있는 규칙 권장:
+  - MAT-<CAT>-<6digits> 형태(자동 생성 옵션)
+- is_active=False는 검색에서 기본 제외(옵션: include_inactive 파라미터로 조회 가능)
+- 삭제는 금지(soft deactivate)
+
+=====================================================
+2) 코드 자동 생성(권장, MVP)
+=====================================================
+HQ가 신규 품목 생성 시 code를:
+- 사용자가 직접 입력 가능(기존 코드가 있으면)
+- 또는 자동 생성 버튼/옵션 제공
+
+자동 생성 규칙(단순):
+- prefix = "MAT"
+- cat_code = 카테고리명 기반 축약(또는 별도 category.code 필드 추가)
+- seq = 6자리 증가
+예: MAT-LS-000123
+
+구현 방식:
+- ItemMasterCodeSeq 테이블을 두거나,
+- DB에서 MAX를 읽어 증가(동시성 위험) → 금지
+권장:
+- ItemCodeSequence 모델 1개로 동시성 안전 처리(select_for_update)
+
+ItemCodeSequence
+- key (unique)  # "MAT-LS"
+- last_number (int)
+
+services.py에서 transaction.atomic + select_for_update로 증가.
+
+=====================================================
+3) 서비스 레이어 (필수)
+=====================================================
+apps/inventory/services.py
+
+함수:
+- create_item(data, actor)
+- update_item(item, data, actor)
+- search_items(q, include_inactive=False, category_id=None, limit=30)
+- get_item_display(item) -> "code | name | spec | uom"
+
+서비스에서:
+- 권한 검사(HQ/CEO만 create/update)
+- AuditLog 기록
+- created_by/updated_by 세팅
+
+=====================================================
+4) API (필수, 검색 중심)
+=====================================================
+권한:
+- FIELD: GET만
+- HQ/CEO: GET/POST/PATCH 가능
+
+엔드포인트(기존 패턴에 맞춰 구현):
+- GET  /api/inventory/items/?q=&category=&active=&limit=
+- POST /api/inventory/items/
+- PATCH /api/inventory/items/<id>/
+- GET  /api/inventory/items/<id>/
+
+검색 응답에 포함:
+- id, code, name, spec, uom(code/name), category(name), is_active
+- display_label: "MAT-LS-000123 | 식재용 배합토 | (규격) | EA"
+
+검색 기본 정책:
+- active=true만 반환
+- include_inactive=true일 때만 비활성 포함(HQ/CEO만 허용)
+- q는 code/name/spec/barcode 부분일치
+
+=====================================================
+5) HQ 관리 UI (최소)
+=====================================================
+HQ 화면:
+- 품목 목록(검색/필터: 카테고리/활성)
+- 품목 등록/수정 폼
+- 단위(UoM) / 카테고리 관리(간단 CRUD) 또는 seed 기반(택1)
+
+FIELD 화면:
+- 품목 검색(읽기 전용)
+- 향후 INV-3/4/5에서 dropdown/autocomplete로 재사용 가능하게 구성
+
+=====================================================
+6) AuditLog (필수)
+=====================================================
+이벤트:
+- ITEM_CREATE
+- ITEM_UPDATE
+- ITEM_DEACTIVATE (is_active false로 전환 시)
+- UOM_CREATE/UPDATE (선택)
+- ITEM_CATEGORY_CREATE/UPDATE (선택)
+
+metadata:
+{ "item_id":..., "code":..., "uom":..., "category":..., "active":... }
+
+=====================================================
+7) CLOSE 연계 (주의)
+=====================================================
+- ItemMaster는 마감 영향을 받지 않는다(마스터 데이터)
+- 단, 비활성화는 운영 영향이 크므로:
+  - 이미 원장/거래가 연결된 Item은 비활성화 시 경고(차단은 후속)
+이번 티켓에서는 “경고만” 또는 “차단 없음”으로 단순화.
+
+=====================================================
+8) 테스트 시나리오 (필수)
+=====================================================
+1) HQ가 UoM/Category 생성(또는 seed) 후 Item 생성 성공
+2) Item 코드 자동 생성 동시성 테스트(2개 연속 생성 시 코드 중복 없음)
+3) FIELD는 Item 목록 조회/검색 OK, 생성/수정 403
+4) is_active=false 아이템은 기본 검색에서 제외
+5) include_inactive=true는 HQ/CEO만 가능
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- UoM/ItemCategory/ItemMaster 모델 + 마이그레이션 완료
+- Item 생성/수정/검색 API 정상 동작 + RBAC 적용
+- HQ 관리 UI(최소) 제공
+- AuditLog 기록
+- INV-3/4/5에서 FK 참조 가능한 구조 확립

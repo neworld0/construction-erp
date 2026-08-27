@@ -143,11 +143,17 @@ def _calc_metrics(snapshot: dict, metrics: list[str]) -> dict:
     return result
 
 
-def _quality_label(snapshot_quality: dict, labor_quality: str | None, period_end: date) -> tuple[bool, str]:
+def _quality_label(
+    snapshot_quality: dict,
+    labor_quality: str | None,
+    period_end: date,
+    *,
+    legal_entity,
+) -> tuple[bool, str]:
     estimated = snapshot_quality.get("confidence") in ("LOW", "MEDIUM")
     if labor_quality == "ESTIMATED":
         estimated = True
-    is_closed = is_month_closed(period_end)
+    is_closed = is_month_closed(period_end, legal_entity=legal_entity)
     if labor_quality == "UNSURE" and not estimated:
         return False, "UNSURE"
     if estimated:
@@ -179,7 +185,12 @@ def build_timeline(project, *, granularity="month", start=None, end=None, metric
         )
         quality = snapshot.get("data_quality", {})
         labor_quality = snapshot.get("labor", {}).get("data_quality")
-        is_closed, quality_label = _quality_label(quality, labor_quality, period.end)
+        is_closed, quality_label = _quality_label(
+            quality,
+            labor_quality,
+            period.end,
+            legal_entity=project.legal_entity,
+        )
         series.append(
             {
                 "period_key": period.key,

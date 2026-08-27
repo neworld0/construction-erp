@@ -1,0 +1,14 @@
+Area,Input_Item,Source_File,ERP_Target,Required,Entered,Verified,Result,Issue_ID,Notes
+프로젝트,공사코드/공사명/발주처/주소,미제공,Project,Yes,No,No,HOLD,OPS1B-001,OPS-1A 프로젝트 템플릿 부재
+배정,FIELD 사용자,미제공,ProjectAssignment,Yes,No,Yes,PASS,-,격리 RBAC 테스트 검증
+CBS,원가코드/비목/공종,미제공,CostItem,Yes,No,Yes,PASS,OPS1B-001,기존 CBS 입력 경로 확인
+WBS,작업명/가중치/일정,미제공,WBSItem,Yes,No,Yes,PASS,OPS1B-001,FIELD 작업 선택 자동 회귀 검증
+예산,비목/CBS/예산금액,미제공,BudgetItem,Yes,No,Yes,PASS,OPS1B-001,계약 대사 실값 미입력
+계약,계약금액/기간,미제공,ContractSnapshot,Yes,No,Yes,PASS,OPS1B-001,fixture 검증
+진행률,작업/진행률/메모,미제공,DailyProgress,Yes,No,Yes,PASS,-,임시저장과 제출 검증
+노무,비식별 근로자/전자카드,미제공,WorkerMaster; ElectronicCardImportBatch,Conditional,No,Yes,HOLD,OPS1B-001,실파일 없이 fixture만 검증
+원가,원가일자/항목/금액,미제공,CostActual; CostActualLine,Yes,No,Yes,PASS,OPS1B-001,실금액 미입력
+수익,기준일/진행률/인식정책,미제공,RevenueRecognition,Yes,No,Yes,HOLD,OPS1B-002,정책 확인 필요
+CEO,KPI 집계,fixture,CEO dashboard,Yes,No,Yes,PASS,OPS1B-003,기존 한글 표시 문자열 점검 필요
+마감,대상월/사유,fixture,ClosingPeriod,Yes,No,Yes,PASS,-,진행률 변경 차단 검증
+감사,행위자/객체/마스킹,fixture,AuditLog,Yes,No,Yes,PASS,-,원문 PII 미노출 검증

@@ -1,0 +1,62 @@
+[FAST-CODEX] D3E-3 (Compact)
+
+Repo: construction-erp
+
+STOP
+- No schema change
+- ≤8 files
+- 1 run max
+- No perf work (seed only)
+
+Pre
+- D3E-2 done (projects + masters exist)
+- Use D3E-1 maps: STATUS_MAP, TYPE_MAP, attachment linking
+
+Range
+- 2026-02-01..2026-02-28
+- Per project: 8~12 workdays (random spaced)
+
+Seed in seed_demo_3sites_e2e command (add flag if needed, e.g. --ops):
+
+For each project:
+
+1) Progress
+- Create mixed statuses: DRAFT/SUBMITTED/APPROVED
+- Include 1 REJECTED→resubmit case
+- Attach 1~3 dummy images to most
+- R1: 1 Progress = SUBMITTED with 0 attachments
+
+2) Report (separate from cost evidence)
+- Include a day with 2 reports
+- Include 1 case: REJECTED then attachment replace then resubmit (update, not duplicate)
+
+3) CostActual
+- Multiple per day on at least one day
+- Some with evidence attachments
+- R2: 1 Cost = SUBMITTED with 0 attachments
+
+4) Timesheet
+- 6~10 days
+- Mix: APPROVED / REJECTED(resubmit) / SUBMITTED
+- R4: leave 1 SUBMITTED near month-end
+
+5) Inventory
+- HQ receipts 5~10
+- Transfers 3~6 (HQ<->site)
+- IssueToWork:
+  - if model exists: 3~6 issues, link to CBS/cost aggregation as existing logic
+  - else: try InventoryLedger ISSUE; if not possible, skip issues + log "ISSUE seed skipped"
+
+Approvals shaping
+- Leave HQ inbox pending counts meaningful:
+  progress/cost/report/timesheet each 3~5 SUBMITTED pending (do NOT auto-approve all)
+- If any CEO-only approval feature exists, create 1~2; else skip
+
+Output (print)
+- HQ inbox URL hint
+- CEO approvals URL hint
+- FIELD approved lists should be non-empty (print counts per type)
+
+DONE
+- Field/HQ/CEO screens show mixed states + attachments
+- Pending + rejected + approved exist

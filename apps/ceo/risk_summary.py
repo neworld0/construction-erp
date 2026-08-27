@@ -47,7 +47,7 @@ def build_risk_summary(
             "sub_text": sub_text,
         }
 
-    summary_text = "🟢 현재 주요 리스크가 없습니다."
+    summary_text = "🟢 현재 OPEN 리스크가 없습니다."
     if pending_approvals_count > 0:
         sub_text = f"승인 대기 {pending_approvals_count}건 처리 시 KPI가 더 선명해집니다."
     elif closing_block_count > 0:
@@ -59,4 +59,3 @@ def build_risk_summary(
         "summary_text": summary_text,
         "sub_text": sub_text,
     }
-

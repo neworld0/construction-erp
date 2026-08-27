@@ -1,0 +1,74 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}{{ metric_label }} 상세{% endblock %}
+{% block content %}
+<style>
+  .metric-ledger-wrap {
+    overflow-x: auto;
+    margin-top: 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+  }
+  .metric-ledger {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .metric-ledger th,
+  .metric-ledger td {
+    padding: 12px 14px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .metric-ledger th:last-child,
+  .metric-ledger td:last-child { border-right: 0; }
+  .metric-ledger thead th {
+    background: var(--panel-raised);
+    color: var(--text);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .metric-ledger tbody tr:nth-child(even) { background: #f4f7fb; }
+  .metric-ledger tbody tr:hover { background: #e8f2fa; }
+  .metric-ledger tfoot th {
+    background: #dce8f5;
+    color: #1e3a5f;
+    font-weight: 700;
+    border-bottom: 0;
+  }
+  .metric-ledger .amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .metric-ledger .status { text-align: center; white-space: nowrap; }
+</style>
+<div class="container">
+  <div class="card">
+    <h2>{% if selected_project %}{{ selected_project.name }} · {% endif %}{{ metric_label }} 상세</h2>
+    <p class="hint">기준일 {{ as_of_date|date:"Y-m-d" }} · {{ metric_label }} 집계 상세입니다. {{ ledger_note }}</p>
+    <div class="kpi-value" style="margin:16px 0">
+      {% if is_percent %}{{ ledger_total|floatformat:2 }}%{% else %}{{ ledger_total|floatformat:0|intcomma }}원{% endif %}
+    </div>
+    <p class="hint">표의 합계가 위 집계 금액입니다.{% if metric == "cash" or metric == "profit" or metric == "provisional_profit" %} 음수는 차감 항목입니다.{% endif %}</p>
+    <div class="metric-ledger-wrap">
+      <table class="metric-ledger">
+        <thead><tr><th>발생일</th><th>프로젝트</th><th>구분</th><th>내역</th><th>상태</th><th class="amount">{% if is_percent %}진행률{% else %}반영 금액{% endif %}</th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{% if row.event_date %}{{ row.event_date|date:"Y-m-d" }}{% else %}-{% endif %}</td><td>{{ row.project_name }}</td><td>{{ row.source }}</td><td>{{ row.description }}</td><td class="status">{{ row.status }}</td>
+            <td class="amount">{% if is_percent %}{{ row.amount|floatformat:2 }}%{% else %}{{ row.amount|floatformat:0|intcomma }}원{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6">기준일 현재 카드 집계에 반영된 내역이 없습니다.</td></tr>
+          {% endfor %}
+        </tbody>
+        {% if rows %}<tfoot><tr><th colspan="5" class="amount">{{ ledger_total_label }}</th><th class="amount">{% if is_percent %}{{ ledger_total|floatformat:2 }}%{% else %}{{ ledger_total|floatformat:0|intcomma }}원{% endif %}</th></tr></tfoot>{% endif %}
+      </table>
+    </div>
+    <p style="margin-top:16px">
+      {% if selected_project %}<a class="btn btn-outline" href="/app/ceo/dashboard/metrics/{{ metric }}/?as_of_date={{ as_of_date|date:'Y-m-d' }}&compare={{ compare_mode }}&entity_scope={{ entity_scope }}">{{ metric_label }} 전체 목록</a>{% endif %}
+      <a class="btn btn-outline" href="/app/ceo/?as_of_date={{ as_of_date|date:'Y-m-d' }}&compare={{ compare_mode }}&entity_scope={{ entity_scope }}">대시보드로</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

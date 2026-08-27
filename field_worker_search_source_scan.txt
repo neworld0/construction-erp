@@ -1,0 +1,10 @@
+Scope: apps/labor/web_views.py, apps/labor/web_urls_field.py, templates/app/field/timesheet_form.html
+
+Search endpoint: /app/field/labor/workers/search/
+RBAC: FIELD role required; selected project must be assigned to the request user.
+Query fields: WorkerMaster.name, default_labor_role.name, default_labor_role.code.
+Candidate filter: WorkerMaster.active=True.
+Response keys only: id, text, role_id.
+Excluded from response/template selection: resident registration number, masked resident registration number, phone, account number, address.
+Persistence: selected worker_id posts to the existing TimesheetLine.worker FK path.
+Schema/migration: none for this search UI patch.

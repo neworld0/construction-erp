@@ -1,0 +1,2 @@
+﻿Project_Code,Project_Name,Contract_Amount,Budget_Total,Progress_Percent,Cost_Total,Recognized_Revenue,Expected_Profit,Expected_Margin,ERP_Dashboard_Value,Difference,Explanation,OPS1C_Action
+PILOT-INPUT-PENDING,실제 공사 데이터 대기,,,,,,,,,,OPS-1A 또는 비식별 실제 입력값 미제공,실제 입력 후 계약 예산 진행률 원가 수익 대사

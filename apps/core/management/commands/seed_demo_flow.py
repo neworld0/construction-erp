@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from apps.contracts.models import ContractChange, ContractChangeStatus
 from apps.core.models import ApprovalRequest, ApprovalStatus
-from apps.core.rbac.models import Role, UserProfile
+from apps.core.rbac.models import LegalEntity, Role, UserProfile
 from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
 from apps.evidence.models import Evidence, EvidenceFile
 from apps.projects.models import Project
@@ -40,8 +40,9 @@ class Command(BaseCommand):
         hq_user = _get_or_create_user(User, hq_username, hq_password, Role.HQ)
         field_user = _get_or_create_user(User, field_username, field_password, Role.FIELD)
 
+        asan = LegalEntity.objects.get(code="ASAN")
         project, project_created = Project.objects.get_or_create(
-            code=project_code, defaults={"name": project_name}
+            code=project_code, defaults={"name": project_name, "legal_entity": asan}
         )
 
         items = _seed_cost_items()

@@ -1,0 +1,130 @@
+[FAST-CODEX] ATT-3: CEO 승인 상세(/app/ceo/approvals/<id>/) 첨부 패널 적용 + 타입별 동일화 + 한글/버튼 정합
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+전제
+- 기존 설계/모델/URL 유지
+- DB 스키마 변경 금지
+- ATT-1(REV)에서 만든 공통 컴포넌트 사용:
+  - templates/components/attachments_panel.html
+  - templates/components/attachment_badge.html (본 티켓은 상세 중심이라 optional)
+- 첨부 편집 정책(ATT-1 표준) 준수:
+  - CEO 승인 상세에서는 기본적으로 “조회 중심” (can_edit=False 기본)
+  - 단, CEO가 승인 과정에서 첨부를 직접 수정하는 정책은 이번 티켓 범위에서 하지 않는다(조회만).
+- 마감(CLOSE-2/CLOSE-4) 잠금 정책은 기존 규칙 우선(버튼 비활성/문구 표시)
+
+목표
+1) CEO 승인 상세에서 첨부 목록/인라인 이미지 미리보기가 즉시 보이게 한다.
+2) 승인 대상 타입(진행률/보고서/원가/출역)이 달라도 첨부 표시 방식이 동일(공통 컴포넌트)해야 한다.
+3) CEO 승인 화면의 한글(상태/버튼/안내/요약 라벨) 깨짐 없이 정합 유지.
+4) 승인/반려/잠금 버튼 동작과 표시가 기존 로직을 깨지 않는다.
+
+------------------------------------------------------------
+1) Discovery (필수)
+------------------------------------------------------------
+아래를 먼저 확인하고 구현에 반영한다(코드 변경 전).
+
+- CEO 승인 상세 URL/뷰/템플릿 위치:
+  - /app/ceo/approvals/<id>/
+  - view 함수/클래스, 템플릿 파일 경로(예: templates/ceo/approval_detail.html)
+- 승인 데이터 모델 구조:
+  - ApprovalRequest가 있는지
+  - object_type/object_id(또는 content_type/object_id)로 원본 객체를 가리키는지
+  - 승인 대상 타입 판정 로직(진행률/보고서/원가/출역)
+- 기존 승인 상세 화면에서 “첨부”가 어떻게 노출되는지(없으면 새로 추가)
+- 첨부 연결 방식:
+  - 원본 객체에서 attachments를 직접 얻는지
+  - Evidence(object_type/object_id)로 조회해야 하는지
+  - 타입별로 경로가 다른지(다르면 공통 함수로 normalize 필요)
+
+Discovery 결과로 “타입별 attachments 추출 함수”를 설계한다.
+
+------------------------------------------------------------
+2) 타입별 첨부 추출 로직을 공통화(핵심)
+------------------------------------------------------------
+목표: CEO 승인 상세에서 타입에 상관없이 attachments를 동일한 변수(attachments)로 제공.
+
+2.1 공통 함수(권장)
+- ceo/attachments.py 또는 approvals/utils.py 등에 함수 생성(스키마 변경 없음)
+  예:
+  - def get_attachments_for_approval(approval_request) -> list/queryset
+
+로직(우선순위)
+A) approval_request가 직접 attachments를 갖는 구조면 그것 사용
+B) approval_request가 원본 객체(target_obj)를 가리키면:
+   - target_obj.attachments / target_obj.files / related_name 탐색 후 있으면 사용
+C) Evidence 구조이면:
+   - object_type/object_id (또는 content_type/object_id)로 Evidence를 찾아
+   - Evidence.attachments를 사용
+D) 그래도 없으면 빈 리스트 반환
+
+중복 제거(가능하면)
+- 동일 파일이 중복 표시되지 않도록 unique 처리(파일 id 또는 url 기준)
+
+성능
+- 단일 상세 페이지이므로 N+1 위험은 낮지만,
+  관련 객체 조회는 select_related/prefetch를 사용해 불필요한 쿼리 방지
+
+------------------------------------------------------------
+3) CEO 승인 상세 템플릿에 attachments_panel 삽입
+------------------------------------------------------------
+3.1 view 컨텍스트 준비(필수)
+- attachments: get_attachments_for_approval() 결과
+- can_edit: False (CEO 승인 상세에서는 조회만; 첨부 수정은 정책 밖)
+- upload_url/delete_url: None (표시만)
+- object_label: 승인 대상 타입 한글 라벨(예: “진행률”, “보고서”, “원가”, “출역부”)
+- help_text:
+  - 첨부가 있을 때: “첨부 파일”
+  - 첨부가 없을 때: 렌더 생략(패널 자체 미표시) 또는 “첨부 없음” 짧게
+
+3.2 템플릿 include
+- 승인 대상 요약 영역(프로젝트/날짜/상태/요약) 아래에 삽입:
+  {% include "components/attachments_panel.html" with attachments=attachments can_edit=can_edit upload_url=upload_url delete_url=delete_url object_label=object_label help_text=help_text %}
+
+3.3 인라인 미리보기/링크 정책
+- attachments_panel 표준을 그대로 따른다:
+  - 이미지: 인라인 + 원본 보기(새 탭)
+  - 비이미지: 리스트 + 새 탭
+
+------------------------------------------------------------
+4) 버튼/상태/잠금 정합(기존 로직 유지) + 한글 체크(필수)
+------------------------------------------------------------
+4.1 승인/반려 버튼 동작 유지
+- 기존 승인/반려 처리 로직(POST 핸들러/액션 URL)을 변경하지 않는다.
+- 단, 첨부 패널 삽입으로 폼 구조가 깨지지 않도록:
+  - attachments_panel 내부에 <form>이 있다면(권장하지 않음) 제거하거나,
+  - 승인/반려 폼과 중첩되지 않게 구성
+- 승인/반려 버튼 라벨/상태 표시는 한글로 유지(기존 정책 존중)
+
+4.2 잠금(마감/프로젝트마감) 상태 표시 유지
+- 잠금이면:
+  - 승인/반려 버튼 비활성(또는 기존 규칙대로)
+  - 안내 문구 한글 정상 출력
+- 첨부 패널은 “조회”이므로 잠금 상태에서도 표시 가능(권한 범위 내)
+
+4.3 한글 깨짐 회귀 체크(필수)
+- CEO 승인 상세에서 아래가 깨지지 않아야 한다:
+  - 상태(임시저장/제출/승인/반려/잠금)
+  - 버튼(승인/반려/목록으로/뒤로 등)
+  - 안내 문구(제출 후 수정 불가/마감 상태 등)
+  - 승인 대상 요약 라벨(진행률/보고서/원가/출역부)
+- 깨짐이 발견되면 즉시 최소 수정:
+  - base 템플릿 meta charset UTF-8 확인
+  - 해당 템플릿 파일 UTF-8 저장
+  - 한글 포함 정적파일 UTF-8 저장 확인
+
+------------------------------------------------------------
+5) 완료 기준(Acceptance)
+------------------------------------------------------------
+- /app/ceo/approvals/<id>/ 상세에서 첨부 목록이 즉시 보인다.
+- 이미지 첨부는 인라인 미리보기로 바로 보인다(원본 새 탭 링크 포함).
+- 승인 대상이 진행률/보고서/원가/출역 중 무엇이든 첨부 표시가 동일하게 동작한다.
+- CEO 승인 화면의 한글(상태/버튼/안내/요약 라벨)이 깨지지 않는다.
+- 승인/반려/잠금 버튼 동작이 기존과 동일하게 유지된다(폼/액션 깨짐 없음).
+
+실행 지시
+1) Discovery로 CEO 승인 상세의 모델/뷰/템플릿/대상 객체 연결 방식을 확인하라.
+2) 타입별 첨부 추출을 공통 함수로 normalize 하라.
+3) approval_detail 템플릿에 attachments_panel include를 삽입하라(can_edit=False).
+4) 승인/반려 버튼/잠금 안내의 한글/동작 정합을 회귀 테스트하라.
+5) 한글 깨짐이 있으면 최소 수정으로 해결하라.

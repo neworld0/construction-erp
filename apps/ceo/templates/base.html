@@ -37,7 +37,7 @@
         font-size: 20px;
         letter-spacing: 0.5px;
       }
-      header a { color: #f7f5f2; text-decoration: none; margin-right: 16px; }
+      header a, header button { color: #f7f5f2; text-decoration: none; margin-right: 16px; background: transparent; border: 0; padding: 0; font: inherit; cursor: pointer; }
       .container { max-width: 1200px; margin: 28px auto 48px; padding: 0 24px; }
       .card {
         background: var(--card);
@@ -80,6 +80,7 @@
     <header>
       <div class="brand">Construction ERP - CEO</div>
       <nav>
+        <button type="button" id="ceo-back-button">이전 화면</button>
         <a href="/ceo/dashboard/">Dashboard</a>
         <a href="/admin/">Admin</a>
       </nav>
@@ -87,5 +88,17 @@
     <div class="container">
       {% block content %}{% endblock %}
     </div>
+    <script>
+      document.getElementById("ceo-back-button")?.addEventListener("click", function () {
+        try {
+          const referrer = document.referrer ? new URL(document.referrer) : null;
+          if (referrer && referrer.origin === window.location.origin && window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+        } catch (_error) {}
+        window.location.assign("/ceo/dashboard/");
+      });
+    </script>
   </body>
 </html>

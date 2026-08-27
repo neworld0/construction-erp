@@ -1,0 +1,8 @@
+Evidence_ID,Step,Evidence_Type,File_or_Screen,Description,Contains_PII,Storage_Note,Reviewer
+OPS1BR2-E01,Guard,Database,ops1b_r2_purge_dryrun_result.txt,local demo DB guard와 dry-run 0건,No,로컬 증적,Implementation Lead
+OPS1BR2-E02,Purge,Apply,ops1b_r2_purge_apply_result.txt,apply 실행 및 삭제 0건,No,로컬 증적,Implementation Lead
+OPS1BR2-E03,Manifest,CSV,ops1b_r2_inactive_project_manifest.csv,inactive 프로젝트 manifest,No,로컬 증적,Implementation Lead
+OPS1BR2-E04,Visibility,CSV,ops1b_r2_ceo_visibility_result.csv,CEO dashboard 및 목록 표시,No,로컬 증적,Implementation Lead
+OPS1BR2-E05,KPI,CSV,ops1b_r2_kpi_dashboard_seed.csv,OPS-1C dashboard 대사 값,No,로컬 증적,Implementation Lead
+OPS1BR2-E06,Regression,Pytest,ops1b_r2_09_10_pytest_baseline.txt,22개 운영 회귀 통과,No,로컬 증적,Implementation Lead
+OPS1BR2-E07,Final,Source scan,ops1b_r2_24_source_scan.txt,R2 UTF-8 및 PII 점검,No,로컬 증적,Implementation Lead

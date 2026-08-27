@@ -3,22 +3,17 @@
 {% block content %}
 <style>
   :root {
-    --card: #101a2b;
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --primary: #38bdf8;
-    --border: rgba(148, 163, 184, 0.2);
-    --panel: rgba(2, 6, 23, 0.55);
+    --primary: var(--action);
   }
   .container {
     display: grid;
     gap: 16px;
   }
   .card {
-    background: var(--card);
+    background: var(--panel);
     border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   }
   .filter-card {
     display: grid;
@@ -47,7 +42,7 @@
   button,
   a.action-link.primary {
     background: var(--primary);
-    color: #0b1220;
+    color: var(--action-text);
     border: 0;
     font-weight: 600;
   }
@@ -126,12 +121,12 @@
   }
   .tab.active {
     background: var(--primary);
-    color: #0b1220;
+    color: var(--action-text);
     border-color: var(--primary);
   }
 </style>
 
-<div class="container">
+<div class="container field-page">
   {% if messages %}
   <div class="card">
     {% for message in messages %}
@@ -139,15 +134,6 @@
     {% endfor %}
   </div>
   {% endif %}
-  <div class="card">
-    <div class="tabs">
-      <a class="tab" href="/app/field/?tab=progress{% if project_id %}&project_id={{ project_id }}{% endif %}">진행률</a>
-      <a class="tab active" href="/app/field/?tab=report{% if project_id %}&project_id={{ project_id }}{% endif %}">보고서</a>
-      <a class="tab" href="/app/field/?tab=cost{% if project_id %}&project_id={{ project_id }}{% endif %}">원가</a>
-      <a class="tab" href="/app/field/inventory/issues/">자재 투입</a>
-      <a class="tab" href="/app/field/labor/timesheets/">출역부</a>
-    </div>
-  </div>
   <div class="card filter-card">
     <form method="get">
       <div class="filter-row">

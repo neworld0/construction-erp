@@ -1,0 +1,23 @@
+1. 조달청_나라장터 입찰공고정보서비스
+1.1 End Point	https://apis.data.go.kr/1230000/ad/BidPublicInfoService
+1.2 데이터포맷	JSON+XML
+
+
+2. 한국토지주택공사 입찰공고정보
+2.1 End Point	https://openapi.ebid.lh.or.kr/ebid.com.openapi.service.OpenBidInfoList.dev
+2.2 데이터포맷	XML
+
+
+3. 한국토지주택공사 전자조달-개찰정보(개찰결과정보)
+3.1 End Point	https://openapi.ebid.lh.or.kr/ebid.com.openapi.service.OpenTenderopenList.dev
+3.2 데이터포맷	XML
+
+
+4. 한국토지주택공사 전자조달-개찰정보(예정가격정보)
+4.1 End Point	https://openapi.ebid.lh.or.kr/ebid.com.openapi.service.OpenPreprcList.dev
+4.2 데이터포맷	XML
+
+
+5. 조달청_나라장터 낙찰정보서비스
+5.1 End Point	https://apis.data.go.kr/1230000/as/ScsbidInfoService
+5.2 데이터포맷	JSON+XML

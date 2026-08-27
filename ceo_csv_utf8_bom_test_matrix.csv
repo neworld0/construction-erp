@@ -1,0 +1,5 @@
+Command,Result,Notes
+python manage.py check,PASS,No system issues.
+python manage.py makemigrations --check --dry-run,PASS,No pending model changes.
+pytest -q apps/ceo/tests/test_ceo_dashboard_csv_export_encoding.py apps/ceo/tests/test_ceo_report_export.py apps/projects/tests/test_audit8_ceo_dashboard_lineage.py apps/core/tests/test_audit9_operational_smoke_matrix.py apps/core/tests/test_audit_utf8_source_integrity.py,PASS,36 passed; 2 existing Django deprecation warnings.
+local API response probe,PASS,HTTP 200; first bytes EF BB BF; UTF-8-sig decode succeeds.

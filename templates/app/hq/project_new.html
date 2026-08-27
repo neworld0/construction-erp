@@ -158,11 +158,32 @@
           {% endif %}
         </div>
         <div class="mb-3">
-          <label class="form-label" for="{{ project_form.project_type.id_for_label }}">공사 유형</label>
-          {{ project_form.project_type }}
-          {% if project_form.project_type.errors %}
-            <div class="input-hint" style="color:#fca5a5;">{{ project_form.project_type.errors|striptags }}</div>
+          <label class="form-label" for="{{ project_form.legal_entity.id_for_label }}">계약 법인</label>
+          {{ project_form.legal_entity }}
+          <div class="input-hint">계약·매출·재고·급여·월마감의 귀속 법인입니다. 등록 후에는 변경할 수 없습니다.</div>
+          {% if project_form.legal_entity.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.legal_entity.errors|striptags }}</div>
           {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.work_types.id_for_label }}">계약 공종</label>
+          {{ project_form.work_types }}
+          <div class="input-hint">토목+조경, 토목+건축, 건축+조경 등 복합 공종을 함께 선택할 수 있습니다.</div>
+          {% if project_form.work_types.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.work_types.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ project_form.contracting_licenses.id_for_label }}">계약 적용 면허</label>
+          {{ project_form.contracting_licenses }}
+          <div class="input-hint">계약 법인에 등록된 면허 중 해당 공종에 적용되는 면허를 모두 선택해 주세요.</div>
+          {% if project_form.contracting_licenses.errors %}
+            <div class="input-hint" style="color:#fca5a5;">{{ project_form.contracting_licenses.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">대표 공종</label>
+          <div class="input-hint">프로젝트 코드는 선택한 계약 공종 중 토목 → 조경 → 건축 순서의 대표 공종으로 생성됩니다.</div>
         </div>
         <div class="mb-3">
           <label class="form-label" for="{{ project_form.start_date.id_for_label }}">공사 시작일</label>
@@ -191,6 +212,9 @@
           {% if project_form.site_address.errors %}
             <div class="input-hint" style="color:#fca5a5;">{{ project_form.site_address.errors|striptags }}</div>
           {% endif %}
+          <label style="display:flex; gap:8px; align-items:center; margin-top:14px;">
+            {{ project_form.requires_ceo_billing_approval }} 일반 기성 보고서도 CEO 결재를 필수로 합니다.
+          </label>
         </div>
       </div>
       {{ project_form.status.as_hidden }}
@@ -271,6 +295,8 @@
         <div class="helper" style="margin-bottom:12px;">
           전체 예산 상세행: {{ budget_import_total_rows }}건
           <br />
+          업로드 대상 행 수: {{ budget_import_source_upload_target_rows }}건
+          <br />
           CBS 자동 매칭: {{ budget_import_auto_matched_rows }}건
           <br />
           CBS 수동 매칭: {{ budget_import_manual_matched_rows }}건
@@ -340,6 +366,39 @@
           매칭률: {{ budget_import_match_rate|floatformat:1 }}%
           <br />
           미매칭 행은 미리보기에는 표시되지만 저장 예산 라인에는 포함되지 않습니다. CBS alias를 등록한 뒤 다시 가져오세요.
+        </div>
+      {% endif %}
+      {% if budget_import_unmatched_details %}
+        <div class="alert alert-danger" style="margin-bottom:12px;">
+          <div style="font-weight:600; margin-bottom:6px;">CBS 미매칭 행</div>
+          <div style="overflow:auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>원본행번호</th>
+                  <th>WBS</th>
+                  <th>CBS</th>
+                  <th>품명</th>
+                  <th>도급금액</th>
+                  <th>실패 사유</th>
+                  <th>조치 안내</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in budget_import_unmatched_details %}
+                  <tr>
+                    <td>{{ row.source_row_no }}</td>
+                    <td>{{ row.wbs_code }}{% if row.wbs_name %} / {{ row.wbs_name }}{% endif %}</td>
+                    <td>{{ row.cbs_code }}{% if row.cbs_name %} / {{ row.cbs_name }}{% endif %}</td>
+                    <td>{{ row.item_name }}</td>
+                    <td>{{ row.amount|intcomma }}</td>
+                    <td>{{ row.reason }}</td>
+                    <td>{{ row.action }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       {% endif %}
       {% if budget_import_coverage_warning %}
@@ -510,6 +569,9 @@
             <thead>
               <tr>
                 <th>코드</th>
+                <th>원본행번호</th>
+                <th>WBS</th>
+                <th>CBS</th>
                 <th>계층</th>
                 <th>항목명</th>
                 <th>규격</th>
@@ -529,6 +591,9 @@
               {% for row in budget_preview_rows %}
                 <tr class="{% if row.is_skipped %}{% elif row.matched_cost_item_id %}matched-row{% else %}unmatched-row{% endif %}">
                   <td>{{ row.code }}</td>
+                  <td>{{ row.source_row_no|default:row.row_no }}</td>
+                  <td>{{ row.wbs_code }}{% if row.wbs_name %} / {{ row.wbs_name }}{% endif %}</td>
+                  <td>{{ row.cbs_code }}{% if row.cbs_name %} / {{ row.cbs_name }}{% endif %}</td>
                   <td>{{ row.hierarchy }}</td>
                   <td>{{ row.item_name }}</td>
                   <td>{{ row.spec }}</td>
@@ -566,6 +631,8 @@
                     {% endif %}
                   </td>
                   <td>
+                    {% if row.match_status %}<div>{{ row.match_status }}</div>{% endif %}
+                    {% if row.match_reason %}<div>{{ row.match_reason }}</div>{% endif %}
                     {% for warning in row.warnings %}
                       <div>{{ warning }}</div>
                     {% empty %}
@@ -584,11 +651,10 @@
       {% endif %}
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
         <div>
-          <label class="form-label" for="budget_template_select">예산 템플릿</label>
-          <select id="budget_template_select" name="budget_template_id" class="form-control">
-            <option value="">템플릿 선택</option>
+          <label class="form-label" for="budget_template_select">예산(CBS) 템플릿</label>
+          <select id="budget_template_select" name="budget_template_ids" class="form-control" multiple size="5">
             {% for tpl in budget_templates %}
-              <option value="{{ tpl.id }}" {% if selected_budget_template and tpl.id == selected_budget_template.id %}selected{% endif %}>
+              <option value="{{ tpl.id }}" {% if tpl in selected_budget_templates %}selected{% endif %}>
                 {{ tpl.domain }}-{{ tpl.category }} v{{ tpl.version }} {{ tpl.name }}
               </option>
             {% endfor %}
@@ -681,6 +747,9 @@
       {% if wbs_import_notice %}
         <div class="alert" style="background:rgba(56,189,248,0.15); color:var(--text);">
           {{ wbs_import_notice }}
+          {% if wbs_date_defaulted_count %}
+            프로젝트 기간 기본값으로 WBS {{ wbs_date_defaulted_count }}건의 시작일과 종료일을 설정합니다.
+          {% endif %}
         </div>
       {% endif %}
       {% if wbs_import_warnings %}
@@ -702,6 +771,7 @@
                 <th>기간 진도값</th>
                 <th>계획 시작</th>
                 <th>계획 종료</th>
+                <th>기간 출처</th>
                 <th>메모</th>
                 <th>경고</th>
               </tr>
@@ -719,8 +789,9 @@
                       -
                     {% endfor %}
                   </td>
-                  <td>{{ row.plan_start_date|default:"-" }}</td>
-                  <td>{{ row.plan_end_date|default:"-" }}</td>
+                  <td>{{ row.resolved_plan_start_date|default:row.plan_start_date|default:"-" }}</td>
+                  <td>{{ row.resolved_plan_end_date|default:row.plan_end_date|default:"-" }}</td>
+                  <td>{{ row.wbs_date_source_label|default:"미설정" }}</td>
                   <td>{{ row.memo|default:"-" }}</td>
                   <td>
                     {% for warning in row.warnings %}
@@ -738,10 +809,9 @@
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
         <div>
           <label class="form-label" for="wbs_template_select">WBS 템플릿</label>
-          <select id="wbs_template_select" name="wbs_template_id" class="form-control">
-            <option value="">템플릿 선택</option>
+          <select id="wbs_template_select" name="wbs_template_ids" class="form-control" multiple size="5">
             {% for tpl in wbs_templates %}
-              <option value="{{ tpl.id }}" {% if selected_wbs_template and tpl.id == selected_wbs_template.id %}selected{% endif %}>
+              <option value="{{ tpl.id }}" {% if tpl in selected_wbs_templates %}selected{% endif %}>
                 {{ tpl.domain }}-{{ tpl.category }} v{{ tpl.version }} {{ tpl.name }}
               </option>
             {% endfor %}
@@ -768,7 +838,7 @@
             <th>가중치(%)</th>
             <th>계획 시작일</th>
             <th>계획 종료일</th>
-            <th>순서</th>
+            <th>순서(선택)</th>
             <th>삭제</th>
           </tr>
         </thead>
@@ -813,16 +883,6 @@
           <input type="checkbox" name="confirm_import_warnings" value="1" />
           <span class="input-hint" style="font-size:13px;">
             파싱 경고 {{ import_warning_count }}건을 확인했습니다. 경고가 있어도 현재 입력값 기준으로 저장합니다.
-          </span>
-        </label>
-      </div>
-    {% endif %}
-    {% if budget_preview_rows and budget_import_unmatched_rows > 0 %}
-      <div class="card" style="margin-top:16px;">
-        <label style="display:flex; gap:8px; align-items:flex-start;">
-          <input type="checkbox" name="confirm_partial_budget_import" value="1" />
-          <span class="input-hint" style="font-size:13px;">
-            미매칭 예산 행을 제외하고 부분 등록합니다.
           </span>
         </label>
       </div>
@@ -926,28 +986,21 @@
 
   function reloadWithTemplates() {
     const params = new URLSearchParams(window.location.search);
-    const projectType = document.getElementById("id_project_type")?.value;
-    const wbsTemplate = document.getElementById("wbs_template_select")?.value;
-    const budgetTemplate = document.getElementById("budget_template_select")?.value;
-    if (projectType) {
-      params.set("project_type", projectType);
-    }
-    if (wbsTemplate) {
-      params.set("wbs_template_id", wbsTemplate);
-    } else {
-      params.delete("wbs_template_id");
-    }
-    if (budgetTemplate) {
-      params.set("budget_template_id", budgetTemplate);
-    } else {
-      params.delete("budget_template_id");
-    }
+    const workTypes = Array.from(document.querySelectorAll('input[name="work_types"]:checked')).map((input) => input.value);
+    const wbsTemplates = Array.from(document.getElementById("wbs_template_select")?.selectedOptions || []).map((option) => option.value);
+    const budgetTemplates = Array.from(document.getElementById("budget_template_select")?.selectedOptions || []).map((option) => option.value);
+    params.delete("work_types");
+    params.delete("wbs_template_ids");
+    params.delete("budget_template_ids");
+    workTypes.forEach((value) => params.append("work_types", value));
+    wbsTemplates.forEach((value) => params.append("wbs_template_ids", value));
+    budgetTemplates.forEach((value) => params.append("budget_template_ids", value));
     const next = `${window.location.pathname}?${params.toString()}`;
     window.location.href = next;
   }
 
   document.getElementById("wbs_template_select")?.addEventListener("change", reloadWithTemplates);
   document.getElementById("budget_template_select")?.addEventListener("change", reloadWithTemplates);
-  document.getElementById("id_project_type")?.addEventListener("change", reloadWithTemplates);
+  document.querySelectorAll('input[name="work_types"]').forEach((input) => input.addEventListener("change", reloadWithTemplates));
 </script>
 {% endblock %}

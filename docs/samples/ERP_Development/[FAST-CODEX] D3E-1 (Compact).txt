@@ -1,0 +1,56 @@
+[FAST-CODEX] D3E-1 (Compact)
+
+Repo: construction-erp
+
+STOP
+- No schema change
+- ≤6 files
+- No server/test run
+- Scaffold + discovery only (no real seeding)
+
+TASK
+Create management command:
+core/management/commands/seed_demo_3sites_e2e.py
+
+CLI
+- --month YYYY-MM (default 2026-02)
+- --reset (optional; do nothing in D3E-1)
+- --dry-run (default True; no DB writes)
+
+DISCOVERY OUTPUT (print summary only)
+Find (if exists) and print:
+1) Approvals
+- approval model name
+- status field name + values for DRAFT/SUBMITTED/REJECTED/APPROVED
+- decided/approved timestamp field name
+
+2) Closing
+- ClosingPeriod model name
+- how to create + how to close (method/function) OR fields needed to mark CLOSED
+
+3) Adjustment
+- Adjustment model name
+- fields required to create
+- how approval is represented (if any)
+
+4) Attachments
+- attachment/evidence model name(s)
+- link method: FK/GFK (object_type/object_id or content_type/object_id)
+- minimal fields needed to attach a file
+
+5) Inventory
+- existence of Warehouse/Location/InventoryLedger/Stock/Transfer
+- IssueToWork existence (INV-5) yes/no
+
+6) Labor
+- Timesheet/LaborRole/Rate table/PayrollAllocation existence
+
+IMPLEMENTATION NOTES
+- Use apps.get_models() / apps.get_model() to discover
+- Do not import optional apps directly; guard with try/except
+- Build dicts: STATUS_MAP, MODEL_HINTS, URL_HINTS (URL_HINTS may be empty placeholders)
+- Print as JSON-like text to stdout for copy/paste
+
+DONE
+- python manage.py seed_demo_3sites_e2e --dry-run prints the discovered maps
+- No DB writes

@@ -1,7 +1,7 @@
 import logging
 import hashlib
 from datetime import date as date_type, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 from io import BytesIO
 import re
 from calendar import monthrange
@@ -9,15 +9,18 @@ from calendar import monthrange
 from django.core.files.base import ContentFile
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 from apps.audit.services.logger import log_action
 from apps.closing.guards import guard_write
-from apps.closing.services import is_month_closed
+from apps.closing.models import ClosingPeriod, ClosingStatus
+from apps.closing.services import is_month_closed, is_project_closed
 from apps.core.rbac.models import Role
-from apps.core.rbac.permissions import require_project_access, require_role
+from apps.core.rbac.permissions import require_legal_entity_access, require_project_access, require_role
 from apps.cost.models import CostActual, CostItem, CostItemCategory
 from apps.projects.models import Project
 
@@ -28,6 +31,8 @@ from .models import (
     LaborExcelExportBatch,
     LaborExcelExportStatus,
     LaborExcelExportType,
+    LaborComplianceExport,
+    LaborComplianceExportType,
     LaborConfirmedWorkDay,
     LaborConfirmedWorkSourceBasis,
     ElectronicCardWorkDay,
@@ -309,7 +314,8 @@ def _get_or_create_fallback_cbs() -> CostItem:
 
 def compute_labor_data_quality(project_id: int, year: int, month: int) -> str:
     period_date = date_type(int(year), int(month), 1)
-    is_closed = is_month_closed(period_date)
+    project = Project.objects.only("legal_entity_id").get(id=project_id)
+    is_closed = is_month_closed(period_date, legal_entity=project.legal_entity)
     has_timesheet = Timesheet.objects.filter(
         project_id=project_id,
         status=TimesheetStatus.APPROVED,
@@ -477,11 +483,14 @@ def get_labor_actual_by_month(project_id: int, year: int, month: int) -> dict:
     }
 
 
-def _validate_overlap(*, role, rate_type, scope_type, project, start, end, exclude_id=None):
+def _validate_overlap(
+    *, role, rate_type, scope_type, project, worker, start, end, exclude_id=None
+):
     qs = LaborRateTable.objects.filter(
         labor_role=role,
         rate_type=rate_type,
         scope_type=scope_type,
+        worker=worker,
     )
     if scope_type == LaborRateScope.PROJECT:
         qs = qs.filter(project=project)
@@ -491,16 +500,17 @@ def _validate_overlap(*, role, rate_type, scope_type, project, start, end, exclu
     if exclude_id:
         qs = qs.exclude(id=exclude_id)
     if qs.exists():
-        raise ValidationError("동일 범위에서 기간이 겹치는 단가가 이미 존재합니다.")
+        raise ValidationError("동일 적용범위의 단가 기간이 중복됩니다.")
 
 
-def _assert_month_open(project: Project | None, target_date: date_type, *, message_prefix: str) -> None:
-    guard_write(
-        project=project,
-        target_date=target_date,
-        message_context=message_prefix,
-        exc=PermissionDenied,
-    )
+def _assert_month_open(project: Project | None, target_date: date_type, *, message_prefix: str, legal_entity=None) -> None:
+    if project is not None:
+        guard_write(project=project, target_date=target_date, message_context=message_prefix, exc=PermissionDenied)
+        return
+    if legal_entity is None:
+        raise ValidationError("급여 마감 검증에 필요한 고용 법인이 없습니다.")
+    from apps.closing.guards import assert_month_open
+    assert_month_open(target_date, legal_entity=legal_entity, message_context=message_prefix, exc=PermissionDenied)
 
 
 def _ensure_timesheet_editable(timesheet: Timesheet, *, actor):
@@ -512,6 +522,44 @@ def _ensure_timesheet_editable(timesheet: Timesheet, *, actor):
         raise PermissionDenied(
             "\ubcf8\uc778\uc774 \uc791\uc131\ud55c \ucd9c\uc5ed\ubd80\ub9cc \uc218\uc815 \uac00\ub2a5\ud569\ub2c8\ub2e4."
         )
+
+
+def get_timesheet_workflow_state(timesheet: Timesheet, user=None):
+    """Return the canonical FIELD/HQ workflow permissions for a timesheet."""
+    is_closed_blocked = is_month_closed(timesheet.work_date, legal_entity=timesheet.project.legal_entity) or is_project_closed(
+        timesheet.project
+    )
+    is_owner = user is None or user == timesheet.created_by
+    is_rejected = timesheet.status == TimesheetStatus.REJECTED
+    is_submitted = timesheet.status == TimesheetStatus.SUBMITTED
+    is_approved = timesheet.status == TimesheetStatus.APPROVED
+    can_field_edit = (
+        not is_closed_blocked
+        and is_owner
+        and timesheet.status in (TimesheetStatus.DRAFT, TimesheetStatus.REJECTED)
+    )
+    labels = {
+        TimesheetStatus.DRAFT: "임시저장",
+        TimesheetStatus.SUBMITTED: "HQ 검토 대기",
+        TimesheetStatus.REJECTED: "반려됨",
+        TimesheetStatus.APPROVED: "승인 완료",
+    }
+    return {
+        "code": timesheet.status,
+        "label_ko": "마감됨" if is_closed_blocked else labels.get(timesheet.status, timesheet.status),
+        "is_closed_blocked": is_closed_blocked,
+        "is_rejected": is_rejected,
+        "is_submitted": is_submitted,
+        "is_approved": is_approved,
+        "can_field_edit": can_field_edit,
+        "can_field_save": can_field_edit,
+        "can_field_submit": can_field_edit and timesheet.status == TimesheetStatus.DRAFT,
+        "can_field_resubmit": can_field_edit and is_rejected,
+        "can_hq_review": not is_closed_blocked and is_submitted,
+        "can_hq_approve": not is_closed_blocked and is_submitted,
+        "can_hq_reject": not is_closed_blocked and is_submitted,
+        "rejection_reason": timesheet.reject_reason if is_rejected else "",
+    }
 
 
 def create_labor_role(data, *, actor):
@@ -2139,6 +2187,327 @@ def register_labor_excel_export_download(export_batch, actor):
     return export_batch
 
 
+# 2026 statutory employee-share rates.  The exported workbook retains this
+# snapshot because a later annual-rate change must never alter a closed month.
+_COMPLIANCE_RATE_2026 = {
+    "income_tax_rate": Decimal("0.06"),
+    "income_tax_credit": Decimal("0.55"),
+    "daily_income_deduction": Decimal("150000"),
+    "local_income_tax_rate": Decimal("0.10"),
+    "pension_employee_rate": Decimal("0.0475"),
+    "health_employee_rate": Decimal("0.03595"),
+    "long_term_care_rate": Decimal("0.004724"),
+    "employment_employee_rate": Decimal("0.009"),
+    "pension_min_base": Decimal("410000"),
+    "pension_max_base": Decimal("6590000"),
+}
+
+
+def _round_down_to_ten(value):
+    return int((Decimal(value) / Decimal("10")).quantize(Decimal("1"), rounding=ROUND_DOWN) * 10)
+
+
+def _closed_month_or_error(year, month):
+    period = ClosingPeriod.objects.filter(
+        year=year, month=month, status=ClosingStatus.CLOSED
+    ).first()
+    if not period:
+        raise ValidationError("월 마감이 완료된 월에만 신고·지급명세서 엑셀을 생성할 수 있습니다.")
+    return period
+
+
+def _closed_timesheet_rows(project, year, month):
+    lines = list(
+        TimesheetLine.objects.select_related("timesheet", "worker", "labor_role")
+        .filter(
+            timesheet__project=project,
+            timesheet__status=TimesheetStatus.APPROVED,
+            timesheet__work_date__year=year,
+            timesheet__work_date__month=month,
+            worker__isnull=False,
+        )
+        .order_by("worker__name", "timesheet__work_date", "id")
+    )
+    if not lines:
+        raise ValidationError("해당 프로젝트·월에 승인된 근로자별 출역부가 없습니다.")
+    rows = {}
+    for line in lines:
+        key = (line.worker_id, line.timesheet.work_date)
+        row = rows.setdefault(key, {
+            "worker": line.worker, "work_date": line.timesheet.work_date,
+            "gross": 0, "hours": Decimal("0"), "roles": [],
+        })
+        row["gross"] += int(line.amount or 0)
+        row["hours"] += Decimal(str(line.hours or 8)) * Decimal(str(line.headcount or 1))
+        if line.labor_role.name not in row["roles"]:
+            row["roles"].append(line.labor_role.name)
+    return list(rows.values())
+
+
+def _calculate_closed_month_deductions(rows):
+    """Calculate employee deductions from approved daily attendance only."""
+    rates = _COMPLIANCE_RATE_2026
+    by_worker = {}
+    for row in rows:
+        taxable = max(Decimal(row["gross"]) - rates["daily_income_deduction"], Decimal("0"))
+        income_tax = _round_down_to_ten(taxable * rates["income_tax_rate"] * (Decimal("1") - rates["income_tax_credit"]))
+        row["income_tax"] = income_tax
+        row["local_tax"] = _round_down_to_ten(Decimal(income_tax) * rates["local_income_tax_rate"])
+        worker_rows = by_worker.setdefault(row["worker"].id, [])
+        worker_rows.append(row)
+    for worker_rows in by_worker.values():
+        monthly_gross = sum(Decimal(row["gross"]) for row in worker_rows)
+        # Daily workers generally acquire pension/health coverage at 8+ days.
+        insurance_base = min(max(monthly_gross, rates["pension_min_base"]), rates["pension_max_base"])
+        insured = len(worker_rows) >= 8
+        pension = _round_down_to_ten(insurance_base * rates["pension_employee_rate"]) if insured else 0
+        health = _round_down_to_ten(monthly_gross * rates["health_employee_rate"]) if insured else 0
+        long_term = _round_down_to_ten(monthly_gross * rates["long_term_care_rate"]) if insured else 0
+        employment = _round_down_to_ten(monthly_gross * rates["employment_employee_rate"])
+        # Monthly social-insurance deductions are assigned to the last workday,
+        # while the statement total remains exactly the monthly employee share.
+        for index, row in enumerate(worker_rows):
+            is_last = index == len(worker_rows) - 1
+            row["pension"] = pension if is_last else 0
+            row["health"] = health if is_last else 0
+            row["long_term"] = long_term if is_last else 0
+            row["employment"] = employment if is_last else 0
+            row["net"] = row["gross"] - row["income_tax"] - row["local_tax"] - row["pension"] - row["health"] - row["long_term"] - row["employment"]
+    return rates
+
+
+def _compliance_workbook_headers(sheet, headers, title):
+    sheet.title = sheet.title or "내역"
+    sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+    cell = sheet.cell(1, 1, title)
+    cell.font = Font(bold=True, size=14)
+    cell.alignment = Alignment(horizontal="center")
+    fill = PatternFill("solid", fgColor="1F4E78")
+    for col, header in enumerate(headers, 1):
+        cell = sheet.cell(3, col, header)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = fill
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        sheet.column_dimensions[cell.column_letter].width = max(12, min(26, len(header) * 2 + 4))
+    sheet.freeze_panes = "A4"
+
+
+def _build_work_confirmation_workbook(project, year, month, rows):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "서식"
+    headers = ["보험구분", "성명", "주민(외국인)등록번호", "국적코드", "체류자격코드", "직종코드"] + [str(day) for day in range(1, 32)] + ["근로일수", "일평균 근로시간", "보수총액(과세소득)", "임금총액", "지급월", "총지급액(과세소득)", "비과세소득", "소득세", "지방소득세"]
+    _compliance_workbook_headers(sheet, headers, f"근로내용확인신고 · {project.name} · {year}년 {month}월")
+    grouped = {}
+    for row in rows:
+        worker = row["worker"]
+        entry = grouped.setdefault(worker.id, {"worker": worker, "days": {}, "gross": 0, "hours": Decimal("0"), "income_tax": 0, "local_tax": 0})
+        entry["days"][row["work_date"].day] = 1
+        entry["gross"] += row["gross"]
+        entry["hours"] += row["hours"]
+        entry["income_tax"] += row["income_tax"]
+        entry["local_tax"] += row["local_tax"]
+    missing = [entry["worker"].name for entry in grouped.values() if not entry["worker"].get_rrn_raw() or not entry["worker"].comwel_job_code]
+    if missing:
+        raise ValidationError("신고 엑셀 생성을 위해 주민등록번호와 근로복지공단 직종코드를 등록해 주세요: " + ", ".join(missing[:5]))
+    for row_no, entry in enumerate(grouped.values(), 4):
+        worker, days = entry["worker"], entry["days"]
+        values = ["1", worker.name, worker.get_rrn_raw(), worker.nationality_code, worker.visa_code, worker.comwel_job_code] + [days.get(day, "") for day in range(1, 32)] + [len(days), float(entry["hours"] / len(days)) if days else 0, entry["gross"], entry["gross"], f"{year:04d}-{month:02d}", entry["gross"], 0, entry["income_tax"], entry["local_tax"]]
+        for col, value in enumerate(values, 1):
+            sheet.cell(row_no, col, value)
+    return workbook, len(grouped)
+
+
+def _build_daily_wage_workbook(project, year, month, rows):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = f"{month}월"
+    sheet.sheet_view.showGridLines = False
+    last_col = 33  # AG
+    title = f"일용 노무비 지급 명세서 ({year}년 {month:02d}월)"
+    sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=last_col)
+    sheet.cell(1, 1, title).font = Font(name="맑은 고딕", bold=True, size=18)
+    sheet.cell(1, 1).alignment = Alignment(horizontal="center", vertical="center")
+    sheet.row_dimensions[1].height = 32
+
+    blue = "DDEBF7"
+    green = "E2F0D9"
+    peach = "FCE4D6"
+    yellow = "FFF2CC"
+    thin = Side(style="thin", color="595959")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    money_format = '#,##0;[Red]-#,##0'
+    sheet.merge_cells("A2:B2"); sheet["A2"] = "공 사 명"
+    sheet.merge_cells("C2:N2"); sheet["C2"] = project.name
+    sheet.merge_cells("O2:P2"); sheet["O2"] = "기 간"
+    sheet.merge_cells("Q2:V2"); sheet["Q2"] = f"{year:04d}-{month:02d}-01 ~ {year:04d}-{month:02d}-{monthrange(year, month)[1]:02d}"
+    sheet.merge_cells("A3:B3"); sheet["A3"] = "회 사 명"
+    sheet.merge_cells("C3:N3"); sheet["C3"] = "ASAN ERP"
+    sheet.merge_cells("O3:P3"); sheet["O3"] = "지급월"
+    sheet.merge_cells("Q3:V3"); sheet["Q3"] = f"{year}년 {month}월"
+    # The upper-right summary aligns vertically with the payment/deduction
+    # columns below, matching the supplied statement layout.
+    sheet["AA2"] = "청구금액"
+    sheet["AB2"] = "소득세+지방소득세"
+    sheet["AC2"] = "건강보험+노인장기"
+    sheet["AD2"] = "국민연금+고용보험"
+    sheet["AE2"] = "공제계"
+    sheet.merge_cells("AF2:AG2"); sheet["AF2"] = "실 지급액"
+    sheet["AA3"] = "=SUM(AA6:AA5)"
+    sheet["AB3"] = "=SUM(AB6:AB5)"
+    sheet["AC3"] = "=SUM(AC6:AC5)"
+    sheet["AD3"] = "=SUM(AD6:AD5)"
+    sheet["AE3"] = "=SUM(AE6:AE5)"
+    sheet.merge_cells("AF3:AG3"); sheet["AF3"] = "=SUM(AF6:AF5)"
+    for row_no in (2, 3):
+        for col in range(1, last_col + 1):
+            cell = sheet.cell(row_no, col)
+            cell.border = border
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        for col in list(range(1, 3)) + list(range(15, 17)):
+            sheet.cell(row_no, col).fill = PatternFill("solid", fgColor=blue)
+            sheet.cell(row_no, col).font = Font(name="맑은 고딕", bold=True)
+    for col in range(27, 34):
+        sheet.cell(2, col).fill = PatternFill("solid", fgColor=green)
+        sheet.cell(2, col).font = Font(name="맑은 고딕", bold=True, size=8)
+        sheet.cell(2, col).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        sheet.cell(3, col).number_format = money_format
+
+    # Match the supplied form: employee identity and attendance/deduction labels
+    # are deliberately split over two rows rather than flattened into one line.
+    merged_headers = [("A4:A5", "번호"), ("B4:B5", "성명"), ("C4:D4", "주민번호"), ("E4:H4", "주소"), ("C5:D5", "연락처"), ("E5:F5", "은행명"), ("G5:H5", "계좌번호"), ("Z4:Z5", "일급"), ("AA4:AA5", "지급총액"), ("AF4:AF5", "차감 지급액"), ("AG4:AG5", "영수인")]
+    for address, label in merged_headers:
+        sheet.merge_cells(address); sheet[address.split(":")[0]].value = label
+    for day in range(1, 16):
+        sheet.cell(4, 8 + day, day)
+    sheet["Y4"] = "출역일수"
+    for day in range(16, 32):
+        sheet.cell(5, day - 7, day)
+    sheet["Y5"] = "출역공수"
+    sheet["AB4"] = "소득세"; sheet["AB5"] = "지방소득세"
+    sheet["AC4"] = "건강보험"; sheet["AC5"] = "노인장기"
+    sheet["AD4"] = "국민연금"; sheet["AD5"] = "고용보험"
+    sheet["AE4"] = "공제소계"; sheet["AE5"] = "기타"
+    for row_no in (4, 5):
+        for col in range(1, last_col + 1):
+            cell = sheet.cell(row_no, col)
+            cell.border = border; cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            cell.fill = PatternFill("solid", fgColor=peach if 9 <= col <= 24 else blue)
+            cell.font = Font(name="맑은 고딕", bold=True, size=9)
+    sheet.row_dimensions[4].height = 24; sheet.row_dimensions[5].height = 24
+
+    grouped = {}
+    for row in rows:
+        worker = row["worker"]
+        item = grouped.setdefault(worker.id, {"worker": worker, "days": {}, "roles": [], "gross": 0, "hours": Decimal("0"), "income_tax": 0, "local_tax": 0, "health": 0, "long_term": 0, "pension": 0, "employment": 0, "net": 0})
+        item["days"][row["work_date"].day] = item["days"].get(row["work_date"].day, Decimal("0")) + Decimal("1")
+        item["roles"] += [role for role in row["roles"] if role not in item["roles"]]
+        for key in ("gross", "hours", "income_tax", "local_tax", "health", "long_term", "pension", "employment", "net"):
+            item[key] += row[key]
+    first_data_row = 6
+    for index, item in enumerate(grouped.values(), 1):
+        row_no = first_data_row + ((index - 1) * 2)
+        detail_row = row_no + 1
+        worker = item["worker"]
+        day_count = len(item["days"])
+        deductions = item["income_tax"] + item["local_tax"] + item["health"] + item["long_term"] + item["pension"] + item["employment"]
+        top_values = [index, worker.name, worker.rrn_masked, None, worker.address, None, None, None]
+        top_values += [float(item["days"].get(day, Decimal("0"))) or None for day in range(1, 16)]
+        top_values += [None, day_count, int(item["gross"] / day_count) if day_count else 0, item["gross"], item["income_tax"], item["health"], item["pension"], deductions, item["net"], worker.name]
+        detail_values = [None, ", ".join(item["roles"]), worker.phone, None, worker.bank_name, None, worker.account_number_masked, None]
+        detail_values += [float(item["days"].get(day, Decimal("0"))) or None for day in range(16, 32)]
+        detail_values += [float(item["hours"] / Decimal("8")), None, None, item["local_tax"], item["long_term"], item["employment"], 0, None, None]
+        for target_row, values in ((row_no, top_values), (detail_row, detail_values)):
+            for col, value in enumerate(values, 1):
+                cell = sheet.cell(target_row, col, value)
+                cell.border = border
+                cell.alignment = Alignment(horizontal="center" if col <= 26 or col == 33 else "right", vertical="center", wrap_text=col in (2, 5))
+                if 9 <= col <= 24: cell.fill = PatternFill("solid", fgColor=green)
+                if col == 27 and target_row == row_no: cell.fill = PatternFill("solid", fgColor=yellow)
+                if 26 <= col <= 32: cell.number_format = money_format
+        for col in (1,): sheet.merge_cells(start_row=row_no, start_column=col, end_row=detail_row, end_column=col)
+        for address in (f"C{row_no}:D{row_no}", f"E{row_no}:H{row_no}", f"C{detail_row}:D{detail_row}", f"E{detail_row}:F{detail_row}", f"G{detail_row}:H{detail_row}"):
+            sheet.merge_cells(address)
+        for col in (26, 27, 32, 33): sheet.merge_cells(start_row=row_no, start_column=col, end_row=detail_row, end_column=col)
+        sheet.row_dimensions[row_no].height = 25; sheet.row_dimensions[detail_row].height = 25
+    total_row = first_data_row + (len(grouped) * 2)
+    total_detail_row = total_row + 1
+    sheet.merge_cells(start_row=total_row, start_column=1, end_row=total_detail_row, end_column=8)
+    sheet.cell(total_row, 1, "합 계")
+    top_rows = ",".join(str(first_data_row + (index * 2)) for index in range(len(grouped)))
+    detail_rows = ",".join(str(first_data_row + (index * 2) + 1) for index in range(len(grouped)))
+    for target_row, source_rows in ((total_row, top_rows), (total_detail_row, detail_rows)):
+        for col in range(1, last_col + 1):
+            cell = sheet.cell(target_row, col); cell.border = border; cell.fill = PatternFill("solid", fgColor=blue); cell.font = Font(name="맑은 고딕", bold=True); cell.alignment = Alignment(horizontal="center" if col <= 26 else "right")
+            if 9 <= col <= 25:
+                letter = get_column_letter(col)
+                cell.value = f"=SUM({','.join(f'{letter}{source_row}' for source_row in source_rows.split(','))})"
+            if 26 <= col <= 32: cell.number_format = money_format
+    # Gross and net are single vertical cells, while tax/insurance totals retain the two-row layout.
+    for col in (26, 27, 32, 33): sheet.merge_cells(start_row=total_row, start_column=col, end_row=total_detail_row, end_column=col)
+    for col in (26, 27, 32):
+        letter = get_column_letter(col)
+        sheet.cell(total_row, col, f"=SUM({','.join(f'{letter}{source_row}' for source_row in top_rows.split(','))})")
+    for col in (28, 29, 30, 31):
+        letter = get_column_letter(col)
+        sheet.cell(total_row, col, f"=SUM({','.join(f'{letter}{source_row}' for source_row in top_rows.split(','))})")
+        sheet.cell(total_detail_row, col, f"=SUM({','.join(f'{letter}{source_row}' for source_row in detail_rows.split(','))})")
+    for col, width in {1:6,2:12,3:16,4:14,5:25,6:12,7:17,8:12,25:9,26:11,27:13,28:12,29:12,30:12,31:12,32:14,33:12}.items():
+        sheet.column_dimensions[get_column_letter(col)].width = width
+    for col in range(9, 24): sheet.column_dimensions[get_column_letter(col)].width = 4.5
+    sheet.column_dimensions["X"].width = 4.5
+    for col in (27, 28, 29, 30, 31):
+        letter = get_column_letter(col)
+        sheet.cell(3, col, f"=SUM({letter}{first_data_row}:{letter}{total_row - 1})")
+    sheet["AF3"] = f"=SUM(AF{first_data_row}:AF{total_row - 1})"
+    sheet.freeze_panes = "I6"
+    sheet.sheet_properties.pageSetUpPr.fitToPage = True
+    sheet.page_setup.orientation = "landscape"; sheet.page_setup.fitToWidth = 1; sheet.page_setup.fitToHeight = 0
+    sheet.print_title_rows = "1:5"
+    sheet2 = workbook.create_sheet("요율")
+    _compliance_workbook_headers(sheet2, ["항목", "2026 적용값", "설명"], "2026년 자동계산 요율 스냅샷")
+    descriptions = [("일용 소득공제", "150,000원/일", "일용근로소득 원천징수 산식"), ("소득세", "6% × (1-55%)", "일별 과세표준 기준"), ("지방소득세", "소득세의 10%", "10원 미만 절사"), ("국민연금(근로자)", "4.75%", "8일 이상 근로 시 기준소득월액 범위 적용"), ("건강보험(근로자)", "3.595%", "8일 이상 근로 시"), ("노인장기요양(근로자)", "0.4724%", "건강보험료 연동"), ("고용보험(근로자)", "0.9%", "근로자 부담분")]
+    for index, values in enumerate(descriptions, 4):
+        for col, value in enumerate(values, 1): sheet2.cell(index, col, value)
+    return workbook, len(rows)
+
+
+def generate_labor_compliance_export(*, project, year, month, export_type, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    project = project if isinstance(project, Project) else Project.objects.filter(id=project).first()
+    if not project:
+        raise ValidationError("프로젝트를 찾을 수 없습니다.")
+    _closed_month_or_error(year, month)
+    rows = _closed_timesheet_rows(project, year, month)
+    rates = _calculate_closed_month_deductions(rows)
+    if export_type == LaborComplianceExportType.WORK_CONFIRMATION:
+        workbook, included_count = _build_work_confirmation_workbook(project, year, month, rows)
+        filename = f"근로내용확인신고_{year:04d}{month:02d}_{project.code or project.id}.xlsx"
+    elif export_type == LaborComplianceExportType.DAILY_WAGE_STATEMENT:
+        workbook, included_count = _build_daily_wage_workbook(project, year, month, rows)
+        filename = f"일용노무비지급명세서_{year:04d}{month:02d}_{project.code or project.id}.xlsx"
+    else:
+        raise ValidationError("지원하지 않는 엑셀 유형입니다.")
+    output = BytesIO(); workbook.save(output); output.seek(0)
+    export = LaborComplianceExport.objects.create(
+        export_type=export_type, year_month=date_type(year, month, 1), project=project,
+        generated_file=ContentFile(output.getvalue(), name=filename), generated_filename=filename,
+        generated_by=actor, source_summary={"approved_daily_rows": len(rows), "included_count": included_count, "rates": {key: str(value) for key, value in rates.items()}},
+    )
+    _log_action_safe(actor=actor, action=LABOR_EXCEL_EXPORT_GENERATE, object_id=export.id,
+        summary=f"LaborComplianceExport generate: {export.id}", metadata={"export_type": export_type, "project_id": project.id, "year_month": f"{year:04d}-{month:02d}", "approved_daily_rows": len(rows)}, object_type="LaborComplianceExport")
+    return export
+
+
+def register_labor_compliance_export_download(export, actor):
+    require_role(actor, [Role.HQ, Role.CEO])
+    export.downloaded_by = actor; export.downloaded_at = timezone.now()
+    export.save(update_fields=["downloaded_by", "downloaded_at"])
+    _log_action_safe(actor=actor, action=LABOR_EXCEL_EXPORT_DOWNLOAD, object_id=export.id,
+        summary=f"LaborComplianceExport download: {export.id}", metadata={"export_type": export.export_type, "project_id": export.project_id}, object_type="LaborComplianceExport")
+    return export
+
+
 def create_electronic_card_import_batch(data, file, actor):
     require_role(actor, [Role.HQ, Role.CEO])
     project = _resolve_project(data.get("project"))
@@ -2559,6 +2928,7 @@ def create_rate(data, *, actor):
     rate_type = str(data.get("rate_type") or LaborRateType.DAY)
     scope_type = str(data.get("scope_type") or LaborRateScope.GLOBAL)
     project = _resolve_project(data.get("project"))
+    worker = _resolve_worker(data.get("worker"))
     unit_rate = data.get("unit_rate")
     effective_from = data.get("effective_from")
     effective_to = data.get("effective_to")
@@ -2581,6 +2951,7 @@ def create_rate(data, *, actor):
             rate_type=rate_type,
             scope_type=scope_type,
             project=project,
+            worker=worker,
             start=effective_from,
             end=effective_to,
         )
@@ -2594,6 +2965,7 @@ def create_rate(data, *, actor):
                 "role_id": role.id,
                 "role_code": role.code,
                 "project_id": project.id if project else None,
+                "worker_id": worker.id if worker else None,
                 "scope_type": scope_type,
                 "rate_type": rate_type,
                 "effective_from": str(effective_from),
@@ -2612,6 +2984,7 @@ def create_rate(data, *, actor):
             effective_to=effective_to,
             scope_type=scope_type,
             project=project,
+            worker=worker,
             is_active=bool(data.get("is_active", True)),
             note=str(data.get("note") or "").strip(),
             created_by=actor,
@@ -2625,6 +2998,7 @@ def create_rate(data, *, actor):
             "role_id": role.id,
             "role_code": role.code,
             "project_id": project.id if project else None,
+            "worker_id": worker.id if worker else None,
             "scope_type": scope_type,
             "rate_type": rate_type,
             "unit_rate": unit_rate,
@@ -2638,10 +3012,15 @@ def create_rate(data, *, actor):
 
 def update_rate(rate: LaborRateTable, data, *, actor):
     require_role(actor, [Role.HQ, Role.CEO])
-    role = rate.labor_role
+    role = data.get("labor_role", rate.labor_role)
+    if not isinstance(role, LaborRole):
+        role = LaborRole.objects.filter(id=role).first()
+    if not role:
+        raise ValidationError({"labor_role": "labor_role is required."})
     rate_type = str(data.get("rate_type") or rate.rate_type)
     scope_type = str(data.get("scope_type") or rate.scope_type)
     project = _resolve_project(data.get("project")) if "project" in data else rate.project
+    worker = _resolve_worker(data.get("worker")) if "worker" in data else rate.worker
     unit_rate = data.get("unit_rate", rate.unit_rate)
     effective_from = data.get("effective_from", rate.effective_from)
     effective_to = data.get("effective_to", rate.effective_to)
@@ -2662,6 +3041,7 @@ def update_rate(rate: LaborRateTable, data, *, actor):
             rate_type=rate_type,
             scope_type=scope_type,
             project=project,
+            worker=worker,
             start=effective_from,
             end=effective_to,
             exclude_id=rate.id,
@@ -2676,6 +3056,7 @@ def update_rate(rate: LaborRateTable, data, *, actor):
                 "role_id": role.id,
                 "role_code": role.code,
                 "project_id": project.id if project else None,
+                "worker_id": worker.id if worker else None,
                 "scope_type": scope_type,
                 "rate_type": rate_type,
                 "effective_from": str(effective_from),
@@ -2685,9 +3066,11 @@ def update_rate(rate: LaborRateTable, data, *, actor):
         )
         raise
     before_active = rate.is_active
+    rate.labor_role = role
     rate.rate_type = rate_type
     rate.scope_type = scope_type
     rate.project = project
+    rate.worker = worker
     rate.unit_rate = unit_rate
     rate.effective_from = effective_from
     rate.effective_to = effective_to
@@ -2709,6 +3092,7 @@ def update_rate(rate: LaborRateTable, data, *, actor):
             "role_id": role.id,
             "role_code": role.code,
             "project_id": project.id if project else None,
+            "worker_id": worker.id if worker else None,
             "scope_type": scope_type,
             "rate_type": rate_type,
             "unit_rate": unit_rate,
@@ -2720,47 +3104,129 @@ def update_rate(rate: LaborRateTable, data, *, actor):
     return rate
 
 
-def get_applicable_rate(project, labor_role, date, *, rate_type=LaborRateType.DAY):
-    if not labor_role or not date:
-        return None
+LABOR_RATE_SCOPE_PROJECT_WORKER = "PROJECT_WORKER"
+LABOR_RATE_SCOPE_PROJECT_ROLE = "PROJECT_ROLE"
+LABOR_RATE_SCOPE_WORKER = "WORKER"
+LABOR_RATE_SCOPE_ROLE_BASE = "ROLE_BASE"
+
+
+def get_rate_scope(rate):
+    if rate.project_id and rate.worker_id:
+        return LABOR_RATE_SCOPE_PROJECT_WORKER
+    if rate.project_id:
+        return LABOR_RATE_SCOPE_PROJECT_ROLE
+    if rate.worker_id:
+        return LABOR_RATE_SCOPE_WORKER
+    return LABOR_RATE_SCOPE_ROLE_BASE
+
+
+def find_labor_rate_candidates(*, worker, labor_role, project, work_date, rate_type):
+    """Return active effective rates ordered by the canonical scope priority."""
+    if not labor_role or not work_date:
+        return []
     if not isinstance(labor_role, LaborRole):
         labor_role = LaborRole.objects.filter(id=labor_role).first()
     if not labor_role:
-        return None
-    if project and not isinstance(project, Project):
-        project = Project.objects.filter(id=project).first()
-    target_date = date if isinstance(date, date_type) else None
+        return []
+    worker = _resolve_worker(worker)
+    project = _resolve_project(project)
+    target_date = work_date if isinstance(work_date, date_type) else None
     if target_date is None:
-        return None
-    project_rate = (
-        LaborRateTable.objects.filter(
+        return []
+
+    base = LaborRateTable.objects.filter(
+        labor_role=labor_role,
+        rate_type=rate_type,
+        is_active=True,
+        effective_from__lte=target_date,
+    ).filter(Q(effective_to__isnull=True) | Q(effective_to__gte=target_date))
+    candidates = []
+    if project and worker:
+        candidates.append(
+            (
+                LABOR_RATE_SCOPE_PROJECT_WORKER,
+                base.filter(
+                    scope_type=LaborRateScope.PROJECT,
+                    project=project,
+                    worker=worker,
+                ),
+            )
+        )
+    if project:
+        candidates.append(
+            (
+                LABOR_RATE_SCOPE_PROJECT_ROLE,
+                base.filter(
+                    scope_type=LaborRateScope.PROJECT,
+                    project=project,
+                    worker__isnull=True,
+                ),
+            )
+        )
+    if worker:
+        candidates.append(
+            (
+                LABOR_RATE_SCOPE_WORKER,
+                base.filter(
+                    scope_type=LaborRateScope.GLOBAL,
+                    project__isnull=True,
+                    worker=worker,
+                ),
+            )
+        )
+    candidates.append(
+        (
+            LABOR_RATE_SCOPE_ROLE_BASE,
+            base.filter(
+                scope_type=LaborRateScope.GLOBAL,
+                project__isnull=True,
+                worker__isnull=True,
+            ),
+        )
+    )
+    return candidates
+
+
+def resolve_labor_rate(*, worker, labor_role, project, work_date, rate_type=LaborRateType.DAY):
+    """Resolve a rate by worker/project/role priority or raise a clear error."""
+    role = labor_role if isinstance(labor_role, LaborRole) else LaborRole.objects.filter(id=labor_role).first()
+    if not role:
+        raise ValidationError("노무 역할을 확인해 주세요.")
+    for scope, queryset in find_labor_rate_candidates(
+        worker=worker,
+        labor_role=role,
+        project=project,
+        work_date=work_date,
+        rate_type=rate_type,
+    ):
+        rates = list(queryset.order_by("-effective_from", "-id")[:2])
+        if not rates:
+            continue
+        if len(rates) > 1 and rates[0].effective_from == rates[1].effective_from:
+            raise ValidationError(
+                f"{role.name} 단가가 중복 등록되어 적용 단가를 확정할 수 없습니다. "
+                "HQ에서 단가 기준을 정리해 주세요."
+            )
+        return rates[0], scope
+    raise ValidationError(
+        f"{role.name} 단가가 등록되지 않았습니다. "
+        "HQ에서 노무 역할 단가를 먼저 등록해 주세요."
+    )
+
+
+def get_applicable_rate(project, labor_role, date, *, rate_type=LaborRateType.DAY, worker=None):
+    """Backward-compatible optional lookup used by previews and diagnostics."""
+    try:
+        rate, _scope = resolve_labor_rate(
+            worker=worker,
             labor_role=labor_role,
-            rate_type=rate_type,
-            scope_type=LaborRateScope.PROJECT,
             project=project,
-            is_active=True,
-            effective_from__lte=target_date,
-        )
-        .filter(Q(effective_to__isnull=True) | Q(effective_to__gte=target_date))
-        .order_by("-effective_from")
-        .first()
-    )
-    if project_rate:
-        return project_rate
-    global_rate = (
-        LaborRateTable.objects.filter(
-            labor_role=labor_role,
+            work_date=date,
             rate_type=rate_type,
-            scope_type=LaborRateScope.GLOBAL,
-            project__isnull=True,
-            is_active=True,
-            effective_from__lte=target_date,
         )
-        .filter(Q(effective_to__isnull=True) | Q(effective_to__gte=target_date))
-        .order_by("-effective_from")
-        .first()
-    )
-    return global_rate
+    except ValidationError:
+        return None
+    return rate
 
 
 def _next_timesheet_no(work_date: date_type) -> str:
@@ -2809,10 +3275,23 @@ def create_timesheet(*, project, work_date, actor, note="") -> Timesheet:
 def upsert_timesheet_lines(*, timesheet: Timesheet, lines_payload: list[dict], actor):
     require_role(actor, [Role.FIELD, Role.HQ, Role.CEO])
     _ensure_timesheet_editable(timesheet, actor=actor)
+    was_rejected = timesheet.status == TimesheetStatus.REJECTED
     _assert_month_open(timesheet.project, timesheet.work_date, message_prefix="\ucd9c\uc5ed\ubd80 \uc218\uc815\uc740 \ubd88\uac00\ub2a5\ud569\ub2c8\ub2e4.")
     cleaned_lines: list[dict] = []
     for raw in lines_payload:
+        worker_id = raw.get("worker_id") or raw.get("worker")
+        worker = None
+        if worker_id:
+            worker = WorkerMaster.objects.filter(id=worker_id, active=True).first()
+            if not worker:
+                raise ValidationError("활성 근로자를 선택해 주세요.")
         role_id = raw.get("labor_role_id") or raw.get("labor_role")
+        if not role_id and worker is not None:
+            role_id = worker.default_labor_role_id
+        if worker is not None and not role_id:
+            raise ValidationError(
+                "근로자 기본 노무 역할이 설정되어 있지 않습니다. HQ에서 근로자 마스터를 보완해 주세요."
+            )
         if not role_id:
             continue
         labor_role = LaborRole.objects.filter(id=role_id, is_active=True).first()
@@ -2829,18 +3308,19 @@ def upsert_timesheet_lines(*, timesheet: Timesheet, lines_payload: list[dict], a
             raise ValidationError("\uc778\uc6d0\uc740 0\ubcf4\ub2e4 \ud070 \uac12\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.")
         rate_type = str(raw.get("rate_type") or LaborRateType.DAY)
         hours_val = None
-        if rate_type == LaborRateType.HOUR:
-            hours = raw.get("hours")
-            if hours in (None, ""):
-                raise ValidationError("\uc2dc\uac04\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.")
+        hours = raw.get("hours")
+        if rate_type == LaborRateType.HOUR and hours in (None, ""):
+            raise ValidationError("시간을 입력해 주세요.")
+        if hours not in (None, ""):
             try:
                 hours_val = Decimal(str(hours))
             except Exception:
-                raise ValidationError("\uc2dc\uac04 \uac12\uc774 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.")
+                raise ValidationError("시간 값이 올바르지 않습니다.")
             if hours_val <= 0:
-                raise ValidationError("\uc2dc\uac04\uc740 0\ubcf4\ub2e4 \ud070 \uac12\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.")
+                raise ValidationError("시간은 0보다 큰 값을 입력해 주세요.")
         cleaned_lines.append(
             {
+                "worker": worker,
                 "labor_role": labor_role,
                 "headcount": headcount_val,
                 "hours": hours_val,
@@ -2856,6 +3336,7 @@ def upsert_timesheet_lines(*, timesheet: Timesheet, lines_payload: list[dict], a
             [
                 TimesheetLine(
                     timesheet=timesheet,
+                    worker=line["worker"],
                     labor_role=line["labor_role"],
                     headcount=line["headcount"],
                     hours=line["hours"],
@@ -2870,7 +3351,7 @@ def upsert_timesheet_lines(*, timesheet: Timesheet, lines_payload: list[dict], a
         timesheet.save(update_fields=["updated_at"])
     _log_action_safe(
         actor=actor,
-        action="TIMESHEET_UPDATE",
+        action="TIMESHEET_EDITED_AFTER_REJECT" if was_rejected else "TIMESHEET_UPDATE",
         object_id=timesheet.id,
         summary=f"Timesheet update: {timesheet.sheet_no}",
         metadata={
@@ -2879,32 +3360,90 @@ def upsert_timesheet_lines(*, timesheet: Timesheet, lines_payload: list[dict], a
             "project_id": timesheet.project_id,
             "work_date": str(timesheet.work_date),
             "line_count": len(cleaned_lines),
+            "worker_line_count": sum(line["worker"] is not None for line in cleaned_lines),
             "status": timesheet.status,
+            "rework": was_rejected,
         },
         object_type="Timesheet",
     )
     return timesheet
 
 
+def get_worker_timesheet_days(project, month):
+    """Return pre-confirmation worker attendance totals for a project month.
+
+    FIELD timesheets are an operational source, not a replacement for the HQ
+    electronic-card reconciliation and confirmed-work workflow.
+    """
+    if not isinstance(project, Project):
+        project = Project.objects.filter(id=project).first()
+    if project is None:
+        return TimesheetLine.objects.none()
+    if not isinstance(month, date_type):
+        raise ValidationError("기준월을 확인해 주세요.")
+    start_date, end_date = _month_range(month.year, month.month)
+    return (
+        TimesheetLine.objects.filter(
+            timesheet__project=project,
+            timesheet__work_date__gte=start_date,
+            timesheet__work_date__lte=end_date,
+            worker__isnull=False,
+        )
+        .exclude(timesheet__status=TimesheetStatus.REJECTED)
+        .values("worker_id", "worker__name", "labor_role_id", "labor_role__name")
+        .annotate(
+            attendance_days=Count("timesheet__work_date", distinct=True),
+            total_work_unit=Sum("headcount"),
+        )
+        .order_by("worker__name", "labor_role__name")
+    )
+
+
 def submit_timesheet(*, timesheet: Timesheet, actor):
     require_role(actor, [Role.FIELD, Role.HQ, Role.CEO])
     if timesheet.status not in (TimesheetStatus.DRAFT, TimesheetStatus.REJECTED):
         raise PermissionDenied("\uc81c\ucd9c \ud560 \uc218 \uc5c6\ub294 \uc0c1\ud0dc\uc785\ub2c8\ub2e4.")
+    was_rejected = timesheet.status == TimesheetStatus.REJECTED
     _assert_month_open(timesheet.project, timesheet.work_date, message_prefix="\ucd9c\uc5ed\ubd80 \uc81c\ucd9c\uc740 \ubd88\uac00\ub2a5\ud569\ub2c8\ub2e4.")
-    lines = list(timesheet.lines.select_related("labor_role").all())
+    lines = list(timesheet.lines.select_related("labor_role", "worker").all())
     if not lines:
         raise ValidationError("\ucd9c\uc5ed \ub77c\uc778\uc740 \ucd5c\uc18c 1\uac1c \uc774\uc0c1 \ud544\uc694\ud569\ub2c8\ub2e4.")
+    rate_by_line = {}
+    resolution_errors = {}
+    for line in lines:
+        try:
+            rate_by_line[line.id] = resolve_labor_rate(
+                worker=line.worker,
+                labor_role=line.labor_role,
+                project=timesheet.project,
+                work_date=timesheet.work_date,
+                rate_type=line.rate_type,
+            )
+        except ValidationError as exc:
+            resolution_errors[(line.labor_role_id, line.rate_type)] = " ".join(exc.messages)
+    if resolution_errors:
+        _log_action_safe(
+            actor=actor,
+            action="TIMESHEET_RATE_RESOLUTION_BLOCKED",
+            object_id=timesheet.id,
+            summary=f"Timesheet rate resolution blocked: {timesheet.sheet_no}",
+            metadata={
+                "timesheet_id": timesheet.id,
+                "project_id": timesheet.project_id,
+                "missing_rate_count": len(resolution_errors),
+                "labor_role_ids": sorted({role_id for role_id, _ in resolution_errors}),
+            },
+            object_type="Timesheet",
+        )
+        raise ValidationError(
+            "직종 단가 등록이 필요합니다. "
+            + " ".join(resolution_errors.values())
+        )
+
     total_amount = 0
     with transaction.atomic():
         for line in lines:
-            rate = get_applicable_rate(
-                timesheet.project,
-                line.labor_role,
-                timesheet.work_date,
-                rate_type=line.rate_type,
-            )
-            if not rate:
-                raise ValidationError("\uc9c1\uc885 \ub2e8\uac00\uac00 \ub4f1\ub85d\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.")
+            rate, rate_scope = rate_by_line[line.id]
             unit_rate = int(rate.unit_rate)
             if line.rate_type == LaborRateType.HOUR:
                 hours = line.hours or Decimal("0")
@@ -2917,14 +3456,27 @@ def submit_timesheet(*, timesheet: Timesheet, actor):
                 )
             line.unit_rate = unit_rate
             line.amount = int(amount)
-            line.save(update_fields=["unit_rate", "amount"])
+            line.applied_rate = rate
+            line.applied_rate_scope = rate_scope
+            line.applied_rate_effective_from = rate.effective_from
+            line.applied_rate_resolved_at = timezone.now()
+            line.save(
+                update_fields=[
+                    "unit_rate",
+                    "amount",
+                    "applied_rate",
+                    "applied_rate_scope",
+                    "applied_rate_effective_from",
+                    "applied_rate_resolved_at",
+                ]
+            )
             total_amount += int(amount)
         timesheet.status = TimesheetStatus.SUBMITTED
         timesheet.submitted_at = timezone.now()
         timesheet.save(update_fields=["status", "submitted_at", "updated_at"])
     _log_action_safe(
         actor=actor,
-        action="TIMESHEET_SUBMIT",
+        action="TIMESHEET_RESUBMIT" if was_rejected else "TIMESHEET_SUBMIT",
         object_id=timesheet.id,
         summary=f"Timesheet submit: {timesheet.sheet_no}",
         metadata={
@@ -2933,6 +3485,9 @@ def submit_timesheet(*, timesheet: Timesheet, actor):
             "project_id": timesheet.project_id,
             "work_date": str(timesheet.work_date),
             "line_count": len(lines),
+            "resolved_rate_count": len(rate_by_line),
+            "missing_rate_count": 0,
+            "resubmitted": was_rejected,
             "total_amount": total_amount,
             "status": timesheet.status,
         },
@@ -3023,17 +3578,18 @@ def _ensure_payroll_editable(batch: PayrollAllocationBatch):
         raise PermissionDenied("제출 이후에는 수정할 수 없습니다.")
 
 
-def create_payroll_batch(*, year: int, month: int, total_amount: int, actor, note: str = ""):
+def create_payroll_batch(*, year: int, month: int, total_amount: int, legal_entity, actor, note: str = ""):
     require_role(actor, [Role.HQ, Role.CEO])
+    require_legal_entity_access(actor, legal_entity)
     period_date = _period_date(year, month)
-    _assert_month_open(None, period_date, message_prefix="급여 배부 생성은 불가능합니다.")
+    _assert_month_open(None, period_date, legal_entity=legal_entity, message_prefix="급여 배부 생성은 불가능합니다.")
     if total_amount is None:
         raise ValidationError({"total_amount": "total_amount is required."})
     total_amount = int(total_amount)
     if total_amount < 0:
         raise ValidationError({"total_amount": "total_amount must be >= 0."})
     if PayrollAllocationBatch.objects.filter(
-        period_year=year, period_month=month
+        legal_entity=legal_entity, period_year=year, period_month=month
     ).exists():
         raise ValidationError("해당 월 배부가 이미 존재합니다.")
     with transaction.atomic():
@@ -3043,6 +3599,7 @@ def create_payroll_batch(*, year: int, month: int, total_amount: int, actor, not
             period_year=year,
             period_month=month,
             total_amount=total_amount,
+            legal_entity=legal_entity,
             note=note or "",
             created_by=actor,
         )
@@ -3068,7 +3625,7 @@ def update_payroll_batch(batch: PayrollAllocationBatch, data: dict, *, actor):
     require_role(actor, [Role.HQ, Role.CEO])
     _ensure_payroll_editable(batch)
     period_date = _period_date(batch.period_year, batch.period_month)
-    _assert_month_open(None, period_date, message_prefix="급여 배부 수정은 불가능합니다.")
+    _assert_month_open(None, period_date, legal_entity=batch.legal_entity, message_prefix="급여 배부 수정은 불가능합니다.")
     if "total_amount" in data and data["total_amount"] not in (None, ""):
         total_amount = int(data["total_amount"])
         if total_amount < 0:
@@ -3101,7 +3658,7 @@ def upsert_payroll_lines(
     require_role(actor, [Role.HQ, Role.CEO])
     _ensure_payroll_editable(batch)
     period_date = _period_date(batch.period_year, batch.period_month)
-    _assert_month_open(None, period_date, message_prefix="급여 배부 수정은 불가능합니다.")
+    _assert_month_open(None, period_date, legal_entity=batch.legal_entity, message_prefix="급여 배부 수정은 불가능합니다.")
     cleaned: list[dict] = []
     for raw in lines_payload:
         project_id = raw.get("project_id") or raw.get("project")
@@ -3113,6 +3670,11 @@ def upsert_payroll_lines(
         project = Project.objects.filter(id=project_id).first()
         if not project:
             raise ValidationError("유효한 프로젝트를 선택해 주세요.")
+        if project.legal_entity_id != batch.legal_entity_id:
+            raise ValidationError(
+                "급여 원가 배부는 고용 법인과 같은 법인 프로젝트에만 등록할 수 있습니다. "
+                "타 법인 프로젝트 배정은 운영지원으로 관리하세요."
+            )
         if amount in (None, ""):
             raise ValidationError("배부 금액을 입력해 주세요.")
         amount_val = int(amount)
@@ -3178,7 +3740,7 @@ def submit_payroll_batch(batch: PayrollAllocationBatch, *, actor):
     require_role(actor, [Role.HQ, Role.CEO])
     _ensure_payroll_editable(batch)
     period_date = _period_date(batch.period_year, batch.period_month)
-    _assert_month_open(None, period_date, message_prefix="급여 배부 제출은 불가능합니다.")
+    _assert_month_open(None, period_date, legal_entity=batch.legal_entity, message_prefix="급여 배부 제출은 불가능합니다.")
     line_count = PayrollAllocationLine.objects.filter(batch=batch).count()
     if line_count == 0:
         raise ValidationError("배부 라인은 최소 1개 이상 입력해야 합니다.")

@@ -1,0 +1,15 @@
+공통 FAST-CODEX 헤더
+
+아래 문구는 모든 프롬프트 상단에 붙여 쓰시면 됩니다.
+
+[COMMON]
+Repo: construction-erp
+Role: Senior Django engineer
+
+Rules:
+- No schema-breaking refactor
+- Keep existing ERP design, RBAC, AuditLog, Closing, Adjustment
+- Use existing Project/Timesheet/Labor/Approval/Attachment structures where possible
+- Korean labels must not break: check UTF-8/base template
+- No external automation to government sites; only generate/import/export files
+- If model names differ, Discovery first, then adapt minimally

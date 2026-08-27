@@ -25,10 +25,10 @@
     font-size: 12px;
     display: inline-block;
   }
-  .badge.open { background: rgba(59,130,246,0.2); color: #93c5fd; }
-  .badge.closed { background: rgba(34,197,94,0.2); color: #4ade80; }
-  .badge.pending { background: rgba(251,191,36,0.2); color: #fbbf24; }
-  .badge.rejected { background: rgba(239,68,68,0.2); color: #f87171; }
+  .badge.open { background: #e0f2fe; color: #0369a1; }
+  .badge.closed { background: #dcfce7; color: #15803d; }
+  .badge.pending { background: #fef3c7; color: #a16207; }
+  .badge.rejected { background: #fee2e2; color: #b91c1c; }
   .table-wrap {
     border-radius: 12px;
     border: 1px solid var(--border);
@@ -39,7 +39,7 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 10px;
     padding: 10px 12px;
-    color: #fecaca;
+    color: #b91c1c;
   }
   .filters {
     display: grid;
@@ -53,6 +53,8 @@
   <p class="muted">월 마감은 되돌릴 수 없습니다. 마감 후 변경은 정정(Adjustment) 절차로 처리합니다.</p>
   <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
     <a class="btn" href="/app/hq/closing/new/">마감 요청 생성</a>
+    {% if role == "hq" %}<a class="btn btn-outline" href="/app/hq/closing/revenue-recognition/">매출·원가 인식</a>{% endif %}
+    {% if role == "hq" %}<a class="btn btn-outline" href="/app/hq/finance/billings/">선급금·기성청구</a>{% endif %}
   </div>
 </div>
 
@@ -86,6 +88,7 @@
         <tr>
           <th>연/월</th>
           <th>상태</th>
+          <th>확정 방식</th>
           <th>마감일시</th>
           <th>마감자</th>
           <th>요청상태</th>
@@ -98,11 +101,12 @@
             <td>{{ item.period.year }}-{{ item.period.month|stringformat:"02d" }}</td>
             <td>
               {% if item.period.status == "CLOSED" %}
-                <span class="badge closed">CLOSED</span>
+                <span class="badge closed">마감</span>
               {% else %}
-                <span class="badge open">OPEN</span>
+                <span class="badge open">진행 중</span>
               {% endif %}
             </td>
+            <td>{{ item.period.get_approval_policy_display }}</td>
             <td>{% if item.period.closed_at %}{{ item.period.closed_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
             <td>{% if item.period.closed_by %}{{ item.period.closed_by.username }}{% else %}-{% endif %}</td>
             <td>
@@ -110,13 +114,13 @@
                 -
               {% else %}
                 {% if item.request.status == "draft" %}
-                  <span class="badge pending">DRAFT</span>
+                  <span class="badge pending">임시저장</span>
                 {% elif item.request.status == "submitted" %}
-                  <span class="badge pending">SUBMITTED</span>
+                  <span class="badge pending">승인 대기</span>
                 {% elif item.request.status == "approved" %}
-                  <span class="badge closed">APPROVED</span>
+                  <span class="badge closed">승인</span>
                 {% elif item.request.status == "rejected" %}
-                  <span class="badge rejected">REJECTED</span>
+                  <span class="badge rejected">반려</span>
                 {% else %}
                   {{ item.request.status }}
                 {% endif %}
@@ -132,7 +136,7 @@
           </tr>
         {% empty %}
           <tr>
-            <td colspan="6">표시할 데이터가 없습니다.</td>
+            <td colspan="7">표시할 데이터가 없습니다.</td>
           </tr>
         {% endfor %}
       </tbody>

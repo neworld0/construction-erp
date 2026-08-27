@@ -1,0 +1,8 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}품목 승인 요청{% endblock %}
+{% block content %}
+<div class="card"><h2 class="card-title">현장 예산 외·미등록 품목 승인 요청</h2><p class="muted">승인 시 품목 마스터를 등록 또는 재사용하고, 반드시 해당 프로젝트 예산 CBS를 지정합니다.</p></div>
+{% for item in requests %}
+<div class="card" style="margin-top:14px;"><strong>{{ item.project.name }} / {{ item.item_name }}</strong><div class="muted">요청자 {{ item.requested_by.username }} · 단위 {{ item.uom_text }} · 예상수량 {{ item.requested_qty|default:"-" }} · {{ item.reason }}</div><form method="post" action="/app/hq/inventory/material-requests/{{ item.id }}/review/" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">{% csrf_token %}<select class="form-control" name="approved_cbs_id" required style="max-width:360px;"><option value="">승인 CBS 선택</option>{% for cbs in item.cbs_choices %}<option value="{{ cbs.id }}">{{ cbs }}</option>{% endfor %}</select><button class="btn" name="action" value="approve">승인</button><input class="form-control" name="reject_reason" placeholder="반려 사유" style="max-width:260px;"><button class="btn btn-outline" name="action" value="reject">반려</button></form></div>
+{% empty %}<div class="card" style="margin-top:14px;">대기 중인 품목 요청이 없습니다.</div>{% endfor %}
+{% endblock %}

@@ -1,0 +1,55 @@
+[FAST-CODEX] D3E-2 (Compact)
+
+Repo: construction-erp
+
+STOP
+- No schema change
+- ≤8 files
+- 1 run max
+- No ops data (no progress/report/cost/timesheet/inv events)
+
+Pre
+- Use D3E-1 discovery maps (model names, status values, attachment linking)
+
+Scenario (fixed)
+- Month: 2026-02
+- Projects:
+  P1 ASAN-조경1 공원 리모델링 (3,000,000,000) end 2026-05-31
+  P2 ASAN-토목1 우수관 정비     (2,000,000,000) end 2026-04-30
+  P3 ASAN-건축1 관리동 증축     (800,000,000)   end 2026-03-31
+- Start: 2026-02-01
+- Warehouses: HQ-WH, P1-WH, P2-WH, P3-WH
+- Items: 20+ (landscape)
+- Labor roles: 6~8 + rates
+- PayrollAllocation: 1 record for 2026-02 (HQ)
+
+Implement in seed_demo_3sites_e2e command (add mode/flag if needed):
+A) Accounts/RBAC/2FA
+- If seed_initial exists: call it; else create:
+  CEO=1, HQ=2, FIELD=3~6
+- Assign FIELD users to projects (RBAC must restrict)
+
+B) Masters
+- Create Warehouse/Location
+- Create ItemMaster 20+
+- Create LaborRole + rate table
+- CBS:
+  - Prefer existing active landscape CBS for budgets
+  - Do NOT create CBS unless none found; if empty, add minimal 10 codes respecting existing flags (active/locked/alias)
+
+C) Projects
+For each project:
+- Create Project
+- Create ProjectContract (amount, dates)
+- Create WBS baseline v1 (set APPROVED if allowed; else SUBMITTED to show CEO inbox)
+- Create BudgetItem 10~20 lines mapped to CBS
+- Attach 1 contract file (generate tiny dummy file in code; link via discovered attachment/evidence method)
+
+Output (print)
+- project ids + (if known) HQ URLs
+- FIELD users -> assigned projects
+- WBS/Budget/ContractAttachment created yes/no
+
+DONE
+- 3 projects exist with contract + WBS + budget + warehouses + masters + users/assignments
+- No ops data created

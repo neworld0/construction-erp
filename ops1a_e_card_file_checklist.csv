@@ -1,0 +1,5 @@
+Check_Item,Required,Status,Note
+근로년월,Yes,NEEDS_SAFE_REAL_FILE,실 전자카드 파일 미제공
+성명,Yes,NEEDS_SAFE_REAL_FILE,마스킹된 샘플만 허용
+일자별 출역,Yes,NEEDS_SAFE_REAL_FILE,실파일 또는 비식별 XLSX 필요
+비대상사유,No,OPTIONAL,별칭 지원 확인 대상

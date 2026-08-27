@@ -1,0 +1,3 @@
+Scenario,Project_Count,Active_Project_Count,Open_CRITICAL_HIGH_DB,Valid_Project_CRITICAL_HIGH,Demo_Seed_CRITICAL_HIGH,Orphan_CRITICAL_HIGH,Projectless_Non_System_CRITICAL_HIGH,HQ_Displayed_CRITICAL_HIGH_Before,HQ_Displayed_CRITICAL_HIGH_After,CEO_Displayed_CRITICAL_HIGH_After,HQ_Risk_Card_Title_Before,HQ_Risk_Card_Title_After,Empty_State_Displayed,Result
+Local reset before patch,0,0,1,0,1,0,0,1,0,0,Demo risk finding,,YES,PASS
+Active project regression,1,1,1,1,0,0,0,1,1,1,,유효 위험,NO,PASS

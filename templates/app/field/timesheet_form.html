@@ -1,158 +1,362 @@
-﻿{% extends "app/base_app.html" %}
+{% extends "app/base_app.html" %}
 {% block page_title %}출역부 입력{% endblock %}
 {% block content %}
 <style>
-  .grid {
+  .field-timesheet-mobile {
+    padding-bottom: 18px;
+  }
+  .timesheet-context-card,
+  .timesheet-entry-card {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  .timesheet-context-card {
+    margin-bottom: 16px;
+  }
+  .timesheet-context-grid,
+  .labor-detail-grid {
     display: grid;
     gap: 12px;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .table {
-    width: 100%;
-    border-collapse: collapse;
+  .form-field {
+    min-width: 0;
   }
-  .table th,
-  .table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    text-align: left;
-    font-size: 13px;
-    vertical-align: top;
+  .form-field.full-width {
+    grid-column: 1 / -1;
   }
-  .table thead th {
-    font-weight: 600;
+  .form-field label {
+    display: block;
+    margin-bottom: 6px;
     color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
   }
   .inline-input {
+    box-sizing: border-box;
     width: 100%;
+    min-height: 40px;
     padding: 8px 10px;
-    border-radius: 8px;
     border: 1px solid var(--border);
+    border-radius: 8px;
     background: transparent;
     color: var(--text);
   }
-  .btn {
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
-    cursor: pointer;
+  textarea.inline-input {
+    min-height: 72px;
+    resize: vertical;
   }
-  .btn.primary {
-    background: #3fa9f5;
-    color: #000000 !important;
-    border: none !important;
+  .timesheet-entry-list {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   }
-  .actions {
+  .timesheet-entry-card {
+    display: grid;
+    gap: 14px;
+  }
+  .timesheet-entry-header {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
   }
-  .actions .btn {
-    border: 1px solid #6b7280 !important;
-    color: #ffffff !important;
+  .timesheet-entry-title {
+    margin: 0;
+    font-size: 15px;
   }
-  .actions .btn.primary {
-    background: #3fa9f5 !important;
-    color: #000000 !important;
-    border: none !important;
-  }
+  .timesheet-entry-hint,
   .muted {
     color: var(--muted);
     font-size: 12px;
   }
-  .warning {
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    color: #facc15;
-    padding: 10px 12px;
-    border-radius: 10px;
-    margin-top: 10px;
+  .worker-picker {
+    position: relative;
+    width: 100%;
+  }
+  .worker-search-results {
+    position: absolute;
+    z-index: 5;
+    width: 100%;
+    margin-top: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
+  }
+  .worker-search-result {
+    display: block;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+  .worker-search-empty {
+    padding: 8px 10px;
+    color: var(--muted);
     font-size: 12px;
+  }
+  .worker-selected-summary {
+    margin-top: 8px;
+    color: var(--text);
+    font-size: 12px;
+  }
+  .warning {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.12);
+    color: #facc15;
+    font-size: 12px;
+  }
+  .mobile-sticky-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 10px 0;
+  }
+  .btn {
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .btn.primary {
+    border: 0;
+    background: var(--action);
+    color: var(--action-text);
+  }
+  .mobile-secondary-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .mobile-primary-button {
+    flex: 1;
+  }
+  @media (max-width: 640px) {
+    .field-timesheet-mobile {
+      padding-bottom: 84px;
+    }
+    .timesheet-context-card,
+    .timesheet-entry-card {
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .timesheet-context-grid,
+    .labor-detail-grid {
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .timesheet-entry-list {
+      grid-template-columns: 1fr;
+    }
+    .inline-input,
+    .worker-search-result,
+    .btn {
+      min-height: 44px;
+    }
+    .mobile-sticky-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+      margin-right: -12px;
+      margin-left: -12px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .mobile-primary-button {
+      min-height: 48px;
+    }
+    .mobile-secondary-actions .btn {
+      min-width: 44px;
+      padding-right: 10px;
+      padding-left: 10px;
+    }
   }
 </style>
 
-<div class="card">
-  <h2 class="card-title">출역부 입력</h2>
-  <p class="muted">일자별 직종/인원/작업내용을 기록합니다.</p>
-  {% if form_disabled %}
-    <div class="warning">제출 이후에는 수정할 수 없습니다.</div>
-  {% endif %}
-</div>
+<section class="field-timesheet-mobile field-page field-entry-page">
+  <div class="card field-entry-header">
+    <h2 class="card-title">출역부 입력</h2>
+    <p class="muted">등록 근로자별 출역을 기록하거나 기존 직종별 집계 입력을 사용할 수 있습니다.</p>
+    {% if workflow and workflow.is_rejected %}
+      <div class="warning">
+        <strong>반려됨</strong>{% if workflow.rejection_reason %}: {{ workflow.rejection_reason }}{% endif %}<br />
+        반려된 출역부입니다. 내용을 수정한 후 다시 제출해 주세요.
+      </div>
+    {% elif form_disabled %}
+      <div class="warning">{{ workflow.label_ko|default:"제출 이후에는 수정할 수 없습니다." }} 상태에서는 수정할 수 없습니다.</div>
+    {% endif %}
+    {% if form_error %}
+      <div class="warning">{{ form_error }}</div>
+    {% endif %}
+  </div>
 
-<div class="card" style="margin-top:18px;">
-  <form method="post">
+  <form method="post" class="field-entry-form">
     {% csrf_token %}
-    <div class="grid">
-      <div>
-        <label>프로젝트</label>
-        <select class="inline-input" name="project_id" required {% if form_disabled %}disabled{% endif %}>
-          {% for project in projects %}
-            <option value="{{ project.id }}" {% if timesheet and timesheet.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
-          {% endfor %}
-        </select>
+    <section class="timesheet-context-card" aria-labelledby="timesheet-context-title">
+      <h3 id="timesheet-context-title" class="timesheet-entry-title">작업 정보</h3>
+      <div class="timesheet-context-grid" style="margin-top:12px;">
+        <div class="form-field full-width">
+          <label for="timesheet-project">프로젝트</label>
+          <select id="timesheet-project" class="inline-input" name="project_id" required {% if form_disabled %}disabled{% endif %}>
+            {% for project in projects %}
+              <option value="{{ project.id }}" {% if timesheet and timesheet.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="timesheet-work-date">작업일자</label>
+          <input id="timesheet-work-date" class="inline-input" type="date" name="work_date" value="{% if timesheet %}{{ timesheet.work_date|date:"Y-m-d" }}{% endif %}" required {% if form_disabled %}disabled{% endif %} />
+        </div>
+        <div class="form-field">
+          <label for="timesheet-note">작업 비고</label>
+          <input id="timesheet-note" class="inline-input" type="text" name="note" value="{% if timesheet %}{{ timesheet.note }}{% endif %}" placeholder="현장 전체 특이사항" {% if form_disabled %}disabled{% endif %} />
+        </div>
       </div>
-      <div>
-        <label>작성일</label>
-        <input class="inline-input" type="date" name="work_date" value="{% if timesheet %}{{ timesheet.work_date|date:"Y-m-d" }}{% endif %}" required {% if form_disabled %}disabled{% endif %} />
-      </div>
-      <div style="grid-column: span 2;">
-        <label>비고</label>
-        <input class="inline-input" type="text" name="note" value="{% if timesheet %}{{ timesheet.note }}{% endif %}" {% if form_disabled %}disabled{% endif %} />
-      </div>
-    </div>
+    </section>
 
-    <div style="margin-top:18px;">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>직종</th>
-            <th>인원수</th>
-            <th>시간</th>
-            <th>단가 유형</th>
-            <th>메모</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in line_rows %}
-            <tr>
-              <td>
-                <select class="inline-input" name="lines-{{ forloop.counter0 }}-role_id" {% if form_disabled %}disabled{% endif %}>
-                  <option value="">선택</option>
-                  {% for role in roles %}
-                    <option value="{{ role.id }}" {% if row.role_id == role.id %}selected{% endif %}>{{ role.code }} - {{ role.name }}</option>
+    <section class="timesheet-entry-list" aria-label="출역 근로자 입력">
+      {% for row in line_rows %}
+        <article class="timesheet-entry-card worker-entry-card">
+          <div class="timesheet-entry-header">
+            <h3 class="timesheet-entry-title">출역 근로자 {{ forloop.counter }}</h3>
+            <span class="timesheet-entry-hint">근로자 선택 시 역할 자동 반영</span>
+          </div>
+
+          <div class="form-field full-width">
+            <label for="worker-search-{{ forloop.counter0 }}">근로자</label>
+            <div class="worker-picker">
+              <input id="worker-search-{{ forloop.counter0 }}" class="inline-input worker-search" type="search" value="{{ row.worker_label }}" placeholder="근로자 이름 또는 직종 검색" autocomplete="off" aria-label="근로자 선택" {% if form_disabled %}disabled{% endif %} />
+              <input class="worker-id-input" type="hidden" data-name="lines-{{ forloop.counter0 }}-worker_id" value="{{ row.worker_id }}" {% if form_disabled %}disabled{% endif %} />
+              <div class="worker-search-results" hidden></div>
+              <noscript>
+                <select class="inline-input" name="lines-{{ forloop.counter0 }}-worker_id" {% if form_disabled %}disabled{% endif %}>
+                  <option value="">집계 입력</option>
+                  {% for worker in workers %}
+                    <option value="{{ worker.id }}" {% if row.worker_id == worker.id %}selected{% endif %}>{{ worker.name }}{% if worker.default_labor_role %} / {{ worker.default_labor_role.name }}{% endif %}</option>
                   {% endfor %}
                 </select>
-              </td>
-              <td>
-                <input class="inline-input" type="number" step="0.1" name="lines-{{ forloop.counter0 }}-headcount" value="{{ row.headcount }}" {% if form_disabled %}disabled{% endif %} />
-              </td>
-              <td>
-                <input class="inline-input" type="number" step="0.1" name="lines-{{ forloop.counter0 }}-hours" value="{{ row.hours }}" {% if form_disabled %}disabled{% endif %} />
-              </td>
-              <td>
-                <select class="inline-input" name="lines-{{ forloop.counter0 }}-rate_type" {% if form_disabled %}disabled{% endif %}>
-                  <option value="DAY" {% if row.rate_type == "DAY" %}selected{% endif %}>일 단가</option>
-                  <option value="HOUR" {% if row.rate_type == "HOUR" %}selected{% endif %}>시간 단가</option>
-                </select>
-              </td>
-              <td>
-                <input class="inline-input" type="text" name="lines-{{ forloop.counter0 }}-memo" value="{{ row.memo }}" {% if form_disabled %}disabled{% endif %} />
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+              </noscript>
+            </div>
+            <div class="worker-selected-summary" {% if not row.worker_label %}hidden{% endif %}>선택됨: <span>{{ row.worker_label }}</span></div>
+          </div>
 
-    <div class="actions" style="margin-top:14px;">
-      <button type="submit" name="action" value="draft" class="btn" {% if form_disabled %}disabled{% endif %}>임시저장</button>
-      <button type="submit" name="action" value="submit" class="btn primary" {% if form_disabled %}disabled{% endif %}>제출</button>
-      <a class="btn" href="/app/field/labor/timesheets/">목록</a>
+          <div class="labor-detail-grid">
+            <div class="form-field full-width">
+              <label for="labor-role-{{ forloop.counter0 }}">노무역할</label>
+              <select id="labor-role-{{ forloop.counter0 }}" class="inline-input role-select" name="lines-{{ forloop.counter0 }}-role_id" {% if form_disabled %}disabled{% endif %}>
+                <option value="">선택</option>
+                {% for role in roles %}
+                  <option value="{{ role.id }}" {% if row.role_id == role.id %}selected{% endif %}>{{ role.code }} - {{ role.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="headcount-{{ forloop.counter0 }}">공수</label>
+              <input id="headcount-{{ forloop.counter0 }}" class="inline-input" type="number" step="0.1" min="0" inputmode="decimal" name="lines-{{ forloop.counter0 }}-headcount" value="{{ row.headcount }}" placeholder="예: 1.0" {% if form_disabled %}disabled{% endif %} />
+            </div>
+            <div class="form-field">
+              <label for="hours-{{ forloop.counter0 }}">시간</label>
+              <input id="hours-{{ forloop.counter0 }}" class="inline-input" type="number" step="0.1" min="0" inputmode="decimal" name="lines-{{ forloop.counter0 }}-hours" value="{{ row.hours }}" placeholder="예: 8" {% if form_disabled %}disabled{% endif %} />
+            </div>
+            <div class="form-field full-width">
+              <label for="rate-type-{{ forloop.counter0 }}">단가유형</label>
+              <select id="rate-type-{{ forloop.counter0 }}" class="inline-input" name="lines-{{ forloop.counter0 }}-rate_type" {% if form_disabled %}disabled{% endif %}>
+                <option value="DAY" {% if row.rate_type == "DAY" %}selected{% endif %}>일 단가</option>
+                <option value="HOUR" {% if row.rate_type == "HOUR" %}selected{% endif %}>시간 단가</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field full-width memo-card">
+            <label for="memo-{{ forloop.counter0 }}">메모</label>
+            <textarea id="memo-{{ forloop.counter0 }}" class="inline-input" name="lines-{{ forloop.counter0 }}-memo" placeholder="특이사항이 있으면 입력" {% if form_disabled %}disabled{% endif %}>{{ row.memo }}</textarea>
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+
+    <div class="mobile-sticky-actions">
+      <div class="mobile-secondary-actions">
+        <button type="submit" name="action" value="draft" class="btn" {% if form_disabled %}disabled{% endif %}>{% if workflow and workflow.is_rejected %}수정 저장{% else %}임시저장{% endif %}</button>
+        <a class="btn" href="/app/field/labor/timesheets/">목록</a>
+      </div>
+      <button type="submit" name="action" value="{% if workflow and workflow.is_rejected %}resubmit{% else %}submit{% endif %}" class="btn primary mobile-primary-button" {% if form_disabled %}disabled{% endif %}>{% if workflow and workflow.is_rejected %}다시 제출{% else %}출역 저장 및 제출{% endif %}</button>
     </div>
   </form>
 
   {% include "components/attachments_panel.html" with attachments=timesheet_existing_files can_edit=timesheet_can_edit_attachments upload_url=timesheet_attachment_upload_url delete_url=timesheet_attachment_delete_url object_label="출역부" help_text=timesheet_attachment_help_text %}
-</div>
+</section>
+<script>
+  const workerSearchUrl = "/app/field/labor/workers/search/";
+  const projectSelect = document.querySelector('select[name="project_id"]');
+
+  document.querySelectorAll(".worker-picker").forEach((picker) => {
+    const input = picker.querySelector(".worker-search");
+    const workerIdInput = picker.querySelector(".worker-id-input");
+    const results = picker.querySelector(".worker-search-results");
+    const card = picker.closest(".timesheet-entry-card");
+    const roleSelect = card.querySelector(".role-select");
+    const selectedSummary = card.querySelector(".worker-selected-summary");
+    const selectedSummaryText = selectedSummary.querySelector("span");
+    workerIdInput.name = workerIdInput.dataset.name;
+
+    const hideResults = () => {
+      results.hidden = true;
+      results.replaceChildren();
+    };
+    const selectWorker = (worker) => {
+      workerIdInput.value = worker.id;
+      input.value = worker.text;
+      selectedSummaryText.textContent = worker.text;
+      selectedSummary.hidden = false;
+      if (worker.role_id) roleSelect.value = worker.role_id;
+      hideResults();
+    };
+    input.addEventListener("input", async () => {
+      workerIdInput.value = "";
+      selectedSummary.hidden = true;
+      const query = input.value.trim();
+      if (!query) return hideResults();
+      const params = new URLSearchParams({q: query, project_id: projectSelect.value});
+      try {
+        const response = await fetch(`${workerSearchUrl}?${params}`, {credentials: "same-origin"});
+        if (!response.ok) return hideResults();
+        const payload = await response.json();
+        results.replaceChildren();
+        if (!payload.results.length) {
+          results.innerHTML = '<div class="worker-search-empty">검색 결과가 없습니다. HQ에서 근로자 마스터를 확인해 주세요.</div>';
+        } else {
+          payload.results.forEach((worker) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "worker-search-result";
+            button.textContent = worker.text;
+            button.addEventListener("click", () => selectWorker(worker));
+            results.appendChild(button);
+          });
+        }
+        results.hidden = false;
+      } catch (_error) {
+        hideResults();
+      }
+    });
+    input.addEventListener("blur", () => window.setTimeout(hideResults, 150));
+  });
+</script>
 {% endblock %}

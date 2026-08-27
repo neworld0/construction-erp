@@ -1,0 +1,8 @@
+Scenario,Field,Before,After,Required_For_Report,Result
+FIELD timesheet,WorkerMaster,Not linked,Active WorkerMaster selectable,Yes,PASS
+FIELD timesheet,LaborRole,Manual role only,Defaults from WorkerMaster when omitted,Yes,PASS
+FIELD timesheet,Headcount,Aggregate input,Worker work unit on a worker line,Yes,PASS
+FIELD timesheet,Hours,Available,Stored on worker line,Yes,PASS
+FIELD timesheet,Rate type,Available,Stored on worker line,Yes,PASS
+FIELD timesheet,WBS,Not available,Not changed; follow-up design required,No,HOLD-P2
+Reporting source,Monthly aggregation,No worker query,get_worker_timesheet_days helper,Yes,PASS

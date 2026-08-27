@@ -1,0 +1,2 @@
+﻿RiskFinding_ID,Status_Before,Severity,Project_ID,Project_Exists,Object_Type,Object_ID,Classification,Cleanup_Action,Status_After,Deleted,Reason,Notes
+1,open,high,,NO,PROJECT,1,DEMO_SEED_RISK,DELETE_LOCAL_RESET,DELETED_ON_APPLY,YES_ON_APPLY,Local reset target or deleted PROJECT reference,RiskRule and AuditLog are preserved.

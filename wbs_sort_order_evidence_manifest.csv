@@ -1,0 +1,6 @@
+Artifact,Purpose
+wbs_sort_order_report.md,Final implementation and verification summary
+wbs_sort_order_root_cause.md,Form validation root cause
+wbs_sort_order_before_after_matrix.csv,Expected order assignment matrix
+wbs_sort_order_test_matrix.csv,Executed test coverage
+wbs_sort_order_source_scan.txt,Scope and source safety check

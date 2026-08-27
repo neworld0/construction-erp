@@ -33,7 +33,7 @@ def field_client(db):
 
 
 def _create_events(project, created_by):
-    account = CashAccount.objects.create(name="Main")
+    account = CashAccount.objects.create(name="Main", legal_entity=project.legal_entity)
     CashEvent.objects.create(
         project=project,
         account=account,

@@ -1,6 +1,9 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
+
+from apps.core.rbac.models import default_asan_legal_entity_id
 
 
 class ProjectStatus(models.TextChoices):
@@ -34,6 +37,12 @@ class ProjectContractStatus(models.TextChoices):
 
 
 class Project(models.Model):
+    legal_entity = models.ForeignKey(
+        "core.LegalEntity",
+        on_delete=models.PROTECT,
+        related_name="projects",
+        default=default_asan_legal_entity_id,
+    )
     code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=255)
     client_name = models.CharField(max_length=255, blank=True, default="")
@@ -42,6 +51,31 @@ class Project(models.Model):
         max_length=20,
         choices=ProjectType.choices,
         default=ProjectType.LANDSCAPE,
+    )
+    contracting_license = models.ForeignKey(
+        "core.LegalEntityLicense",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="contract_projects",
+        help_text="계약 체결에 적용한 법인 면허입니다.",
+    )
+    contracting_license_snapshot = models.CharField(
+        max_length=300,
+        blank=True,
+        default="",
+        help_text="프로젝트 등록 시점의 면허명·등록번호·등록처 보존값입니다.",
+    )
+    contracting_licenses = models.ManyToManyField(
+        "core.LegalEntityLicense",
+        blank=True,
+        related_name="multi_license_contract_projects",
+        help_text="복합 공종 계약에 적용한 모든 법인 면허입니다.",
+    )
+    work_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="계약상 실제 공종 목록입니다. project_type은 기존 호환을 위한 대표 공종입니다.",
     )
     wbs_template = models.ForeignKey(
         "master.MasterTemplate",
@@ -68,6 +102,10 @@ class Project(models.Model):
         default=ProjectStatus.PLANNED,
     )
     is_active = models.BooleanField(default=True)
+    requires_ceo_billing_approval = models.BooleanField(
+        default=False,
+        help_text="일반 기성 보고서도 CEO 결재를 필수로 합니다. 준공 보고서는 항상 CEO 결재 대상입니다.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -76,6 +114,39 @@ class Project(models.Model):
 
     def __str__(self) -> str:
         return f"{self.code} - {self.name}"
+
+
+class ProjectCodeSequence(models.Model):
+    legal_entity = models.ForeignKey("core.LegalEntity", on_delete=models.PROTECT, related_name="project_code_sequences")
+    project_type = models.CharField(max_length=20, choices=ProjectType.choices)
+    year = models.PositiveSmallIntegerField()
+    last_number = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["legal_entity", "project_type", "year"],
+                name="uniq_project_code_sequence_entity_type_year",
+            )
+        ]
+
+
+class ProjectOperationalTestDateWindow(models.Model):
+    """Temporary, project-scoped future-entry authority for controlled UAT."""
+
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name="operational_test_date_window")
+    start_date = models.DateField()
+    end_date = models.DateField()
+    expires_on = models.DateField()
+    reason = models.TextField()
+    is_enabled = models.BooleanField(default=True)
+    configured_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="configured_operational_test_date_windows")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if self.start_date > self.end_date:
+            raise ValidationError({"end_date": "허용 종료일은 시작일보다 빠를 수 없습니다."})
 
 
 class BudgetItem(models.Model):
@@ -145,6 +216,81 @@ class WBSItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.project} - {self.name}"
+
+
+class WorkProgressCalculationMode(models.TextChoices):
+    QUANTITY = "QUANTITY", "물량 자동계산"
+    MANUAL = "MANUAL", "수기 진행률"
+
+
+class ProjectWorkProgressMapping(models.Model):
+    """Approved bridge between a project WBS item and its schedule task.
+
+    The mapping does not alter ``DailyProgress``. It establishes one
+    authoritative calculation mode per active schedule task, preventing
+    quantity-based daily logs from being double-counted with manually entered
+    progress.
+    """
+
+    project = models.ForeignKey(
+        Project, on_delete=models.PROTECT, related_name="work_progress_mappings"
+    )
+    wbs_item = models.ForeignKey(
+        WBSItem, on_delete=models.PROTECT, related_name="work_progress_mappings"
+    )
+    schedule_task = models.ForeignKey(
+        "schedule.ScheduleTask",
+        on_delete=models.PROTECT,
+        related_name="work_progress_mappings",
+    )
+    calculation_mode = models.CharField(
+        max_length=12,
+        choices=WorkProgressCalculationMode.choices,
+        default=WorkProgressCalculationMode.MANUAL,
+    )
+    uom = models.ForeignKey("inventory.UoM", on_delete=models.PROTECT)
+    planned_qty = models.DecimalField(max_digits=18, decimal_places=3, default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["project", "is_active"]),
+            models.Index(fields=["schedule_task", "is_active"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "wbs_item", "schedule_task"],
+                name="uq_project_wbs_schedule_mapping",
+            ),
+            models.CheckConstraint(
+                condition=Q(planned_qty__gte=0),
+                name="chk_project_work_progress_mapping_planned_qty_nonnegative",
+            ),
+        ]
+
+    def clean(self):
+        errors = {}
+        if self.wbs_item_id and self.project_id and self.wbs_item.project_id != self.project_id:
+            errors["wbs_item"] = "WBS 항목은 같은 프로젝트에 속해야 합니다."
+        if self.schedule_task_id and self.project_id:
+            if self.schedule_task.plan.project_id != self.project_id:
+                errors["schedule_task"] = "공정 작업은 같은 프로젝트에 속해야 합니다."
+        if self.planned_qty is not None and self.planned_qty < 0:
+            errors["planned_qty"] = "계획수량은 0 이상이어야 합니다."
+        if self.is_active and self.schedule_task_id:
+            conflicting = ProjectWorkProgressMapping.objects.filter(
+                schedule_task_id=self.schedule_task_id,
+                is_active=True,
+            ).exclude(pk=self.pk).exclude(calculation_mode=self.calculation_mode)
+            if conflicting.exists():
+                errors["calculation_mode"] = (
+                    "같은 공정 작업에는 물량 자동계산 또는 수기 진행률 중 하나의 계산방식만 활성화할 수 있습니다."
+                )
+        if errors:
+            raise ValidationError(errors)
+        super().clean()
 
 
 class WBSChangeRequestStatus(models.TextChoices):

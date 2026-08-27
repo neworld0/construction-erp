@@ -1,0 +1,7 @@
+Worker,Role,Days,Rate,Amount,Expected,Result
+김로컬,보통인부,3,160000,480000,480000,Verified by focused test
+박포장,포장공,3,210000,630000,630000,Verified by focused test
+이장비,장비공,1,250000,250000,250000,Verified by focused test
+최다짐,다짐공,1,220000,220000,220000,Verified by focused test
+정도색,도색공,1,200000,200000,200000,Verified by focused test
+TOTAL,,, ,1780000,1780000,Verified by focused test

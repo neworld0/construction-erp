@@ -1,0 +1,2 @@
+Difference_ID,KPI,Expected_Value,Actual_Value,Difference,Tolerance,Severity,Classification,Explanation,Followup_Action
+D-00,None,,,0,,NONE,NONE,All required KPI values reconcile within tolerance.,No patch required.

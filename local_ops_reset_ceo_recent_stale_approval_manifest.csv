@@ -1,0 +1,17 @@
+﻿Source_Model,Source_ID,Action,Object_Type,Object_ID,Project_ID,Classification,Recommended_Action,Dashboard_Visible_After,Reason
+AuditLog,955,APPROVAL_APPROVE,APPROVAL_REQUEST,11,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,1050,APPROVAL_APPROVE,APPROVAL_REQUEST,13,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,24,APPROVAL_APPROVE,APPROVAL_REQUEST,4,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,25,APPROVAL_REJECT,APPROVAL_REQUEST,2,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,81,APPROVAL_REJECT,APPROVAL_REQUEST,6,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,940,APPROVAL_APPROVE,APPROVAL_REQUEST,9,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,565,APPROVAL_REJECT,APPROVAL_REQUEST,5,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,567,APPROVAL_APPROVE,APPROVAL_REQUEST,7,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,933,APPROVAL_APPROVE,APPROVAL_REQUEST,8,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,1051,APPROVAL_APPROVE,APPROVAL_REQUEST,12,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,20,APPROVAL_APPROVE,APPROVAL_REQUEST,1,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,21,APPROVAL_REJECT,APPROVAL_REQUEST,4,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,27,APPROVAL_REJECT,APPROVAL_REQUEST,2,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,30,APPROVAL_APPROVE,APPROVAL_REQUEST,2,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,31,APPROVAL_REJECT,APPROVAL_REQUEST,3,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.
+AuditLog,947,APPROVAL_APPROVE,APPROVAL_REQUEST,10,,PROJECTLESS_APPROVAL_LOG,PRESERVE_AUDITLOG_EXCLUDE_FROM_DASHBOARD,NO,Audit ledger is preserved; current dashboard requires an active project.

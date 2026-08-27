@@ -1,0 +1,206 @@
+[LAB-3]
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+
+=====================================================
+[LAB-3 목표]
+=====================================================
+본사(HQ)가 월 단위로 “급여(월급) 총액”을 입력하고,
+이를 프로젝트(+CBS)로 배부(Allocation)하여
+월별 인건비 실적 집계(LAB-4) 및 KPI에 반영되도록 한다.
+
+핵심 정책:
+- 월 마감(CLOSE-2) 이후 해당 월 PayrollAllocation 생성/수정/제출/승인 전면 차단
+- 배부는 “월 단위”이며, 총액과 배부합계가 일치해야 함(통제)
+- 배부 기준은 MVP에서 “직접 입력(금액)” + 옵션으로 “비율(%)” 지원
+- 급여 배부 대상은 “직원/부서 단위”까지는 후속. MVP는 회사 전체(또는 HQ 인건비 풀)로 시작.
+- 추후 그룹사/캐시풀 확장 가능하도록 period_year/month 필드를 기준으로 설계
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- Project 모델/코드, 프로젝트 활성/종료 상태 정책 확인
+- CBS(CostItem) 정책(잠금/별칭/비활성) 확인: 배부 시 CBS 선택 제한 필요
+- CLOSE-2 가드(assert_month_open(date)) 위치 확인
+- 기존 승인 흐름(ApprovalRequest) 존재 여부 확인:
+  - 있으면 PayrollAllocation도 “제출→CEO 승인” 흐름 가능
+  - 없으면 HQ 승인 없이 “SUBMITTED=확정”으로 MVP 처리
+Discovery 결과를 코드 주석으로 남기고 실제 파일 경로/함수명 명시.
+
+=====================================================
+1) 모델 설계 (필수)
+=====================================================
+apps/labor/models.py
+
+[PayrollAllocationBatch]  # 월 1건(헤더)
+- id
+- batch_no (CharField, unique, db_index=True)     # PA-YYYYMM-0001 (또는 PA-YYYYMM)
+- period_year (IntegerField)
+- period_month (IntegerField)
+- status (choices):
+    "DRAFT"       # 임시저장
+    "SUBMITTED"   # 확정(제출)
+    "APPROVED"    # CEO 승인(옵션)
+    "REJECTED"    # 반려(옵션)
+- total_amount (IntegerField)   # 해당 월 급여 총액(원)
+- note (TextField, blank=True)
+- created_by (FK User)
+- submitted_at/approved_at/approved_by/reject_reason 등(필요시)
+- created_at/updated_at
+
+제약:
+- (period_year, period_month) 당 “활성 배치 1개”만 허용(UniqueConstraint)
+  - 상태가 REJECTED라도 같은 월 재작성 허용하려면:
+    - is_active(soft) 또는 status!=APPROVED/CLOSED 조건으로 관리
+  - MVP 단순: year+month 유니크로 1개만. 반려 시 수정/재제출로 처리.
+
+[PayrollAllocationLine]  # 프로젝트별 배부 라인
+- id
+- batch (FK PayrollAllocationBatch, related_name="lines")
+- project (FK Project)
+- cbs (FK CostItem, null=True, blank=True)  # 기본 CBS 선택(권장). 없으면 “간접비/본사급여” CBS로 자동
+- amount (IntegerField)                     # 배부 금액(원)
+- memo (CharField, blank=True)
+
+제약/검증:
+- amount >= 0
+- 같은 batch 내 project 중복 금지(UniqueConstraint batch+project)
+- CBS 선택 정책:
+  - active=False는 선택 불가
+  - locked CBS는 선택 불가(또는 alias만 표시) — 현재 CBS 정책을 동일 적용
+- 합계 검증:
+  - sum(lines.amount) == batch.total_amount 가 SUBMIT 시 반드시 성립
+  - 차이가 있으면 에러: "배부 합계가 총액과 일치하지 않습니다."
+
+권장:
+- “미배부(잔액)” 개념은 MVP에서는 금지(운영 통제)
+  단, 옵션으로 “미배부는 HQ 공통 프로젝트(OverheadProject)”에 자동 배부 가능하도록 TODO 남김.
+
+=====================================================
+2) 서비스 레이어 (필수)
+=====================================================
+apps/labor/services.py
+
+함수:
+- create_payroll_batch(year, month, total_amount, actor) -> DRAFT
+  - assert_month_open(date=YYYY-MM-01)
+  - RBAC(HQ/CEO)
+- update_payroll_batch(batch, total_amount/note, actor)  # DRAFT/REJECTED만
+- upsert_payroll_lines(batch, lines_payload, actor)      # DRAFT/REJECTED만
+- validate_payroll_batch(batch) -> (ok, diff, sum_lines)
+- submit_payroll_batch(batch, actor)
+  - assert_month_open
+  - 라인 최소 1개
+  - 합계 일치 검증
+  - status=SUBMITTED, submitted_at
+  - AuditLog
+- (옵션) approve/reject: CEO 승인 워크플로우가 이미 존재하면 연결, 아니면 TODO
+
+주의:
+- 마감 체크는 period 기준 월(YYYY-MM)로 적용
+- 동시성: select_for_update(batch) 권장
+
+=====================================================
+3) RBAC (필수)
+=====================================================
+- HQ/CEO:
+  - PayrollAllocationBatch 생성/수정/라인 편집/제출 가능
+  - (옵션) CEO만 APPROVE/REJECT
+- FIELD:
+  - 접근 불가(403)
+
+=====================================================
+4) API (필수)
+=====================================================
+- GET  /api/labor/payroll-batches/?year=&month=&status=
+- POST /api/labor/payroll-batches/
+  body: {period_year, period_month, total_amount, note}
+- PATCH /api/labor/payroll-batches/<id>/
+- PUT/PATCH /api/labor/payroll-batches/<id>/lines/
+  body: {"lines":[{"project_id":..,"cbs_id":..,"amount":..,"memo":..}, ...]}
+- POST /api/labor/payroll-batches/<id>/submit/
+- (옵션) POST /api/labor/payroll-batches/<id>/approve/
+- (옵션) POST /api/labor/payroll-batches/<id>/reject/
+
+응답:
+- total_amount
+- sum_lines
+- diff
+- status
+
+=====================================================
+5) HQ UI (필수: 월 배부 입력 화면)
+=====================================================
+경로(예시, 기존 HQ 패턴에 맞춤):
+- /app/hq/labor/payroll/
+- /app/hq/labor/payroll/new/
+- /app/hq/labor/payroll/<id>/
+
+화면 요구:
+A) 목록:
+- 최근 12개월 배치 표시(연/월/총액/상태/배부합계/차이)
+- “신규 월 배부 생성” 버튼
+B) 생성/편집:
+- 연/월 선택(이미 존재하면 생성 불가)
+- 총액 입력(천단위 콤마 UI)
+- 라인 테이블:
+  - 프로젝트 선택(검색)
+  - CBS 선택(검색, 정책 적용)
+  - 금액 입력(천단위 콤마, 정수)
+  - 메모
+  - 합계/차이 실시간 표시(가능하면 JS)
+- 버튼:
+  - [임시저장]
+  - [제출] (합계==총액일 때만 활성화)
+- 제출 후 수정 불가(승인/반려 정책에 맞춤)
+
+한글 라벨:
+- “급여 배부(월)”
+- “총 급여”
+- “배부 내역”
+- “배부 합계”
+- “차이”
+- “제출”
+
+=====================================================
+6) CLOSE-2 연계 (필수)
+=====================================================
+- period_year/month가 CLOSED면:
+  - 생성/수정/제출 전부 차단
+메시지:
+"YYYY년 M월은 마감되었습니다. 마감월 급여 배부는 정정 절차로 처리해야 합니다."
+
+=====================================================
+7) AuditLog (필수)
+=====================================================
+이벤트:
+- PAYROLL_BATCH_CREATE
+- PAYROLL_BATCH_UPDATE
+- PAYROLL_LINES_UPDATE
+- PAYROLL_BATCH_SUBMIT
+- PAYROLL_BATCH_BLOCKED_CLOSED (선택)
+- PAYROLL_BATCH_VALIDATE_FAIL (선택)
+
+metadata:
+{batch_id, batch_no, year, month, total_amount, sum_lines, diff, status}
+
+=====================================================
+8) 테스트 시나리오 (필수)
+=====================================================
+1) HQ가 2026-01 batch 생성(total=10,000,000) OK
+2) 라인 2개 입력(프로젝트A 6,000,000 / 프로젝트B 4,000,000) OK
+3) diff!=0 상태에서 제출 시도 → 차단
+4) 합계 일치 후 제출 → SUBMITTED 전환, 이후 수정 불가
+5) CLOSED 월로 생성/수정/제출 → 차단
+6) FIELD 접근 → 403
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- PayrollAllocationBatch/Line 모델 + 마이그레이션 완료
+- 합계=총액 통제 + 제출 워크플로우 구현
+- 월 마감(CLOSE-2) 이후 전면 차단
+- HQ UI 제공(월별 배부 입력/검증/제출)
+- RBAC/AuditLog 적용
+- LAB-4 집계에서 참조 가능한 구조 확보(월+프로젝트+CBS+금액)

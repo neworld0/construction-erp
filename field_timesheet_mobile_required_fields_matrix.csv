@@ -1,0 +1,8 @@
+field,before_visible_on_mobile,after_visible_on_mobile,required_for_labpay,result
+근로자,YES,YES,YES,PASS
+노무역할,YES,YES,YES,PASS
+공수,YES,YES,YES,PASS
+시간,YES,YES,YES,PASS
+단가유형,YES,YES,YES,PASS
+메모,YES,YES,YES,PASS
+저장 버튼,YES,YES,YES,PASS

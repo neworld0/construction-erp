@@ -1,0 +1,736 @@
+LABPAY-1 — WorkerMaster 근로자 마스터
+Issue
+
+목표
+일용근로자 기본정보, 신고정보, 계좌정보, 퇴직공제 대상 여부를 관리하는 근로자 마스터를 구현합니다.
+
+핵심 정책
+
+주민번호/외국인번호: 암호화 저장 + 마스킹 표시
+계좌번호: 암호화 저장 + 마스킹 표시
+identity_hash 생성: 전자카드 데이터와 매칭용
+자동 근로자 생성 금지
+미매칭 근로자는 HQ가 수동 등록 또는 기존 WorkerMaster와 매칭
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-1 WorkerMaster
+
+Goal:
+Create WorkerMaster for daily labor workers.
+
+Fields:
+- name
+- rrn_encrypted
+- rrn_masked
+- identity_hash
+- phone
+- address
+- bank_name
+- bank_code
+- account_number_encrypted
+- account_holder
+- nationality_code
+- visa_code
+- comwel_job_code
+- cwma_job_name
+- default_labor_role
+- retirement_deduction_eligible
+- active
+
+Rules:
+- Encrypt rrn/account if project has encryption util; else isolate fields and add TODO
+- Display masked values only
+- HQ can view/download full values; FIELD cannot
+- Add basic HQ CRUD page: /app/hq/labor/workers/
+- Add search by name/phone/masked rrn
+- AuditLog on create/update/download
+
+Done:
+- WorkerMaster CRUD works
+- Sensitive values masked in UI
+- identity_hash created
+- Korean labels OK
+
+
+LABPAY-2 — LaborWorkLedger 실투입 노무 원장
+Issue
+
+목표
+FIELD Timesheet 또는 HQ 입력을 기반으로 실투입 기준 일자별 노무 원장을 생성합니다.
+
+핵심 정책
+
+전자카드는 출역 여부 기준
+ERP는 공수 기준
+실투입 현장(actual_project)과 신고용 현장(report_project)을 분리
+report_project 기본값은 actual_project, HQ가 변경 가능
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-2 LaborWorkLedger
+
+Goal:
+Create actual labor work ledger from FIELD/HQ labor input.
+
+Model:
+LaborWorkLedger:
+- work_date
+- work_month
+- worker
+- actual_project
+- report_project
+- labor_role
+- work_unit
+- work_hours
+- unit_wage
+- gross_wage
+- income_tax
+- local_tax
+- employment_insurance
+- pension
+- health_insurance
+- net_pay
+- detail_work_type
+- source
+- status
+- timesheet_ref
+- cost_ref
+
+Rules:
+- actual_project = real site
+- report_project = reporting site; default actual_project
+- ERP work_unit is official internal man-day value
+- Connect to existing Timesheet if possible
+- DRAFT/APPROVED/CLOSED status follows existing Closing rules
+
+UI:
+- /app/hq/labor/work-ledger/
+- month/project/worker filters
+- inline table by worker/date
+
+Done:
+- Ledger created from Timesheet or HQ manual input
+- actual/report project separated
+- Close guard works
+
+
+LABPAY-3 — 월별 노무비 지급명세
+Issue
+
+목표
+근로자별 월 노무비, 공제, 실지급액, 지급상태를 관리합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-3 Monthly Labor Payroll
+
+Goal:
+Create monthly labor payroll summary from LaborWorkLedger.
+
+Model:
+LaborMonthlyPayroll:
+- year_month
+- worker
+- project/report_project
+- total_work_unit
+- gross_wage
+- income_tax
+- local_tax
+- insurance_deductions
+- net_pay
+- bank_name
+- account_number_masked
+- payment_status
+- paid_at
+
+Rules:
+- Source = approved LaborWorkLedger
+- Use WorkerMaster bank info snapshot
+- HQ can view full payment export
+- AuditLog on export/download
+
+UI:
+- /app/hq/labor/payroll/
+- filters: month/project/worker/payment_status
+
+Done:
+- Monthly payroll rows generated
+- gross/net totals match ledger
+- Korean labels OK
+
+
+LABPAY-4 — 실투입→신고용 현장 매핑
+Issue
+
+목표
+실제 투입 현장과 신고용 현장을 분리하여 월별 신고용 데이터를 만들 수 있도록 합니다.
+
+정책
+
+자동 확정 금지
+HQ 수동 매핑
+사유 필수
+확정 후 잠금
+마감 후 변경은 Adjustment만 허용
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-4 Actual-to-Reporting Project Mapping
+
+Goal:
+Allow HQ to map actual_project to report_project for labor reporting.
+
+Model:
+LaborProjectMapping:
+- year_month
+- worker
+- work_date
+- actual_project
+- report_project
+- reason
+- approved_by
+- approved_at
+- locked
+
+Rules:
+- No auto-confirm
+- HQ manually selects report_project
+- reason required when report_project != actual_project
+- locked after confirmation
+- closed month: no edit, use Adjustment
+
+UI:
+- /app/hq/labor/reporting-map/
+- show rows where actual_project != report_project or unmapped
+- bulk apply allowed only before lock
+
+Done:
+- Mapping affects reporting exports
+- Original actual ledger unchanged
+
+
+LABPAY-5 — 전자카드 엑셀 업로드/원본 보관
+Issue
+
+목표
+건설근로자공제회에서 다운로드한 근로내역신고 - 전자카드 내역.xlsx를 ERP에 업로드하고 원본을 보관합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-5 E-Card Excel Import Batch
+
+Goal:
+Upload and store CWMA e-card Excel file.
+
+Model:
+ElectronicCardImportBatch:
+- year_month
+- project
+- cwma_project_name
+- deduction_join_no
+- company_name
+- source_file
+- status
+- uploaded_by
+- uploaded_at
+- confirmed_by
+- confirmed_at
+
+UI:
+- /app/hq/labor/e-card-imports/
+- upload form: month, project, file
+
+Rules:
+- HQ only
+- Store original file
+- Validate file extension xlsx
+- No parsing beyond header check in this ticket
+- AuditLog on upload
+
+Done:
+- File upload works
+- Batch row created
+- Original file retained
+
+
+LABPAY-6 — 전자카드 원본 파싱/일별 정규화
+Issue
+
+목표
+전자카드 엑셀의 원본 행을 저장하고, 1일~31일 컬럼을 일별 세로 데이터로 정규화합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-6 Parse E-Card Excel
+
+Goal:
+Parse ElectronicCardImportBatch source_file into raw rows and daily rows.
+
+Models:
+ElectronicCardWorkRaw:
+- batch
+- row_no
+- work_month
+- project_name_raw
+- deduction_join_no
+- company_name
+- worker_name_raw
+- rrn_encrypted
+- rrn_masked
+- phone
+- job_name_raw
+- card_issued
+- retirement_target
+- exclusion_reason
+- work_status
+- report_status
+- error_message
+- auto_work_days
+- reported_days
+- declaration_days
+- confirmed_days
+- day_01 ... day_31
+- note
+
+ElectronicCardWorkDay:
+- raw
+- worker nullable
+- work_date
+- card_value
+- is_worked
+- card_project
+- match_status
+- note
+
+Rules:
+- Parse columns by header names, not hard-coded indexes where possible
+- day columns 1~31 -> daily rows
+- card_value > 0 means worked
+- Do not create WorkerMaster automatically
+- Try match by identity_hash, then name+phone
+- unmatched remains UNMATCHED
+
+Done:
+- Upload batch can be parsed
+- Raw + day rows created
+- Unmatched workers visible
+
+
+LABPAY-7 — ERP 출역 vs 전자카드 자동 대사
+Issue
+
+목표
+ERP 노무 원장과 전자카드 일별 데이터를 비교하여 차이를 자동 분류합니다.
+
+결정 정책
+
+전자카드 = 출역 여부 기준
+ERP = 공수 기준
+공수 차이는 HQ 검토 대상
+불일치 자동 확정 금지
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-7 Labor Reconciliation
+
+Goal:
+Compare ERP LaborWorkLedger vs ElectronicCardWorkDay.
+
+Model:
+LaborReconciliationResult:
+- year_month
+- project
+- worker
+- work_date
+- erp_work_unit
+- card_work_unit
+- difference
+- status
+- resolution
+- final_work_unit
+- hq_comment
+- resolved_by
+- resolved_at
+- export_included
+- export_value
+- export_note
+
+Rules:
+- Card worked if card_value > 0
+- ERP worked if erp_work_unit > 0
+- If both worked but unit differs: status=DIFF
+- ERP only: ERP_ONLY
+- Card only: CARD_ONLY
+- both same presence and same unit: MATCH
+- unmatched worker: UNMATCHED
+- Do not auto-resolve non-MATCH cases
+
+UI:
+- add reconcile action to batch detail
+
+Done:
+- Reconciliation rows generated
+- Summary counts: MATCH/ERP_ONLY/CARD_ONLY/DIFF/UNMATCHED
+
+
+LABPAY-8 — HQ 대사 수정/확정 화면
+Issue
+
+목표
+HQ가 대사 결과를 검토하고 ERP 기준/전자카드 기준/수기조정/제외/근로자 매칭으로 확정합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-8 HQ Reconciliation Review
+
+Goal:
+Build HQ review UI for reconciliation results.
+
+URL:
+- /app/hq/labor/e-card-imports/<batch_id>/
+
+Actions:
+- use ERP
+- use CARD
+- manual final_work_unit
+- exclude
+- match WorkerMaster
+- save comment
+
+Rules:
+- Reason/comment required for ERP_ONLY/CARD_ONLY/DIFF/EXCLUDED
+- Worker auto-create forbidden
+- HQ must manually select WorkerMaster or create worker via existing WorkerMaster UI
+- Cannot confirm batch if unresolved rows exist
+- AuditLog on each resolution
+
+Done:
+- HQ can resolve all rows
+- Batch shows unresolved count
+- Korean labels OK
+
+
+LABPAY-9 — LaborConfirmedWorkDay 생성
+Issue
+
+목표
+HQ 확정 결과를 기준으로 모든 신고/퇴직공제/지급자료의 기준이 되는 확정 근로내역을 생성합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-9 Confirmed Labor Work Days
+
+Goal:
+Create LaborConfirmedWorkDay after HQ resolves reconciliation.
+
+Model:
+LaborConfirmedWorkDay:
+- year_month
+- worker
+- actual_project
+- report_project
+- card_project
+- work_date
+- final_work_unit
+- source_basis
+- reconciliation_result
+- confirmed_by
+- confirmed_at
+
+Rules:
+- Only create when all reconciliation rows resolved
+- Do not edit original ERP/card rows
+- source_basis = ERP/CARD/MANUAL/EXCLUDED
+- EXCLUDED rows do not count in exports
+- Close guard applies
+
+Done:
+- Confirm button creates confirmed rows
+- Batch status=CONFIRMED
+- Confirmed totals visible
+
+
+LABPAY-10 — 공제회 수정업로드용 동일 양식 엑셀 생성
+Issue
+
+목표
+HQ 확정 후 원본 전자카드 엑셀과 동일한 양식으로 수정업로드용 엑셀을 생성합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-10 CWMA E-Card Reupload Excel
+
+Goal:
+Generate same-format Excel for CWMA reupload after HQ confirmation.
+
+Input:
+- ElectronicCardImportBatch.source_file
+- LaborConfirmedWorkDay
+- LaborReconciliationResult
+
+Output:
+- Same workbook format as uploaded e-card file
+- Fill day 1~31, 신고일수, 확정일수, 비대상사유, 비고 from confirmed values
+
+Model:
+LaborExcelExportBatch:
+- export_type = CWMA_CARD_REUPLOAD
+- year_month
+- project
+- source_batch
+- generated_file
+- generated_by
+- generated_at
+- status
+- changed_count
+- note
+
+Rules:
+- Generate only if batch CONFIRMED
+- Preserve original workbook structure/styles as much as possible
+- HQ can download
+- CEO approval not required
+- Download AuditLog permanent
+
+Done:
+- Button appears after confirmation
+- Downloaded file opens
+- Changed values reflected
+
+
+
+
+==========================여기까지 구현함.
+
+
+
+
+LABPAY-11 — 근로내용확인신고 엑셀 생성
+Issue
+
+목표
+근로복지공단 업로드용 근로내용확인신고 엑셀을 생성합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-11 COMWEL Work Confirmation Excel
+
+Goal:
+Generate COMWEL work confirmation Excel.
+
+Source:
+- LaborConfirmedWorkDay preferred
+- WorkerMaster
+- report_project mapping
+
+Template:
+- use existing uploaded template if configured
+- else create workbook matching required columns
+
+Columns:
+- 보험구분
+- 성명
+- 주민/외국인등록번호
+- 국적코드
+- 체류자격코드
+- 전화번호
+- 직종코드
+- 1일~31일
+
+Rules:
+- HQ can download full rrn Excel
+- CEO approval not required
+- AuditLog permanent
+- Validate required worker fields before export
+
+Done:
+- /app/hq/labor/exports/ has COMWEL download
+- Excel generated for month/project
+
+
+LABPAY-12 — 퇴직공제 신고 보조자료
+Issue
+
+목표
+건설근로자공제회 퇴직공제 신고에 필요한 누적 공정률, 전체 출역일수, 근로자별 근로일수를 계산합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-12 Retirement Deduction Support
+
+Goal:
+Create retirement deduction support data.
+
+Source:
+- LaborConfirmedWorkDay
+- WorkerMaster.retirement_deduction_eligible
+- approved progress data
+
+Compute:
+- worker monthly work days
+- project total work days
+- cumulative progress rate as of month end
+
+Progress policy:
+- use latest approved progress by project/month
+- if WBS weighted progress exists, use it; else fallback to latest approved project progress
+
+UI:
+- /app/hq/labor/retirement/
+- show project/month totals
+- export support Excel if simple
+
+Done:
+- HQ can see total work days + cumulative progress
+- Korean labels OK
+
+
+LABPAY-13 — 일용노무비 지급 총괄표 생성
+Issue
+
+목표
+실투입 기준 총괄표와 신고용 기준 총괄표를 생성합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-13 Daily Labor Payment Summary
+
+Goal:
+Generate payment summary Excel:
+1) actual basis
+2) reporting basis
+
+Source:
+- LaborWorkLedger for actual
+- LaborConfirmedWorkDay + LaborProjectMapping for reporting
+- WorkerMaster payroll/bank info
+
+Rules:
+- Actual summary uses actual_project
+- Reporting summary uses report_project
+- HQ can download bank/account full Excel
+- CEO approval not required
+- AuditLog permanent
+- Store LaborExcelExportBatch
+
+UI:
+- /app/hq/labor/exports/
+- buttons:
+  - 지급총괄표 실투입
+  - 지급총괄표 신고용
+
+Done:
+- Both Excel files generated
+- Totals differ if mapping differs
+
+
+LABPAY-14 — 노무비 월마감/정정/AuditLog
+Issue
+
+목표
+노무비 확정, 월마감, 마감 후 정정 및 엑셀 v2 생성을 기존 ERP Closing/Adjustment 체계와 연결합니다.
+
+FAST-CODEX
+[FAST-CODEX] LABPAY-14 Labor Close + Adjustment
+
+Goal:
+Integrate labor module with existing Closing/Adjustment.
+
+Rules:
+- Before close: edit allowed by status
+- After LaborMonthlyBatch CONFIRMED: original edits restricted
+- After ClosingPeriod CLOSED: no original edit
+- Errors after close -> Adjustment only
+- Adjustment approved by CEO if existing flow requires
+- Export v2 allowed after approved adjustment
+
+Implement:
+- Add close guard checks to labor edit/export actions
+- Add AuditLog for:
+  worker sensitive edit
+  e-card upload
+  reconciliation resolution
+  confirm
+  excel generate/download
+  adjustment
+
+Done:
+- Closed labor month blocks edits
+- Adjustment path works
+- AuditLog recorded
+
+
+LABPAY-15 — 개인정보 다운로드 권한/영구 이력
+Issue
+
+목표
+주민번호 전체, 계좌번호 전체가 포함된 엑셀 다운로드 권한과 이력 보관 정책을 구현합니다.
+
+결정 반영
+
+HQ에게 다운로드 권한 부여
+CEO 승인 불필요
+다운로드 이력 영구 보관
+FAST-CODEX
+[FAST-CODEX] LABPAY-15 Sensitive Download Permission
+
+Goal:
+Control and log downloads containing full rrn/account numbers.
+
+Policy:
+- HQ can download full rrn/account Excel
+- CEO approval not required
+- Download log is permanent
+- FIELD cannot download sensitive files
+
+Implement:
+- Permission helper: can_download_sensitive_labor_excel(user)
+- Apply to:
+  COMWEL export
+  CWMA reupload export
+  payment actual/reporting export
+  payroll export
+- Create/extend AuditLog:
+  action=SENSITIVE_LABOR_EXCEL_DOWNLOAD
+  user
+  export_type
+  year_month
+  project
+  timestamp
+  file_id
+  keep forever
+
+UI:
+- Show warning before download:
+  “개인정보가 포함된 파일입니다. 다운로드 이력이 영구 보관됩니다.”
+
+Done:
+- HQ download allowed
+- FIELD blocked
+- AuditLog permanent
+- Korean warning OK
+
+
+
+
+추천 착수 순서
+
+현재 ERP 구조를 고려하면 아래 5개를 먼저 하시는 것이 가장 안전합니다.
+
+1. LABPAY-1 WorkerMaster
+2. LABPAY-2 LaborWorkLedger
+3. LABPAY-5 전자카드 업로드
+4. LABPAY-6 전자카드 파싱/정규화
+5. LABPAY-7 ERP vs 전자카드 대사
+
+그 다음:
+
+6. LABPAY-8 HQ 대사 확정
+7. LABPAY-9 확정 근로내역
+8. LABPAY-10 공제회 수정업로드용 엑셀
+
+엑셀 출력류는 확정 데이터가 만들어진 다음이 안전합니다.
+
+9. LABPAY-11 근로내용확인신고
+10. LABPAY-12 퇴직공제 보조자료
+11. LABPAY-13 지급총괄표
+12. LABPAY-14 마감/정정
+13. LABPAY-15 개인정보 다운로드 통제
+
+
+
+최종 요약
+
+이제 개발 기준은 다음 한 줄로 고정하면 됩니다.
+
+ERP 실투입 데이터와 전자카드 데이터를 비교한 뒤 HQ가 확정하고, 그 확정 데이터를 기준으로 공제회 수정업로드용 엑셀·근로내용확인신고·퇴직공제·지급총괄표를 생성한다.
+
+위 티켓 세트는 이 원칙을 기준으로 분해되어 있으므로, 다음 단계에서 각 티켓을 더 짧은 Codex 실행용 프롬프트로 재분해할 수 있습니다.

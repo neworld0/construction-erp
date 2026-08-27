@@ -16,6 +16,12 @@ WBS_SHEET_PREFERENCES = ["\uc608\uc815\uacf5\uc815\ud45c"]
 COMMENCEMENT_INFO_SHEET_PREFERENCES = ["\ucc29\uacf5\uc2e0\uace0\uc11c", "\ucc29\uacf5\uacc4"]
 
 BUDGET_HEADER_ALIASES = {
+    "source_row_no": ["\uc6d0\ubcf8\ud589\ubc88\ud638", "\uc6d0\ubcf8 \ud589\ubc88\ud638", "\uc6d0\ubcf8\ud589", "\ud589\ubc88\ud638"],
+    "wbs_code": ["WBS\ucf54\ub4dc", "WBS \ucf54\ub4dc", "\uc791\uc5c5\ucf54\ub4dc"],
+    "wbs_name": ["WBS\uba85", "WBS \uba85"],
+    "cbs_code": ["CBS\ucf54\ub4dc", "CBS \ucf54\ub4dc", "\uc6d0\uac00\ucf54\ub4dc"],
+    "cbs_name": ["CBS\uba85", "CBS \uba85", "\uc6d0\uac00\ud56d\ubaa9\uba85"],
+    "cost_category": ["\uc6d0\uac00\uad6c\ubd84", "\ube44\uc6a9\uad6c\ubd84", "\uc608\uc0b0\uad6c\ubd84"],
     "code": ["\ucf54\ub4dc", "\uacf5\uc885", "\ubc88\ud638", "\ub0b4\uc5ed\ubc88\ud638", "\ube44\ubaa9"],
     "hierarchy": ["\uacc4\uce35", "\ub808\ubca8", "\uad6c\ubd84"],
     "item_name": ["\ud488\uba85", "\uc138\ubd80\uacf5\uc885", "\uacf5\uc885\uba85", "\ud56d\ubaa9\uba85", "\uba85\uce6d", "\uc791\uc5c5\uba85"],
@@ -27,6 +33,9 @@ BUDGET_HEADER_ALIASES = {
     "labor_amount": ["\ub178\ubb34\ube44"],
     "material_amount": ["\uc7ac\ub8cc\ube44"],
     "expense_amount": ["\uacbd\ube44"],
+    "subcontract_amount": ["\ud558\ub3c4\uae09\ube44", "\ud558\ub3c4\uae09"],
+    "upload_status": ["ERP\uc5c5\ub85c\ub4dc\uc0c1\ud0dc", "ERP \uc5c5\ub85c\ub4dc\uc0c1\ud0dc", "\uc5c5\ub85c\ub4dc\uc0c1\ud0dc", "\uc5c5\ub85c\ub4dc \uc0c1\ud0dc"],
+    "memo": ["\ube44\uace0", "\uba54\ubaa8", "remarks"],
 }
 
 WBS_HEADER_ALIASES = {
@@ -628,6 +637,12 @@ def _parse_budget_rows(data_ws, formula_ws, mapping, data_start_row):
         blank_streak = 0
         row_warnings = []
         code_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("code"), data_merged_map, formula_merged_map)
+        source_row_no_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("source_row_no"), data_merged_map, formula_merged_map)
+        wbs_code_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("wbs_code"), data_merged_map, formula_merged_map)
+        wbs_name_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("wbs_name"), data_merged_map, formula_merged_map)
+        cbs_code_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("cbs_code"), data_merged_map, formula_merged_map)
+        cbs_name_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("cbs_name"), data_merged_map, formula_merged_map)
+        cost_category_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("cost_category"), data_merged_map, formula_merged_map)
         item_name_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("item_name"), data_merged_map, formula_merged_map)
         spec_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("spec"), data_merged_map, formula_merged_map)
         quantity_value, quantity_raw = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("quantity"), data_merged_map, formula_merged_map)
@@ -637,14 +652,22 @@ def _parse_budget_rows(data_ws, formula_ws, mapping, data_start_row):
         labor_value, labor_raw = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("labor_amount"), data_merged_map, formula_merged_map)
         material_value, material_raw = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("material_amount"), data_merged_map, formula_merged_map)
         expense_value, expense_raw = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("expense_amount"), data_merged_map, formula_merged_map)
+        subcontract_value, subcontract_raw = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("subcontract_amount"), data_merged_map, formula_merged_map)
         memo_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("memo"), data_merged_map, formula_merged_map)
+        upload_status_value, _ = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("upload_status"), data_merged_map, formula_merged_map)
 
         row = {
             "sheet_name": data_ws.title,
             "row_no": row_idx,
             "row_number": row_idx,
             "code": _normalize_text(code_value),
+            "source_row_no": _normalize_text(source_row_no_value),
             "hierarchy": "",
+            "wbs_code": _normalize_text(wbs_code_value),
+            "wbs_name": _normalize_text(wbs_name_value),
+            "cbs_code": _normalize_text(cbs_code_value),
+            "cbs_name": _normalize_text(cbs_name_value),
+            "cost_category": _normalize_text(cost_category_value),
             "item_name": _normalize_text(item_name_value),
             "spec": _normalize_text(spec_value),
             "quantity": _coerce_decimal(quantity_value),
@@ -654,7 +677,9 @@ def _parse_budget_rows(data_ws, formula_ws, mapping, data_start_row):
             "labor_amount": _coerce_decimal(labor_value),
             "material_amount": _coerce_decimal(material_value),
             "expense_amount": _coerce_decimal(expense_value),
+            "subcontract_amount": _coerce_decimal(subcontract_value),
             "memo": _normalize_text(memo_value),
+            "upload_status": _normalize_text(upload_status_value),
             "warnings": row_warnings,
         }
         row["hierarchy"] = _infer_hierarchy(row["code"], row["item_name"])
@@ -673,6 +698,7 @@ def _parse_budget_rows(data_ws, formula_ws, mapping, data_start_row):
         _append_formula_warning(row_warnings, labor_raw, labor_value, "\ub178\ubb34\ube44")
         _append_formula_warning(row_warnings, material_raw, material_value, "\uc7ac\ub8cc\ube44")
         _append_formula_warning(row_warnings, expense_raw, expense_value, "\uacbd\ube44")
+        _append_formula_warning(row_warnings, subcontract_raw, subcontract_value, "\ud558\ub3c4\uae09\ube44")
         if row["amount"] is None:
             row_warnings.append("\uae08\uc561\uc744 \ud655\uc778\ud574 \uc8fc\uc138\uc694.")
         rows.append(row)

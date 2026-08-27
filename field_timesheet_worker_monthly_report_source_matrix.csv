@@ -1,0 +1,6 @@
+Worker,Role,Expected_Days,Saved_Timesheet_Days,Project,Month,Can_Feed_Confirmed_Work,Result
+김로컬,보통인부,3,,LOCAL-OPS-20260814,2026-08,Pre-confirmation only,READY
+박포장,포장공,3,,LOCAL-OPS-20260814,2026-08,Pre-confirmation only,READY
+이장비,장비공,1,,LOCAL-OPS-20260814,2026-08,Pre-confirmation only,READY
+최다짐,다짐공,1,,LOCAL-OPS-20260814,2026-08,Pre-confirmation only,READY
+정도색,도색공,1,,LOCAL-OPS-20260814,2026-08,Pre-confirmation only,READY

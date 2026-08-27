@@ -1,0 +1,83 @@
+{
+  "project": {
+    "id": 17,
+    "code": "OPS1B-RERUN-SAMPLE-001",
+    "name": "국도 유지보수 파일럿 공사",
+    "is_active": true
+  },
+  "as_of_date": "2026-08-04",
+  "data_presence": {
+    "budget_items": 4,
+    "wbs_items": 4,
+    "schedule_tasks": 4,
+    "daily_progress": 1,
+    "cost_lines": 1,
+    "revenue_records": 1,
+    "contract_snapshots": 1
+  },
+  "dashboard": {
+    "project_id": 17,
+    "project_name": "국도 유지보수 파일럿 공사",
+    "overall_progress_percent": "5.625000",
+    "recognized_revenue": "32120026.88",
+    "accrual_cost": "10000000.00",
+    "labor_cost": "0",
+    "profit": "22120026.88",
+    "margin_percent": "68.86677574287260372305142978",
+    "cost_by_category": {
+      "MATERIAL": "10000000.00",
+      "LABOR": "0"
+    },
+    "updated_at": null,
+    "risk_open_count": 0,
+    "risk_critical_count": 0
+  },
+  "manual": {
+    "weighted_progress": "5.625000",
+    "revenue": "32120026.88",
+    "profit": "22120026.88",
+    "margin": "68.86677574287260372305142978"
+  },
+  "tasks": [
+    {
+      "name": "토공",
+      "weight_percent": "20.000"
+    },
+    {
+      "name": "포장공사",
+      "weight_percent": "45.000"
+    },
+    {
+      "name": "배수공사",
+      "weight_percent": "20.000"
+    },
+    {
+      "name": "기타공정",
+      "weight_percent": "15.000"
+    }
+  ],
+  "daily_progress": [
+    {
+      "task__name": "포장공사",
+      "task__weight_percent": "45.000",
+      "report_date": "2026-08-04",
+      "progress_percent": "12.500",
+      "status": "approved"
+    }
+  ],
+  "snapshots": [
+    {
+      "id": 1,
+      "version_no": 1,
+      "base_contract_amount": "571022700.00",
+      "is_active": true
+    }
+  ],
+  "revenues": [
+    {
+      "as_of_date": "2026-08-04",
+      "recognized_revenue": "32120026.88",
+      "contract_snapshot_id": "1"
+    }
+  ]
+}

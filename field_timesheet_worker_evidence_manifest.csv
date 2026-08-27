@@ -1,0 +1,10 @@
+Artifact,Status,Description
+field_timesheet_worker_root_cause.md,PASS,Aggregate-only root cause
+field_timesheet_worker_model_decision.md,PASS,TimesheetLine worker FK decision
+field_timesheet_worker_worker_role_snapshot.csv,PASS,Safe worker visibility snapshot
+field_timesheet_worker_timesheet_model_snapshot.csv,PASS,Model capability comparison
+field_timesheet_worker_before_after_matrix.csv,PASS,FIELD screen behavior comparison
+field_timesheet_worker_monthly_report_source_matrix.csv,READY,LOCAL-OPS expected monthly worker totals
+field_timesheet_worker_test_matrix.csv,PASS,Migration and test results
+field_timesheet_worker_source_scan.txt,PASS,UTF-8 and PII source scan
+field_timesheet_worker_report.md,PASS,Final report

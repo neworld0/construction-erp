@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import DataError, IntegrityError, transaction
 from django.db.models import Count, Q
@@ -19,16 +19,37 @@ from apps.audit.constants import DRAFT_SAVE, EVIDENCE_CREATE, EVIDENCE_FILE_ADD,
 from apps.audit.services.logger import log_action
 from apps.core.models import ApprovalRequest, ApprovalStatus
 from apps.core.rbac.models import Role
-from apps.core.rbac.permissions import get_user_role, require_project_access
-from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
+from apps.core.rbac.permissions import get_current_legal_entity, get_user_legal_entities, get_user_role, require_project_access, require_role
+from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem, CostVATTreatment
 from apps.evidence.attachment_policy import can_edit_attachments
 from apps.evidence.models import Evidence, EvidenceFile, EvidenceStatus
 from apps.evidence.services.resolve import is_project_or_month_locked
 from apps.reports.models import FieldReport, FieldReportStatus
-from apps.field.models import DailyReport, DailyReportLine, DailyReportStatus
+from apps.field.models import (
+    DailyReport,
+    DailyReportLine,
+    DailyReportStatus,
+    RetroactiveEntryRequest,
+    RetroactiveEntryRequestStatus,
+)
+from apps.field.retro_progress import (
+    approve_retroactive_progress_request,
+    consume_retroactive_progress_request,
+    create_retroactive_progress_request,
+    get_retroactive_progress_request,
+    reject_retroactive_progress_request,
+    require_approved_retroactive_progress_request,
+    requires_retroactive_progress_authorization,
+)
 from apps.projects.models import Project, WBSItem
+from apps.projects.test_date_window import (
+    allows_future_operational_test_date,
+    allows_operational_test_date,
+    get_active_test_date_window,
+)
 from apps.projects.wbs_change import render_wbs_change_form
-from apps.schedule.models import DailyProgress, SchedulePlan, ScheduleTask
+from apps.schedule.models import DailyProgress, SchedulePlan, ScheduleTask, ProgressCorrectionType
+from apps.schedule.progress_corrections import create_progress_correction
 
 
 _LOCKED_STATUSES = {"SUBMITTED", "APPROVED", "FINAL", "LOCKED", "CLOSED"}
@@ -37,10 +58,12 @@ _LOCKED_STATUSES = {"SUBMITTED", "APPROVED", "FINAL", "LOCKED", "CLOSED"}
 def _get_accessible_projects(user):
     role = get_user_role(user)
     if role in (Role.CEO, Role.HQ):
-        return Project.objects.all().order_by("name")
+        return Project.objects.filter(legal_entity__in=get_user_legal_entities(user)).order_by("name")
     if role == Role.FIELD:
         return Project.objects.filter(
-            projectassignment__user=user, projectassignment__is_active=True
+            projectassignment__user=user,
+            projectassignment__is_active=True,
+            legal_entity__in=get_user_legal_entities(user),
         ).order_by("name")
     return Project.objects.none()
 
@@ -50,6 +73,13 @@ def _resolve_project(user, project_id):
         return None
     require_project_access(user, project_id)
     return Project.objects.filter(id=project_id).first()
+
+
+def _require_current_entity_project(request, project):
+    require_project_access(request.user, project.id)
+    current_legal_entity = get_current_legal_entity(request)
+    if current_legal_entity is None or project.legal_entity_id != current_legal_entity.id:
+        raise PermissionDenied("선택한 운영 법인의 프로젝트만 처리할 수 있습니다.")
 
 
 def _forbidden(_request):
@@ -141,8 +171,8 @@ def _ensure_progress_tasks_for_project(project):
                     ScheduleTask(
                         plan=plan,
                         name=wbs.name,
-                        start_date=wbs.plan_start_date,
-                        end_date=wbs.plan_end_date,
+                        start_date=wbs.plan_start_date or project.start_date,
+                        end_date=wbs.plan_end_date or project.end_date,
                         weight_percent=wbs.weight or Decimal("0"),
                         sort_order=wbs.sort_order or index,
                         is_active=True,
@@ -406,9 +436,13 @@ def _is_progress_locked(progress) -> bool:
 @login_required
 def field_dashboard(request):
     tab = request.GET.get("tab", request.POST.get("tab", "progress"))
-    if tab == "evidence":
-        tab = "report"
+    if tab in {"evidence", "report"}:
+        tab = "progress"
+        messages.info(request, "기존 보고서 메뉴는 공사일보로 통합되었습니다. 공사일보 탭에서 자동 취합 결과를 확인해 주세요.")
     projects = _get_accessible_projects(request.user)
+    current_legal_entity = get_current_legal_entity(request)
+    if current_legal_entity is not None:
+        projects = projects.filter(legal_entity=current_legal_entity)
     project_id = request.GET.get("project_id") or request.POST.get("project_id")
     project = None
     requested_project_denied = False
@@ -418,6 +452,9 @@ def field_dashboard(request):
         except PermissionDenied:
             requested_project_denied = True
             project = None
+    if project is not None and not projects.filter(id=project.id).exists():
+        requested_project_denied = True
+        project = None
 
     if project is None:
         last_project_id = request.session.get("last_project_id")
@@ -433,6 +470,8 @@ def field_dashboard(request):
         if project:
             project_id = project.id
 
+    test_date_window = get_active_test_date_window(project) if project else None
+    progress_max_date = (test_date_window.end_date if test_date_window else date.today()).isoformat()
     context = {
         "tab": tab,
         "projects": projects,
@@ -440,8 +479,12 @@ def field_dashboard(request):
         "errors": [],
         "success": "",
         "now": date.today().isoformat(),
-        "progress_min_date": (date.today() - timedelta(days=1)).isoformat(),
-        "progress_max_date": date.today().isoformat(),
+        "progress_min_date": (
+            test_date_window.start_date if test_date_window else date.today() - timedelta(days=1)
+        ).isoformat(),
+        "progress_max_date": progress_max_date,
+        "test_date_window": test_date_window,
+        "retro_request_context": None,
         "role": get_user_role(request.user),
     }
 
@@ -453,8 +496,6 @@ def field_dashboard(request):
     if request.method == "POST" and project:
         if tab == "progress":
             _handle_progress_submit(request, project, context)
-        elif tab == "report":
-            context["errors"].append("보고서는 /app/reports/에서 작성해 주세요.")
         elif tab == "cost":
             _handle_cost_submit(request, project, context)
         if context["success"]:
@@ -466,6 +507,59 @@ def field_dashboard(request):
     _load_cost_context(project, request.user, request, context)
 
     return render(request, "field/dashboard.html", context)
+
+
+@login_required
+def hq_retroactive_progress_request_list(request):
+    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+    if request.method == "POST":
+        retro_request = get_object_or_404(
+            RetroactiveEntryRequest,
+            pk=request.POST.get("request_id"),
+            project__legal_entity=get_current_legal_entity(request),
+        )
+        action = request.POST.get("action")
+        try:
+            if action == "approve":
+                approve_retroactive_progress_request(
+                    retro_request=retro_request,
+                    actor=request.user,
+                    review_comment=request.POST.get("review_comment", ""),
+                    request=request,
+                )
+                messages.success(request, "진행률 소급 입력 요청을 승인했습니다.")
+            elif action == "reject":
+                reject_retroactive_progress_request(
+                    retro_request=retro_request,
+                    actor=request.user,
+                    review_comment=request.POST.get("review_comment", ""),
+                    request=request,
+                )
+                messages.success(request, "진행률 소급 입력 요청을 반려했습니다.")
+            else:
+                messages.error(request, "요청 처리 방식을 확인해 주세요.")
+        except (PermissionDenied, ValidationError) as exc:
+            messages.error(request, str(exc))
+        return redirect("/app/hq/progress/retro-requests/")
+
+    status = (request.GET.get("status") or "PENDING").upper()
+    requests = RetroactiveEntryRequest.objects.select_related(
+        "project", "requested_by", "reviewed_by"
+    ).filter(project__legal_entity=get_current_legal_entity(request)).order_by("-requested_at", "-id")
+    valid_statuses = {choice for choice, _label in RetroactiveEntryRequestStatus.choices}
+    if status in valid_statuses:
+        requests = requests.filter(status=status)
+    else:
+        status = ""
+    return render(
+        request,
+        "app/hq/retro_progress_request_list.html",
+        {
+            "retro_requests": requests,
+            "selected_status": status,
+            "retro_statuses": RetroactiveEntryRequestStatus.choices,
+        },
+    )
 
 
 @login_required
@@ -481,7 +575,7 @@ def field_cost_detail(request, cost_actual_id):
 def field_cost_edit(request, cost_actual_id):
     cost_actual = get_object_or_404(CostActual, id=cost_actual_id)
     project = cost_actual.project
-    require_project_access(request.user, project.id)
+    _require_current_entity_project(request, project)
 
     role = get_user_role(request.user)
     try:
@@ -658,6 +752,7 @@ def field_cost_edit(request, cost_actual_id):
         cost_item_id = request.POST.get("cost_item_id")
         quantity = _parse_decimal_amount(request.POST.get("quantity"))
         unit_price = _parse_decimal_amount(request.POST.get("unit_price"))
+        vat_treatment = request.POST.get("vat_treatment") or CostVATTreatment.DEDUCTIBLE
         memo = (request.POST.get("memo") or "").strip()
         file_obj = request.FILES.get("evidence_file")
         cost_item = None
@@ -667,10 +762,13 @@ def field_cost_edit(request, cost_actual_id):
             return _render_cost_edit("원가 항목을 선택해 주세요.")
         if quantity is None or unit_price is None:
             return _render_cost_edit("수량/단가를 입력해 주세요.")
+        if vat_treatment not in CostVATTreatment.values:
+            return _render_cost_edit("부가세 처리 구분을 선택해 주세요.")
         if line:
             line.cost_item = cost_item
             line.quantity = quantity
             line.unit_price = unit_price
+            line.vat_treatment = vat_treatment
             line.description = memo
             line.save()
         else:
@@ -680,6 +778,7 @@ def field_cost_edit(request, cost_actual_id):
                 description=memo,
                 quantity=quantity,
                 unit_price=unit_price,
+                vat_treatment=vat_treatment,
             )
 
         if report and memo:
@@ -756,10 +855,33 @@ def field_progress_detail(request, progress_id):
     Field progress flow uses dashboard detail/edit hybrid.
     """
     progress = get_object_or_404(DailyProgress, pk=progress_id)
-    require_project_access(request.user, progress.project_id)
+    _require_current_entity_project(request, progress.project)
     return redirect(
         f"/app/field/?tab=progress&project_id={progress.project_id}&progress_id={progress.id}"
     )
+
+
+@login_required
+def field_progress_correction_new(request, progress_id):
+    progress = get_object_or_404(DailyProgress.objects.select_related("project", "task", "reporter"), pk=progress_id)
+    _require_current_entity_project(request, progress.project)
+    if get_user_role(request.user) != Role.FIELD or progress.reporter_id != request.user.id:
+        raise PermissionDenied("본인이 작성한 진행률만 정정·취소 요청할 수 있습니다.")
+    if request.method == "POST":
+        try:
+            value = request.POST.get("proposed_progress_percent")
+            create_progress_correction(
+                progress=progress, actor=request.user,
+                correction_type=(request.POST.get("correction_type") or "").upper(),
+                proposed_progress_percent=Decimal(value) if value not in (None, "") else None,
+                proposed_note=request.POST.get("proposed_note", ""), reason=request.POST.get("reason", ""), request=request,
+            )
+        except (ValidationError, PermissionDenied, InvalidOperation) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, "진행률 정정·취소 요청을 HQ에 전달했습니다.")
+            return redirect(f"/app/field/?tab=progress&project_id={progress.project_id}")
+    return render(request, "field/progress_correction_new.html", {"progress": progress, "role": get_user_role(request.user)})
 
 
 @login_required
@@ -767,6 +889,8 @@ def field_progress_edit(request, progress_id):
     message_context = "\uc9c4\ud589\ub960 \uc785\ub825\uc785\ub2c8\ub2e4."
     progress = get_object_or_404(DailyProgress, pk=progress_id)
     project = progress.project
+
+    _require_current_entity_project(request, project)
 
     if not _can_edit_progress(request.user, project):
         return _forbidden(request)
@@ -824,13 +948,32 @@ def field_progress_edit(request, progress_id):
         return redirect("/app/field/?tab=progress&project_id=%s" % project.id)
     if report_date:
         today = date.today()
-        min_date = today - timedelta(days=1)
-        if report_date < min_date or report_date > today:
-            messages.error(
-                request,
-                "\uc18c\uae09 \uc785\ub825\uc740 HQ \uc694\uccad\uc774 \ud544\uc694\ud569\ub2c8\ub2e4. (\ud5c8\uc6a9: \uc624\ub298/\uc5b4\uc81c)",
-            )
+        if report_date > today and not allows_future_operational_test_date(project, report_date, today=today):
+            messages.error(request, "미래 날짜의 진행률은 입력할 수 없습니다.")
             return redirect("/app/field/?tab=progress&project_id=%s" % project.id)
+        try:
+            guard_write(
+                project=project,
+                target_date=report_date,
+                message_context=message_context,
+                exc=PermissionDenied,
+            )
+        except PermissionDenied as exc:
+            messages.error(request, str(exc))
+            return redirect("/app/field/?tab=progress&project_id=%s" % project.id)
+        if (
+            requires_retroactive_progress_authorization(report_date, today=today)
+            and not allows_operational_test_date(project, report_date, today=today)
+        ):
+            try:
+                require_approved_retroactive_progress_request(
+                    project=project,
+                    target_date=report_date,
+                    actor=request.user,
+                )
+            except ValidationError as exc:
+                messages.error(request, str(exc))
+                return redirect("/app/field/?tab=progress&project_id=%s" % project.id)
         monotonic_error = _validate_progress_monotonic(
             project=project,
             task=task,
@@ -915,13 +1058,65 @@ def _handle_progress_submit(request, project, context):
     min_date = today - timedelta(days=1)
     _plan, available_tasks = _ensure_progress_tasks_for_project(project)
 
+    def _set_retro_request_context(target_date):
+        context["retro_request_context"] = {
+            "target_date": target_date,
+            "retro_request": get_retroactive_progress_request(
+                project=project,
+                target_date=target_date,
+                actor=request.user,
+            ),
+        }
+
     def _validate_recent_date(target_date):
-        if target_date < min_date or target_date > today:
-            context["errors"].append(
-                "소급 입력은 HQ 요청이 필요합니다. (허용: 오늘/어제)"
-            )
+        if target_date > today and not allows_future_operational_test_date(project, target_date, today=today):
+            context["errors"].append("미래 날짜의 진행률은 입력할 수 없습니다.")
             return False
+        if (
+            requires_retroactive_progress_authorization(target_date, today=today)
+            and not allows_operational_test_date(project, target_date, today=today)
+        ):
+            _set_retro_request_context(target_date)
+            try:
+                require_approved_retroactive_progress_request(
+                    project=project,
+                    target_date=target_date,
+                    actor=request.user,
+                )
+            except ValidationError as exc:
+                context["errors"].append(
+                    "해당 일자는 일반 입력 가능기간(오늘/어제)을 초과했습니다. 소급 입력이 필요한 경우 HQ 승인을 요청해 주세요."
+                )
+                context["errors"].append(str(exc))
+                return False
         return True
+
+    if action == "retro_request":
+        target_value = request.POST.get("retro_target_date") or request.POST.get("report_date")
+        try:
+            target_date = datetime.strptime(str(target_value), "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            context["errors"].append("소급 입력 대상일을 확인해 주세요.")
+            return
+        _set_retro_request_context(target_date)
+        try:
+            retro_request, created = create_retroactive_progress_request(
+                project=project,
+                target_date=target_date,
+                reason=request.POST.get("retro_reason", ""),
+                actor=request.user,
+                request=request,
+            )
+        except (PermissionDenied, ValidationError) as exc:
+            context["errors"].append(str(exc))
+            return
+        context["retro_request_context"]["retro_request"] = retro_request
+        context["success"] = (
+            "진행률 소급 입력 요청을 제출했습니다. HQ 승인 후 해당 일자에 입력할 수 있습니다."
+            if created
+            else "동일한 소급 입력 요청이 이미 접수되어 있습니다. 처리 상태를 확인해 주세요."
+        )
+        return
 
     if action in {"attachment_upload", "attachment_delete"}:
         progress_id = request.POST.get("progress_id")
@@ -1023,30 +1218,74 @@ def _handle_progress_submit(request, project, context):
             if evidence_error:
                 context["errors"].append(evidence_error)
                 return
-        progress.status = "submitted"
-        progress.save(update_fields=["status", "updated_at"])
-        _submit_progress_evidence(progress)
-        ApprovalRequest.objects.update_or_create(
-            object_type="DAILY_PROGRESS",
-            object_id=progress.id,
-            defaults={
-                "status": ApprovalStatus.SUBMITTED,
-                "submitted_by": request.user,
-                "submitted_at": timezone.now(),
-                "approved_by": None,
-                "approved_at": None,
-                "reject_reason": "",
-            },
-        )
-        log_action(
-            actor=request.user,
-            action=SUBMIT,
-            object_type="DAILY_PROGRESS",
-            object_id=progress.id,
-            project=project,
-            request=request,
-            after={"status": progress.status, "report_date": str(progress.report_date)},
-        )
+        with transaction.atomic():
+            progress = DailyProgress.objects.select_for_update().get(pk=progress.pk)
+            guard_write(
+                project=project,
+                target_date=progress.report_date,
+                message_context=message_context,
+                exc=PermissionDenied,
+            )
+            retro_request = None
+            if requires_retroactive_progress_authorization(progress.report_date, today=today):
+                retro_request = require_approved_retroactive_progress_request(
+                    project=project,
+                    target_date=progress.report_date,
+                    actor=request.user,
+                    lock=True,
+                )
+            progress.status = "submitted"
+            progress.rejected_by = None
+            progress.rejected_at = None
+            progress.reject_reason = ""
+            progress.save(
+                update_fields=[
+                    "status",
+                    "rejected_by",
+                    "rejected_at",
+                    "reject_reason",
+                    "updated_at",
+                ]
+            )
+            _submit_progress_evidence(progress)
+            ApprovalRequest.objects.update_or_create(
+                object_type="DAILY_PROGRESS",
+                object_id=progress.id,
+                defaults={
+                    "status": ApprovalStatus.SUBMITTED,
+                    "submitted_by": request.user,
+                    "submitted_at": timezone.now(),
+                    "approved_by": None,
+                    "approved_at": None,
+                    "reject_reason": "",
+                },
+            )
+            log_action(
+                actor=request.user,
+                action=SUBMIT,
+                object_type="DAILY_PROGRESS",
+                object_id=progress.id,
+                project=project,
+                request=request,
+                after={"status": progress.status, "report_date": str(progress.report_date)},
+            )
+            if retro_request is not None:
+                consume_retroactive_progress_request(
+                    retro_request=retro_request,
+                    actor=request.user,
+                    progress=progress,
+                    request=request,
+                )
+                log_action(
+                    actor=request.user,
+                    action="RETRO_PROGRESS_SUBMITTED",
+                    object_type="DAILY_PROGRESS",
+                    object_id=progress.id,
+                    project=project,
+                    request=request,
+                    after={"status": progress.status, "report_date": str(progress.report_date)},
+                    meta={"retro_request_id": retro_request.id},
+                )
         context["success"] = "진행률이 제출되었습니다."
         return
         monotonic_error = _validate_progress_monotonic(
@@ -1334,20 +1573,32 @@ def _handle_evidence_submit(request, project, context):
 def _handle_cost_submit(request, project, context):
     action = request.POST.get("action", "draft")
     cost_actual_id = request.POST.get("cost_actual_id")
+    report_date = None
     cost_item_id = request.POST.get("cost_item_id")
     quantity = _parse_decimal_amount(request.POST.get("quantity"))
     unit_price = _parse_decimal_amount(request.POST.get("unit_price"))
+    vat_treatment = request.POST.get("vat_treatment") or CostVATTreatment.DEDUCTIBLE
     memo = (request.POST.get("memo") or "").strip()
     evidence_file = request.FILES.get("evidence_file")
 
     cost_item = None
     if action != "submit":
+        report_date = _parse_iso_date(request.POST.get("report_date"))
+        if report_date is None:
+            context["errors"].append("원가 발생일을 선택해 주세요.")
+            return
+        if report_date > timezone.localdate() and not allows_future_operational_test_date(project, report_date):
+            context["errors"].append("미래 날짜의 원가는 입력할 수 없습니다.")
+            return
         cost_actual_id = None
         if not cost_item_id or quantity is None or unit_price is None:
             context["errors"].append("\uc6d0\uac00 \ud56d\ubaa9/\uc218\ub7c9/\ub2e8\uac00\ub97c \uc785\ub825\ud558\uc138\uc694.")
             return
         if quantity < 0 or unit_price < 0:
             context["errors"].append("\uae08\uc561\uc740 0 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.")
+            return
+        if vat_treatment not in CostVATTreatment.values:
+            context["errors"].append("부가세 처리 구분을 선택해 주세요.")
             return
         cost_item = CostItem.objects.filter(id=cost_item_id, is_active=True).first()
         if cost_item is None:
@@ -1427,7 +1678,6 @@ def _handle_cost_submit(request, project, context):
                 context["success"] = "\uc6d0\uac00\uac00 \uc81c\ucd9c\ub418\uc5c8\uc2b5\ub2c8\ub2e4."
                 return
 
-            report_date = date.today()
             try:
                 guard_write(
                     project=project,
@@ -1488,12 +1738,14 @@ def _handle_cost_submit(request, project, context):
                     description=report_line.description,
                     quantity=report_line.quantity,
                     unit_price=report_line.unit_price,
+                    vat_treatment=vat_treatment,
                 )
             else:
                 cost_line.cost_item = cost_item
                 cost_line.description = report_line.description
                 cost_line.quantity = report_line.quantity
                 cost_line.unit_price = report_line.unit_price
+                cost_line.vat_treatment = vat_treatment
                 cost_line.save()
 
             if evidence_file:
@@ -1573,8 +1825,18 @@ def _load_progress_context(project, user, request, context):
     context["progress_page_obj"] = None
     context["progress_draft"] = None
     context["progress_reject_reasons"] = {}
+    context["retroactive_progress_requests"] = []
     if project is None:
         return
+    context["retroactive_progress_requests"] = list(
+        RetroactiveEntryRequest.objects.filter(
+            project=project,
+            requested_by=user,
+            request_type="PROGRESS",
+        )
+        .select_related("reviewed_by")
+        .order_by("-requested_at", "-id")[:5]
+    )
     plan, tasks = _ensure_progress_tasks_for_project(project)
     context["tasks"] = tasks
     context["progress_task_input_disabled"] = not bool(tasks)
@@ -2039,8 +2301,8 @@ def _load_cost_context(project, user, request, context):
 
 @login_required
 def field_wbs_change_new(request, project_id):
-    require_project_access(request.user, project_id)
     project = get_object_or_404(Project, id=project_id)
+    _require_current_entity_project(request, project)
     role = get_user_role(request.user)
     return render_wbs_change_form(
         request,
@@ -2102,7 +2364,9 @@ def field_approved_list(request):
         else {"DAILY_PROGRESS", "FIELD_REPORT", "COST_ACTUAL"}
     )
 
-    accessible_projects = _get_accessible_projects(request.user)
+    accessible_projects = _get_accessible_projects(request.user).filter(
+        legal_entity=get_current_legal_entity(request)
+    )
     project_ids = list(accessible_projects.values_list("id", flat=True))
     selected_project_id = None
     if project_param and project_param.isdigit():

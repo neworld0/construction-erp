@@ -1,0 +1,11 @@
+﻿Scenario,Worker,LaborRole,Project,Work_Date,Rate_Type,Expected_Priority,Resolved_Rate_ID,Resolved_Rate,Resolved_Scope,Missing,Conflict,Result
+활성 근로자 기본 단가 확인,김로컬,보통인부,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,12,160000,ROLE_BASE,False,False,RATE_RESOLVED
+활성 근로자 기본 단가 확인,김철수,조경공,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,,,,True,False,조경공 단가가 등록되지 않았습니다. HQ에서 노무 역할 단가를 먼저 등록해 주세요.
+활성 근로자 기본 단가 확인,박영희,신호수,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,,,,True,False,신호수 단가가 등록되지 않았습니다. HQ에서 노무 역할 단가를 먼저 등록해 주세요.
+활성 근로자 기본 단가 확인,박포장,포장공,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,13,210000,ROLE_BASE,False,False,RATE_RESOLVED
+활성 근로자 기본 단가 확인,오부택,조경공,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,,,,True,False,조경공 단가가 등록되지 않았습니다. HQ에서 노무 역할 단가를 먼저 등록해 주세요.
+활성 근로자 기본 단가 확인,이영수,장비유도원,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,,,,True,False,장비유도원 단가가 등록되지 않았습니다. HQ에서 노무 역할 단가를 먼저 등록해 주세요.
+활성 근로자 기본 단가 확인,이장비,장비공,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,9,250000,ROLE_BASE,False,False,RATE_RESOLVED
+활성 근로자 기본 단가 확인,정도색,도색공,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,11,200000,ROLE_BASE,False,False,RATE_RESOLVED
+활성 근로자 기본 단가 확인,최다짐,다짐공,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,10,220000,ROLE_BASE,False,False,RATE_RESOLVED
+활성 근로자 기본 단가 확인,홍길동,포장공,,2026-08-14,DAY,WORKER 또는 ROLE_BASE,13,210000,ROLE_BASE,False,False,RATE_RESOLVED

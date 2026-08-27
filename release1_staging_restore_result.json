@@ -1,0 +1,6 @@
+{
+  "status": "RESTORE_CREATE_DB_FAILED",
+  "restore_executed": false,
+  "restore_target": "construction_erp_demo_restore_20260805_164116",
+  "reason": "createdb returned a non-zero exit code; stderr is not persisted to avoid secrets."
+}

@@ -1,0 +1,13 @@
+[Construction ERP 프로젝트 점검사항]
+
+
+1. AUDIT-0 전체 인벤토리 생성
+2. AUDIT-1 URL/View/Template 연결 점검
+3. AUDIT-2 RBAC 권한 점검
+4. AUDIT-3 AuditLog 계약 점검
+5. AUDIT-4 마감/확정 수정 차단 점검
+6. AUDIT-5 Excel import/export 점검
+7. AUDIT-6 LABPAY 1~10 E2E 검증
+8. AUDIT-7 프로젝트 등록~진행률 E2E 검증
+9. AUDIT-8 개선 Backlog 작성
+10. P0 항목부터 개별 Codex 프롬프트로 패치

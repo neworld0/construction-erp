@@ -1,0 +1,5 @@
+﻿DB_GUARD_PASS {'engine': 'django.db.backends.postgresql', 'host': '127.0.0.1', 'database': 'construction_erp_demo'}
+MODE DRY_RUN
+INACTIVE_TARGET_COUNT 0
+DELETED_PROJECT_IDS []
+PILOT_VISIBILITY PASS

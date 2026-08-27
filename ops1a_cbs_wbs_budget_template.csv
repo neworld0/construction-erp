@@ -1,0 +1,4 @@
+CBS_Code,CBS_Name,Cost_Category,Budget_Category,WBS_Code,WBS_Name,WBS_Weight,Planned_Amount,Note
+OPS1B-EARTHWORK,토공,other,OTHER,WBS-01,토공,20,50000000,비식별 파일럿 예산
+OPS1B-PAVING,포장공사,material,MATERIAL,WBS-02,포장공사,45,250000000,비식별 파일럿 예산
+OPS1B-DRAINAGE,배수공사,other,OTHER,WBS-03,배수공사,20,90000000,비식별 파일럿 예산

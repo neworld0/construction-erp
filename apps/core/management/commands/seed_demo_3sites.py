@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.core.models import ApprovalRequest, ApprovalStatus
-from apps.core.rbac.models import Role, UserProfile
+from apps.core.rbac.models import LegalEntity, Role, UserProfile
 from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
 from apps.projects.models import (
     BudgetCategory,
@@ -68,11 +68,13 @@ class Command(BaseCommand):
         contract_skipped = 0
         budget_created = 0
         budget_skipped = 0
+        asan = LegalEntity.objects.get(code="ASAN")
         for code, name, status in project_specs:
             project, _ = Project.objects.get_or_create(
                 code=code,
                 defaults={
                     "name": name,
+                    "legal_entity": asan,
                     "status": status,
                     "start_date": timezone.localdate(),
                     "end_date": timezone.localdate() + timedelta(days=365),

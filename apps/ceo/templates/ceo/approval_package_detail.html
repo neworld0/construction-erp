@@ -42,7 +42,7 @@
     {% endfor %}
   {% endif %}
 
-  {% if package.status == "submitted" %}
+  {% if package.status == "submitted" and not ceo_read_only %}
   <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
     <form method="post" action="/app/ceo/approval-packages/{{ package.id }}/approve/">
       {% csrf_token %}

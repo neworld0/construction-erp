@@ -1,0 +1,5 @@
+Scope: LABOR-RATE-MASTER-02 changed labor rate model, services, HQ forms/views/URLs/templates, migration, diagnostic, and focused tests.
+PII policy: HQ rate UI and diagnostics use worker name and role only. 주민등록번호, 계좌번호, 전화번호, 원문 식별값을 기록하거나 표시하지 않습니다.
+Hardcoded rates: LOCAL-OPS 기준 단가는 existing seed_labor_rates command and tests only.
+Korean UTF-8: newly added user-facing labels and validation messages are UTF-8 Korean.
+OVERALL_SOURCE_SCAN_PASS: True

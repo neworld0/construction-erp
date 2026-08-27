@@ -1,0 +1,7 @@
+area,before,after,result
+primary_entry_layout,가로 테이블 1행,근로자별 카드,모바일 가로 스크롤 위험 제거
+worker_selection,검색 입력이 테이블 셀 안에 있음,전폭 검색 입력과 선택 요약,근로자 우선순위 강화
+labor_fields,열 헤더 의존,각 입력에 보이는 라벨,역할 공수 시간 단가유형 명확화
+memo,좁은 한 줄 입력,카드 하단 textarea,특이사항 입력성 개선
+actions,일반 하단 버튼,모바일 sticky 하단 영역,저장 버튼 접근성 개선
+data_save,worker_id POST,worker_id POST 유지,WorkerMaster FK 계약 유지

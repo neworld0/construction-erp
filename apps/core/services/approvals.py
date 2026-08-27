@@ -18,6 +18,32 @@ def _sync_target_status_on_approve(approval, user, _visited=None):
     _visited.add(approval.id)
 
     object_type = (approval.object_type or "").upper()
+    if object_type == "CLOSING_PERIOD":
+        from apps.closing.models import ClosingApprovalPolicy, ClosingStatus
+        from apps.closing.services import close_month
+
+        from apps.closing.models import ClosingPeriod
+
+        period = ClosingPeriod.objects.filter(id=approval.object_id).first()
+        if period is not None and period.approval_policy != ClosingApprovalPolicy.CEO:
+            raise ValueError("CEO 예외 승인으로 요청된 월 마감만 CEO가 승인할 수 있습니다.")
+        if period is not None and period.status != ClosingStatus.CLOSED:
+            close_month(
+                period.year,
+                period.month,
+                user,
+                legal_entity=period.legal_entity,
+                note=approval.comment,
+            )
+        return
+    if object_type == "PROJECT_BASELINE":
+        from apps.projects.models import Project, ProjectStatus
+
+        Project.objects.filter(
+            id=approval.object_id,
+            status=ProjectStatus.SUBMITTED,
+        ).update(status=ProjectStatus.APPROVED, updated_at=timezone.now())
+        return
     if object_type == "APPROVAL_REQUEST":
         nested = ApprovalRequest.objects.filter(id=approval.object_id).first()
         if nested:
@@ -35,9 +61,44 @@ def _sync_target_status_on_approve(approval, user, _visited=None):
             approved_by=user,
             approved_at=approval.approved_at,
         )
+        from apps.inventory.models import IssueStatus, IssueToWork
+
+        IssueToWork.objects.filter(cost_actual_id=approval.object_id).update(
+            status=IssueStatus.APPROVED,
+            approved_by=user,
+            approved_at=approval.approved_at,
+        )
+        cost_actual = CostActual.objects.filter(id=approval.object_id).select_related("project").first()
+        # DailyReport is the source record of a CostActual, not a separate
+        # approval work item.  Keep its lifecycle synchronized so it cannot
+        # remain as a phantom submitted report after the cost is approved.
+        if cost_actual is not None and cost_actual.source_daily_report_id:
+            DailyReport.objects.filter(id=cost_actual.source_daily_report_id).update(
+                status=DailyReportStatus.APPROVED,
+            )
+        if cost_actual is not None:
+            from apps.finance.services.expense_execution import queue_ceo_approved_cost_execution
+
+            queue_ceo_approved_cost_execution(
+                cost_actual=cost_actual,
+                actor=user,
+                approved_at=approval.approved_at,
+            )
         return
     if object_type == "DAILY_PROGRESS":
-        DailyProgress.objects.filter(id=approval.object_id).update(status="approved")
+        DailyProgress.objects.filter(id=approval.object_id).update(
+            status="approved",
+            approved_by=user,
+            approved_at=approval.approved_at,
+            rejected_by=None,
+            rejected_at=None,
+            reject_reason="",
+        )
+        return
+    if object_type == "PROGRESS_CORRECTION":
+        from apps.schedule.progress_corrections import approve_progress_correction
+
+        approve_progress_correction(correction_id=approval.object_id, actor=user)
         return
     if object_type == "DAILY_REPORT":
         DailyReport.objects.filter(id=approval.object_id).update(
@@ -51,7 +112,7 @@ def _sync_target_status_on_approve(approval, user, _visited=None):
         )
 
 
-def _sync_target_status_on_reject(approval, _visited=None):
+def _sync_target_status_on_reject(approval, user=None, _visited=None):
     if _visited is None:
         _visited = set()
     if approval.id in _visited:
@@ -59,20 +120,53 @@ def _sync_target_status_on_reject(approval, _visited=None):
     _visited.add(approval.id)
 
     object_type = (approval.object_type or "").upper()
+    if object_type == "PROJECT_BASELINE":
+        from apps.projects.models import Project, ProjectStatus
+
+        # A rejected baseline returns to HQ rework, but never reopens a closed project.
+        Project.objects.filter(
+            id=approval.object_id,
+            status=ProjectStatus.SUBMITTED,
+        ).update(status=ProjectStatus.DRAFT, updated_at=timezone.now())
+        return
     if object_type == "APPROVAL_REQUEST":
         nested = ApprovalRequest.objects.filter(id=approval.object_id).first()
         if nested and nested.status == ApprovalStatus.SUBMITTED:
             nested.status = ApprovalStatus.REJECTED
             nested.save(update_fields=["status"])
-            _sync_target_status_on_reject(nested, _visited)
+            _sync_target_status_on_reject(nested, user, _visited)
         return
     if object_type == "COST_ACTUAL":
         CostActual.objects.filter(id=approval.object_id).update(
             status=CostActualStatus.REJECTED,
         )
+        from apps.inventory.models import IssueStatus, IssueToWork
+
+        IssueToWork.objects.filter(cost_actual_id=approval.object_id).update(
+            status=IssueStatus.REJECTED,
+        )
+        cost_actual = CostActual.objects.filter(id=approval.object_id).only(
+            "source_daily_report_id"
+        ).first()
+        if cost_actual is not None and cost_actual.source_daily_report_id:
+            DailyReport.objects.filter(id=cost_actual.source_daily_report_id).update(
+                status=DailyReportStatus.REJECTED,
+            )
         return
     if object_type == "DAILY_PROGRESS":
-        DailyProgress.objects.filter(id=approval.object_id).update(status="rejected")
+        DailyProgress.objects.filter(id=approval.object_id).update(
+            status="rejected",
+            rejected_by=user,
+            rejected_at=timezone.now(),
+            reject_reason=(approval.reject_reason or "").strip(),
+        )
+        return
+    if object_type == "PROGRESS_CORRECTION":
+        from apps.schedule.progress_corrections import reject_progress_correction
+
+        reject_progress_correction(
+            correction_id=approval.object_id, actor=user, reason=approval.reject_reason
+        )
         return
     if object_type == "DAILY_REPORT":
         DailyReport.objects.filter(id=approval.object_id).update(
@@ -85,6 +179,10 @@ def _sync_target_status_on_reject(approval, _visited=None):
 
 def _resolve_approval_project(approval):
     object_type = (approval.object_type or "").upper()
+    if object_type == "PROJECT_BASELINE":
+        from apps.projects.models import Project
+
+        return Project.objects.filter(id=approval.object_id).first()
     if object_type == "APPROVAL_REQUEST":
         nested = ApprovalRequest.objects.filter(id=approval.object_id).first()
         if nested:
@@ -96,6 +194,11 @@ def _resolve_approval_project(approval):
     if object_type == "DAILY_PROGRESS":
         progress = DailyProgress.objects.filter(id=approval.object_id).select_related("project").first()
         return progress.project if progress else None
+    if object_type == "PROGRESS_CORRECTION":
+        from apps.schedule.models import ProgressCorrectionRequest
+
+        correction = ProgressCorrectionRequest.objects.filter(id=approval.object_id).select_related("project").first()
+        return correction.project if correction else None
     if object_type == "DAILY_REPORT":
         report = DailyReport.objects.filter(id=approval.object_id).select_related("project").first()
         return report.project if report else None
@@ -153,7 +256,7 @@ def reject_request(approval_id, user, reject_reason=None, comment=None, request=
             approval.comment = comment
         approval.save()
 
-        _sync_target_status_on_reject(approval)
+        _sync_target_status_on_reject(approval, user)
 
         if failpoint == "after_status":
             raise RuntimeError("failpoint after_status")

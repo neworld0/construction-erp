@@ -1,0 +1,260 @@
+﻿from __future__ import annotations
+
+import logging
+import time
+from datetime import date
+from decimal import Decimal
+
+from django.apps import apps
+from django.db.models import Case, Count, IntegerField, OuterRef, Subquery, Sum, When
+from django.utils import timezone
+
+from apps.closing.adjustments import (
+    AdjustmentTargetType,
+    get_adjustment_totals,
+    get_cost_adjustment_by_category,
+)
+from apps.contracts.models import ContractChange, ContractChangeStatus
+from apps.core.models import ApprovalRequest, ApprovalStatus
+from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
+from apps.labor.services import get_labor_totals_for_projects
+from apps.projects.models import Project, ProjectStatus
+from apps.reports.models import FieldReport, FieldReportStatus
+from apps.schedule.models import (
+    DailyProgress,
+    PlanChangeRequest,
+    PlanChangeStatus,
+    SchedulePlan,
+    ScheduleTask,
+)
+
+
+def _safe_decimal(value):
+    return value if value is not None else Decimal("0")
+
+
+def _clamp01(value):
+    if value is None:
+        return Decimal("0")
+    if value < 0:
+        return Decimal("0")
+    if value > 1:
+        return Decimal("1")
+    return value
+
+
+def _status_included(status_value, include_submitted=False):
+    if status_value is None:
+        return False
+    status = str(status_value).lower()
+    if status in ("approved", "closed"):
+        return True
+    if include_submitted and status == "submitted":
+        return True
+    return False
+
+
+def _approval_included(object_type, object_id, include_submitted=False):
+    qs = ApprovalRequest.objects.filter(object_type=object_type, object_id=object_id)
+    if qs.filter(status=ApprovalStatus.APPROVED).exists():
+        return True
+    if include_submitted and qs.filter(status=ApprovalStatus.SUBMITTED).exists():
+        return True
+    return False
+
+
+def _baseline_ready(project, contract_amount, budget_total, planned_progress_percent):
+    if not _project_status_is_approved(project.status):
+        return False, "baseline_not_approved"
+    if contract_amount is None or contract_amount <= 0:
+        return False, "missing_contract"
+    if budget_total is None or budget_total <= 0:
+        return False, "missing_budget"
+    if planned_progress_percent is None:
+        return False, "missing_plan_dates"
+    return True, None
+
+
+def _project_status_is_approved(status_value):
+    if status_value is None:
+        return False
+    status = str(status_value).lower()
+    approved_values = [choice.value for choice in ProjectStatus]
+    if any(str(value).lower() == "approved" for value in approved_values):
+        return status == "approved"
+    return status in ("active", "closed")
+
+
+def _planned_progress_percent_for_items(project, wbs_items, as_of_date):
+    if not wbs_items:
+        if project.start_date and project.end_date:
+            return _ratio_to_percent(project.start_date, project.end_date, as_of_date)
+        return None
+
+    all_have_dates = all(item.plan_start_date and item.plan_end_date for item in wbs_items)
+    if all_have_dates:
+        total_weight = sum((item.weight or Decimal("0") for item in wbs_items), Decimal("0"))
+        if total_weight <= 0:
+            return Decimal("0")
+        weighted = Decimal("0")
+        for item in wbs_items:
+            ratio = _date_ratio(item.plan_start_date, item.plan_end_date, as_of_date)
+            weighted += (item.weight or Decimal("0")) * ratio
+        return (weighted / total_weight) * Decimal("100")
+
+    if project.start_date and project.end_date:
+        return _ratio_to_percent(project.start_date, project.end_date, as_of_date)
+    return None
+
+
+def _date_ratio(start, end, as_of_date):
+    if not start or not end or not as_of_date:
+        return Decimal("0")
+    if end <= start:
+        return Decimal("1") if as_of_date >= end else Decimal("0")
+    if as_of_date <= start:
+        return Decimal("0")
+    if as_of_date >= end:
+        return Decimal("1")
+    total_days = (end - start).days
+    elapsed = (as_of_date - start).days
+    if total_days <= 0:
+        return Decimal("0")
+    return Decimal(elapsed) / Decimal(total_days)
+
+
+def _ratio_to_percent(start, end, as_of_date):
+    return _date_ratio(start, end, as_of_date) * Decimal("100")
+
+
+def compute_project_kpi(project, as_of_date=None, include_submitted=False):
+    if as_of_date is None:
+        as_of_date = timezone.localdate()
+    return compute_kpis_for_projects([project], as_of_date, include_submitted).get(
+        project.id, {}
+    )
+
+
+def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include_submitted=False):
+    if as_of_date is None:
+        as_of_date = timezone.localdate()
+
+    start_ts = time.perf_counter()
+    logger = logging.getLogger(__name__)
+
+    if isinstance(projects_queryset_or_ids, (list, tuple, set)):
+        project_ids = [
+            item.id if isinstance(item, Project) else item
+            for item in projects_queryset_or_ids
+        ]
+    else:
+        project_ids = [project.id for project in projects_queryset_or_ids]
+
+    projects = list(
+        Project.objects.filter(id__in=project_ids)
+        .select_related("contract")
+        .prefetch_related("budget_items", "wbsitem_set")
+    )
+    project_ids = [project.id for project in projects]
+
+    if not project_ids:
+        return {}
+
+    if not project_ids:
+        return {}
+
+    contract_map = {
+        project.id: getattr(project, "contract_amount", None) for project in projects
+    }
+    contract_model = apps.get_model("projects", "ProjectContract")
+    if contract_model:
+        for row in contract_model.objects.filter(project_id__in=project_ids).values(
+            "project_id", "contract_amount"
+        ):
+            contract_map[row["project_id"]] = row["contract_amount"]
+
+    budget_by_project = {}
+    budget_by_category = {pid: {} for pid in project_ids}
+    budget_model = apps.get_model("projects", "BudgetItem")
+    if budget_model:
+        for row in (
+            budget_model.objects.filter(project_id__in=project_ids)
+            .values("project_id", "category")
+            .annotate(total=Sum("planned_amount"))
+        ):
+            pid = row["project_id"]
+            total = row["total"] or Decimal("0")
+            budget_by_project[pid] = budget_by_project.get(pid, Decimal("0")) + total
+            budget_by_category[pid][row["category"]] = total
+
+    cost_statuses = [CostActualStatus.APPROVED, CostActualStatus.CLOSED]
+    if include_submitted:
+        cost_statuses.append(CostActualStatus.SUBMITTED)
+
+    cost_totals = {}
+    cost_by_category = {pid: {} for pid in project_ids}
+    cost_rows = (
+        CostActualLine.objects.filter(
+            cost_actual__project_id__in=project_ids,
+            cost_actual__status__in=cost_statuses,
+        )
+        .values("cost_actual__project_id", "cost_item__category")
+        .annotate(total=Sum("amount"))
+    )
+    for row in cost_rows:
+        pid = row["cost_actual__project_id"]
+        total = row["total"] or Decimal("0")
+        cost_totals[pid] = cost_totals.get(pid, Decimal("0")) + total
+        cost_by_category[pid][row["cost_item__category"]] = total
+
+    labor_totals = get_labor_totals_for_projects(project_ids, as_of_date=as_of_date)
+    labor_cbs_ids = set()
+    for summary in labor_totals.values():
+        labor_cbs_ids.update((summary.get("by_cbs") or {}).keys())
+    labor_cbs_map = {
+        item.id: item for item in CostItem.objects.filter(id__in=labor_cbs_ids)
+    }
+
+    adjustment_totals = get_adjustment_totals(
+        project_ids,
+        target_type=AdjustmentTargetType.COST,
+        as_of_date=as_of_date,
+    )
+    adjustment_by_category = get_cost_adjustment_by_category(
+        project_ids, as_of_date=as_of_date
+    )
+    for (project_id, category), amount in adjustment_by_category.items():
+        cost_by_category.setdefault(project_id, {})
+        cost_by_category[project_id][category] = cost_by_category[project_id].get(
+            category, Decimal("0")
+        ) + (amount or Decimal("0"))
+
+    progress_statuses = ["approved"]
+    if include_submitted:
+        progress_statuses.append("submitted")
+
+    progress_by_project = _bulk_actual_progress(project_ids, as_of_date, progress_statuses)
+
+    pending_approvals = _pending_approvals(project_ids)
+    pending_changes = _pending_changes(project_ids)
+
+    results = {}
+    for project in projects:
+        contract_amount = _safe_decimal(contract_map.get(project.id))
+        budget_total = _safe_decimal(budget_by_project.get(project.id))
+        planned_progress = _planned_progress_percent_for_items(
+            project,
+            list(project.wbsitem_set.all()),
+            as_of_date,
+        )
+        baseline_ready, excluded_reason = _baseline_ready(
+            project, contract_amount, budget_total, planned_progress
+        )
+
+        actual_cost_total = _safe_decimal(cost_totals.get(project.id)) + _safe_decimal(
+            adjustment_totals.get(project.id)
+        )
+        labor_summary = labor_totals.get(project.id, {})
+        labor_total = _safe_decimal(labor_summary.get("total"))
+        if labor_total:
+            actual_cost_total += labor_total

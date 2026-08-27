@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from apps.cost.models import CostItem
 from apps.closing.guards import guard_write
+from apps.projects.test_date_window import allows_future_operational_test_date
 
 from .models import DailyReport, DailyReportLine, DailyReportStatus
 
@@ -59,10 +60,12 @@ class DailyReportSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "status", "created_at", "updated_at"]
 
-    def validate_report_date(self, value):
-        if value and value > date.today():
-            raise serializers.ValidationError("report_date cannot be in the future.")
-        return value
+    def validate(self, attrs):
+        report_date = attrs.get("report_date") or getattr(self.instance, "report_date", None)
+        project = attrs.get("project") or getattr(self.instance, "project", None)
+        if report_date and report_date > date.today() and not allows_future_operational_test_date(project, report_date):
+            raise serializers.ValidationError({"report_date": "report_date cannot be in the future."})
+        return attrs
 
     def create(self, validated_data):
         lines_data = validated_data.pop("lines", [])

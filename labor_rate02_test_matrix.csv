@@ -1,0 +1,5 @@
+Command,Result,Notes
+python manage.py check,PASS,0 issues
+python manage.py makemigrations --check --dry-run,PASS,No changes detected
+python manage.py migrate labor,PASS,labor.0014 applied
+pytest -q apps/labor/tests/test_labor_rate_master_hq_ui_and_resolution.py apps/labor/tests/test_labor_rate_master_timesheet_submit.py,PASS,12 passed

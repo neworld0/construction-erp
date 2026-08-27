@@ -1,0 +1,208 @@
+[LAB-4]
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+
+=====================================================
+[LAB-4 목표]
+=====================================================
+승인된 출역부(Timesheet.APPROVED)와 제출된 급여 배부(PayrollAllocationBatch.SUBMITTED/APPROVED)를 기반으로
+프로젝트별/월별/ CBS별 인건비 실적을 집계하고,
+이를 KPI(T10-3) 계산에 포함시킨다.
+
+원칙:
+- 원본 데이터(Timesheet/PayrollAllocation)는 변경하지 않는다.
+- 집계는 “표준 집계 함수/뷰”로 제공하고, 필요시 캐시 테이블(옵션)을 도입한다.
+- KPI는 “원가 실적”에 인건비를 포함해야 한다.
+- data_quality(OK/미정/추정) 규칙을 인건비에도 적용한다.
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- KPI 계산 코드 위치(T10-3) 및 “원가 실적” 집계 함수/쿼리 확인
+- CostActual(기타 원가) 집계 방식 확인(월/프로젝트/CBS)
+- data_quality 배지 계산 방식(OK/미정/추정) 확인
+- Timesheet/PayrollAllocation 모델 필드명, status 값 확인
+- CBS 기본 정책(비활성/별칭/잠금)과 집계 표시 방식 확인
+Discovery 결과를 코드 주석으로 남기고, 수정할 함수/파일 목록을 먼저 적어라.
+
+=====================================================
+1) 집계 범위/정의 (필수)
+=====================================================
+인건비 실적(LaborActual) =
+
+A) 현장 출역 인건비:
+- Timesheet.status=APPROVED 인 것만 포함
+- TimesheetLine.amount 합계
+
+B) 급여 배부 인건비(월급):
+- PayrollAllocationBatch.status IN ("SUBMITTED","APPROVED") 인 것만 포함
+- PayrollAllocationLine.amount 합계
+
+집계 차원:
+- project_id
+- period_year, period_month
+- cbs_id (가능하면)  # 없으면 “기본 인건비 CBS”로 매핑
+
+CBS 매핑 정책:
+- TimesheetLine의 labor_role.default_cbs가 있으면 사용
+- 없으면 “공통 CBS(예: LABOR-GENERAL)”로 매핑
+- PayrollAllocationLine.cbs가 null이면 “공통 CBS”로 매핑
+=> 공통 CBS는 기존 CBS 코드표에 존재해야 함.
+  없다면: LAB-4에서 마이그레이션/seed로 1개 생성(또는 설정값으로 지정).
+  예: code="LABOR-GENERAL", name="인건비(공통)"
+
+=====================================================
+2) 구현 방식 선택 (필수: A로 시작)
+=====================================================
+A) 실시간 집계(권장, MVP)
+- DB aggregate 쿼리로 월별/프로젝트별/ CBS별 집계를 즉시 반환
+- 캐시/스냅샷 테이블은 후속(성능 문제 발생 시)
+
+B) 집계 테이블(Materialized-like) (옵션)
+- LaborMonthlyActual(project, year, month, cbs, amount, updated_at)
+- Timesheet/PayrollAllocation 승인/제출 시 신호로 갱신
+=> 이번 티켓은 A로 구현하고, B는 TODO로만 남김.
+
+=====================================================
+3) 서비스/쿼리 함수 (필수)
+=====================================================
+apps/labor/services.py 또는 apps/kpi/services.py에 다음을 추가/수정:
+
+함수 1) get_labor_actual_by_month(project_id, year, month) -> dict
+- 반환:
+  {
+    "total": int,
+    "by_cbs": [{"cbs_id":..,"cbs_code":..,"cbs_name":..,"amount":..}, ...],
+    "sources": {
+       "timesheet_total": int,
+       "payroll_total": int
+    },
+    "data_quality": "OK|ESTIMATED|UNKNOWN"
+  }
+
+집계 로직:
+- timesheet_qs = Timesheet(APPROVED, project=..., work_date in month)
+  sum TimesheetLine.amount grouped by cbs (via labor_role.default_cbs else fallback)
+- payroll_qs = PayrollAllocationBatch(status SUBMITTED/APPROVED, year/month)
+  join PayrollAllocationLine for project=...
+  sum by cbs (null -> fallback)
+- 합산
+
+CBS fallback 매핑 구현 방법:
+- DB에서 CASE WHEN으로 처리하거나
+- 파이썬에서 2단계 집계:
+  1) role.default_cbs별 sum (null 포함)
+  2) null은 fallback_cbs로 합산
+MVP에서는 파이썬 후처리 허용(성능 이슈는 후속)
+
+함수 2) get_labor_actual_range(project_id, start_date, end_date, granularity="month|week")  # T10-3-EXTRA 대응
+- week 지원 시 ISO week 기준으로 bucketizing
+
+=====================================================
+4) data_quality 규칙(필수)
+=====================================================
+인건비 품질 배지 로직을 KPI 배지 규칙과 일치시켜라.
+
+권장 규칙(현재 시스템에 맞춰 조정):
+- 대상 월이 CLOSED:
+   - PayrollAllocationBatch가 존재하고 status SUBMITTED/APPROVED이고,
+   - Timesheet는 해당 월의 현장 입력이 "필요 수준" 충족(아래)하면 → OK
+   - 그렇지 않으면 → ESTIMATED
+- 대상 월이 OPEN:
+   - UNKNOWN 또는 ESTIMATED (KPI 화면 정책에 맞춤)
+
+Timesheet “필요 수준” (MVP 단순):
+- APPROVED Timesheet가 1건 이상이면 충족
+(후속: 현장별 일수 커버리지 기준)
+
+위 규칙을 코드로 분리:
+- compute_labor_data_quality(project_id, year, month) 함수
+
+=====================================================
+5) KPI(T10-3) 반영 (핵심)
+=====================================================
+기존 KPI 계산에서 “원가 실적(actual_cost)” 산식에 인건비를 포함:
+
+예:
+- actual_cost_total = costactual_total + labor_total + inventory_issue_cost(이미 반영이면 중복 주의)
+※ 중복 주의:
+- INV-5가 CostActual을 자동 생성하도록 구현했다면 자재 투입은 이미 costactual_total에 포함된다.
+- 인건비는 별도 축으로 합산하되,
+  만약 기존에 “인건비를 CostActual로도 입력하는 경로”가 있다면 중복 집계 위험:
+  - 정책: 인건비는 LAB-2/3 기반으로만 집계(권장)
+  - 또는 CostActual에 category/type이 있다면 type="LABOR"는 제외(정책 결정)
+이번 티켓에서 “중복 방지 정책”을 명확히 구현:
+- CostActual에서 labor 관련 입력이 없다는 전제면 단순 합산
+- 있다면 CostActual에 cost_type을 추가하는 것은 큰 변경이므로, MVP에서는:
+  - labor_total을 별도 KPI 카드로 보여주고
+  - actual_cost_total에는 포함하되, CostActual labor 입력이 없도록 운영 가이드(TODO)
+=> 현실적으로는 actual_cost_total에 포함하는 구현을 우선하고,
+   “CostActual에 labor 입력은 금지” 안내를 UI에 경고로 추가(최소).
+
+KPI 산출물에 추가 필드:
+- labor_cost_total
+- labor_cost_by_cbs (옵션)
+- labor_data_quality
+
+=====================================================
+6) API 확장 (필수)
+=====================================================
+- 기존 KPI API 응답에 labor 항목 포함
+예: GET /api/kpi/project/<id>/summary/?year=&month=
+응답 추가:
+{
+  ...
+  "labor": {
+     "total": 1234567,
+     "timesheet_total": ...,
+     "payroll_total": ...,
+     "data_quality": "OK|ESTIMATED|UNKNOWN"
+  }
+}
+
+T10-3-EXTRA(월/주 타임라인) API에도 labor 포함:
+- month buckets: labor_total, labor_quality
+- week buckets: labor_total(week)
+
+=====================================================
+7) CEO 대시보드 UI 반영 (필수, 최소)
+=====================================================
+- 기존 CEO KPI 카드/그래프에 인건비를 포함:
+  - “원가(실적)”에 인건비 포함된 값 표시
+  - 별도 카드: “인건비(실적)” 표시(추천)
+- 데이터 품질 배지(OK/미정/추정) 계산에 labor_quality를 반영:
+  - 전체 KPI 품질이 기존 규칙이라면, labor_quality를 AND/최저값으로 반영(정책 맞춤)
+- 한글 라벨:
+  - “인건비(실적)”
+  - “출역”
+  - “급여 배부”
+
+=====================================================
+8) AuditLog (필수)
+=====================================================
+LAB-4는 읽기 집계가 핵심이라 AuditLog는 최소화:
+- KPI 조회 로그는 남기지 않음(노이즈)
+- 다만, “집계 캐시/스냅샷”을 만들지 않으므로 이벤트 없음
+(옵션 B 구현 시 갱신 이벤트 기록)
+
+=====================================================
+9) 테스트 시나리오 (필수)
+=====================================================
+1) 승인된 Timesheet 2건(같은 월, 다른 role) 생성 → labor_total=합계
+   - role.default_cbs가 있는/없는 경우 fallback CBS로 합산 확인
+2) PayrollAllocationBatch(월) SUBMITTED + 라인(project별) 입력 → payroll_total 반영 확인
+3) labor_total = timesheet_total + payroll_total 정확성
+4) KPI summary에서 actual_cost_total에 labor_total이 포함되는지 확인
+5) month CLOSED + payroll 존재 + timesheet 승인 존재 → labor_quality=OK
+6) month CLOSED인데 payroll 미제출 또는 timesheet 없음 → labor_quality=ESTIMATED
+7) week 타임라인 API에서 labor_total 주별 합계 확인
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- 인건비 월별/프로젝트별/CBS별 집계 함수 구현
+- KPI API 및 타임라인 API에 labor 포함
+- CEO UI에 인건비 표시 + 품질 배지 반영
+- CLOSE/승인 상태 기반 data_quality 규칙 적용
+- 중복 집계 위험 최소화(명시적 정책/경고 또는 필터 적용)

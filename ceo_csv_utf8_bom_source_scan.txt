@@ -1,0 +1,8 @@
+﻿Changed source files:
+apps/ceo/views.py
+apps/ceo/tests/test_ceo_dashboard_csv_export_encoding.py
+
+Mojibake scan:
+apps/ceo/tests/test_ceo_dashboard_csv_export_encoding.py:58:    assert "�" not in decoded
+apps/ceo/tests/test_ceo_dashboard_csv_export_encoding.py:100:    assert "�" not in decoded
+OVERALL_SOURCE_SCAN_PASS: True

@@ -1,12 +1,13 @@
 from django import forms
 
+from apps.core.rbac.models import LegalEntity
 from .models import ItemCategory, ItemMaster, UoM, Warehouse, WarehouseType
 
 
 class WarehouseCreateForm(forms.ModelForm):
     class Meta:
         model = Warehouse
-        fields = ["code", "name"]
+        fields = ["legal_entity", "code", "name"]
         widgets = {
             "code": forms.TextInput(attrs={"class": "input"}),
             "name": forms.TextInput(attrs={"class": "input"}),

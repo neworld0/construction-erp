@@ -1,0 +1,8 @@
+Scope: apps/labor/models.py; apps/labor/migrations/0013_timesheetline_worker.py; apps/labor/services.py; apps/labor/web_views.py; templates/app/field/timesheet_form.html; templates/app/hq/timesheet_detail.html; apps/labor/tests/test_field_timesheet_worker_selection.py; scripts/local_ops_field_timesheet_worker_diagnostic.py
+Korean mojibake: none
+Replacement character: none
+Raw resident number, bank account, or phone exposed to FIELD: none
+Secrets: none
+Migration justification: TimesheetLine previously had no WorkerMaster FK; nullable field preserves aggregate rows.
+Broad unrelated changes: none in this patch.
+OVERALL_SOURCE_SCAN_PASS: True

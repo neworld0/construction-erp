@@ -1,0 +1,6 @@
+Command,Result,Notes
+python manage.py check,PASS,No system issues.
+python manage.py makemigrations --check --dry-run,PASS,No pending model changes.
+pytest -q apps/risk/tests/test_local_ops_reset_risk_cleanup.py apps/projects/tests/test_audit8_ceo_dashboard_lineage.py,PASS,10 passed; 2 existing Django deprecation warnings.
+python scripts/local_ops_risk_diagnostic.py,PASS,Read-only local/demo diagnostic; CEO visible open count is 0.
+python scripts/local_ops_reset_project_data.py --dry-run,PASS,No deletion applied; orphan risk cleanup appears in manifest.

@@ -1,0 +1,2 @@
+Project_Code,Project_ID,Is_Active,Status,CEO_Dashboard_HTTP_Status,CEO_Project_List_HTTP_Status,Appears_In_Dashboard,Appears_In_Project_List,Dashboard_Progress,Dashboard_Cost,Dashboard_Revenue,Dashboard_Profit,Visibility_Result,Notes
+OPS1B-RERUN-SAMPLE-001,17,True,active,200,200,True,True,5.625000,10000000.00,32120026.88,22120026.88,PASS,Dashboard filters active projects with Project.is_active=True

@@ -1,0 +1,33 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}비용 집행 관리{% endblock %}
+{% block content %}
+<div class="card">
+  <h2 class="card-title">비용 집행 관리</h2>
+  <p class="muted">CEO가 승인한 원가 요청을 HQ가 지급 예정부터 실제 지급 완료까지 관리합니다. 지급 완료 시 확정 현금 유출로 반영됩니다.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+    <a class="btn {% if selected_status == 'open' %}primary{% else %}btn-outline{% endif %}" href="?status=open">처리 대상</a>
+    <a class="btn btn-outline" href="?status=PAID">지급 완료</a>
+    <a class="btn btn-outline" href="?status=CANCELLED">취소</a>
+  </div>
+</div>
+<div class="card" style="margin-top:16px;overflow:auto;">
+  <table class="table" style="min-width:1100px;">
+    <thead><tr><th>프로젝트</th><th>원가 발생일</th><th>승인 금액</th><th>CEO 승인</th><th>상태</th><th>예정/지급일</th><th>처리</th></tr></thead>
+    <tbody>{% for item in executions %}
+      <tr>
+        <td>{{ item.cost_actual.project.name }}</td><td>{{ item.cost_actual.report_date|date:"Y-m-d" }}</td><td>{{ item.amount_snapshot|intcomma }}원</td>
+        <td>{% if item.ceo_approved_by %}{{ item.ceo_approved_by.username }} / {{ item.ceo_approved_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+        <td>{{ item.get_status_display }}</td><td>{% if item.status == 'PAID' %}{{ item.paid_date|date:"Y-m-d" }}{% else %}{{ item.scheduled_date|date:"Y-m-d"|default:"-" }}{% endif %}</td>
+        <td>
+          {% if item.status == 'READY' or item.status == 'SCHEDULED' %}
+          <form method="post" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">{% csrf_token %}<input type="hidden" name="execution_id" value="{{ item.id }}"><input type="hidden" name="status" value="{{ selected_status }}"><input type="hidden" name="action" value="schedule"><input class="input" type="date" name="scheduled_date" value="{{ item.scheduled_date|date:'Y-m-d'|default:today|date:'Y-m-d' }}" required><input class="input" name="memo" value="{{ item.memo }}" placeholder="지급 메모"><button class="btn btn-outline">예정 등록</button></form>
+          <form method="post" style="display:flex;gap:6px;flex-wrap:wrap;">{% csrf_token %}<input type="hidden" name="execution_id" value="{{ item.id }}"><input type="hidden" name="status" value="{{ selected_status }}"><input type="hidden" name="action" value="pay"><input class="input" type="date" name="paid_date" value="{{ today|date:'Y-m-d' }}" required><input class="input" name="payment_reference" placeholder="이체번호·전표번호"><input class="input" name="memo" value="{{ item.memo }}" placeholder="지급 메모"><button class="btn">지급 완료</button></form>
+          <form method="post" style="margin-top:6px;display:flex;gap:6px;">{% csrf_token %}<input type="hidden" name="execution_id" value="{{ item.id }}"><input type="hidden" name="status" value="{{ selected_status }}"><input type="hidden" name="action" value="cancel"><input class="input" name="memo" placeholder="취소 사유" required><button class="btn btn-outline" onclick="return confirm('비용 집행 대상을 취소할까요?')">취소</button></form>
+          {% else %}<span class="muted">{% if item.payment_reference %}{{ item.payment_reference }}{% else %}-{% endif %}<br>{{ item.memo|default:"" }}</span>{% endif %}
+        </td>
+      </tr>
+    {% empty %}<tr><td colspan="7" class="muted">표시할 비용 집행 대상이 없습니다.</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endblock %}

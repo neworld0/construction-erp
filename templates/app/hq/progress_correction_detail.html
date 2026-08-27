@@ -1,0 +1,8 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}진행률 정정·취소 상세{% endblock %}
+{% block content %}
+<div class="container" style="max-width:800px;display:grid;gap:16px"><div class="card"><h2>진행률 정정·취소 요청</h2><p class="hint">원본 진행률은 삭제되지 않으며, 승인 이력과 함께 보관됩니다.</p>
+<div style="display:grid;gap:8px"><div>프로젝트: {{ correction.project.name }}</div><div>원본: {{ correction.original_report_date }} / {{ correction.original_progress_percent|floatformat:1 }}% / {{ correction.original_note|default:'-' }}</div><div>요청: {% if correction.correction_type == 'CANCEL' %}취소(무효){% else %}{{ correction.proposed_progress_percent|floatformat:1 }}% / {{ correction.proposed_note|default:'-' }}{% endif %}</div><div>요청 사유: {{ correction.reason }}</div><div>요청자: {{ correction.requested_by.username }}</div><div>상태: {{ correction.status }}</div>{% if correction.hq_review_comment %}<div>HQ 의견: {{ correction.hq_review_comment }}</div>{% endif %}{% if correction.rejection_reason %}<div>반려 사유: {{ correction.rejection_reason }}</div>{% endif %}</div>
+{% if is_hq and correction.status == 'HQ_REVIEW' %}<form method="post" action="/app/hq/progress/corrections/{{ correction.id }}/review/" style="margin-top:16px;display:grid;gap:8px">{% csrf_token %}<label>HQ 검토 의견</label><textarea name="comment" rows="3"></textarea><div style="display:flex;gap:8px"><button class="btn btn-primary" name="action" value="approve">CEO 승인 요청으로 전달</button><button class="btn btn-outline" name="action" value="reject">HQ 반려</button></div></form>{% endif %}
+<div style="margin-top:16px"><a class="btn btn-outline" href="{% if is_hq %}/app/hq/progress/corrections/{% else %}/app/ceo/{% endif %}">돌아가기</a></div></div></div>
+{% endblock %}

@@ -1,0 +1,209 @@
+[CLOSE-4]
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+
+=====================================================
+[CLOSE-4 목표]
+=====================================================
+프로젝트 단위의 마감(Project Close)을 도입하여,
+1) 프로젝트가 종료/정산 완료된 이후에는 해당 프로젝트에 대한 모든 입력/수정/승인/재고이동을 차단하고,
+2) 월 마감(ClosingPeriod)과 충돌하지 않는 규칙을 정의/구현하며,
+3) 마감 후 변경은 CLOSE-3 정정(Adjustment) 경로로만 가능하게 한다.
+
+핵심은 “이중 잠금”:
+- 월 마감: 기간(월) 단위 차단
+- 프로젝트 마감: 프로젝트 단위 차단(월과 무관하게)
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- 현재 CLOSE-2의 공통 가드 함수(예: assert_month_open(date), guard_write_or_403 등) 위치/호출지점 파악
+- 입력/변경이 발생하는 핵심 도메인 목록 파악:
+  - Project/WBS baseline change
+  - DailyReport/CostActual/Evidence
+  - InventoryLedger/Transfer/IssueToWork
+  - Timesheet/PayrollAllocation
+  - ApprovalRequest/Package(승인)
+- 프로젝트 상태 필드(예: status, start_date/end_date) 및 종료 처리 흐름 확인
+Discovery 결과를 코드 주석으로 남기고, “어떤 모델/엔드포인트에 가드를 붙였는지 체크리스트”를 작성하라.
+
+=====================================================
+1) 모델 설계 (필수)
+=====================================================
+옵션 A(권장, 최소 침습): 별도 모델 ProjectClose
+apps/closing/models.py 또는 core/models.py
+
+[ProjectClose]
+- id
+- project (OneToOneField Project, related_name="close", unique)
+- status (choices):
+    "OPEN"        # 운영 중
+    "CLOSING"     # 마감 절차 진행 중(요청/검증)
+    "CLOSED"      # 프로젝트 마감 완료(전면 차단)
+- closed_at (DateTimeField, null=True, blank=True)
+- closed_by (FK User, null=True, blank=True)
+- note (TextField, blank=True)
+- created_at/updated_at
+
+필수 필드 추가(추천):
+- close_effective_date (DateField, null=True, blank=True)
+  - “이 날짜 이후의 입력 차단” 기준이 아니라, “프로젝트 마감 완료 시점 이후 전부 차단”으로 가되
+    리포팅(마지막 정산월)을 위해 저장 가능.
+
+옵션 B(더 단순): Project에 is_closed/closed_at 추가
+- 이미 Project 모델 변경이 광범위하면 A가 더 안전.
+
+이번 티켓은 옵션 A로 구현(권장).
+
+=====================================================
+2) 프로젝트 마감 워크플로우 (필수)
+=====================================================
+정책(운영 안전):
+- HQ는 “프로젝트 마감 요청(Submit)”만 가능
+- CEO 승인 후 “CLOSED” 전환(권장)
+- 마감 해제(OPEN 복귀)는 UI/API 모두 제공하지 않음(금지)
+- 마감 직전 검증(Checklist)을 수행해 “경고/차단”을 분리
+
+상태 전이:
+- OPEN -> CLOSING (HQ submit close request)
+- CLOSING -> CLOSED (CEO approve + execute close)
+- CLOSING -> OPEN (CEO reject)  # 반려 시 운영 계속
+
+검증 체크리스트(권장: 경고 + 일부 차단):
+- 해당 프로젝트의 “미승인/미제출” 문서가 남아있으면:
+  - 경고: DRAFT/SUBMITTED 잔존
+  - 선택 차단: SUBMITTED 승인 대기 잔존이면 마감 실행 차단(권장)
+- 마지막 월이 마감(CLOSE-1에서 CLOSED)되었는지:
+  - 프로젝트 종료월(또는 close_effective_date월)이 CLOSED가 아니면 마감 실행 차단(권장)
+- 재고:
+  - 현장 창고 재고(Stock) 잔존이 있으면 경고(또는 차단 옵션)
+  - MVP는 “경고만” 또는 “차단” 중 택1:
+    => 운영 안전상 차단 추천: 재고 0 확인 후 마감
+
+코드는 “검증 함수”로 분리:
+- validate_project_close(project) -> {ok:bool, blocks:[...], warns:[...], stats:{...}}
+
+=====================================================
+3) 월 마감과 충돌 규칙(핵심)
+=====================================================
+규칙을 명문화 + 코드로 구현:
+
+Rule-1 (강제): 프로젝트가 CLOSED면 “모든 월/일자”에 대해 해당 프로젝트 입력은 차단
+- 즉, 월이 OPEN이어도 프로젝트 CLOSED면 금지
+
+Rule-2 (권장): 프로젝트 CLOSE 실행(CEO 승인)은 “프로젝트 종료월이 월 마감(CLOSED)”된 후에만 가능
+- 종료월은:
+  - project.end_date가 있으면 그 월
+  - 없으면 close_effective_date 또는 현재월(명시 필요)
+- 종료월 판단 로직을 validate_project_close에서 처리
+
+Rule-3 (정정): 프로젝트 CLOSED 이후 변경이 필요하면:
+- CLOSE-3 Adjustment로만 처리
+- 단, Adjustment는 “프로젝트가 CLOSED여도 허용”하지만,
+  CEO 승인 필수 + AuditLog 필수
+
+Rule-4 (프로젝트 마감이 월 마감보다 우선):
+- 가드 함수에서 검사 순서:
+  1) assert_project_open(project)
+  2) assert_month_open(date)
+(둘 중 하나라도 막히면 차단)
+
+=====================================================
+4) 공통 가드 함수 확장 (필수)
+=====================================================
+CLOSE-2에서 이미 쓰는 공통 가드에 프로젝트 마감 체크를 추가하라.
+
+예:
+- assert_project_open(project): project.close.status != CLOSED
+- guard_write(project, date, actor, domain): 
+    assert_project_open(project)
+    assert_month_open(date)
+
+도메인별 date 선택(중요, Discovery 기반으로 실제 필드로 매핑):
+- CostActual: spent_date(또는 date)
+- Evidence: 연결 대상의 date를 찾아 사용(없으면 created_at date로)
+- InventoryLedger: tx_date
+- Transfer: tx_date
+- IssueToWork: issue_date
+- Timesheet: work_date
+- PayrollAllocationBatch: period_year/month -> date=YYYY-MM-01
+- WBS baseline/change: effective_date or request_date(없으면 today)
+
+=====================================================
+5) 입력/승인 경로별 차단 적용(필수)
+=====================================================
+아래 “상태 전이/생성/수정” 엔드포인트에서 guard_write를 호출하도록 수정:
+- /api/*: create/update/submit/approve endpoints
+- /app/*: 폼 POST 처리 로직
+
+최소 적용 대상(필수):
+- CostActual 생성/수정/제출
+- Evidence 업로드/수정
+- InventoryLedger 생성
+- Transfer submit/issue/receive
+- IssueToWork submit
+- Timesheet create/update/submit/approve/reject
+- PayrollAllocationBatch create/update/submit
+- ChangeOrder/WBS 변경 승인 실행(프로젝트 baseline 바뀌는 순간)
+
+주의:
+- “조회”는 허용
+- “정정(Adjustment)”은 프로젝트 CLOSED여도 허용(단, CEO 승인 필수)
+
+=====================================================
+6) 프로젝트 마감 UI (HQ/CEO) (권장: 최소)
+=====================================================
+HQ 화면:
+- /app/hq/projects/<id>/close/
+  - 현재 상태(OPEN/CLOSING/CLOSED)
+  - 검증 결과(경고/차단 항목 리스트 + 통계)
+  - [마감 요청 제출] 버튼(OPEN에서만)
+CEO 화면:
+- /app/ceo/project-close/
+  - 대기(CLOSING) 목록
+  - 상세에서 검증 결과 확인
+  - [승인하고 마감 실행] / [반려] 버튼
+
+※ 기존 Approval UI가 있다면:
+- object_type="PROJECT_CLOSE"로 승인요청 생성 후, CEO 승인 시 execute_close(project) 호출
+
+=====================================================
+7) AuditLog (필수)
+=====================================================
+이벤트:
+- PROJECT_CLOSE_REQUEST_CREATE
+- PROJECT_CLOSE_SUBMIT
+- PROJECT_CLOSE_APPROVE_AND_EXECUTE
+- PROJECT_CLOSE_REJECT
+- PROJECT_CLOSE_BLOCKED_VALIDATION_FAIL
+- PROJECT_WRITE_BLOCKED_PROJECT_CLOSED (선택: 차단 시도 로깅)
+
+metadata:
+{project_id, close_id, status_before, status_after, blocks_count, warns_count}
+
+=====================================================
+8) 테스트 시나리오 (필수)
+=====================================================
+1) 프로젝트 OPEN 상태에서 CostActual 입력 가능(월 OPEN)
+2) 프로젝트 CLOSING 상태에서도 입력은 가능(정책 선택):
+   - 권장: CLOSING에서도 입력 허용(마감 준비 중) + 마감 실행 전에만 막음
+3) 프로젝트 CLOSED 전환 후:
+   - CostActual/Timesheet/Transfer/IssueToWork 등 생성/제출/승인 모두 차단
+   - 조회는 가능
+4) 프로젝트 종료월이 월 마감되지 않은 상태에서 CEO가 마감 실행 시도:
+   - validate_project_close blocks로 차단
+5) CLOSE-3 Adjustment는 프로젝트 CLOSED 후에도 생성 가능(CEO 승인 필수) 확인
+6) 월 CLOSED + 프로젝트 OPEN: 월 가드가 차단되는지 확인
+7) 월 OPEN + 프로젝트 CLOSED: 프로젝트 가드가 차단되는지 확인(우선순위)
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- ProjectClose 모델(또는 Project 필드) + 마이그레이션 완료
+- 프로젝트 마감 요청(HQ) + 승인/마감 실행(CEO) 구현
+- 검증 체크리스트(validate_project_close) 구현 + UI에 표시
+- 공통 가드에 “프로젝트 마감 차단” 추가(CLOSE-2 확장)
+- 주요 도메인 입력/승인 엔드포인트에 가드 적용
+- 월 마감과 충돌 규칙이 코드로 강제(프로젝트 CLOSED 우선, 종료월 월마감 선행)
+- AuditLog 기록

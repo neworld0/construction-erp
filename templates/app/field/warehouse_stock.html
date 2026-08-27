@@ -1,0 +1,85 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}현장 창고 재고{% endblock %}
+{% block content %}
+<style>
+  .field-stock-table { border-collapse:collapse; }
+  .field-stock-table th,
+  .field-stock-table td { padding:10px 12px; border:1px solid var(--border); text-align:left; vertical-align:middle; }
+  .field-stock-table thead th { background:var(--panel-raised); color:var(--text); font-size:12px; font-weight:800; white-space:nowrap; }
+  @media (max-width: 900px) {
+    .field-stock-table,
+    .field-stock-table tbody,
+    .field-stock-table tr,
+    .field-stock-table td { display:block; width:100%; }
+    .table-wrap { overflow:visible; border:0; }
+    .table-wrap .field-stock-table { min-width:0; }
+    .field-stock-table thead { display:none; }
+    .field-stock-table tr {
+      margin:10px 0;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--panel-raised);
+    }
+    .field-stock-table td { padding:7px 0; border:0; }
+    .field-stock-table td::before {
+      display:block;
+      margin-bottom:4px;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+    }
+    .field-stock-table td:nth-child(1)::before { content:"품목 코드"; }
+    .field-stock-table td:nth-child(2)::before { content:"품목명"; }
+    .field-stock-table td:nth-child(3)::before { content:"규격"; }
+    .field-stock-table td:nth-child(4)::before { content:"위치"; }
+    .field-stock-table td:nth-child(5)::before { content:"현재고"; }
+    .field-stock-table td:nth-child(6)::before { content:"단위"; }
+    .field-stock-table td:nth-child(7)::before { content:"중앙창고 반송 요청"; }
+  }
+</style>
+<div class="field-page">
+  <div class="card">
+    <h2 class="card-title">{% if warehouse.warehouse_type == "hq" %}본사 중앙창고 가용재고{% else %}{{ warehouse.project.name }} 현장 창고 재고{% endif %}</h2>
+    <p class="muted">{{ warehouse.name }} · {{ warehouse.code }}{% if warehouse.warehouse_type == "hq" %} · 조회 전용{% endif %}</p>
+  </div>
+  <div class="card">
+    {% if can_return %}
+      <p class="muted">반송 요청은 HQ가 확정한 뒤 현장 출고와 중앙창고 입고를 처리합니다.</p>
+    {% else %}
+      <p class="muted">본사 가용재고는 자재 이관 가능 여부 확인용입니다. 단가와 재고 원장 내역은 표시하지 않습니다.</p>
+    {% endif %}
+    <div class="table-wrap">
+      <table class="table field-stock-table">
+        <thead>
+          <tr>
+            <th>품목 코드</th><th>품목명</th><th>규격</th><th>위치</th><th>현재고</th><th>단위</th>
+            {% if can_return %}<th>중앙창고 반송 요청</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for stock in stocks %}
+            <tr>
+              <td>{{ stock.item.code }}</td><td>{{ stock.item.name }}</td><td>{{ stock.item.spec|default:"-" }}</td><td>{{ stock.location.name|default:"기본" }}</td><td>{{ stock.qty_on_hand }}</td><td>{{ stock.item.uom.code }}</td>
+              {% if can_return %}
+                <td>
+                  <form method="post" style="display:flex;gap:6px;flex-wrap:wrap;">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ stock.item_id }}">
+                    <select class="form-control" name="to_warehouse_id" required>{% for hq in hq_warehouses %}<option value="{{ hq.id }}">{{ hq.name }}</option>{% endfor %}</select>
+                    <input class="form-control" type="number" step="0.001" min="0.001" max="{{ stock.qty_on_hand }}" name="qty" placeholder="수량" required>
+                    <input class="form-control" name="note" placeholder="반송 사유">
+                    <button class="btn btn-outline" onclick="return confirm('중앙창고 반송 요청을 등록할까요?')">반송 요청</button>
+                  </form>
+                </td>
+              {% endif %}
+            </tr>
+          {% empty %}
+            <tr><td colspan="{% if can_return %}7{% else %}6{% endif %}" class="muted">현재 재고가 없습니다.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+﻿apps\core\admin.py:21:class ProjectAssignmentAdmin(admin.ModelAdmin):
+apps\closing\__init__.py:1:"""Closing period app."""
+apps\closing\web_views.py:24:from .models import Adjustment, AdjustmentStatus, AdjustmentTargetType, ClosingPeriod, ClosingStatus
+apps\closing\web_views.py:25:from .services import close_month, get_closing_period
+apps\closing\web_views.py:226:def _get_latest_closing_request(period: ClosingPeriod):
+apps\closing\web_views.py:240:        object_type="ClosingPeriod",
+apps\closing\web_views.py:265:            period = ClosingPeriod(
+apps\closing\web_views.py:266:                year=year, month=month, status=ClosingStatus.OPEN, closed_at=None
+apps\closing\web_views.py:272:    if status_filter in (ClosingStatus.OPEN, ClosingStatus.CLOSED):
+apps\closing\web_views.py:320:        period, _created = ClosingPeriod.objects.get_or_create(
+apps\closing\web_views.py:321:            year=year_int, month=month_int, defaults={"status": ClosingStatus.OPEN}
+apps\closing\web_views.py:323:        if period.status == ClosingStatus.CLOSED:
+apps\closing\web_views.py:356:    period = get_object_or_404(ClosingPeriod, id=closing_id)
+apps\closing\web_views.py:371:    period = get_object_or_404(ClosingPeriod, id=closing_id)
+apps\closing\web_views.py:397:    period = get_object_or_404(ClosingPeriod, id=closing_id)
+apps\closing\web_views.py:403:        close_month(period.year, period.month, request.user, note=request_obj.comment)
+apps\closing\web_views.py:425:    period = get_object_or_404(ClosingPeriod, id=closing_id)
+apps\audit\views.py:10:class AuditLogListView(ListAPIView):
+apps\closing\urls.py:3:from .api_views import ClosingMonthCloseView, ClosingMonthStatusView
+apps\closing\urls.py:6:    path("month/status/", ClosingMonthStatusView.as_view(), name="closing-status"),
+apps\closing\urls.py:7:    path("month/close/", ClosingMonthCloseView.as_view(), name="closing-close"),
+apps\closing\forms.py:13:    ClosingPeriod,
+apps\closing\forms.py:14:    ClosingStatus,
+apps\closing\forms.py:38:        closed_periods = ClosingPeriod.objects.filter(
+apps\closing\forms.py:39:            status=ClosingStatus.CLOSED
+apps\closing\forms.py:97:        is_closed = ClosingPeriod.objects.filter(
+apps\closing\forms.py:98:            year=year, month=month, status=ClosingStatus.CLOSED
+apps\closing\apps.py:4:class ClosingConfig(AppConfig):
+apps\closing\api_views.py:8:from .services import close_month, get_closing_period
+apps\closing\api_views.py:11:class ClosingMonthStatusView(APIView):
+apps\closing\api_views.py:48:class ClosingMonthCloseView(APIView):
+apps\closing\api_views.py:61:            period = close_month(year_int, month_int, request.user, note=note)
+apps\closing\tests\test_closing_guards.py:10:from apps.closing.services import close_month
+apps\closing\tests\test_closing_guards.py:19:def test_close_month_is_idempotency_safe():
+apps\closing\tests\test_closing_guards.py:22:    close_month(2026, 5, actor)
+apps\closing\tests\test_closing_guards.py:25:        close_month(2026, 5, actor)
+apps\closing\tests\test_closing_guards.py:31:    close_month(2026, 5, actor)
+apps\closing\adjustments.py:23:    ClosingPeriod,
+apps\closing\adjustments.py:24:    ClosingStatus,
+apps\closing\adjustments.py:31:    is_closed = ClosingPeriod.objects.filter(
+apps\closing\adjustments.py:32:        year=year, month=month, status=ClosingStatus.CLOSED
+apps\closing\services.py:13:from .models import ClosingPeriod, ClosingStatus, ProjectClose, ProjectCloseStatus
+apps\closing\services.py:21:def get_closing_period(year: int, month: int) -> ClosingPeriod | None:
+apps\closing\services.py:23:    return ClosingPeriod.objects.filter(year=year, month=month).first()
+apps\closing\services.py:27:    period = ClosingPeriod.objects.filter(
+apps\closing\services.py:30:    return bool(period and period.status == ClosingStatus.CLOSED)
+apps\closing\services.py:38:def close_month(year: int, month: int, actor, note: str | None = None) -> ClosingPeriod:
+apps\closing\services.py:41:        period, _created = ClosingPeriod.objects.select_for_update().get_or_create(
+apps\closing\services.py:42:            year=year, month=month, defaults={"status": ClosingStatus.OPEN}
+apps\closing\services.py:44:        if period.status == ClosingStatus.CLOSED:
+apps\closing\services.py:45:            raise ValidationError("ClosingPeriod is already closed.")
+apps\closing\services.py:46:        period.status = ClosingStatus.CLOSED
+apps\closing\services.py:55:            object_type="ClosingPeriod",
+apps\closing\models.py:11:class ClosingStatus(models.TextChoices):
+apps\closing\models.py:16:class ClosingPeriod(models.Model):
+apps\closing\models.py:20:        max_length=10, choices=ClosingStatus.choices, default=ClosingStatus.OPEN
+apps\closing\models.py:47:        if self.status == ClosingStatus.CLOSED:
+apps\closing\models.py:48:            raise ValidationError("ClosingPeriod is already closed.")
+apps\closing\models.py:49:        self.status = ClosingStatus.CLOSED
+apps\closing\models.py:59:class ProjectCloseStatus(models.TextChoices):
+apps\closing\models.py:61:    CLOSING = "CLOSING", "Closing"
+apps\closing\models.py:65:class ProjectClose(models.Model):
+apps\closing\models.py:166:        period_closed = ClosingPeriod.objects.filter(
+apps\closing\models.py:167:            year=self.period_year, month=self.period_month, status=ClosingStatus.CLOSED
+apps\core\todo.py:9:from apps.closing.models import ClosingPeriod, ClosingStatus
+apps\core\todo.py:171:    period = ClosingPeriod.objects.filter(
+apps\core\todo.py:172:        year=today.year, month=today.month, status=ClosingStatus.OPEN
+apps\core\management\commands\seed_demo_3sites_e2e.py:40:    "closing_period_model": "closing.ClosingPeriod",
+apps\core\management\commands\seed_demo_3sites_e2e.py:150:        closing_model = _safe_get_model("closing", "ClosingPeriod")
+apps\core\management\commands\seed_demo_3sites_e2e.py:189:        model = _safe_get_model("closing", "ClosingPeriod")
+apps\core\management\commands\seed_demo_3sites_e2e.py:195:            "apps.closing.services", ["close_month", "approve_project_close"]
+apps\core\management\commands\seed_demo_3sites_e2e.py:599:        ClosingPeriod = _safe_get_model("closing", "ClosingPeriod")
+apps\core\management\commands\seed_demo_3sites_e2e.py:610:        if not all([Project, ClosingPeriod, CostItem, Adjustment, Warehouse, Location, Transfer, TransferLine, Stock, ItemMaster]):
+apps\core\management\commands\seed_demo_3sites_e2e.py:614:        from apps.closing.services import close_month
+apps\core\management\commands\seed_demo_3sites_e2e.py:636:        period = ClosingPeriod.objects.filter(year=year, month=month_no).first()
+apps\core\management\commands\seed_demo_3sites_e2e.py:638:            period = close_month(year, month_no, actor=hq, note="D3E-4 monthly close")
+apps\closing\migrations\0004_projectclose.py:21:                ('status', models.CharField(choices=[('OPEN', 'Open'), ('CLOSING', 'Closing'), ('CLOSED', 'Closed')], default='OPEN', max_length=16)),
+apps\audit\serializers.py:6:class AuditLogSerializer(serializers.ModelSerializer):
+apps\core\rbac\models.py:21:class ProjectAssignment(models.Model):
+apps\audit\models.py:5:class AuditLog(models.Model):
+apps\audit\admin.py:7:class AuditLogAdmin(admin.ModelAdmin):
+apps\closing\migrations\0001_initial.py:14:            name='ClosingPeriod',
+apps\schedule\views.py:22:class DailyProgressViewSet(viewsets.ModelViewSet):
+apps\core\tests\test_demo_d3e4_compact.py:8:from apps.closing.services import close_month
+apps\core\tests\test_demo_d3e4_compact.py:17:    close_month(2026, 2, actor=user, note="test close")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:14:from apps.closing.services import close_month
+apps\core\tests\test_audit9_operational_smoke_matrix.py:366:    close_month(today.year, today.month, hq, note="AUDIT9 closing smoke")
+apps\cost\admin.py:21:class CostActualLineInline(admin.TabularInline):
+apps\cost\admin.py:27:class CostActualAdmin(admin.ModelAdmin):
+apps\cost\admin.py:33:class RevenueRecognitionAdmin(admin.ModelAdmin):
+apps\cost\models.py:136:class CostActualStatus(models.TextChoices):
+apps\cost\models.py:144:class CostActual(models.Model):
+apps\cost\models.py:177:class CostActualLine(models.Model):
+apps\cost\models.py:210:class RevenueRecognition(models.Model):
+apps\kpi\api_views.py:14:class ProjectKPIView(APIView):
+apps\kpi\api_views.py:47:class ProjectKPITimelineView(APIView):
+apps\cost\serializers.py:52:class CostActualLineSerializer(serializers.ModelSerializer):
+apps\cost\serializers.py:68:class CostActualSerializer(serializers.ModelSerializer):
+apps\cost\serializers.py:99:class CostActualCreateFromDailyReportSerializer(serializers.Serializer):
+apps\cost\serializers.py:149:class RevenueRecognitionSerializer(serializers.ModelSerializer):
+apps\cost\serializers.py:165:class RevenueRecognitionCreateSerializer(serializers.Serializer):
+apps\schedule\admin.py:18:class DailyProgressAdmin(admin.ModelAdmin):
+apps\cost\views.py:44:class CostActualViewSet(viewsets.ModelViewSet):
+apps\cost\views.py:182:class RevenueRecognitionView(GenericAPIView):
+apps\schedule\serializers.py:17:class DailyProgressSerializer(serializers.ModelSerializer):
+apps\schedule\models.py:53:class DailyProgress(models.Model):
+apps\evidence\attachment_policy.py:37:    Closing lock overrides every status.
+apps\labor\models.py:188:class WorkerMaster(models.Model):
+apps\labor\tests\test_labor_closing_guards.py:8:from apps.closing.services import close_month
+apps\labor\tests\test_labor_closing_guards.py:67:    close_month(2026, 5, actor)
+apps\labor\tests\test_labor_closing_guards.py:82:    close_month(2026, 5, actor)
+apps\labor\tests\test_labor_closing_guards.py:106:    close_month(2026, 5, actor)
+apps\labor\tests\test_labor_closing_guards.py:119:    close_month(2026, 5, actor)
+apps\projects\models.py:6:class ProjectStatus(models.TextChoices):
+apps\projects\models.py:15:class ProjectType(models.TextChoices):
+apps\projects\models.py:30:class ProjectContractStatus(models.TextChoices):
+apps\projects\models.py:36:class Project(models.Model):
+apps\projects\models.py:81:class BudgetItem(models.Model):
+apps\projects\models.py:124:class WBSItem(models.Model):
+apps\projects\models.py:306:class ProjectContract(models.Model):
+apps\projects\forms.py:41:class ProjectOnboardingForm(forms.ModelForm):
+apps\projects\forms.py:66:class ProjectContractForm(forms.ModelForm):
+apps\projects\forms.py:109:class ProjectAssignmentForm(forms.ModelForm):
+apps\projects\forms.py:124:class BudgetItemForm(forms.ModelForm):
+apps\projects\forms.py:185:class WBSItemForm(forms.ModelForm):
+apps\projects\views.py:12:class ProjectViewSet(viewsets.ModelViewSet):
+apps\projects\apps.py:4:class ProjectsConfig(AppConfig):
+apps\projects\api_views.py:15:class ProjectWBSBaselineBadgeView(APIView):
+apps\projects\api_views.py:22:class ProjectWBSBaselineHistoryView(APIView):
+apps\projects\admin.py:7:class ProjectAdmin(admin.ModelAdmin):
+apps\projects\serializers.py:6:class ProjectSerializer(serializers.ModelSerializer):
+apps\labor\forms.py:95:class WorkerMasterForm(forms.ModelForm):
+apps\projects\tests\test_audit7_field_progress_e2e.py:13:from apps.closing.services import close_month
+apps\projects\tests\test_audit7_field_progress_e2e.py:309:    close_month(today.year, today.month, hq_user, note="AUDIT7 closed month")

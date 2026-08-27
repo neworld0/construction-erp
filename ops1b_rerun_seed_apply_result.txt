@@ -1,0 +1,11 @@
+﻿SEED_APPLY_PASS
+project_id=17
+project_code=OPS1B-RERUN-SAMPLE-001
+budget_total=390000000
+contract_amount=571022700
+contract_budget_difference=181022700
+submitted_progress=12.500
+cost_total=10000000.00
+recognized_revenue=71377837.50
+progress_audit_log_count=2
+dashboard_status=200

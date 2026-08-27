@@ -59,10 +59,14 @@ class CostActualLineSerializer(serializers.ModelSerializer):
             "quantity",
             "unit_price",
             "amount",
+            "vat_treatment",
+            "supply_amount",
+            "vat_amount",
+            "accounting_cost_amount",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "amount", "created_at", "updated_at"]
+        read_only_fields = ["id", "amount", "supply_amount", "vat_amount", "accounting_cost_amount", "created_at", "updated_at"]
 
 
 class CostActualSerializer(serializers.ModelSerializer):

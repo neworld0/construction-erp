@@ -1,0 +1,182 @@
+[LAB-1]
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+
+=====================================================
+[LAB-1 목표]
+=====================================================
+현장 출역부(Timesheet, LAB-2)와 급여 배부(PayrollAllocation, LAB-3)의 기준이 되는
+1) 직종(LaborRole) 마스터와
+2) 단가표(LaborRateTable)를 구현한다.
+
+MVP 범위:
+- 직종 코드/명/활성 관리
+- 단가표는 “기간 유효(from~to)” + “단가(원/일 또는 원/시간)” 제공
+- 프로젝트별 단가(현장 단가)와 회사 공통 단가(기본 단가)를 모두 지원
+- 향후 CBS(비목/공종)로 인건비를 매핑할 수 있도록 “기본 CBS” 연결 옵션 제공(선택)
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- CBS/CostItem 모델 경로 및 “잠금/별칭/비활성 정책” 확인(기본CBS 선택에 필요)
+- RBAC 데코레이터/미들웨어 패턴 확인
+- 기존 HQ 마스터 관리 화면 패턴(CBS 관리 등) 확인
+Discovery 결과를 코드 주석으로 남기고, 실제 파일 경로/클래스명을 명시하라.
+
+=====================================================
+1) 모델 설계 (필수)
+=====================================================
+새 app 권장: apps/labor/ (없으면 생성)
+- apps/labor/models.py
+- apps/labor/services.py
+- apps/labor/api.py (또는 기존 api 라우팅에 맞춤)
+
+[LaborRole]
+- id
+- code (CharField, unique, db_index=True)   # 예: LR-001, L-FOREMAN, L-OP
+- name (CharField, db_index=True)           # 예: "현장소장", "조경기능공", "보통인부"
+- role_group (choices, optional):
+    "FOREMAN" "SKILLED" "UNSKILLED" "OPERATOR" "ENGINEER" "ADMIN"
+- is_active (BooleanField, default=True)
+- sort_order (IntegerField, default=0)
+- default_cbs (FK CostItem, null=True, blank=True)   # 선택: 인건비가 자동 매핑될 CBS
+- created_at/updated_at
+
+제약:
+- is_active=False는 FIELD 입력(출역부)에서 선택 불가(조회는 가능)
+
+[LaborRateTable]
+- id
+- labor_role (FK LaborRole)
+- rate_type (choices):
+    "DAY"     # 원/일
+    "HOUR"    # 원/시간 (옵션)
+- unit_rate (IntegerField)  # 원 단위 정수
+- currency (CharField, default="KRW")  # 고정
+- effective_from (DateField)
+- effective_to (DateField, null=True, blank=True)   # null=무기한
+- scope_type (choices):
+    "GLOBAL"  # 회사 공통
+    "PROJECT" # 프로젝트별
+- project (FK Project, null=True, blank=True)       # scope_type=PROJECT일 때만
+- is_active (BooleanField, default=True)
+- note (CharField, blank=True)
+- created_by (FK User, null=True, blank=True)
+- created_at/updated_at
+
+제약/검증(중요):
+- scope_type="GLOBAL"이면 project=NULL
+- scope_type="PROJECT"이면 project NOT NULL
+- 같은 (scope_type, project, labor_role, rate_type) 조합에서
+  유효기간이 겹치지 않도록 차단(Overlapping date ranges 금지)
+  - effective_to가 null인 레코드는 “끝이 없는 구간”으로 간주
+- unit_rate > 0
+
+권장 인덱스:
+- LaborRateTable(labor_role, scope_type, project, effective_from, effective_to, is_active)
+
+=====================================================
+2) 서비스 레이어 (필수)
+=====================================================
+apps/labor/services.py
+
+함수:
+- create_labor_role(data, actor)
+- update_labor_role(role, data, actor)
+- create_rate(data, actor)
+- update_rate(rate, data, actor)
+- get_applicable_rate(project, labor_role, date, rate_type="DAY") -> LaborRateTable or None
+   우선순위:
+   1) PROJECT scope 중 date에 유효한 것
+   2) GLOBAL scope 중 date에 유효한 것
+   3) 없으면 None
+
+겹침 검증:
+- create/update 시 overlapping 여부 검사
+- transaction.atomic 사용
+
+=====================================================
+3) RBAC (필수)
+=====================================================
+- HQ/CEO:
+  - LaborRole/RateTable 생성/수정/비활성 가능
+- FIELD:
+  - 조회만 가능(출역부 입력에서 선택)
+  - 생성/수정 403
+
+=====================================================
+4) API (필수, 최소)
+=====================================================
+- GET  /api/labor/roles/?q=&active=&limit=
+- POST /api/labor/roles/                 # HQ/CEO
+- PATCH /api/labor/roles/<id>/           # HQ/CEO
+- GET  /api/labor/rates/?project=&role=&date=&active=
+- POST /api/labor/rates/                 # HQ/CEO
+- PATCH /api/labor/rates/<id>/           # HQ/CEO
+
+검색 규칙:
+- FIELD는 active=true만 기본 반환
+- HQ는 include_inactive 옵션 허용
+
+유효 단가 조회(권장, LAB-2용):
+- GET /api/labor/rates/applicable/?project_id=&role_id=&date=&rate_type=
+응답:
+{ "unit_rate": 180000, "rate_type":"DAY", "scope":"PROJECT", "rate_id":123 }
+
+=====================================================
+5) HQ UI (권장: 최소 관리 화면)
+=====================================================
+HQ 마스터 메뉴에 추가:
+- “직종 관리”
+  - 목록(검색/활성필터) + 신규/수정 + 비활성 토글
+- “직종 단가표”
+  - 필터: 프로젝트/직종/기간/활성
+  - 신규 단가 등록:
+    - scope GLOBAL/PROJECT 선택
+    - 기간(from~to)
+    - 단가(원/일)
+  - 겹침 발생 시 에러 메시지(한글):
+    "동일 범위에서 기간이 겹치는 단가가 이미 존재합니다."
+
+FIELD UI는 이번 티켓에서 화면 추가 불필요(출역부에서 재사용).
+
+=====================================================
+6) AuditLog (필수)
+=====================================================
+이벤트:
+- LABOR_ROLE_CREATE / UPDATE / DEACTIVATE
+- LABOR_RATE_CREATE / UPDATE / DEACTIVATE
+- LABOR_RATE_OVERLAP_BLOCKED (선택)
+
+metadata:
+{role_id, role_code, project_id, scope_type, rate_type, unit_rate, effective_from, effective_to}
+
+=====================================================
+7) CLOSE 연계 (주의)
+=====================================================
+- LaborRole/RateTable은 마스터 데이터이므로 CLOSE-2로 차단하지 않는다.
+- 단, “과거 기간 단가 변경”은 운영상 위험:
+  - MVP에서는 허용하되, AuditLog로 남기고 UI에 경고 문구 표시:
+    "과거 기간 단가 변경은 마감/정산에 영향을 줄 수 있습니다."
+  - (후속) 마감된 월 범위에 영향을 주는 단가 수정은 승인 워크플로우로 묶기
+
+=====================================================
+8) 테스트 시나리오 (필수)
+=====================================================
+1) HQ가 LaborRole 생성/수정/비활성 OK
+2) HQ가 GLOBAL 단가 등록(2026-01-01~무기한) OK
+3) 동일 role/scope에서 기간 겹치는 단가 등록 시 차단
+4) PROJECT 단가가 있으면 applicable_rate가 PROJECT를 우선 반환
+5) FIELD가 POST/PATCH 시도 → 403, GET은 가능
+6) inactive role은 기본 목록에서 제외(옵션으로 포함 가능)
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- LaborRole/LaborRateTable 모델 + 마이그레이션 완료
+- 적용 단가 조회 함수(get_applicable_rate) 구현
+- 겹침 기간 차단 검증 구현
+- RBAC 적용
+- API 동작 + HQ 최소 UI 제공
+- AuditLog 기록

@@ -1,0 +1,8 @@
+Artifact,Purpose,Status
+ceo_csv_utf8_bom_06_discovery_notes.md,Handler and policy discovery,PASS
+ceo_csv_utf8_bom_root_cause.md,Root cause record,PASS
+ceo_csv_utf8_bom_response_probe_before.txt,Pre-patch source-state probe,PASS
+ceo_csv_utf8_bom_response_probe_after.txt,Post-patch response bytes,PASS
+ceo_csv_utf8_bom_before_after_matrix.csv,Encoding comparison,PASS
+ceo_csv_utf8_bom_test_matrix.csv,Verification summary,PASS
+ceo_csv_utf8_bom_source_scan.txt,Changed-source integrity scan,PASS

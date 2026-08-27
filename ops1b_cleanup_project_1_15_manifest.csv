@@ -1,0 +1,14 @@
+Project_ID,Project_Code,Project_Name,Status,Is_Active,Contract_Amount,Start_Date,End_Date,Delete_Eligible,Exclusion_Reason
+1,PRJ-DEMO-001,Demo Project,planned,True,0.00,,,YES,명시적 ID 1~15 정리 대상
+2,PRJ-LEGACY-00002,국도46호선 호평IC교(상)등 포장및시설물 보수공사,submitted,True,0.00,2026-04-01,2026-07-29,YES,명시적 ID 1~15 정리 대상
+4,C-20260527-48A743,국도46호선 호평IC교(상)등 포장및시설물 보수공사2,draft,True,0.00,2026-04-01,2026-07-29,YES,명시적 ID 1~15 정리 대상
+5,C-20260527-225D97,x,draft,True,0.00,2026-05-01,2026-05-31,YES,명시적 ID 1~15 정리 대상
+6,C-20260527-ED1627,국도46호선 호평IC교(상)등 포장및시설물 보수공사3,draft,True,0.00,2026-04-01,2026-07-29,YES,명시적 ID 1~15 정리 대상
+7,C-20260528-01C65B,국도46호선 호평IC교(상)등 포장및시설물 보수공사4,draft,True,0.00,2026-04-01,2026-07-29,YES,명시적 ID 1~15 정리 대상
+8,PRJ-DBG-002,디버그,draft,True,0.00,,,YES,명시적 ID 1~15 정리 대상
+9,PRJ-DBG-003,디버그2,draft,True,0.00,,,YES,명시적 ID 1~15 정리 대상
+10,PRJ-DBG-004,디버그4,draft,True,0.00,,,YES,명시적 ID 1~15 정리 대상
+11,PRJ-DBG-005,디버그5,draft,True,0.00,,,YES,명시적 ID 1~15 정리 대상
+12,PRJ-DBG-006,디버그6,draft,True,0.00,,,YES,명시적 ID 1~15 정리 대상
+13,PRJ-DEBUG-BUCKET3,버킷 합계 공사,draft,True,0.00,,,YES,명시적 ID 1~15 정리 대상
+15,C-20260529-D34061,국도46호선 호평IC교(상)등 포장및시설물 보수공사5,approved,True,0.00,2026-04-01,2026-07-29,YES,명시적 ID 1~15 정리 대상

@@ -1,0 +1,2 @@
+Run_ID,Route,Batch_Count,Raw_Row_Count,Day_Row_Count,Reconciliation_Row_Count,SQL_Query_Count,Elapsed_Seconds,Result,Notes
+LR-01,/app/hq/labor/e-card-imports/,NOT_EXECUTED,NOT_EXECUTED,NOT_EXECUTED,NOT_EXECUTED,NOT_EXECUTED,NOT_EXECUTED,HOLD,staging endpoint/HQ account not provided

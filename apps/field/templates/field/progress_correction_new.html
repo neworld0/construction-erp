@@ -1,0 +1,16 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}진행률 정정·취소 요청{% endblock %}
+{% block content %}
+<div class="container" style="max-width:760px; display:grid; gap:16px;"><div class="card">
+  <h2>승인 완료 진행률 정정·취소 요청</h2>
+  <p class="hint">원본은 삭제되지 않습니다. HQ 검토와 CEO 최종 승인 후에만 반영됩니다.</p>
+  <div style="display:grid; gap:6px; margin:14px 0;"><div>프로젝트: {{ progress.project.name }}</div><div>작성일: {{ progress.report_date|date:"Y-m-d" }}</div><div>작업: {{ progress.task.name }}</div><div>현재 진행률: {{ progress.progress_percent|floatformat:1 }}%</div><div>현재 메모: {{ progress.note|default:"-" }}</div></div>
+  <form method="post" style="display:grid; gap:12px;">{% csrf_token %}
+    <div><label>처리 유형</label><select name="correction_type" id="correction_type" required><option value="CORRECT">정정</option><option value="CANCEL">취소(무효)</option></select></div>
+    <div id="correction_fields"><label>정정 진행률</label><input type="number" name="proposed_progress_percent" min="0" max="100" step="0.1"><label style="margin-top:8px; display:block;">정정 메모</label><textarea name="proposed_note" rows="3"></textarea></div>
+    <div><label>사유</label><textarea name="reason" rows="3" required></textarea></div>
+    <div style="display:flex; gap:8px;"><button class="btn btn-primary" type="submit">HQ 검토 요청</button><a class="btn btn-outline" href="/app/field/?tab=progress&project_id={{ progress.project_id }}">돌아가기</a></div>
+  </form>
+</div></div>
+<script>const type=document.getElementById('correction_type'), fields=document.getElementById('correction_fields'); function sync(){fields.style.display=type.value==='CANCEL'?'none':'';} type.addEventListener('change',sync); sync();</script>
+{% endblock %}

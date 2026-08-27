@@ -1,0 +1,234 @@
+[INV-3]
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다.
+
+
+=====================================================
+[INV-3 목표]
+=====================================================
+품목(ItemMaster)과 창고(Warehouse/Location) 기준으로
+1) 모든 재고 변동을 “원장(InventoryLedger)”에 기록하고
+2) 현재고를 “Stock” 테이블로 유지/조회하며
+3) 월 마감(CLOSE-2) 이후에는 원장 입력/수정/삭제가 전면 차단되도록 한다.
+
+MVP 범위(필수):
+- HQ/현장 모두 “입고/출고” 기본 트랜잭션
+- Stock은 원장 기반으로 증가/감소
+- 음수 재고 정책: MVP에서는 “원칙 차단” (설정 옵션으로만 열어둠)
+- 가격(금액)은 선택: MVP에서는 “단가/금액은 optional, 수량 중심” + (필요시 amount도 기록)
+
+후속(INV-4/5):
+- 이동(Transfer), 현장 투입(IssueToWork)은 다음 티켓에서 별도
+
+=====================================================
+0) Discovery (필수)
+=====================================================
+- RBAC 패턴(CEO/HQ/FIELD role 판별)
+- AuditLog 기록 방식
+- CLOSE-2 가드 함수 위치(assert_month_open 등)
+- Warehouse/Location/ItemMaster 모델 필드명 확인
+- FIELD 입력 화면이 /app/field/ 탭으로 존재하는지, API 중심인지 확인
+Discovery 결과를 코드 주석으로 남기고, 실제 경로/함수명으로 구현하라.
+
+=====================================================
+1) 모델 설계 (필수)
+=====================================================
+apps/inventory/models.py
+
+[InventoryLedger]
+- id (UUID 권장 또는 BigAuto)
+- tx_type (choices):
+    "RECEIPT"   # 입고
+    "ISSUE"     # 출고
+    "ADJUST"    # 재고정정(원장 수준) — MVP에서는 HQ만, 선택
+- tx_date (DateField)         # 재고 변동 기준일(업무일)
+- warehouse (FK Warehouse)
+- location (FK Location, null=True, blank=True)  # MVP: 기본 location 사용 가능
+- item (FK ItemMaster)
+- qty_delta (DecimalField 또는 IntegerField)
+    - 단위 정책:
+      * MVP 권장: Decimal(18,3) (수량이 소수 필요한 자재 대비)
+- uom (FK UoM)  # item 기본 uom과 동일 강제(향후 변환은 후속)
+- unit_cost (IntegerField, null=True, blank=True) # 원가단가(원). optional
+- amount (IntegerField, null=True, blank=True)    # qty*unit_cost. optional
+- ref_type (choices, optional):
+    "MANUAL" (MVP 기본)
+    "TRANSFER" (INV-4)
+    "ISSUE_TO_WORK" (INV-5)
+    "PURCHASE" (향후)
+- ref_id (IntegerField, null=True, blank=True)
+- note (TextField, blank=True)
+- created_by (FK User)
+- created_at
+
+제약:
+- warehouse.is_active must be True
+- item.is_active must be True (비활성 품목 거래는 차단)
+- uom은 item.uom과 동일 아니면 ValidationError (MVP)
+- qty_delta는 0 금지
+- tx_date는 “월 마감” 기준이 되는 날짜
+
+[Stock] (현재고)
+- id
+- warehouse (FK Warehouse)
+- location (FK Location, null=True, blank=True)  # location별 재고를 지원(권장)
+- item (FK ItemMaster)
+- qty_on_hand (DecimalField(18,3), default=0)
+- updated_at
+
+제약:
+- UniqueConstraint(warehouse, location, item)
+- qty_on_hand < 0 금지(MVP 기본, 옵션으로만 허용)
+
+옵션(권장):
+- StockSnapshot(월마감 스냅샷)은 후속으로 남김(TODO)
+
+=====================================================
+2) 원장 → 현재고 반영 로직(핵심)
+=====================================================
+원칙:
+- Stock은 “원장 입력 성공”과 동일 트랜잭션에서 갱신되어야 한다(atomic).
+
+구현 방식(권장):
+- services.py 에서만 ledger 생성 허용(직접 model.save 금지 패턴은 과함. 대신 view/api는 서비스만 호출)
+- create_ledger_entry(...) 함수가:
+  1) CLOSE-2 마감 가드 실행(assert_month_open(tx_date))
+  2) RBAC 검사(누가 어떤 창고에 입력 가능한지)
+  3) InventoryLedger 생성
+  4) Stock row를 select_for_update로 잠금 후 qty_on_hand += qty_delta
+  5) 음수면 롤백 + 에러
+  6) AuditLog 기록
+
+중요:
+- 동시성: Stock row를 select_for_update로 잠가야 함.
+- location이 null이면 warehouse의 default location을 자동 적용(권장: Location.is_default)
+
+=====================================================
+3) RBAC/입력 권한(필수)
+=====================================================
+- CEO/HQ:
+  - 모든 창고/품목에 대해 원장 입력 가능(활성만)
+- FIELD:
+  - 본인 배정 프로젝트의 SITE warehouse에 대해서만 원장 입력 가능
+  - HQ warehouse에 대해서는 입력 금지(원칙) / 조회만 허용
+  - (현실 옵션) HQ에서 현장 출고를 대리입력 허용: HQ 권한으로만
+
+입력 UI/API에서 “warehouse 선택” 시:
+- FIELD는 자동으로 본인 SITE warehouse로 고정하고, 선택 불가(실수 방지)
+
+=====================================================
+4) 마감(CLOSE-2) 연계(필수)
+=====================================================
+- 모든 InventoryLedger 생성(입고/출고/정정)은 tx_date 기준 월이 CLOSED면 차단
+- InventoryLedger 수정/삭제는 기본 금지(운영 안전)
+  - MVP: 수정/삭제 endpoint 자체 미제공 권장
+  - 정말 필요하면 “반대 부호 원장”으로 상쇄하는 방식 사용(정정=ADJUST)
+
+정정(Adjustment, CLOSE-3)과의 관계:
+- 마감월에 재고 금액만 보정이 필요하면:
+  - CLOSE-3의 target_type="INVENTORY"로 금액(원) 보정만 허용 (수량 X)
+- INV-3에서는 마감월 원장 입력을 차단만 하고, 정정은 CLOSE-3 경로로 처리
+
+=====================================================
+5) API 설계(필수)
+=====================================================
+(1) 원장 생성
+- POST /api/inventory/ledger/
+body:
+{
+  "tx_type": "RECEIPT|ISSUE|ADJUST",
+  "tx_date": "YYYY-MM-DD",
+  "warehouse_id": ...,
+  "location_id": ... (optional),
+  "item_id": ...,
+  "qty": 10.5,
+  "note": "...",
+  "unit_cost": 12345 (optional)
+}
+
+응답:
+- ledger_id
+- stock_qty_on_hand (갱신된 현재고)
+- message (한글)
+
+(2) 원장 조회
+- GET /api/inventory/ledger/?warehouse=&item=&start=&end=&q=&limit=
+권한:
+- FIELD는 본인 SITE warehouse로 강제 필터
+
+(3) 현재고 조회
+- GET /api/inventory/stock/?warehouse=&item=&q=
+응답:
+- item, warehouse, location, qty_on_hand, uom
+
+검색 최적화:
+- item.code/name/spec 부분일치
+- active item만 기본 노출
+
+=====================================================
+6) UI 최소 구현(권장)
+=====================================================
+FIELD:
+- “입고/출고” 간단 입력 폼
+  - 품목 자동완성(INV-2 API 재사용)
+  - 수량
+  - 비고
+  - 저장 시 최근 원장 목록 표시
+
+HQ:
+- 창고별 현재고 화면(검색/필터)
+- 원장 조회(기간/품목)
+
+주의:
+- UI보다 API 우선. UI는 최소만.
+
+=====================================================
+7) AuditLog (필수)
+=====================================================
+이벤트:
+- INVENTORY_LEDGER_CREATE
+- STOCK_UPDATE
+- INVENTORY_LEDGER_BLOCKED_CLOSED (마감 차단 시도, 선택)
+
+metadata:
+{
+  "tx_type": "...",
+  "tx_date": "...",
+  "warehouse_id": ...,
+  "location_id": ...,
+  "item_id": ...,
+  "qty_delta": ...,
+  "qty_on_hand_after": ...
+}
+
+=====================================================
+8) 음수 재고/정책(필수)
+=====================================================
+MVP 기본:
+- 음수 재고는 금지
+- 출고 시 현재고 부족하면 400/409로 차단
+  메시지: "현재고가 부족합니다. (현재: X, 요청: Y)"
+
+옵션 설정만 열어두기:
+- settings.INVENTORY_ALLOW_NEGATIVE = False
+
+=====================================================
+9) 테스트 시나리오(필수)
+=====================================================
+1) HQ warehouse + item 준비, 입고 10 → stock 10
+2) 출고 3 → stock 7
+3) 출고 8 → 차단(음수 금지)
+4) FIELD가 타 프로젝트 SITE warehouse에 입력 시도 → 403
+5) 마감월(tx_date가 CLOSED 월)로 입고/출고 시도 → 차단(CLOSE-2 연계)
+6) 동시성(가능하면):
+   - 같은 stock row에 2개의 입고 요청이 동시에 들어와도 qty가 정확히 누적
+
+=====================================================
+완료 기준(DoD)
+=====================================================
+- InventoryLedger/Stock 모델 및 마이그레이션 완료
+- 원장 생성 시 Stock이 atomic하게 갱신됨(select_for_update)
+- 음수 재고 기본 차단
+- 마감월 원장 입력 차단(CLOSE-2 가드 연계)
+- RBAC 적용(현장=배정 프로젝트 창고만)
+- 원장/현재고 조회 API 동작 + AuditLog 기록

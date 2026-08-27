@@ -1,8 +1,9 @@
-﻿<div class="tabs">
-  <a class="tab {% if active_tab == 'progress' %}active{% endif %}" href="/app/field/?tab=progress{% if project_id %}&project_id={{ project_id }}{% endif %}">진행률</a>
-  <a class="tab {% if active_tab == 'report' %}active{% endif %}" href="/app/field/?tab=report{% if project_id %}&project_id={{ project_id }}{% endif %}">보고서</a>
-  <a class="tab {% if active_tab == 'cost' %}active{% endif %}" href="/app/field/?tab=cost{% if project_id %}&project_id={{ project_id }}{% endif %}">원가</a>
-  <a class="tab {% if active_tab == 'inventory' %}active{% endif %}" href="/app/field/inventory/issues/{% if project_id %}?project_id={{ project_id }}{% endif %}">자재 투입</a>
-  <a class="tab {% if active_tab == 'timesheet' %}active{% endif %}" href="/app/field/labor/timesheets/{% if project_id %}?project_id={{ project_id }}{% endif %}">출역부</a>
-  <a class="tab {% if active_tab == 'approved' %}active{% endif %}" href="/app/field/approved/{% if project_id %}?project_id={{ project_id }}{% endif %}">승인완료</a>
-</div>
+<nav class="tabs field-tabs" aria-label="현장 업무 메뉴">
+  <a class="tab field-tab {% if active_tab == 'progress' %}active{% endif %}" data-field-tab="progress" href="/app/field/?tab=progress{% if project_id %}&project_id={{ project_id }}{% endif %}"><span class="field-tab__icon" aria-hidden="true">▥</span><span>진행률</span></a>
+  <a class="tab field-tab {% if active_tab == 'timesheet' %}active{% endif %}" data-field-tab="timesheet" href="/app/field/labor/timesheets/{% if project_id %}?project_id={{ project_id }}{% endif %}"><span class="field-tab__icon" aria-hidden="true">◷</span><span>출역부</span></a>
+  <a class="tab field-tab {% if active_tab == 'cost' %}active{% endif %}" data-field-tab="cost" href="/app/field/?tab=cost{% if project_id %}&project_id={{ project_id }}{% endif %}"><span class="field-tab__icon" aria-hidden="true">₩</span><span>원가</span></a>
+  <a class="tab field-tab {% if active_tab == 'inventory' %}active{% endif %}" data-field-tab="inventory" href="/app/field/inventory/issues/{% if project_id %}?project_id={{ project_id }}{% endif %}"><span class="field-tab__icon" aria-hidden="true">▣</span><span>자재<span class="field-tab__mobile-break"><br></span>투입</span></a>
+  <a class="tab field-tab {% if active_tab == 'site_daily_log' %}active{% endif %}" data-field-tab="site-daily-log" href="/app/field/site-daily-logs/{% if project_id %}?project_id={{ project_id }}{% endif %}"><span class="field-tab__icon" aria-hidden="true">▧</span><span>공사<span class="field-tab__mobile-break"><br></span>일보</span></a>
+  <a class="tab field-tab {% if active_tab == 'warehouse' %}active{% endif %}" data-field-tab="warehouse" href="/app/field/inventory/warehouses/"><span class="field-tab__icon" aria-hidden="true">⌂</span><span>창고<span class="field-tab__mobile-break"><br></span>조회</span></a>
+  <a class="tab field-tab {% if active_tab == 'approved' %}active{% endif %}" data-field-tab="approved" href="/app/field/approved/{% if project_id %}?project_id={{ project_id }}{% endif %}"><span class="field-tab__icon" aria-hidden="true">✓</span><span>승인<span class="field-tab__mobile-break"><br></span>완료</span></a>
+</nav>

@@ -1,0 +1,6 @@
+Role,Route,Expected,Actual_Status,Contains_Project,Result,Notes
+CEO,/app/ceo/,200,200,True,PASS,2FA device not fabricated
+HQ,/app/ceo/projects/,200,200,True,PASS,HQ project KPI access policy
+FIELD,/app/ceo/,403,403,False,PASS,CEO dashboard blocked
+ANONYMOUS,/app/ceo/,302,302,False,PASS,login redirect
+FIELD,/app/field/?tab=progress&project_id=17,200 if assigned,200,True,PASS,assignment-dependent field path

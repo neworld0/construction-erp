@@ -1,0 +1,14 @@
+﻿Changed source files:
+apps/risk/dashboard_visibility.py
+apps/core/todo.py
+apps/core/views.py
+apps/ceo/app_views.py
+apps/ceo/services/dashboard.py
+templates/app/hq_home.html
+templates/app/hq_risk_list.html
+scripts/local_ops_reset_project_data.py
+scripts/local_ops_hq_risk_diagnostic.py
+apps/risk/tests/test_hq_dashboard_risk_visibility_after_reset.py
+
+Mojibake scan:
+OVERALL_SOURCE_SCAN_PASS: True

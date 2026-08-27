@@ -1,0 +1,30 @@
+[FAST-CODEX] ATT-4A (STOP-RULE VERSION): 원가/보고서/출역/HQ ‘상세 화면’ 첨부 UX 통일(attachments_panel)만 수행
+
+당신은 시니어 Django 엔지니어입니다. 리포지토리 루트는 construction-erp 입니다. 
+
+STOP RULE(반드시 지킬 것)
+- Discovery는 최대 6개 파일만 확인하고 종료한다.
+- 수정 파일은 최대 5개까지만 변경한다.
+- 서버 실행/테스트는 최대 1회만 한다.
+- 목록 화면(attachment_badge), N+1 최적화, 리팩터, 추가 기능 제안은 금지한다.
+- 이번 작업은 “상세 화면에서 첨부가 인라인으로 보이고, can_edit 정책대로 업로드/삭제 UI가 노출/차단되는 것”만 목표다.
+
+범위(상세 화면만)
+- FIELD: 원가 상세 1곳, 보고서 상세 1곳, 출역 상세 1곳
+- HQ: 상세 1곳(가장 대표 화면 1개)
+(각 탭마다 상세가 여러 개면, 실제 사용되는 대표 상세 1개만 선택)
+
+구현 지시
+1) 각 상세 view에서 attachments, can_edit, upload_url, delete_url, object_label, help_text 컨텍스트를 준비한다.
+2) 템플릿에 attachments_panel include를 삽입한다.
+3) can_edit 정책:
+   - DRAFT/REJECTED: True
+   - SUBMITTED/APPROVED: False
+   - 마감 잠금이면 무조건 False
+4) 업로드/삭제 엔드포인트가 이미 있으면 그대로 연결하고, 없으면 버튼을 숨긴다(delete_url=None).
+5) 한글 깨짐은 base 템플릿 charset과 해당 4개 템플릿 저장 인코딩만 점검/최소 수정한다.
+
+Acceptance
+- 위 4개 상세 화면에서 첨부가 인라인으로 표시되고, can_edit에 따라 업로드/삭제 UI가 정확히 노출/차단된다.
+- 한글 라벨/버튼이 깨지지 않는다.
+- 여기서 멈춘다(목록/배지/N+1은 다음 티켓).

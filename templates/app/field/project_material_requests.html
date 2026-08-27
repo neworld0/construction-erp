@@ -1,0 +1,18 @@
+{% extends "app/base_app.html" %}
+{% load utils %}
+{% block page_title %}품목 승인 요청{% endblock %}
+{% block content %}
+<div class="card">
+  <h2 class="card-title">예산 외·미등록 품목 승인 요청</h2>
+  <p class="muted">HQ가 프로젝트 CBS를 지정해 승인하면 품목 검색과 자재 투입에 사용할 수 있습니다.</p>
+  <form method="post" style="display:grid;gap:12px;max-width:680px;">{% csrf_token %}
+    <select class="form-control" name="project_id" required>{% for project in projects %}<option value="{{ project.id }}">{{ project.name }}</option>{% endfor %}</select>
+    <input class="form-control" name="item_name" placeholder="품목명" required>
+    <input class="form-control" name="spec" placeholder="규격 (선택)">
+    <div style="display:flex;gap:8px;"><input class="form-control" name="uom_text" value="EA" placeholder="단위"><input class="form-control" type="number" step="0.001" name="requested_qty" placeholder="예상 수량 (선택)"></div>
+    <textarea class="form-control" name="reason" placeholder="요청 사유 및 용도"></textarea>
+    <button class="btn" type="submit">HQ 승인 요청</button>
+  </form>
+</div>
+<div class="card" style="margin-top:18px;"><h3>내 요청 이력</h3><table class="table"><tr><th>프로젝트</th><th>품목</th><th>상태</th><th>승인 CBS/반려사유</th></tr>{% for item in requests %}<tr><td>{{ item.project.name }}</td><td>{{ item.item_name }}</td><td><span class="status-badge {{ item.status|field_status_class }}">{{ item.status|field_status_label }}</span></td><td>{% if item.approved_cbs %}{{ item.approved_cbs }}{% else %}{{ item.reject_reason }}{% endif %}</td></tr>{% empty %}<tr><td colspan="4" class="muted">요청 이력이 없습니다.</td></tr>{% endfor %}</table></div>
+{% endblock %}

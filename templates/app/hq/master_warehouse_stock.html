@@ -1,0 +1,7 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}창고 재고현황{% endblock %}
+{% block content %}
+<div class="card"><h2 class="card-title">{{ warehouse.name }} 재고현황</h2><p class="muted">{{ warehouse.code }} · {% if warehouse.project %}{{ warehouse.project.name }}{% else %}HQ 중앙창고{% endif %}</p></div>
+<div class="card" style="margin-top:16px;"><h3>현재고</h3><div class="erp-table-wrap"><table class="erp-table"><thead><tr><th>품목</th><th>위치</th><th class="number">현재 수량</th><th>단위</th></tr></thead><tbody>{% for stock in stocks %}<tr><td>{{ stock.item.code }} - {{ stock.item.name }}</td><td>{{ stock.location.name|default:"기본" }}</td><td class="number">{{ stock.qty_on_hand }}</td><td>{{ stock.item.uom.code }}</td></tr>{% empty %}<tr><td colspan="4" class="empty-row">재고가 없습니다.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card" style="margin-top:16px;"><h3>최근 재고 원장</h3><div class="erp-table-wrap"><table class="erp-table"><thead><tr><th>일자</th><th>구분</th><th>품목</th><th class="number">증감</th><th>비고</th></tr></thead><tbody>{% for entry in ledgers %}<tr><td>{{ entry.tx_date }}</td><td>{{ entry.tx_type }}</td><td>{{ entry.item.name }}</td><td class="number">{{ entry.qty_delta }} {{ entry.uom.code }}</td><td>{{ entry.note }}</td></tr>{% empty %}<tr><td colspan="5" class="empty-row">원장 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

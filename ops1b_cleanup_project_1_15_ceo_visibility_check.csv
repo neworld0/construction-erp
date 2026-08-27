@@ -1,0 +1,2 @@
+Project_Code,Project_ID,Pilot_Exists,Pilot_Is_Active,CEO_Dashboard_HTTP_Status,CEO_Projects_HTTP_Status,CEO_Check_Mode,Appears_In_Dashboard,Visibility_Result
+OPS1B-RERUN-SAMPLE-001,17,True,True,200,200,CEO role-session smoke; 2FA device not fabricated,True,PASS

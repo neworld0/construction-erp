@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
+from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem, CostVATTreatment
 from apps.cost.services.accrual_cost import (
     get_accrual_cost_by_project,
     get_accrual_cost_by_snapshot,
@@ -60,6 +60,7 @@ def _create_cost_actual(project, status, lines):
             cost_item=line["cost_item"],
             quantity=line["quantity"],
             unit_price=line["unit_price"],
+            vat_treatment=CostVATTreatment.EXEMPT,
         )
     return cost_actual
 

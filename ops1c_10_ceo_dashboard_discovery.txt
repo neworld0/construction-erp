@@ -1,0 +1,726 @@
+﻿apps/cost\views.py:10:from apps.projects.models import Project
+apps/cost\views.py:13:from .models import CostActual, CostActualStatus, CostItem, RevenueRecognition
+apps/cost\views.py:18:    RevenueRecognitionCreateSerializer,
+apps/cost\views.py:19:    RevenueRecognitionSerializer,
+apps/cost\views.py:29:        CostItem.objects.filter(is_active=True)
+apps/cost\views.py:164:        project = Project.objects.filter(id=project_id).first()
+apps/cost\views.py:182:class RevenueRecognitionView(GenericAPIView):
+apps/cost\views.py:189:        queryset = RevenueRecognition.objects.all().order_by("-as_of_date", "-id")
+apps/cost\views.py:192:            resolved_project_id = RevenueRecognition.objects.filter(
+apps/cost\views.py:212:        serializer = RevenueRecognitionSerializer(queryset, many=True)
+apps/cost\views.py:216:        serializer = RevenueRecognitionCreateSerializer(data=request.data)
+apps/cost\views.py:220:            RevenueRecognitionSerializer(record).data, status=status.HTTP_201_CREATED
+apps/projects\excel_import.py:864:                "period_progress_values": [],
+apps/projects\excel_import.py:876:                row["period_progress_values"].append(
+apps/projects\excel_import.py:964:            "period_progress_values": [],
+apps/projects\excel_import.py:971:            row["period_progress_values"].append(
+apps/projects\excel_import.py:974:        if not row["plan_start_date"] and not row["plan_end_date"] and row["period_progress_values"]:
+apps/cost\models.py:145:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps/cost\models.py:177:class CostActualLine(models.Model):
+apps/cost\models.py:202:        "contracts.ContractSnapshot",
+apps/cost\models.py:210:class RevenueRecognition(models.Model):
+apps/cost\models.py:211:    project = models.ForeignKey("projects.Project", on_delete=models.PROTECT)
+apps/cost\models.py:213:    as_of_date = models.DateField()
+apps/cost\models.py:214:    progress_percent = models.DecimalField(max_digits=6, decimal_places=3)
+apps/cost\models.py:222:                fields=["project", "contract_snapshot", "as_of_date"],
+apps/cost\models.py:226:        ordering = ["-as_of_date"]
+apps/cost\models.py:240:        progress_ratio = (self.progress_percent or Decimal("0")) / Decimal("100")
+apps/cost\models.py:241:        self.recognized_revenue = (total_amount or Decimal("0")) * progress_ratio
+apps/cost\models.py:244:        filter_kwargs = {"project": self.project, "as_of_date__lt": self.as_of_date}
+apps/cost\models.py:251:            RevenueRecognition.objects.filter(**filter_kwargs)
+apps/cost\models.py:252:            .order_by("-as_of_date")
+apps/cost\models.py:275:            return manager.filter(is_active=True).first()
+apps/ceo\web_views.py:8:from apps.projects.models import Project
+apps/ceo\web_views.py:9:from .services.dashboard import get_ceo_project_summary, get_ceo_projects_list
+apps/ceo\web_views.py:10:from apps.projects.services.wbs_baseline import (
+apps/ceo\web_views.py:26:def dashboard_page(request):
+apps/ceo\web_views.py:34:    as_of_date = _parse_date(request.GET.get("as_of_date"))
+apps/ceo\web_views.py:35:    summary = get_ceo_project_summary(project_id, as_of_date)
+apps/ceo\web_views.py:36:    project = Project.objects.filter(id=project_id).first()
+apps/ceo\web_views.py:42:        "as_of_date": as_of_date,
+apps/projects\apps.py:6:    name = "apps.projects"
+apps/ceo\web_urls.py:3:from .web_views import dashboard_page, project_detail_page
+apps/ceo\web_urls.py:6:    path("ceo/dashboard/", dashboard_page, name="ceo-dashboard"),
+apps/ceo\web_urls.py:7:    path("ceo/projects/<int:project_id>/", project_detail_page, name="ceo-project-detail"),
+apps/projects\approval_package_views.py:10:from apps.projects.forms import ApprovalPackageForm
+apps/projects\approval_package_views.py:11:from apps.projects.models import (
+apps/projects\approval_package_views.py:20:from apps.projects.services.approval_package import submit_package
+apps/projects\approval_package_views.py:21:from apps.projects.services.wbs_baseline import get_current_wbs_version
+apps/projects\approval_package_views.py:67:                return redirect(f"/app/hq/projects/{project.id}/approval-packages/{package.id}/")
+apps/projects\approval_package_views.py:152:        return redirect(f"/app/hq/projects/{package.project_id}/approval-packages/{package.id}/")
+apps/projects\approval_package_views.py:158:    return redirect(f"/app/hq/projects/{package.project_id}/approval-packages/{package.id}/")
+apps/ceo\views.py:12:from apps.contracts.models import ContractSnapshot
+apps/ceo\views.py:16:from .services.dashboard import (
+apps/ceo\views.py:17:    get_ceo_dashboard,
+apps/ceo\views.py:19:    get_ceo_projects_list,
+apps/ceo\views.py:28:        as_of_date = _parse_date(request.query_params.get("as_of_date"))
+apps/ceo\views.py:29:        data = get_ceo_dashboard(as_of_date)
+apps/ceo\views.py:42:            "as_of_date": _parse_date(request.query_params.get("as_of_date")),
+apps/ceo\views.py:44:        data = get_ceo_projects_list(filters)
+apps/ceo\views.py:53:        as_of_date = _parse_date(request.query_params.get("as_of_date"))
+apps/ceo\views.py:54:        data = get_ceo_project_summary(id, as_of_date)
+apps/ceo\views.py:64:        as_of_date = _parse_date(request.query_params.get("as_of_date"))
+apps/ceo\views.py:65:        data = get_ceo_dashboard(as_of_date)
+apps/ceo\views.py:66:        projects = data.get("projects", [])
+apps/ceo\views.py:67:        project_ids = [item.get("project_id") for item in projects if item.get("project_id")]
+apps/ceo\views.py:68:        snapshots = ContractSnapshot.objects.filter(
+apps/ceo\views.py:69:            project_id__in=project_ids, is_active=True
+apps/ceo\views.py:81:                "overall_progress_percent",
+apps/ceo\views.py:84:                "profit",
+apps/ceo\views.py:85:                "margin_percent",
+apps/ceo\views.py:90:        for item in projects:
+apps/ceo\views.py:97:                    item.get("overall_progress_percent", 0),
+apps/ceo\views.py:100:                    item.get("profit", 0),
+apps/ceo\views.py:101:                    item.get("margin_percent", 0),
+apps/ceo\views.py:115:                "as_of_date": as_of_date.isoformat() if as_of_date else None,
+apps/ceo\views.py:116:                "row_count": len(projects),
+apps/cost\serializers.py:9:from .models import CostActual, CostActualLine, CostItem, RevenueRecognition, _get_active_snapshot
+apps/cost\serializers.py:52:class CostActualLineSerializer(serializers.ModelSerializer):
+apps/cost\serializers.py:54:        model = CostActualLine
+apps/cost\serializers.py:69:    lines = CostActualLineSerializer(many=True, read_only=True)
+apps/cost\serializers.py:137:            CostActualLine.objects.create(
+apps/cost\serializers.py:149:class RevenueRecognitionSerializer(serializers.ModelSerializer):
+apps/cost\serializers.py:151:        model = RevenueRecognition
+apps/cost\serializers.py:156:            "as_of_date",
+apps/cost\serializers.py:157:            "progress_percent",
+apps/cost\serializers.py:165:class RevenueRecognitionCreateSerializer(serializers.Serializer):
+apps/cost\serializers.py:167:    as_of_date = serializers.DateField()
+apps/cost\serializers.py:168:    progress_percent = serializers.DecimalField(max_digits=6, decimal_places=3)
+apps/cost\serializers.py:171:    def validate_progress_percent(self, value):
+apps/cost\serializers.py:173:            raise serializers.ValidationError("progress_percent must be between 0 and 100.")
+apps/cost\serializers.py:176:    def validate_as_of_date(self, value):
+apps/cost\serializers.py:178:            raise serializers.ValidationError("as_of_date cannot be in the future.")
+apps/cost\serializers.py:186:            project = RevenueRecognition._meta.get_field("project").remote_field.model.objects.get(
+apps/cost\serializers.py:189:        except RevenueRecognition._meta.get_field("project").remote_field.model.DoesNotExist:
+apps/cost\serializers.py:193:        snapshot_field = RevenueRecognition._meta.get_field("contract_snapshot")
+apps/cost\serializers.py:212:        progress_percent = validated_data["progress_percent"]
+apps/cost\serializers.py:213:        as_of_date = validated_data["as_of_date"]
+apps/cost\serializers.py:215:        record = RevenueRecognition(
+apps/cost\serializers.py:217:            as_of_date=as_of_date,
+apps/cost\serializers.py:218:            progress_percent=progress_percent,
+apps/cost\serializers.py:221:        snapshot_field = RevenueRecognition._meta.get_field("contract_snapshot")
+apps/projects\api_views.py:8:from apps.projects.models import Project
+apps/projects\api_views.py:9:from apps.projects.services.wbs_baseline import (
+apps/cost\tests\test_accrual_cost.py:5:from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
+apps/cost\tests\test_accrual_cost.py:10:from apps.projects.models import Project
+apps/cost\tests\test_accrual_cost.py:28:            is_active=True,
+apps/cost\tests\test_accrual_cost.py:37:            is_active=True,
+apps/cost\tests\test_accrual_cost.py:46:            is_active=True,
+apps/cost\tests\test_accrual_cost.py:58:        CostActualLine.objects.create(
+apps/cost\tests\test_cbs_utf8_labels.py:11:from apps.projects.forms import BudgetItemForm
+apps/ceo\urls.py:11:    path("ceo/dashboard/", CEODashboardView.as_view()),
+apps/ceo\urls.py:12:    path("ceo/projects/", CEOProjectsView.as_view()),
+apps/ceo\urls.py:13:    path("ceo/projects/<int:id>/summary/", CEOProjectSummaryView.as_view()),
+apps/projects\hq_urls.py:6:    path("projects/", hq_views.hq_project_list),
+apps/projects\hq_urls.py:7:    path("projects/new/", hq_views.hq_project_new),
+apps/projects\hq_urls.py:8:    path("projects/<int:project_id>/", hq_views.hq_project_detail),
+apps/cost\seed_civil_road_cbs.py:380:            is_active=True,
+apps/projects\models.py:51:        related_name="projects_wbs",
+apps/projects\models.py:59:        related_name="projects_budget",
+apps/cost\tests\test_costactual_api.py:7:from apps.projects.models import Project
+apps/cost\tests\test_costactual_api.py:32:        is_active=True,
+apps/cost\services\accrual_cost.py:6:from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItemCategory
+apps/cost\services\accrual_cost.py:23:            return manager.filter(is_active=True).first()
+apps/cost\services\accrual_cost.py:69:    lines = CostActualLine.objects.filter(cost_actual__in=queryset)
+apps/cost\services\accrual_cost.py:81:    lines = CostActualLine.objects.filter(cost_actual__in=queryset)
+apps/cost\tests\test_costitem_api.py:72:        is_active=True,
+apps/projects\hq_views.py:128:        if not Project.objects.filter(code=code).exists():
+apps/projects\hq_views.py:137:    projects = Project.objects.all().order_by("-created_at")
+apps/projects\hq_views.py:140:        projects.filter(created_at__gte=recent_cutoff).values_list("id", flat=True)
+apps/projects\hq_views.py:144:        "app/hq_projects_list.html",
+apps/projects\hq_views.py:145:        {"projects": projects, "recent_ids": recent_ids},
+apps/projects\hq_views.py:606:                                    return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:891:def _is_exact_profit_row(item_name):
+apps/projects\hq_views.py:1324:        if _is_exact_profit_row(item_name):
+apps/projects\hq_views.py:1385:        if _is_exact_profit_row(review_row.get("source_item_name")):
+apps/projects\hq_views.py:1453:        row["requires_manual_profit_mapping"] = True
+apps/projects\hq_views.py:1700:    queryset = CostItem.objects.filter(is_active=True).order_by("sort_order", "name")
+apps/projects\hq_views.py:1770:        if _is_exact_profit_row(row.get("item_name")) and (
+apps/projects\hq_views.py:1774:        if _is_exact_profit_row(row.get("item_name")) and base_cost_item is not None:
+apps/projects\hq_views.py:2073:        if bucket == BUDGET_BUCKET_EXPENSE and _is_exact_profit_row(row.get("item_name")):
+apps/projects\hq_views.py:2174:        row["requires_manual_profit_mapping"] = False
+apps/projects\hq_views.py:2236:            and not _is_exact_profit_row(row.get("item_name"))
+apps/projects\hq_views.py:2307:                    if bucket == BUDGET_BUCKET_EXPENSE and _is_exact_profit_row(row.get("item_name")):
+apps/projects\hq_views.py:2310:                        row["requires_manual_profit_mapping"] = True
+apps/projects\hq_views.py:2362:                        _is_exact_profit_row(row.get("item_name"))
+apps/projects\hq_views.py:2375:                    if row.get("requires_manual_profit_mapping"):
+apps/projects\hq_views.py:2386:                if row.get("requires_manual_profit_mapping"):
+apps/projects\hq_views.py:2392:                    profit_amount = Decimal(str(row.get("expense_amount") or row.get("amount") or 0))
+apps/projects\hq_views.py:2395:                        profit_amount,
+apps/projects\hq_views.py:2407:                                "planned_amount": int(profit_amount),
+apps/projects\hq_views.py:2408:                                "note": _make_budget_bucket_note(row, BUDGET_BUCKET_EXPENSE, profit_amount),
+apps/projects\hq_views.py:2421:            if cost_item.code == "CIVIL-PROFIT" and not _is_exact_profit_row(row.get("item_name")):
+apps/projects\hq_views.py:2503:                            if bucket == BUDGET_BUCKET_EXPENSE and _is_exact_profit_row(row.get("item_name")):
+apps/projects\hq_views.py:2506:                                row["requires_manual_profit_mapping"] = True
+apps/projects\hq_views.py:3199:        MasterTemplate.objects.filter(domain=domain, category=category, is_active=True)
+apps/projects\hq_views.py:3622:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3625:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3628:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3631:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3657:            return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3661:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3664:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3686:            return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3690:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3693:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3721:            return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3725:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3758:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3763:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3787:            return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3791:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3909:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3935:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3949:                return redirect(f"/app/hq/projects/{project.id}/")
+apps/projects\hq_views.py:3993:        back_url=f"/app/hq/projects/{project.id}/",
+apps/projects\views.py:13:    queryset = Project.objects.filter(is_active=True).order_by("-created_at")
+apps/projects\views.py:22:                user=self.request.user, is_active=True
+apps/projects\urls.py:8:router.register("projects", ProjectViewSet, basename="project")
+apps/projects\urls.py:12:        "projects/<int:project_id>/wbs-baseline/badge/",
+apps/projects\urls.py:16:        "projects/<int:project_id>/wbs-baseline/history/",
+apps/projects\migrations\0002_projectcontract.py:7:        ("projects", "0001_initial"),
+apps/projects\migrations\0002_projectcontract.py:30:                        to="projects.project",
+apps/projects\wbs_change.py:116:    # - WBS baseline model: projects.WBSItem (baseline_version, is_baseline)
+apps/ceo\risk_summary.py:16:    Display-only risk summary generator for CEO dashboard.
+apps/ceo\tests\test_ceo_report_export.py:7:from apps.contracts.models import ContractSnapshot
+apps/ceo\tests\test_ceo_report_export.py:9:from apps.projects.models import Project
+apps/ceo\tests\test_ceo_report_export.py:41:    ContractSnapshot.objects.create(
+apps/ceo\tests\test_ceo_report_export.py:45:        is_active=True,
+apps/projects\tests\test_audit7_field_progress_e2e.py:17:from apps.projects.models import BudgetCategory, BudgetItem, Project, WBSItem
+apps/projects\tests\test_audit7_field_progress_e2e.py:52:    return ProjectAssignment.objects.create(user=field_user, project=project, is_active=True)
+apps/projects\tests\test_audit7_field_progress_e2e.py:63:        is_active=True,
+apps/projects\tests\test_audit7_field_progress_e2e.py:105:def _progress_url(project):
+apps/projects\tests\test_audit7_field_progress_e2e.py:106:    return f"/app/field/?tab=progress&project_id={project.id}"
+apps/projects\tests\test_audit7_field_progress_e2e.py:109:def _draft_payload(project, task, *, progress_percent="12.5", note="현장 진행률 메모"):
+apps/projects\tests\test_audit7_field_progress_e2e.py:111:        "tab": "progress",
+apps/projects\tests\test_audit7_field_progress_e2e.py:116:        "progress_percent": progress_percent,
+apps/projects\tests\test_audit7_field_progress_e2e.py:121:def _submit_payload(project, progress):
+apps/projects\tests\test_audit7_field_progress_e2e.py:123:        "tab": "progress",
+apps/projects\tests\test_audit7_field_progress_e2e.py:126:        "progress_id": str(progress.id),
+apps/projects\tests\test_audit7_field_progress_e2e.py:130:def _prepare_progress_task(client, project, wbs_name):
+apps/projects\tests\test_audit7_field_progress_e2e.py:131:    response = client.get(_progress_url(project))
+apps/projects\tests\test_audit7_field_progress_e2e.py:133:    plan = SchedulePlan.objects.get(project=project, is_active=True)
+apps/projects\tests\test_audit7_field_progress_e2e.py:154:def test_audit7_project_wbs_work_items_are_available_in_field_progress_dropdown():
+apps/projects\tests\test_audit7_field_progress_e2e.py:159:    response, plan, task = _prepare_progress_task(client, project, wbs.name)
+apps/projects\tests\test_audit7_field_progress_e2e.py:174:def test_audit7_field_can_save_draft_progress_for_project_work_item():
+apps/projects\tests\test_audit7_field_progress_e2e.py:178:    _response, plan, task = _prepare_progress_task(client, project, wbs.name)
+apps/projects\tests\test_audit7_field_progress_e2e.py:183:    progress = DailyProgress.objects.get(project=project, task=task, reporter=field_user)
+apps/projects\tests\test_audit7_field_progress_e2e.py:184:    assert progress.plan == plan
+apps/projects\tests\test_audit7_field_progress_e2e.py:185:    assert progress.status == "draft"
+apps/projects\tests\test_audit7_field_progress_e2e.py:186:    assert progress.progress_percent == Decimal("12.500")
+apps/projects\tests\test_audit7_field_progress_e2e.py:187:    assert progress.note == "현장 진행률 메모"
+apps/projects\tests\test_audit7_field_progress_e2e.py:191:        object_id=progress.id,
+apps/projects\tests\test_audit7_field_progress_e2e.py:198:def test_audit7_field_can_submit_progress_for_project_work_item():
+apps/projects\tests\test_audit7_field_progress_e2e.py:199:    hq_user = _user(Role.HQ, "audit7-hq-progress-view")
+apps/projects\tests\test_audit7_field_progress_e2e.py:203:    _response, _plan, task = _prepare_progress_task(field_client, project, wbs.name)
+apps/projects\tests\test_audit7_field_progress_e2e.py:204:    field_client.post("/app/field/", _draft_payload(project, task, progress_percent="25.0"))
+apps/projects\tests\test_audit7_field_progress_e2e.py:205:    progress = DailyProgress.objects.get(project=project, task=task, reporter=field_user)
+apps/projects\tests\test_audit7_field_progress_e2e.py:207:    response = field_client.post("/app/field/", _submit_payload(project, progress))
+apps/projects\tests\test_audit7_field_progress_e2e.py:210:    progress.refresh_from_db()
+apps/projects\tests\test_audit7_field_progress_e2e.py:211:    assert progress.status == "submitted"
+apps/projects\tests\test_audit7_field_progress_e2e.py:212:    assert progress.project == project
+apps/projects\tests\test_audit7_field_progress_e2e.py:213:    assert progress.task == task
+apps/projects\tests\test_audit7_field_progress_e2e.py:216:        object_id=progress.id,
+apps/projects\tests\test_audit7_field_progress_e2e.py:223:        object_id=progress.id,
+apps/projects\tests\test_audit7_field_progress_e2e.py:228:    hq_response = _client(hq_user).get(f"/app/hq/progress/{progress.id}/")
+apps/projects\tests\test_audit7_field_progress_e2e.py:236:def test_audit7_field_progress_without_project_work_items_shows_clear_no_work_items_state():
+apps/projects\tests\test_audit7_field_progress_e2e.py:242:    response = client.get(_progress_url(project))
+apps/projects\tests\test_audit7_field_progress_e2e.py:248:    assert 'id="progress_draft_btn" disabled' in content
+apps/projects\tests\test_audit7_field_progress_e2e.py:249:    assert 'id="progress_submit_btn" disabled' in content
+apps/projects\tests\test_audit7_field_progress_e2e.py:253:def test_audit7_field_cannot_post_progress_with_work_item_from_other_project():
+apps/projects\tests\test_audit7_field_progress_e2e.py:259:    _prepare_progress_task(client, project_a, wbs_a.name)
+apps/projects\tests\test_audit7_field_progress_e2e.py:260:    other_plan = SchedulePlan.objects.create(project=project_b, version_no=1, name="Other", is_active=True)
+apps/projects\tests\test_audit7_field_progress_e2e.py:266:        is_active=True,
+apps/projects\tests\test_audit7_field_progress_e2e.py:279:def test_audit7_field_cannot_access_unassigned_project_progress():
+apps/projects\tests\test_audit7_field_progress_e2e.py:290:    response = client.get(_progress_url(unassigned_project))
+apps/projects\tests\test_audit7_field_progress_e2e.py:302:def test_audit7_field_cannot_save_or_submit_progress_in_closed_month():
+apps/projects\tests\test_audit7_field_progress_e2e.py:307:    _response, _plan, task = _prepare_progress_task(client, project, wbs.name)
+apps/projects\tests\test_audit7_field_progress_e2e.py:311:    response = client.post("/app/field/", _draft_payload(project, task, progress_percent="10.0"))
+apps/projects\tests\test_audit7_field_progress_e2e.py:320:def test_audit7_field_cannot_modify_progress_after_project_closed():
+apps/projects\tests\test_audit7_field_progress_e2e.py:324:    _response, _plan, task = _prepare_progress_task(client, project, wbs.name)
+apps/projects\tests\test_audit7_field_progress_e2e.py:325:    client.post("/app/field/", _draft_payload(project, task, progress_percent="10.0"))
+apps/projects\tests\test_audit7_field_progress_e2e.py:326:    progress = DailyProgress.objects.get(project=project, task=task, reporter=field_user)
+apps/projects\tests\test_audit7_field_progress_e2e.py:329:    response = client.post("/app/field/", _submit_payload(project, progress))
+apps/projects\tests\test_audit7_field_progress_e2e.py:332:    progress.refresh_from_db()
+apps/projects\tests\test_audit7_field_progress_e2e.py:333:    assert progress.status == "draft"
+apps/projects\tests\test_audit7_field_progress_e2e.py:338:def test_audit7_progress_audit_logs_are_recorded_without_sensitive_or_mojibake_payload():
+apps/projects\tests\test_audit7_field_progress_e2e.py:346:    _response, _plan, task = _prepare_progress_task(client, project, wbs.name)
+apps/projects\tests\test_audit7_field_progress_e2e.py:347:    client.post("/app/field/", _draft_payload(project, task, progress_percent="15.0", note="흙터파기 진행"))
+apps/projects\tests\test_audit7_field_progress_e2e.py:348:    progress = DailyProgress.objects.get(project=project, task=task, reporter=field_user)
+apps/projects\tests\test_audit7_field_progress_e2e.py:349:    client.post("/app/field/", _submit_payload(project, progress))
+apps/projects\tests\test_audit7_field_progress_e2e.py:368:    response = client.get(_progress_url(project))
+apps/ceo\tests\test_ceo_pages.py:6:from apps.projects.models import Project
+apps/ceo\tests\test_ceo_pages.py:21:def test_dashboard_requires_login(client):
+apps/ceo\tests\test_ceo_pages.py:22:    response = client.get("/ceo/dashboard/")
+apps/ceo\tests\test_ceo_pages.py:26:def test_dashboard_login_success(client, user):
+apps/ceo\tests\test_ceo_pages.py:28:    response = client.get("/ceo/dashboard/")
+apps/ceo\tests\test_ceo_pages.py:35:    response = client.get(f"/ceo/projects/{project.id}/")
+apps/ceo\app_urls.py:7:    hq_daily_progress_detail,
+apps/ceo\app_urls.py:20:    ceo_projects_list,
+apps/ceo\app_urls.py:47:    path("progress/<int:progress_id>/", hq_daily_progress_detail),
+apps/ceo\app_urls.py:55:    path("projects/", ceo_projects_list),
+apps/ceo\app_urls.py:56:    path("projects/<int:project_id>/", project_detail_page),
+apps/ceo\app_urls.py:57:    path("projects/<int:project_id>/kpi/", ceo_project_kpi_detail),
+apps/ceo\approval_package_views.py:10:from apps.projects.models import (
+apps/ceo\approval_package_views.py:16:from apps.projects.services.approval_package import approve_package, reject_package
+apps/cost\migrations\0003_revenue_recognition.py:8:        ("projects", "0001_initial"),
+apps/cost\migrations\0003_revenue_recognition.py:13:            name="RevenueRecognition",
+apps/cost\migrations\0003_revenue_recognition.py:22:                ("as_of_date", models.DateField()),
+apps/cost\migrations\0003_revenue_recognition.py:23:                ("progress_percent", models.DecimalField(decimal_places=3, max_digits=6)),
+apps/cost\migrations\0003_revenue_recognition.py:29:                    models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="projects.project"),
+apps/cost\migrations\0003_revenue_recognition.py:33:                "ordering": ["-as_of_date"],
+apps/cost\migrations\0003_revenue_recognition.py:39:                fields=("project", "contract_snapshot", "as_of_date"),
+apps/ceo\app_views.py:24:from apps.projects.models import (
+apps/ceo\app_views.py:40:from apps.projects.services.approval_package import approve_package, reject_package
+apps/ceo\app_views.py:41:from apps.projects.services.wbs_change_approval import approve_wbs_change_request
+apps/ceo\app_views.py:43:from apps.finance.services.profit_loss import _calculate_margin
+apps/ceo\app_views.py:51:from .services.dashboard import get_ceo_dashboard, get_ceo_projects_list
+apps/ceo\app_views.py:142:        "DAILY_PROGRESS": f"/app/ceo/progress/{object_id}/",
+apps/ceo\app_views.py:253:        progress = getattr(obj, "progress_percent", None)
+apps/ceo\app_views.py:255:        title = f"{task_name} / {progress}%" if progress is not None else task_name
+apps/ceo\app_views.py:558:    as_of_date = _parse_date(request.GET.get("as_of_date")) or timezone.localdate()
+apps/ceo\app_views.py:566:        as_of_date, compare_mode
+apps/ceo\app_views.py:569:    dashboard = get_ceo_dashboard(as_of_date)
+apps/ceo\app_views.py:570:    projects = dashboard.get("projects", [])
+apps/ceo\app_views.py:571:    project_ids = [p.get("project_id") for p in projects if p.get("project_id")]
+apps/ceo\app_views.py:574:    chart_labels = [p.get("project_name") or "" for p in projects]
+apps/ceo\app_views.py:575:    chart_values = [float(p.get("overall_progress_percent") or 0) for p in projects]
+apps/ceo\app_views.py:577:    total_revenue = sum((_safe_decimal(p.get("recognized_revenue")) for p in projects), Decimal("0"))
+apps/ceo\app_views.py:578:    total_cost = sum((_safe_decimal(p.get("accrual_cost")) for p in projects), Decimal("0"))
+apps/ceo\app_views.py:579:    total_labor = sum((_safe_decimal(p.get("labor_cost")) for p in projects), Decimal("0"))
+apps/ceo\app_views.py:580:    total_profit = total_revenue - total_cost
+apps/ceo\app_views.py:581:    avg_progress = (
+apps/ceo\app_views.py:582:        sum((_safe_decimal(p.get("overall_progress_percent")) for p in projects), Decimal("0"))
+apps/ceo\app_views.py:583:        / Decimal(len(projects))
+apps/ceo\app_views.py:584:        if projects
+apps/ceo\app_views.py:587:    margin_percent = _calculate_margin(total_revenue, total_profit)
+apps/ceo\app_views.py:591:    prev_dashboard = get_ceo_dashboard(prev_period_end)
+apps/ceo\app_views.py:592:    prev_projects = prev_dashboard.get("projects", [])
+apps/ceo\app_views.py:594:        (_safe_decimal(p.get("recognized_revenue")) for p in prev_projects), Decimal("0")
+apps/ceo\app_views.py:597:        (_safe_decimal(p.get("accrual_cost")) for p in prev_projects), Decimal("0")
+apps/ceo\app_views.py:599:    prev_total_profit = prev_total_revenue - prev_total_cost
+apps/ceo\app_views.py:600:    prev_margin_percent = _calculate_margin(prev_total_revenue, prev_total_profit)
+apps/ceo\app_views.py:606:        "profit": build_trend(total_profit, prev_total_profit),
+apps/ceo\app_views.py:607:        "margin": build_trend(margin_percent, prev_margin_percent),
+apps/ceo\app_views.py:613:    if not projects:
+apps/ceo\app_views.py:617:            "profit": build_trend(None, None),
+apps/ceo\app_views.py:618:            "margin": build_trend(None, None),
+apps/ceo\app_views.py:622:    project_qs = Project.objects.filter(id__in=project_ids).select_related("contract")
+apps/ceo\app_views.py:625:        elapsed = project_elapsed_percent(project, as_of_date)
+apps/ceo\app_views.py:633:    schedule_vs_progress = schedule_status(avg_progress, avg_elapsed_percent)
+apps/ceo\app_views.py:705:    query_bits = [f"as_of_date={as_of_date.isoformat()}"]
+apps/ceo\app_views.py:713:        "as_of_date": as_of_date,
+apps/ceo\app_views.py:717:        "projects": projects,
+apps/ceo\app_views.py:721:        "total_profit": total_profit,
+apps/ceo\app_views.py:722:        "margin_percent": margin_percent,
+apps/ceo\app_views.py:723:        "avg_progress": avg_progress,
+apps/ceo\app_views.py:727:        "schedule_vs_progress": schedule_vs_progress,
+apps/ceo\app_views.py:847:def ceo_projects_list(request):
+apps/ceo\app_views.py:849:    as_of_date = _parse_date(request.GET.get("as_of_date"))
+apps/ceo\app_views.py:850:    projects = get_ceo_projects_list({"as_of_date": as_of_date})
+apps/ceo\app_views.py:852:        "projects": projects,
+apps/ceo\app_views.py:853:        "as_of_date": as_of_date,
+apps/ceo\app_views.py:856:    return render(request, "ceo/app_projects.html", context)
+apps/ceo\app_views.py:863:    as_of_date = _parse_date(request.GET.get("as_of_date"))
+apps/ceo\app_views.py:864:    if as_of_date is None:
+apps/ceo\app_views.py:865:        as_of_date = timezone.localdate()
+apps/ceo\app_views.py:869:        project, as_of_date=as_of_date, include_submitted=include_submitted
+apps/ceo\app_views.py:895:    planned_progress = (kpi.get("baseline") or {}).get("planned_progress_percent") or Decimal(
+apps/ceo\app_views.py:898:    actual_progress = (kpi.get("actual") or {}).get("actual_progress_percent") or Decimal(
+apps/ceo\app_views.py:901:    chart_progress_labels = ["怨꾪쉷", "?ㅼ젣"]
+apps/ceo\app_views.py:902:    chart_progress_values = [float(planned_progress), float(actual_progress)]
+apps/ceo\app_views.py:905:    wbs_model = apps.get_model("projects", "WBSItem")
+apps/ceo\app_views.py:914:                    "actual_progress": None,
+apps/ceo\app_views.py:919:    progress_ids = list(
+apps/ceo\app_views.py:931:        "progress": ApprovalRequest.objects.filter(
+apps/ceo\app_views.py:934:            object_id__in=progress_ids,
+apps/ceo\app_views.py:936:        if progress_ids
+apps/ceo\app_views.py:949:        "as_of_date": as_of_date,
+apps/ceo\app_views.py:958:        "chart_progress_labels": chart_progress_labels,
+apps/ceo\app_views.py:959:        "chart_progress_values": chart_progress_values,
+apps/projects\services\wbs_change_approval.py:10:from apps.projects.models import (
+apps/ceo\services\dashboard.py:6:from apps.cost.models import CostActualLine, CostActualStatus, RevenueRecognition
+apps/ceo\services\dashboard.py:9:from apps.finance.services.profit_loss import _calculate_margin, get_profit_loss_by_project
+apps/ceo\services\dashboard.py:10:from apps.labor.services import get_labor_totals_for_projects
+apps/ceo\services\dashboard.py:11:from apps.projects.models import Project
+apps/ceo\services\dashboard.py:15:from apps.schedule.services.progress_agg import get_project_progress
+apps/ceo\services\dashboard.py:53:def get_ceo_dashboard(as_of_date=None):
+apps/ceo\services\dashboard.py:54:    projects = get_ceo_projects_list({"as_of_date": as_of_date})
+apps/ceo\services\dashboard.py:56:        "as_of_date": as_of_date,
+apps/ceo\services\dashboard.py:57:        "projects": projects,
+apps/ceo\services\dashboard.py:61:def get_ceo_projects_list(filters):
+apps/ceo\services\dashboard.py:63:    queryset = Project.objects.filter(is_active=True).order_by("id").select_related()
+apps/ceo\services\dashboard.py:69:    progress_map = _bulk_progress(project_ids, filters.get("as_of_date"))
+apps/ceo\services\dashboard.py:70:    accrual_map = _bulk_accrual(project_ids, filters.get("as_of_date"))
+apps/ceo\services\dashboard.py:71:    labor_map = get_labor_totals_for_projects(
+apps/ceo\services\dashboard.py:72:        project_ids, as_of_date=filters.get("as_of_date") or timezone.localdate()
+apps/ceo\services\dashboard.py:74:    profit_map = _bulk_profit(project_ids, filters.get("as_of_date"))
+apps/ceo\services\dashboard.py:80:        progress = progress_map.get(project.id, {"overall_progress_percent": Decimal("0")})
+apps/ceo\services\dashboard.py:88:        profit_loss = profit_map.get(project.id, _empty_profit(project.id))
+apps/ceo\services\dashboard.py:89:        recognized_revenue = _safe_decimal(profit_loss.get("recognized_revenue"))
+apps/ceo\services\dashboard.py:91:        profit = recognized_revenue - accrual_cost
+apps/ceo\services\dashboard.py:92:        margin_percent = _calculate_margin(recognized_revenue, profit)
+apps/ceo\services\dashboard.py:96:            "overall_progress_percent": _safe_decimal(progress.get("overall_progress_percent")),
+apps/ceo\services\dashboard.py:100:            "profit": profit,
+apps/ceo\services\dashboard.py:101:            "margin_percent": margin_percent,
+apps/ceo\services\dashboard.py:102:            "tasks": progress.get("tasks", []),
+apps/ceo\services\dashboard.py:117:    if sort_key == "profit_desc":
+apps/ceo\services\dashboard.py:118:        results.sort(key=lambda item: item["profit"], reverse=True)
+apps/ceo\services\dashboard.py:119:    elif sort_key == "margin_desc":
+apps/ceo\services\dashboard.py:120:        results.sort(key=lambda item: item["margin_percent"], reverse=True)
+apps/ceo\services\dashboard.py:121:    elif sort_key == "progress_desc":
+apps/ceo\services\dashboard.py:122:        results.sort(key=lambda item: item["overall_progress_percent"], reverse=True)
+apps/ceo\services\dashboard.py:129:def get_ceo_project_summary(project_id, as_of_date=None):
+apps/ceo\services\dashboard.py:130:    if as_of_date is None:
+apps/ceo\services\dashboard.py:131:        as_of_date = timezone.localdate()
+apps/ceo\services\dashboard.py:132:    period_start = as_of_date.replace(day=1)
+apps/ceo\services\dashboard.py:133:    progress = get_project_progress(project_id, as_of_date)
+apps/ceo\services\dashboard.py:134:    profit_loss = get_profit_loss_by_project(project_id)
+apps/ceo\services\dashboard.py:136:    labor_summary = get_labor_totals_for_projects([project_id], as_of_date=as_of_date).get(
+apps/ceo\services\dashboard.py:144:    cash_summary = get_cash_summary(project_id, period_start, as_of_date)
+apps/ceo\services\dashboard.py:162:        "overall_progress_percent": _safe_decimal(progress.get("overall_progress_percent")),
+apps/ceo\services\dashboard.py:163:        "tasks": progress.get("tasks", []),
+apps/ceo\services\dashboard.py:164:        "recognized_revenue": _safe_decimal(profit_loss.get("recognized_revenue")),
+apps/ceo\services\dashboard.py:168:        "profit": _safe_decimal(profit_loss.get("profit")),
+apps/ceo\services\dashboard.py:169:        "margin_percent": _safe_decimal(profit_loss.get("margin_percent")),
+apps/ceo\services\dashboard.py:178:def _bulk_progress(project_ids, as_of_date):
+apps/ceo\services\dashboard.py:181:    if as_of_date is None:
+apps/ceo\services\dashboard.py:182:        as_of_date = timezone.localdate()
+apps/ceo\services\dashboard.py:184:        SchedulePlan.objects.filter(project_id__in=project_ids, is_active=True)
+apps/ceo\services\dashboard.py:192:        ScheduleTask.objects.filter(plan_id__in=plan_map.keys(), is_active=True)
+apps/ceo\services\dashboard.py:195:    progress_rows = (
+apps/ceo\services\dashboard.py:196:        DailyProgress.objects.filter(plan_id__in=plan_map.keys(), report_date__lte=as_of_date)
+apps/ceo\services\dashboard.py:198:        .values("task_id", "progress_percent")
+apps/ceo\services\dashboard.py:201:    for row in progress_rows:
+apps/ceo\services\dashboard.py:204:            latest_by_task[task_id] = row["progress_percent"]
+apps/ceo\services\dashboard.py:213:            {"overall_progress_percent": Decimal("0"), "tasks": []},
+apps/ceo\services\dashboard.py:216:        progress = latest_by_task.get(task["id"], Decimal("0"))
+apps/ceo\services\dashboard.py:217:        entry["overall_progress_percent"] += (weight * progress) / Decimal("100")
+apps/ceo\services\dashboard.py:223:                "latest_progress_percent": progress,
+apps/ceo\services\dashboard.py:230:def _bulk_accrual(project_ids, as_of_date=None):
+apps/ceo\services\dashboard.py:237:    if as_of_date is not None:
+apps/ceo\services\dashboard.py:238:        cost_filters["cost_actual__report_date__lte"] = as_of_date
+apps/ceo\services\dashboard.py:240:        CostActualLine.objects.filter(**cost_filters)
+apps/ceo\services\dashboard.py:253:def _bulk_profit(project_ids, as_of_date=None):
+apps/ceo\services\dashboard.py:256:    projects = Project.objects.filter(id__in=project_ids)
+apps/ceo\services\dashboard.py:258:    for project in projects:
+apps/ceo\services\dashboard.py:262:    queryset = RevenueRecognition.objects.filter(project_id__in=project_ids).order_by(
+apps/ceo\services\dashboard.py:263:        "project_id", "-as_of_date", "-id"
+apps/ceo\services\dashboard.py:265:    if as_of_date is not None:
+apps/ceo\services\dashboard.py:266:        queryset = queryset.filter(as_of_date__lte=as_of_date)
+apps/ceo\services\dashboard.py:290:def _empty_profit(project_id):
+apps/ceo\services\dashboard.py:291:    return {"project_id": project_id, "recognized_revenue": Decimal("0"), "profit": Decimal("0"), "margin_percent": Decimal("0")}
+apps/ceo\services\kpi_utils.py:108:def schedule_status(avg_progress: Decimal, elapsed_percent: Optional[Decimal]) -> dict:
+apps/ceo\services\kpi_utils.py:119:    gap = avg_progress - elapsed_percent
+apps/ceo\tests\test_ceo_cash_summary.py:9:from apps.projects.models import Project
+apps/ceo\tests\test_ceo_cash_summary.py:80:    response = field_client.get(f"/api/ceo/projects/{project.id}/summary/")
+apps/ceo\tests\test_ceo_cash_summary.py:85:    response = hq_client.get(f"/api/ceo/projects/{project.id}/summary/")
+apps/ceo\tests\test_ceo_cash_summary.py:94:        f"/api/ceo/projects/{project.id}/summary/?as_of_date=2024-01-20"
+apps/projects\tests\test_project_new_preview.py:15:from apps.projects.hq_views import hq_project_new
+apps/projects\tests\test_project_new_preview.py:49:    request = RequestFactory().post("/app/hq/projects/new/", data)
+apps/projects\tests\test_project_new_preview.py:58:    path = "/app/hq/projects/new/"
+apps/projects\tests\test_project_new_preview.py:116:def _budget_workbook_with_bucket_gap_and_manual_profit():
+apps/projects\tests\test_project_new_preview.py:444:            "budget_excel": _xlsx_upload("budget-gap.xlsx", _budget_workbook_with_bucket_gap_and_manual_profit()),
+apps/ceo\services\kpi_engine.py:19:from apps.cost.models import CostActual, CostActualLine, CostActualStatus, CostItem
+apps/ceo\services\kpi_engine.py:20:from apps.labor.services import get_labor_totals_for_projects
+apps/ceo\services\kpi_engine.py:21:from apps.projects.models import Project, ProjectStatus
+apps/ceo\services\kpi_engine.py:66:def _baseline_ready(project, contract_amount, budget_total, planned_progress_percent):
+apps/ceo\services\kpi_engine.py:73:    if planned_progress_percent is None:
+apps/ceo\services\kpi_engine.py:88:def _planned_progress_percent_for_items(project, wbs_items, as_of_date):
+apps/ceo\services\kpi_engine.py:91:            return _ratio_to_percent(project.start_date, project.end_date, as_of_date)
+apps/ceo\services\kpi_engine.py:101:            ratio = _date_ratio(item.plan_start_date, item.plan_end_date, as_of_date)
+apps/ceo\services\kpi_engine.py:106:        return _ratio_to_percent(project.start_date, project.end_date, as_of_date)
+apps/ceo\services\kpi_engine.py:110:def _date_ratio(start, end, as_of_date):
+apps/ceo\services\kpi_engine.py:111:    if not start or not end or not as_of_date:
+apps/ceo\services\kpi_engine.py:114:        return Decimal("1") if as_of_date >= end else Decimal("0")
+apps/ceo\services\kpi_engine.py:115:    if as_of_date <= start:
+apps/ceo\services\kpi_engine.py:117:    if as_of_date >= end:
+apps/ceo\services\kpi_engine.py:120:    elapsed = (as_of_date - start).days
+apps/ceo\services\kpi_engine.py:126:def _ratio_to_percent(start, end, as_of_date):
+apps/ceo\services\kpi_engine.py:127:    return _date_ratio(start, end, as_of_date) * Decimal("100")
+apps/ceo\services\kpi_engine.py:130:def compute_project_kpi(project, as_of_date=None, include_submitted=False):
+apps/ceo\services\kpi_engine.py:131:    if as_of_date is None:
+apps/ceo\services\kpi_engine.py:132:        as_of_date = timezone.localdate()
+apps/ceo\services\kpi_engine.py:133:    return compute_kpis_for_projects([project], as_of_date, include_submitted).get(
+apps/ceo\services\kpi_engine.py:138:def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include_submitted=False):
+apps/ceo\services\kpi_engine.py:139:    if as_of_date is None:
+apps/ceo\services\kpi_engine.py:140:        as_of_date = timezone.localdate()
+apps/ceo\services\kpi_engine.py:145:    if isinstance(projects_queryset_or_ids, (list, tuple, set)):
+apps/ceo\services\kpi_engine.py:148:            for item in projects_queryset_or_ids
+apps/ceo\services\kpi_engine.py:151:        project_ids = [project.id for project in projects_queryset_or_ids]
+apps/ceo\services\kpi_engine.py:153:    projects = list(
+apps/ceo\services\kpi_engine.py:154:        Project.objects.filter(id__in=project_ids)
+apps/ceo\services\kpi_engine.py:158:    project_ids = [project.id for project in projects]
+apps/ceo\services\kpi_engine.py:167:        project.id: getattr(project, "contract_amount", None) for project in projects
+apps/ceo\services\kpi_engine.py:169:    contract_model = apps.get_model("projects", "ProjectContract")
+apps/ceo\services\kpi_engine.py:178:    budget_model = apps.get_model("projects", "BudgetItem")
+apps/ceo\services\kpi_engine.py:197:        CostActualLine.objects.filter(
+apps/ceo\services\kpi_engine.py:210:    labor_totals = get_labor_totals_for_projects(project_ids, as_of_date=as_of_date)
+apps/ceo\services\kpi_engine.py:221:        as_of_date=as_of_date,
+apps/ceo\services\kpi_engine.py:224:        project_ids, as_of_date=as_of_date
+apps/ceo\services\kpi_engine.py:232:    progress_statuses = ["approved"]
+apps/ceo\services\kpi_engine.py:234:        progress_statuses.append("submitted")
+apps/ceo\services\kpi_engine.py:236:    progress_by_project = _bulk_actual_progress(project_ids, as_of_date, progress_statuses)
+apps/ceo\services\kpi_engine.py:242:    for project in projects:
+apps/ceo\services\kpi_engine.py:245:        planned_progress = _planned_progress_percent_for_items(
+apps/ceo\services\kpi_engine.py:248:            as_of_date,
+apps/ceo\services\kpi_engine.py:251:            project, contract_amount, budget_total, planned_progress
+apps/ceo\services\kpi_engine.py:269:        actual_progress = _safe_decimal(
+apps/ceo\services\kpi_engine.py:270:            progress_by_project.get(project.id, Decimal("0"))
+apps/ceo\services\kpi_engine.py:273:        ev = contract_amount * (actual_progress / Decimal("100"))
+apps/ceo\services\kpi_engine.py:275:            (planned_progress or Decimal("0")) / Decimal("100")
+apps/ceo\services\kpi_engine.py:282:        forecast_profit = (contract_amount - eac_budget) if eac_budget is not None else None
+apps/ceo\services\kpi_engine.py:284:        schedule_progress_ratio = (
+apps/ceo\services\kpi_engine.py:285:            actual_progress / planned_progress
+apps/ceo\services\kpi_engine.py:286:            if planned_progress not in (None, 0)
+apps/ceo\services\kpi_engine.py:292:            schedule_progress_ratio,
+apps/ceo\services\kpi_engine.py:307:                "planned_progress_percent": planned_progress,
+apps/ceo\services\kpi_engine.py:312:                "actual_progress_percent": actual_progress,
+apps/ceo\services\kpi_engine.py:321:            "forecast_profit": forecast_profit,
+apps/ceo\services\kpi_engine.py:323:            "schedule_progress_ratio": schedule_progress_ratio,
+apps/ceo\services\kpi_engine.py:332:            "KPI bulk computed for %s projects (include_submitted=%s) in %.2fms",
+apps/ceo\services\kpi_engine.py:341:def _bulk_actual_progress(project_ids, as_of_date, statuses):
+apps/ceo\services\kpi_engine.py:343:        SchedulePlan.objects.filter(project_id__in=project_ids, is_active=True)
+apps/ceo\services\kpi_engine.py:351:        ScheduleTask.objects.filter(plan_id__in=plan_map.keys(), is_active=True)
+apps/ceo\services\kpi_engine.py:354:    progress_rows = (
+apps/ceo\services\kpi_engine.py:357:            report_date__lte=as_of_date,
+apps/ceo\services\kpi_engine.py:361:        .values("task_id", "progress_percent")
+apps/ceo\services\kpi_engine.py:365:    for row in progress_rows:
+apps/ceo\services\kpi_engine.py:368:            latest_by_task[task_id] = row["progress_percent"]
+apps/ceo\services\kpi_engine.py:378:        progress = latest_by_task.get(task["id"], Decimal("0"))
+apps/ceo\services\kpi_engine.py:379:        summary[project_id] = summary.get(project_id, Decimal("0")) + (weight * progress)
+apps/ceo\services\kpi_engine.py:394:    progress_project = DailyProgress.objects.filter(id=OuterRef("object_id")).values("project_id")[:1]
+apps/ceo\services\kpi_engine.py:405:                When(object_type="DAILY_PROGRESS", then=Subquery(progress_project)),
+apps/ceo\services\kpi_engine.py:448:    schedule_progress_ratio,
+apps/ceo\services\kpi_engine.py:459:        (Decimal("1") - Decimal(schedule_progress_ratio)) / Decimal("0.2")
+apps/ceo\services\kpi_engine.py:460:        if schedule_progress_ratio is not None
+apps/cost\migrations\0002_costactual_and_lines.py:11:        ("projects", "0001_initial"),
+apps/cost\migrations\0002_costactual_and_lines.py:56:                    models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="projects.project"),
+apps/cost\migrations\0002_costactual_and_lines.py:73:            name="CostActualLine",
+apps/projects\migrations\0005_wbsitem.py:6:        ("projects", "0004_merge_0003_alter_project_status_0003_budgetitem"),
+apps/projects\migrations\0005_wbsitem.py:25:                        to="projects.wbsitem",
+apps/projects\migrations\0005_wbsitem.py:30:                    models.ForeignKey(on_delete=models.CASCADE, to="projects.project"),
+apps/projects\migrations\0005_wbsitem.py:39:            index=models.Index(fields=["project", "sort_order"], name="projects_wb_project_8f0f1c_idx"),
+apps/projects\migrations\0009_budgetitem_wbsitem.py:7:        ("projects", "0008_projectcontract"),
+apps/projects\migrations\0009_budgetitem_wbsitem.py:49:                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="projects.project"),
+apps/projects\migrations\0009_budgetitem_wbsitem.py:73:                        to="projects.wbsitem",
+apps/projects\migrations\0009_budgetitem_wbsitem.py:78:                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="projects.project"),
+apps/projects\migrations\0009_budgetitem_wbsitem.py:87:            index=models.Index(fields=["project", "category"], name="projects_bu_project_6f9e5b_idx"),
+apps/projects\migrations\0009_budgetitem_wbsitem.py:91:            index=models.Index(fields=["project", "sort_order"], name="projects_wb_project_8f0f1c_idx"),
+apps/projects\migrations\0017_remove_budgetitem_uq_budgetitem_project_costitem.py:9:        ('projects', '0016_rename_projects_ap_package_3a20c6_idx_projects_ap_package_2176e5_idx'),
+apps/cost\management\commands\repair_project_owner_supplied_budget.py:3:from apps.projects.models import BudgetItem, Project
+apps/cost\management\commands\repair_project_owner_supplied_budget.py:17:        project = Project.objects.filter(id=options["project_id"]).first()
+apps/projects\migrations\0013_wbs_change_request.py:10:        ("projects", "0012_project_templates"),
+apps/projects\migrations\0013_wbs_change_request.py:74:                        to="projects.project",
+apps/projects\migrations\0013_wbs_change_request.py:104:                        to="projects.wbschangerequest",
+apps/projects\migrations\0013_wbs_change_request.py:114:            index=models.Index(fields=["request", "order"], name="projects_wb_request_6b1c3a_idx"),
+apps/projects\services\wbs_baseline.py:7:from apps.projects.models import (
+apps/projects\services\wbs_baseline.py:15:# - Project model: apps/projects/models.py -> Project (current_wbs_version may exist)
+apps/projects\services\wbs_baseline.py:16:# - WBSChangeRequest: apps/projects/models.py -> WBSChangeRequest (status, proposed_version, approved_at, approved_by, base_version)
+apps/projects\services\wbs_baseline.py:17:# - WBS baseline: apps/projects/models.py -> WBSItem (baseline_version, is_baseline)
+apps/cost\management\commands\repair_project_budget_categories.py:7:from apps.projects.hq_views import _canonical_budget_category_for_cost_item
+apps/cost\management\commands\repair_project_budget_categories.py:8:from apps.projects.models import BudgetCategory, BudgetItem, Project, ProjectContract
+apps/cost\management\commands\repair_project_budget_categories.py:66:        project = Project.objects.filter(id=options["project_id"]).first()
+apps/cost\admin.py:3:from .models import CostActual, CostActualLine, CostItem, RevenueRecognition
+apps/cost\admin.py:21:class CostActualLineInline(admin.TabularInline):
+apps/cost\admin.py:22:    model = CostActualLine
+apps/cost\admin.py:29:    inlines = [CostActualLineInline]
+apps/cost\admin.py:32:@admin.register(RevenueRecognition)
+apps/cost\admin.py:33:class RevenueRecognitionAdmin(admin.ModelAdmin):
+apps/cost\admin.py:34:    list_display = ("project", "as_of_date", "progress_percent", "recognized_revenue", "delta_revenue")
+apps/cost\management\commands\repair_project_budget_cbs.py:7:from apps.projects.models import BudgetCategory, BudgetItem, Project
+apps/cost\management\commands\repair_project_budget_cbs.py:35:        item = CostItem.objects.filter(code=code, is_active=True).first()
+apps/cost\management\commands\repair_project_budget_cbs.py:39:        item = CostItem.objects.filter(name=name, is_active=True).first()
+apps/cost\management\commands\repair_project_budget_cbs.py:43:        return CostItem.objects.filter(category=category, is_active=True).order_by("sort_order", "id").first()
+apps/cost\management\commands\repair_project_budget_cbs.py:73:    help = "Repair project budget CBS grouping for labor/expense/profit rows."
+apps/cost\management\commands\repair_project_budget_cbs.py:80:        project = Project.objects.filter(id=project_id).first()
+apps/cost\management\commands\repair_project_budget_cbs.py:86:        profit_item = _pick_cost_item("CIVIL-PROFIT")
+apps/cost\management\commands\repair_project_budget_cbs.py:87:        if labor_item is None or expense_item is None or profit_item is None:
+apps/cost\management\commands\repair_project_budget_cbs.py:99:                if item.cost_item_id == profit_item.id and "안전관리책임자" in (item.note or ""):
+apps/projects\tests\test_project_new_manual_create.py:8:from apps.projects.hq_views import hq_project_new
+apps/projects\tests\test_project_new_manual_create.py:9:from apps.projects.models import Project
+apps/projects\tests\test_project_new_manual_create.py:10:from apps.projects.tests.test_project_import_commit import _build_request
+apps/projects\services\approval_package.py:15:from apps.projects.models import (
+apps/projects\services\approval_package.py:23:from apps.projects.services.wbs_baseline import get_current_wbs_version
+apps/projects\services\approval_package.py:28:# - WBSChangeRequest: apps/projects/models.py (status, base_version, proposed_version)
+apps/projects\services\approval_package.py:30:# - ProjectContract: apps/projects/models.py (contract_amount)
+apps/projects\services\approval_package.py:31:# - BudgetItem: apps/projects/models.py (planned_amount)
+apps/projects\services\baseline.py:1:from apps.projects.models import ProjectStatus
+apps/projects\migrations\0004_merge_0003_alter_project_status_0003_budgetitem.py:9:        ('projects', '0003_alter_project_status'),
+apps/projects\migrations\0004_merge_0003_alter_project_status_0003_budgetitem.py:10:        ('projects', '0003_budgetitem'),
+apps/projects\migrations\0008_projectcontract.py:7:        ("projects", "0007_remove_projectcontract_project_remove_wbsitem_parent_and_more"),
+apps/projects\migrations\0008_projectcontract.py:48:                        to="projects.project",
+apps/projects\migrations\0003_alter_project_status.py:9:        ('projects', '0002_projectcontract'),
+apps/projects\migrations\0012_project_templates.py:8:        ("projects", "0011_project_wbs_fields"),
+apps/projects\migrations\0012_project_templates.py:20:                related_name="projects_budget",
+apps/projects\migrations\0012_project_templates.py:32:                related_name="projects_wbs",
+apps/projects\migrations\0016_rename_projects_ap_package_3a20c6_idx_projects_ap_package_2176e5_idx.py:9:        ('projects', '0015_approval_package'),
+apps/projects\migrations\0016_rename_projects_ap_package_3a20c6_idx_projects_ap_package_2176e5_idx.py:15:            new_name='projects_ap_package_2176e5_idx',
+apps/projects\migrations\0016_rename_projects_ap_package_3a20c6_idx_projects_ap_package_2176e5_idx.py:16:            old_name='projects_ap_package_3a20c6_idx',
+apps/projects\migrations\0003_budgetitem.py:7:        ("projects", "0002_projectcontract"),
+apps/projects\migrations\0003_budgetitem.py:44:                    models.ForeignKey(on_delete=models.CASCADE, to="projects.project"),
+apps/projects\migrations\0003_budgetitem.py:50:            index=models.Index(fields=["project", "category"], name="projects_bu_project_6f9e5b_idx"),
+apps/projects\migrations\0007_remove_projectcontract_project_remove_wbsitem_parent_and_more.py:9:        ('projects', '0006_rename_projects_bu_project_6f9e5b_idx_projects_bu_project_186f23_idx_and_more'),
+apps/projects\migrations\0006_rename_projects_bu_project_6f9e5b_idx_projects_bu_project_186f23_idx_and_more.py:9:        ('projects', '0005_wbsitem'),
+apps/projects\migrations\0006_rename_projects_bu_project_6f9e5b_idx_projects_bu_project_186f23_idx_and_more.py:15:            new_name='projects_bu_project_186f23_idx',
+apps/projects\migrations\0006_rename_projects_bu_project_6f9e5b_idx_projects_bu_project_186f23_idx_and_more.py:16:            old_name='projects_bu_project_6f9e5b_idx',
+apps/projects\migrations\0006_rename_projects_bu_project_6f9e5b_idx_projects_bu_project_186f23_idx_and_more.py:20:            new_name='projects_wb_project_892322_idx',
+apps/projects\migrations\0006_rename_projects_bu_project_6f9e5b_idx_projects_bu_project_186f23_idx_and_more.py:21:            old_name='projects_wb_project_8f0f1c_idx',
+apps/projects\tests\test_project_import_commit.py:17:from apps.projects.hq_views import (
+apps/projects\tests\test_project_import_commit.py:24:from apps.projects.models import BudgetCategory, BudgetItem, Project, ProjectContract, WBSItem
+apps/projects\tests\test_project_import_commit.py:44:    request = RequestFactory().post("/app/hq/projects/new/", data)
+apps/projects\tests\test_project_import_commit.py:189:    request = getattr(factory, method.lower())(f"/app/hq/projects/{project_id}/", data or {})
+apps/projects\tests\test_project_import_commit.py:340:    assert not Project.objects.filter(name=PROJECT_NAME).exists()
+apps/projects\tests\test_project_import_commit.py:450:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps/projects\tests\test_project_import_commit.py:453:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.OTHER, name="이윤", planned_amount=2000)
+apps/projects\tests\test_project_import_commit.py:470:def test_repair_project_budget_cbs_command_moves_safety_manager_out_of_profit():
+apps/projects\tests\test_project_import_commit.py:473:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps/projects\tests\test_project_import_commit.py:477:        cost_item=profit_item,
+apps/projects\tests\test_project_import_commit.py:488:    assert not BudgetItem.objects.filter(project=project, cost_item=profit_item, note__contains="안전관리책임자").exists()
+apps/projects\tests\test_project_import_commit.py:495:def test_profit_is_general_budget_even_if_saved_as_labor():
+apps/projects\tests\test_project_import_commit.py:497:    user = get_user_model().objects.create_user(username="profit-hq", password="pass")
+apps/projects\tests\test_project_import_commit.py:501:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps/projects\tests\test_project_import_commit.py:502:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.LABOR, name="이윤", planned_amount=1000)
+apps/projects\tests\test_project_import_commit.py:511:    budget = BudgetItem.objects.get(project=project, cost_item=profit_item)
+apps/projects\tests\test_project_import_commit.py:558:        subcon_item = CostItem.objects.create(code="TEST-SUBCON-BUCKET", name="하도급 테스트", category="subcon", is_active=True)
+apps/projects\tests\test_project_import_commit.py:561:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps/projects\tests\test_project_import_commit.py:567:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.OTHER, name="이윤", planned_amount=600)
+apps/projects\tests\test_project_import_commit.py:588:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps/projects\tests\test_project_import_commit.py:589:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.LABOR, name="", planned_amount=1000)
+apps/projects\tests\test_project_import_commit.py:595:    repaired = BudgetItem.objects.get(project=project, cost_item=profit_item)
+apps/projects\migrations\0010_update_budgetitem_fields.py:7:        ("projects", "0009_budgetitem_wbsitem"),
+apps/projects\migrations\0010_update_budgetitem_fields.py:36:                to="projects.project",
+apps/projects\migrations\0010_update_budgetitem_fields.py:76:            name="projects_bu_project_6f9e5b_idx",
+apps/projects\migrations\0010_update_budgetitem_fields.py:80:            index=models.Index(fields=["project", "cost_item"], name="projects_bu_project_cost_item_idx"),
+apps/projects\migrations\0011_project_wbs_fields.py:6:        ("projects", "0010_update_budgetitem_fields"),
+apps/projects\migrations\0015_approval_package.py:8:        ("projects", "0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more"),
+apps/projects\migrations\0015_approval_package.py:58:                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="projects.project"),
+apps/projects\migrations\0015_approval_package.py:89:                        to="projects.approvalpackage",
+apps/projects\migrations\0015_approval_package.py:95:                    models.Index(fields=["package", "item_type"], name="projects_ap_package_3a20c6_idx"),
+apps/projects\migrations\0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more.py:9:        ('projects', '0013_wbs_change_request'),
+apps/projects\migrations\0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more.py:15:            new_name='projects_bu_project_83b1ff_idx',
+apps/projects\migrations\0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more.py:16:            old_name='projects_bu_project_cost_item_idx',
+apps/projects\migrations\0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more.py:20:            new_name='projects_wb_request_3d7589_idx',
+apps/projects\migrations\0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more.py:21:            old_name='projects_wb_request_6b1c3a_idx',
+apps/projects\migrations\0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more.py:25:            new_name='projects_wb_project_892322_idx',
+apps/projects\migrations\0014_rename_projects_bu_project_cost_item_idx_projects_bu_project_83b1ff_idx_and_more.py:26:            old_name='projects_wb_project_8f0f1c_idx',
+apps/projects\tests\test_project_api.py:5:from apps.projects.models import Project
+apps/projects\tests\test_project_api.py:21:    response = client.get("/api/projects/")
+apps/projects\tests\test_project_api.py:37:    response = auth_client.post("/api/projects/", payload, format="json")
+apps/projects\tests\test_project_api.py:63:    response = auth_client.post("/api/projects/", payload, format="json")
+apps/projects\tests\test_project_api.py:70:        f"/api/projects/{project.id}/",
+apps/projects\tests\test_project_api.py:88:        is_active=True,
+apps/projects\tests\test_project_api.py:91:    response = auth_client.delete(f"/api/projects/{project.id}/")
+apps/projects\tests\test_project_api.py:97:    response = auth_client.get("/api/projects/")
+apps/projects\tests\test_project_budget_detail_save.py:13:from apps.projects.hq_views import hq_project_detail
+apps/projects\tests\test_project_budget_detail_save.py:14:from apps.projects.models import (
+apps/projects\tests\test_project_budget_detail_save.py:64:    return f"/app/hq/projects/{project.id}/"
+apps/projects\tests\test_project_baseline_rejection.py:12:from apps.projects.hq_views import hq_project_detail, hq_project_list
+apps/projects\tests\test_project_baseline_rejection.py:13:from apps.projects.models import Project, ProjectContract, ProjectStatus
+apps/projects\tests\test_project_baseline_rejection.py:64:        f"/app/hq/projects/{project.id}/",
+apps/projects\tests\test_project_baseline_rejection.py:89:        f"/app/hq/projects/{project.id}/",
+apps/projects\tests\test_project_baseline_rejection.py:115:        f"/app/hq/projects/{project.id}/",
+apps/projects\tests\test_project_baseline_rejection.py:122:        f"/app/hq/projects/{project.id}/",
+apps/projects\tests\test_project_baseline_rejection.py:147:        f"/app/hq/projects/{project.id}/",
+apps/projects\tests\test_project_baseline_rejection.py:152:    list_request = _build_request(hq, "/app/hq/projects/", method="get")
+apps/projects\tests\test_project_baseline_rejection.py:166:    request = _build_request(hq, f"/app/hq/projects/{project.id}/", method="get")
+apps/projects\tests\test_project_baseline_rejection.py:192:    request = _build_request(ceo, f"/app/hq/projects/{project.id}/", method="get")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:12:from apps.contracts.models import ContractSnapshot
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:16:    CostActualLine,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:20:    RevenueRecognition,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:23:from apps.projects.models import BudgetCategory, BudgetItem, Project
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:68:def _dashboard_url(as_of=date(2026, 6, 30)):
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:69:    return f"/app/ceo/?as_of_date={as_of.isoformat()}"
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:72:def _project(code, name, *, status="active", is_active=True):
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:92:        is_active=True,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:109:    return ContractSnapshot.objects.create(
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:115:        is_active=True,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:119:def _revenue(project, snapshot, as_of, progress_percent):
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:120:    return RevenueRecognition.objects.create(
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:123:        as_of_date=as_of,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:124:        progress_percent=Decimal(str(progress_percent)),
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:136:    CostActualLine.objects.create(
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:147:def _progress(project, reporter, percent, *, task_name="포장공사", report_date=date(2026, 6, 20)):
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:160:        progress_percent=Decimal(str(percent)),
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:172:    revenue_progress,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:174:    progress_percent,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:177:    is_active=True,
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:184:    _revenue(project, snapshot, as_of - timedelta(days=1), revenue_progress)
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:186:    _progress(project, reporter, progress_percent, report_date=as_of - timedelta(days=3))
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:190:def _dashboard_context(response):
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:216:    for item in context["projects"]:
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:219:    raise AssertionError(f"project {project.id} missing from CEO dashboard context")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:223:def test_audit8_ceo_dashboard_renders_for_ceo_with_clean_korean_labels():
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:230:        revenue_progress="50.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:232:        progress_percent="40.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:236:    response = _client(ceo).get(_dashboard_url())
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:243:    assert _project_summary(_dashboard_context(response), project)["project_name"] == project.name
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:256:        revenue_progress="50.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:258:        progress_percent="40.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:266:        revenue_progress="25.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:268:        progress_percent="80.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:272:    future_snapshot = ContractSnapshot.objects.get(project=project_a, is_active=True)
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:281:    response = _client(ceo).get(_dashboard_url(as_of))
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:282:    context = _dashboard_context(response)
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:285:    assert len(context["projects"]) == 2
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:286:    assert {item["project_id"] for item in context["projects"]} == {project_a.id, project_b.id}
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:289:    assert context["total_profit"] == Decimal("500000.00")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:290:    assert context["avg_progress"] == Decimal("60.000")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:294:def test_audit8_ceo_project_card_lineage_matches_project_budget_progress_cost():
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:301:        revenue_progress="10.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:303:        progress_percent="33.3",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:310:        revenue_progress="20.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:312:        progress_percent="90.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:316:    response = _client(ceo).get(_dashboard_url())
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:317:    context = _dashboard_context(response)
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:324:    assert summary["profit"] == Decimal("176544.00")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:325:    assert summary["overall_progress_percent"] == Decimal("33.300")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:330:def test_audit8_ceo_dashboard_excludes_inactive_projects_and_keeps_closed_read_only():
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:337:        revenue_progress="10.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:339:        progress_percent="20.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:346:        revenue_progress="100.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:348:        progress_percent="100.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:356:        revenue_progress="50.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:358:        progress_percent="70.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:365:        "daily_progress": DailyProgress.objects.count(),
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:371:    response = _client(ceo).get(_dashboard_url())
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:372:    context = _dashboard_context(response)
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:373:    project_ids = {item["project_id"] for item in context["projects"]}
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:381:        "daily_progress": DailyProgress.objects.count(),
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:389:def test_audit8_rbac_boundary_for_ceo_dashboard():
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:394:    assert _client(ceo).get(_dashboard_url()).status_code == 200
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:395:    assert _client(field).get(_dashboard_url()).status_code == 403
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:396:    assert _client(hq).get(_dashboard_url()).status_code == 403
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:400:def test_audit8_ceo_dashboard_does_not_expose_raw_labor_pii_or_secret_values():
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:407:        revenue_progress="5.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:409:        progress_percent="10.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:417:    response = _client(ceo).get(_dashboard_url())
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:419:    context_payload = json.dumps(_dashboard_context(response), ensure_ascii=False, default=str)
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:431:def test_audit8_ceo_dashboard_project_links_resolve_with_clean_korean_labels():
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:438:        revenue_progress="30.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:440:        progress_percent="55.0",
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:445:    dashboard = client.get(_dashboard_url())
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:446:    projects = client.get("/app/ceo/projects/")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:447:    detail = client.get(f"/app/ceo/projects/{project.id}/")
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:448:    projects_content = _unescaped_content(projects)
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:451:    assert dashboard.status_code == 200
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:452:    assert projects.status_code == 200
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:454:    assert f'/app/ceo/projects/{project.id}/' in projects_content
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:455:    assert "프로젝트 목록" in projects_content
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:459:    assert project.name in projects_content
+apps/projects\tests\test_audit8_ceo_dashboard_lineage.py:460:    _assert_no_mojibake(projects_content + detail_content)
+apps/projects\tests\test_project_import_budget_initial.py:11:from apps.projects.forms import (
+apps/projects\tests\test_project_import_budget_initial.py:16:from apps.projects.excel_import import parse_budget_summary_sheet
+apps/projects\tests\test_project_import_budget_initial.py:17:from apps.projects.hq_views import (
+apps/projects\tests\test_project_import_budget_initial.py:26:from apps.projects.models import BudgetCategory, BudgetItem, Project
+apps/projects\tests\test_project_import_budget_initial.py:443:def test_profit_is_not_auto_matched():
+apps/projects\tests\test_project_import_budget_initial.py:462:    assert rows[0]["requires_manual_profit_mapping"] is True
+apps/projects\tests\test_project_import_budget_initial.py:467:def test_profit_can_be_manually_mapped_to_profit_cbs():
+apps/projects\tests\test_project_import_budget_initial.py:469:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps/projects\tests\test_project_import_budget_initial.py:481:    manual_mapping = {_make_budget_import_key(row, 0): str(profit_item.id)}
+apps/projects\tests\test_project_import_budget_initial.py:487:    assert initial[0]["cost_item"] == profit_item.id
+apps/projects\tests\test_project_import_budget_initial.py:494:def test_safety_manager_does_not_match_profit():
+apps/projects\tests\test_project_import_budget_initial.py:900:def test_missing_profit_is_reported_as_manual_required_expense_not_dropped():
+apps/projects\tests\test_excel_import.py:7:import apps.projects.excel_import as ei
+apps/projects\tests\test_excel_import.py:174:    assert [entry["period"] for entry in result["rows"][0]["period_progress_values"]] == [
+apps/projects\tests\test_excel_import.py:182:    assert all(entry["period"] not in {"\uacf5\uc885", "\ubcf4\ud560"} for entry in result["rows"][0]["period_progress_values"])

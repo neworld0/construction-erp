@@ -1,0 +1,1 @@
+﻿Before source state: Content-Type=text/csv; no response.write("\\ufeff"); first bytes began with CSV header, so BOM_PRESENT=False.

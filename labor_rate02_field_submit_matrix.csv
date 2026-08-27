@@ -1,0 +1,7 @@
+Scenario,Worker,Role,Expected,Result
+기본 직종 단가,활성 근로자,노무 역할,자동 해석 후 제출,Implemented
+근로자 단가,활성 근로자,노무 역할,기본 단가보다 우선,Implemented
+프로젝트 직종 단가,활성 근로자,노무 역할,근로자 기본 단가보다 우선,Implemented
+프로젝트+근로자 단가,활성 근로자,노무 역할,가장 높은 우선순위,Implemented
+단가 없음,활성 근로자,노무 역할,제출 차단 및 HQ 안내,Implemented
+중복 단가,활성 근로자,노무 역할,제출 차단 및 기준 정리 안내,Implemented

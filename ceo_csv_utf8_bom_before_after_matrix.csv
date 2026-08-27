@@ -1,0 +1,3 @@
+Scenario,Content_Type,Content_Disposition,First_Bytes_Hex,BOM_Present,UTF8_Decode_OK,Korean_Project_Name_OK,Excel_Compatibility_Result,Notes
+Before patch,text/csv,"attachment; filename=project-summary.csv",70 72 6F 6A 65 63 74,NO,YES,Not guaranteed,FAIL,Windows Excel can use local ANSI heuristics.
+After patch,text/csv; charset=utf-8,"attachment; filename*=UTF-8''project-summary.csv",EF BB BF 70 72 6F 6A 65 63 74,YES,YES,YES,PASS,UTF-8-sig decodes headers and Korean names safely.

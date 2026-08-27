@@ -23,6 +23,11 @@
         <div class="alert alert-error">{{ form.non_field_errors }}</div>
       {% endif %}
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+      <div>
+          <label class="hint">고용 법인</label>
+          {{ form.legal_entity }}
+          <div class="hint">선택한 법인 소속 프로젝트에만 급여 원가를 배부할 수 있습니다.</div>
+        </div>
         <div>
           <label class="hint">연도</label>
           {{ form.period_year }}

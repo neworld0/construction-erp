@@ -1,0 +1,52 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+{% block page_title %}법인·면허 관리{% endblock %}
+{% block content %}
+<div class="container">
+  {% if form_section %}
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2 class="card-title" style="margin-bottom:4px">{{ current_legal_entity.legal_name }} · {% if form_section == "license" %}{% if editing_license %}면허 수정{% else %}면허 등록{% endif %}{% elif form_section == "credit_rating" %}{% if editing_credit_rating %}신용평가등급 수정{% else %}신용평가등급 등록{% endif %}{% else %}{% if editing_performance %}공종별 시공 실적 수정{% else %}공종별 시공 실적 등록{% endif %}{% endif %}</h2>
+        <p class="hint">입력 후 저장하면 법인·면허 관리 목록으로 돌아갑니다.</p>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/legal-entity/licenses/">목록으로</a>
+    </div>
+    {% if form_section == "license" %}
+      <form method="post" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">{% csrf_token %}
+        {% if editing_license %}<input type="hidden" name="license_id" value="{{ editing_license.id }}">{% endif %}
+        {% for field in form %}<div><label class="form-label">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="input-hint" style="color:#c2410c">{{ field.errors|striptags }}</div>{% endif %}</div>{% endfor %}
+        <div style="grid-column:1/-1"><button class="btn">저장</button> <a class="btn btn-outline" href="/app/hq/legal-entity/licenses/">취소</a></div>
+      </form>
+    {% elif form_section == "credit_rating" %}
+      <form method="post" enctype="multipart/form-data" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">{% csrf_token %}
+        <input type="hidden" name="action" value="credit_rating">
+        {% if editing_credit_rating %}<input type="hidden" name="credit_rating_id" value="{{ editing_credit_rating.id }}">{% endif %}
+        {% for field in credit_rating_form %}<div{% if field.name == "evidence_note" or field.name == "evidence_file" %} style="grid-column:1/-1"{% endif %}><label class="form-label">{{ field.label }}</label>{{ field }}{% if field.name == "evidence_file" %}<div class="hint">선택 항목 · PDF, Excel, PNG/JPG · 최대 20MB</div>{% endif %}{% if field.errors %}<div class="input-hint" style="color:#c2410c">{{ field.errors|striptags }}</div>{% endif %}</div>{% endfor %}
+        <div style="grid-column:1/-1"><button class="btn">등급 저장</button> <a class="btn btn-outline" href="/app/hq/legal-entity/licenses/">취소</a></div>
+      </form>
+    {% else %}
+      <form method="post" enctype="multipart/form-data" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">{% csrf_token %}
+        <input type="hidden" name="action" value="performance">
+        {% if editing_performance %}<input type="hidden" name="performance_id" value="{{ editing_performance.id }}">{% endif %}
+        {% for field in performance_form %}<div{% if field.name == "evidence_note" or field.name == "evidence_file" %} style="grid-column:1/-1"{% endif %}><label class="form-label">{{ field.label }}</label>{{ field }}{% if field.name == "evidence_file" %}<div class="hint">선택 항목 · PDF, Excel, PNG/JPG · 최대 20MB</div>{% endif %}{% if field.help_text %}<div class="hint">{{ field.help_text }}</div>{% endif %}{% if field.errors %}<div class="input-hint" style="color:#c2410c">{{ field.errors|striptags }}</div>{% endif %}</div>{% endfor %}
+        <div style="grid-column:1/-1"><button class="btn">실적 저장</button> <a class="btn btn-outline" href="/app/hq/legal-entity/licenses/">취소</a></div>
+      </form>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 class="card-title" style="margin-bottom:4px">{{ current_legal_entity.legal_name }} 법인·면허 관리</h2><p class="hint">등록된 면허, 신용평가등급 및 공종별 시공 실적을 조회합니다.</p></div><a class="btn" href="/app/hq/legal-entity/licenses/new/">면허 등록</a></div>
+    <table class="table"><thead><tr><th>업종·면허</th><th>등록번호</th><th>등록일</th><th>등록처</th><th>유효기간</th><th>상태</th><th>관리</th></tr></thead><tbody>{% for item in licenses %}<tr><td>{{ item.license_type }}</td><td>{{ item.registration_number }}</td><td>{{ item.registered_on|date:"Y-m-d" }}</td><td>{{ item.registered_by }}</td><td>{{ item.valid_from|date:"Y-m-d"|default:"-" }} ~ {{ item.valid_to|date:"Y-m-d"|default:"-" }}</td><td>{% if item.is_active %}사용{% else %}중지{% endif %}</td><td><a class="btn btn-outline" href="/app/hq/legal-entity/licenses/new/?edit={{ item.id }}">수정</a></td></tr>{% empty %}<tr><td colspan="7">등록된 면허가 없습니다.</td></tr>{% endfor %}</tbody></table>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h3 style="margin-bottom:4px">신용평가등급</h3><p class="hint">법인 단위 신용평가등급과 신용평가서 증빙 파일입니다.</p></div><a class="btn" href="/app/hq/legal-entity/licenses/credit-ratings/new/">신용평가등급 등록</a></div>
+    <table class="table"><thead><tr><th>평가기관</th><th>신용평가등급</th><th>평가 기준일</th><th>유효 종료일</th><th>증빙·비고</th><th>입력자</th><th>신용평가서</th><th>관리</th></tr></thead><tbody>{% for item in credit_ratings %}<tr><td>{{ item.rating_agency }}</td><td><strong>{{ item.rating_grade }}</strong></td><td>{{ item.assessed_on|date:"Y-m-d" }}</td><td>{{ item.valid_until|date:"Y-m-d"|default:"-" }}</td><td>{{ item.evidence_note|default:"-" }}</td><td>{{ item.created_by.username|default:"-" }}</td><td>{% for evidence in item.evidences.all %}<div style="margin-bottom:6px"><a href="/app/hq/legal-entity/licenses/credit-ratings/evidence/{{ evidence.id }}/download/">{{ evidence.original_name }}</a><br><span class="hint">{{ evidence.uploaded_by.username }} · {{ evidence.created_at|date:"Y-m-d H:i" }}</span></div>{% empty %}<span class="hint">첨부 없음</span>{% endfor %}</td><td><a class="btn btn-outline" href="/app/hq/legal-entity/licenses/credit-ratings/new/?credit_edit={{ item.id }}">수정·파일첨부</a></td></tr>{% empty %}<tr><td colspan="8">등록된 신용평가등급이 없습니다.</td></tr>{% endfor %}</tbody></table>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h3 style="margin-bottom:4px">공종별 시공 실적</h3><p class="hint">입찰 참여 판단을 위한 면허별 실적 스냅샷과 실적증명서 파일입니다.</p></div><a class="btn" href="/app/hq/legal-entity/licenses/performances/new/">시공 실적 등록</a></div>
+    <table class="table"><thead><tr><th>적용 면허</th><th>공종</th><th>외부 공종 코드</th><th>기준일</th><th>최근 3년 실적</th><th>최근 5년 실적</th><th>출처</th><th>증빙·비고</th><th>입력자</th><th>실적증명서</th><th>관리</th></tr></thead><tbody>{% for item in performances %}<tr><td>{{ item.license.license_type }}</td><td>{{ item.work_category }}</td><td>{{ item.external_category_code|default:"-" }}</td><td>{{ item.as_of_date|date:"Y-m-d" }}</td><td class="num">{{ item.three_year_amount|floatformat:0|intcomma }}원</td><td class="num">{{ item.five_year_amount|floatformat:0|intcomma }}원</td><td>{{ item.get_source_display }}</td><td>{{ item.evidence_note|default:"-" }}</td><td>{{ item.created_by.username|default:"-" }}</td><td>{% for evidence in item.evidences.all %}<div style="margin-bottom:6px"><a href="/app/hq/legal-entity/licenses/performances/evidence/{{ evidence.id }}/download/">{{ evidence.original_name }}</a><br><span class="hint">{{ evidence.uploaded_by.username }} · {{ evidence.created_at|date:"Y-m-d H:i" }}</span></div>{% empty %}<span class="hint">첨부 없음</span>{% endfor %}</td><td><a class="btn btn-outline" href="/app/hq/legal-entity/licenses/performances/new/?performance_edit={{ item.id }}">수정·파일첨부</a></td></tr>{% empty %}<tr><td colspan="11">등록된 공종별 시공 실적이 없습니다.</td></tr>{% endfor %}</tbody></table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

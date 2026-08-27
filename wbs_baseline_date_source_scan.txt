@@ -1,0 +1,12 @@
+Changed implementation paths:
+- apps/projects/hq_views.py
+- apps/field/web_views.py
+- templates/app/hq/project_new.html
+- apps/projects/tests/test_wbs_baseline_dates.py
+
+Checks completed:
+- python -m compileall: PASS
+- git diff --check: PASS
+- No migration file added: PASS
+
+OVERALL_SOURCE_SCAN_PASS: True

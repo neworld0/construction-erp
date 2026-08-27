@@ -15,9 +15,9 @@ def _month_block_message(target_date: date) -> str:
 
 
 def assert_month_open(
-    target_date: date, *, message_context: str | None = None, exc=PermissionDenied
+    target_date: date, *, legal_entity, message_context: str | None = None, exc=PermissionDenied
 ) -> None:
-    if is_month_closed(target_date):
+    if is_month_closed(target_date, legal_entity=legal_entity):
         message = _month_block_message(target_date)
         if message_context:
             message = f"{message_context} {message}"
@@ -30,7 +30,10 @@ def assert_object_month_open(
     target_date = getattr(obj, date_field_name)
     if not isinstance(target_date, date):
         raise ValidationError("Date field is missing or invalid.")
-    assert_month_open(target_date, message_context=message_context, exc=exc)
+    project = getattr(obj, "project", None)
+    if project is None:
+        raise ValidationError("법인 귀속 프로젝트가 없는 데이터는 월마감 검증을 할 수 없습니다.")
+    assert_month_open(target_date, legal_entity=project.legal_entity, message_context=message_context, exc=exc)
 
 
 def _project_block_message(project) -> str:
@@ -62,4 +65,6 @@ def guard_write(
     exc=PermissionDenied,
 ) -> None:
     assert_project_open(project, message_context=message_context, exc=exc)
-    assert_month_open(target_date, message_context=message_context, exc=exc)
+    if project is None:
+        raise ValidationError("프로젝트 법인이 없는 월마감 검증은 허용되지 않습니다.")
+    assert_month_open(target_date, legal_entity=project.legal_entity, message_context=message_context, exc=exc)

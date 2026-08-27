@@ -1,0 +1,4 @@
+Issue_ID,Area,Severity,P0_P1_P2,Description,Evidence,Workaround,Required_Before_OPS2,Required_Before_Full_Rollout,Followup_Prompt
+OPS1C-00,CEO KPI Detail,RESOLVED,P0_RESOLVED,KPI detail prefetch used the missing budgetitem_set relation and caused a 500 response.,apps/ceo/services/kpi_engine.py; rerun route check HTTP 200,Not required after one-line relation-name fix.,NO,NO,None
+OPS1C-01,LABPAY,P2,P2,Safe real CWMA e-card file validation remains separate as LABPAY-REAL-1.,OPS-1C scope exclusion,Use sanitized fixtures only.,NO,YES,LABPAY-REAL-1
+OPS1C-02,Revenue Policy,P1,P1,PROGRESS_BASED_PROVISIONAL is validated for OPS-1C but is not final accounting policy.,ops1b_r1_revenue_policy.csv,Label dashboard value provisional.,NO,YES,FINANCE-REVENUE-POLICY-1

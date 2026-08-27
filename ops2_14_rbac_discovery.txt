@@ -1,0 +1,662 @@
+﻿apps\audit\views.py:4:from rest_framework.permissions import IsAuthenticated
+apps\audit\views.py:12:    permission_classes = [IsAuthenticated]
+apps\audit\tests\test_audit_logs.py:17:from apps.core.rbac.models import UserProfile
+apps\audit\tests\test_audit_logs.py:27:    UserProfile.objects.create(user=user, role="hq")
+apps\audit\tests\test_audit_logs.py:34:    UserProfile.objects.create(user=user, role="field")
+apps\audit\tests\test_audit_log_sanitization.py:8:from apps.core.rbac.models import Role, UserProfile
+apps\audit\tests\test_audit_log_sanitization.py:15:    UserProfile.objects.create(user=user, role=Role.HQ)
+apps\core\admin.py:4:from .rbac.models import ProjectAssignment, UserProfile
+apps\core\admin.py:13:@admin.register(UserProfile)
+apps\core\admin.py:14:class UserProfileAdmin(admin.ModelAdmin):
+apps\core\admin.py:20:@admin.register(ProjectAssignment)
+apps\core\admin.py:21:class ProjectAssignmentAdmin(admin.ModelAdmin):
+apps\finance\views.py:4:from rest_framework.permissions import IsAuthenticated
+apps\finance\views.py:8:from apps.core.rbac.models import Role
+apps\finance\views.py:9:from apps.core.rbac.permissions import require_project_access, require_role
+apps\finance\views.py:16:    permission_classes = [IsAuthenticated]
+apps\finance\views.py:46:    permission_classes = [IsAuthenticated]
+apps\finance\views.py:89:    permission_classes = [IsAuthenticated]
+apps\finance\views.py:93:        require_role(request.user, [Role.CEO, Role.HQ])
+apps\schedule\web_views.py:6:from apps.core.rbac.models import Role
+apps\schedule\web_views.py:7:from apps.core.rbac.permissions import require_role
+apps\schedule\web_views.py:13:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\schedule\views.py:5:from rest_framework.permissions import IsAuthenticated
+apps\schedule\views.py:18:from apps.core.rbac.permissions import require_project_access
+apps\schedule\views.py:25:    permission_classes = [IsAuthenticated]
+apps\schedule\views.py:76:    permission_classes = [IsAuthenticated]
+apps\schedule\views.py:125:    permission_classes = [IsAuthenticated]
+apps\contracts\web_views.py:4:from apps.core.rbac.models import Role
+apps\contracts\web_views.py:5:from apps.core.rbac.permissions import require_role
+apps\contracts\web_views.py:11:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\closing\web_views.py:12:from apps.core.rbac.models import Role
+apps\closing\web_views.py:13:from apps.core.rbac.permissions import get_user_role, require_role
+apps\closing\web_views.py:56:    require_role(request.user, [Role.FIELD], request=request)
+apps\closing\web_views.py:95:    require_role(request.user, [Role.FIELD], request=request)
+apps\closing\web_views.py:122:    require_role(request.user, [Role.HQ], request=request)
+apps\closing\web_views.py:135:    require_role(request.user, [Role.HQ], request=request)
+apps\closing\web_views.py:150:    require_role(request.user, [Role.HQ], request=request)
+apps\closing\web_views.py:161:    require_role(request.user, [Role.CEO], request=request)
+apps\closing\web_views.py:175:    require_role(request.user, [Role.CEO], request=request)
+apps\closing\web_views.py:191:    require_role(request.user, [Role.CEO], request=request)
+apps\closing\web_views.py:202:    require_role(request.user, [Role.CEO], request=request)
+apps\closing\web_views.py:253:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\closing\web_views.py:305:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\closing\web_views.py:354:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\closing\web_views.py:370:    require_role(request.user, [Role.HQ], request=request)
+apps\closing\web_views.py:396:    require_role(request.user, [Role.CEO], request=request)
+apps\closing\web_views.py:424:    require_role(request.user, [Role.CEO], request=request)
+apps\core\management\commands\seed_initial.py:6:from apps.core.rbac.models import ProjectAssignment, Role, UserProfile
+apps\core\management\commands\seed_initial.py:33:        UserProfile.objects.get_or_create(user=ceo_user, defaults={"role": Role.CEO})
+apps\core\management\commands\seed_initial.py:38:        UserProfile.objects.get_or_create(user=hq_user, defaults={"role": Role.HQ})
+apps\core\management\commands\seed_initial.py:43:        UserProfile.objects.get_or_create(user=field_user, defaults={"role": Role.FIELD})
+apps\core\management\commands\seed_initial.py:49:        assignment, assignment_created = ProjectAssignment.objects.get_or_create(
+apps\evidence\web_views.py:10:from apps.core.rbac.models import Role
+apps\evidence\web_views.py:11:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\evidence\web_views.py:92:    if role == Role.FIELD:
+apps\cost\views.py:7:from rest_framework.permissions import IsAuthenticated
+apps\cost\views.py:23:from apps.core.rbac.models import Role
+apps\cost\views.py:24:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\cost\views.py:35:    permission_classes = [IsAuthenticated]
+apps\cost\views.py:47:    permission_classes = [IsAuthenticated]
+apps\cost\views.py:133:    permission_classes = [IsAuthenticated]
+apps\cost\views.py:183:    permission_classes = [IsAuthenticated]
+apps\cost\views.py:197:            elif get_user_role(request.user) == Role.FIELD:
+apps\core\management\commands\seed_demo_flow.py:11:from apps.core.rbac.models import Role, UserProfile
+apps\core\management\commands\seed_demo_flow.py:39:        ceo_user = _get_or_create_user(User, ceo_username, ceo_password, Role.CEO)
+apps\core\management\commands\seed_demo_flow.py:40:        hq_user = _get_or_create_user(User, hq_username, hq_password, Role.HQ)
+apps\core\management\commands\seed_demo_flow.py:41:        field_user = _get_or_create_user(User, field_username, field_password, Role.FIELD)
+apps\core\management\commands\seed_demo_flow.py:241:    profile, _ = UserProfile.objects.get_or_create(user=user, defaults={"role": role})
+apps\ceo\web_views.py:6:from apps.core.rbac.models import Role
+apps\ceo\web_views.py:7:from apps.core.rbac.permissions import require_role
+apps\ceo\web_views.py:27:    require_role(request.user, [Role.CEO, Role.HQ])
+apps\ceo\web_views.py:33:    require_role(request.user, [Role.CEO, Role.HQ])
+apps\field\web_views.py:21:from apps.core.rbac.models import Role
+apps\field\web_views.py:22:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\field\web_views.py:39:    if role in (Role.CEO, Role.HQ):
+apps\field\web_views.py:41:    if role == Role.FIELD:
+apps\field\web_views.py:61:    if role in (Role.CEO, Role.HQ):
+apps\field\web_views.py:63:    if role != Role.FIELD or project is None:
+apps\field\web_views.py:499:    if role == Role.FIELD:
+apps\field\web_views.py:1824:    if get_user_role(user) == Role.FIELD:
+apps\field\web_views.py:1847:    if get_user_role(user) == Role.FIELD:
+apps\field\web_views.py:2074:    if role != Role.FIELD:
+apps\field\web_views.py:2080:    # - Field scope: apps.core.rbac.permissions + ProjectAssignment via _get_accessible_projects
+apps\evidence\views.py:4:from rest_framework.permissions import IsAuthenticated
+apps\evidence\views.py:12:from apps.core.rbac.models import Role
+apps\evidence\views.py:13:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\evidence\views.py:27:    permission_classes = [IsAuthenticated]
+apps\evidence\views.py:38:        if role == Role.FIELD:
+apps\evidence\views.py:68:    permission_classes = [IsAuthenticated]
+apps\evidence\views.py:74:        if project is None and get_user_role(request.user) == Role.FIELD:
+apps\evidence\views.py:82:    permission_classes = [IsAuthenticated]
+apps\evidence\views.py:90:        if project is None and get_user_role(request.user) == Role.FIELD:
+apps\evidence\views.py:127:    permission_classes = [IsAuthenticated]
+apps\contracts\views.py:4:from rest_framework.permissions import IsAuthenticated
+apps\contracts\views.py:19:    permission_classes = [IsAuthenticated]
+apps\core\management\commands\seed_demo_3sites_e2e.py:358:        UserProfile = _safe_get_model("core", "UserProfile")
+apps\core\management\commands\seed_demo_3sites_e2e.py:359:        ProjectAssignment = _safe_get_model("core", "ProjectAssignment")
+apps\core\management\commands\seed_demo_3sites_e2e.py:376:            "UserProfile": UserProfile,
+apps\core\management\commands\seed_demo_3sites_e2e.py:377:            "ProjectAssignment": ProjectAssignment,
+apps\core\management\commands\seed_demo_3sites_e2e.py:397:        users = self._ensure_users(user_specs, UserProfile)
+apps\core\management\commands\seed_demo_3sites_e2e.py:513:                ProjectAssignment.objects.update_or_create(
+apps\core\management\commands\seed_demo_3sites_e2e.py:1485:    def _ensure_users(self, user_specs, UserProfile):
+apps\core\management\commands\seed_demo_3sites_e2e.py:1493:            profile, _ = UserProfile.objects.get_or_create(user=user, defaults={"role": role})
+apps\ceo\views.py:6:from rest_framework.permissions import IsAuthenticated
+apps\ceo\views.py:13:from apps.core.rbac.models import Role
+apps\ceo\views.py:14:from apps.core.rbac.permissions import require_role
+apps\ceo\views.py:15:from .permissions import CEOAccessPermission
+apps\ceo\views.py:24:    permission_classes = [IsAuthenticated, CEOAccessPermission]
+apps\ceo\views.py:34:    permission_classes = [IsAuthenticated, CEOAccessPermission]
+apps\ceo\views.py:49:    permission_classes = [IsAuthenticated, CEOAccessPermission]
+apps\ceo\views.py:59:    permission_classes = [IsAuthenticated, CEOAccessPermission]
+apps\ceo\views.py:63:        require_role(request.user, [Role.CEO, Role.HQ])
+apps\field\views.py:4:from rest_framework.permissions import IsAuthenticated
+apps\field\views.py:15:    permission_classes = [IsAuthenticated]
+apps\schedule\tests\test_progress_api.py:8:from apps.core.rbac.models import UserProfile
+apps\schedule\tests\test_progress_api.py:17:    UserProfile.objects.create(user=user, role="hq")
+apps\core\management\commands\seed_demo_3sites.py:12:from apps.core.rbac.models import Role, UserProfile
+apps\core\management\commands\seed_demo_3sites.py:42:            Role.CEO,
+apps\core\management\commands\seed_demo_3sites.py:48:            Role.HQ,
+apps\core\management\commands\seed_demo_3sites.py:54:            Role.FIELD,
+apps\core\management\commands\seed_demo_3sites.py:132:    profile, _ = UserProfile.objects.get_or_create(user=user, defaults={"role": role})
+apps\core\views.py:16:from rest_framework.permissions import IsAuthenticated
+apps\core\views.py:23:from .rbac.models import Role
+apps\core\views.py:24:from .rbac.permissions import get_user_role, require_project_access, require_role
+apps\core\views.py:104:    if role not in (Role.CEO, Role.HQ, Role.FIELD):
+apps\core\views.py:106:    if role == Role.FIELD and not getattr(settings, "FIELD_2FA_REQUIRED", False):
+apps\core\views.py:158:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:265:    if role in (Role.CEO, "ceo", "CEO") and request.path.startswith("/app/hq/"):
+apps\core\views.py:275:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:280:    is_ceo_role = role in (Role.CEO, "ceo", "CEO") or request.path.startswith("/app/ceo/")
+apps\core\views.py:602:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:619:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:650:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:677:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:714:    is_ceo = role in (Role.CEO, "ceo", "CEO")
+apps\core\views.py:746:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:768:    is_ceo = role in (Role.CEO, "ceo", "CEO")
+apps\core\views.py:802:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:811:    is_ceo = role in (Role.CEO, "ceo", "CEO")
+apps\core\views.py:854:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\core\views.py:977:    if role in (Role.CEO, "ceo", "CEO"):
+apps\core\views.py:1065:    elif get_user_role(request.user) not in (Role.HQ, Role.CEO):
+apps\core\views.py:1080:    permission_classes = [IsAuthenticated]
+apps\core\views.py:1094:    permission_classes = [IsAuthenticated]
+apps\core\views.py:1107:    permission_classes = [IsAuthenticated]
+apps\core\views.py:1119:    permission_classes = [IsAuthenticated]
+apps\finance\tests\test_profit_loss.py:14:from apps.core.rbac.models import UserProfile
+apps\finance\tests\test_profit_loss.py:23:    UserProfile.objects.create(user=user, role="hq")
+apps\ceo\permissions.py:1:from rest_framework.permissions import BasePermission
+apps\ceo\permissions.py:3:from apps.core.rbac.models import Role
+apps\ceo\permissions.py:4:from apps.core.rbac.permissions import require_role
+apps\ceo\permissions.py:10:    def has_permission(self, request, view):
+apps\ceo\permissions.py:12:            require_role(request.user, [Role.CEO, Role.HQ])
+apps\ceo\app_views.py:19:from apps.core.rbac.models import Role
+apps\ceo\app_views.py:20:from apps.core.rbac.permissions import get_user_role, require_role
+apps\ceo\app_views.py:556:    require_role(request.user, [Role.CEO])
+apps\ceo\app_views.py:756:    require_role(request.user, [Role.CEO])
+apps\ceo\app_views.py:799:    require_role(request.user, [Role.CEO])
+apps\ceo\app_views.py:848:    require_role(request.user, [Role.CEO, Role.HQ])
+apps\ceo\app_views.py:861:    require_role(request.user, [Role.CEO, Role.HQ])
+apps\ceo\app_views.py:996:    require_role(request.user, [Role.CEO])
+apps\ceo\app_views.py:1017:    require_role(request.user, [Role.CEO])
+apps\ceo\app_views.py:1040:    require_role(request.user, [Role.CEO])
+apps\ceo\app_views.py:1157:    require_role(request.user, [Role.CEO])
+apps\evidence\tests\test_secure_download.py:9:from apps.core.rbac.models import ProjectAssignment, UserProfile
+apps\evidence\tests\test_secure_download.py:27:    UserProfile.objects.create(user=user, role="field")
+apps\evidence\tests\test_secure_download.py:34:    UserProfile.objects.create(user=user, role="hq")
+apps\evidence\tests\test_secure_download.py:91:    ProjectAssignment.objects.create(user=field_user, project=project_a, is_active=True)
+apps\ceo\approval_package_views.py:7:from apps.core.rbac.models import Role
+apps\ceo\approval_package_views.py:8:from apps.core.rbac.permissions import require_role
+apps\ceo\approval_package_views.py:21:    require_role(request.user, [Role.CEO])
+apps\ceo\approval_package_views.py:41:    require_role(request.user, [Role.CEO])
+apps\ceo\approval_package_views.py:84:    require_role(request.user, [Role.CEO])
+apps\ceo\approval_package_views.py:97:    require_role(request.user, [Role.CEO])
+apps\field\tests\test_field_progress.py:9:from apps.core.rbac.models import ProjectAssignment, UserProfile
+apps\field\tests\test_field_progress.py:16:    UserProfile.objects.create(user=user, role="field")
+apps\field\tests\test_field_progress.py:29:    ProjectAssignment.objects.create(project=project, user=user, is_active=True)
+apps\ceo\tests\test_ceo_report_export.py:8:from apps.core.rbac.models import UserProfile
+apps\ceo\tests\test_ceo_report_export.py:21:    UserProfile.objects.create(user=user, role="field")
+apps\ceo\tests\test_ceo_report_export.py:30:    UserProfile.objects.create(user=user, role="hq")
+apps\evidence\tests\test_evidence_policy_gate.py:11:from apps.core.rbac.models import UserProfile
+apps\evidence\tests\test_evidence_policy_gate.py:18:    UserProfile.objects.create(user=user, role="hq")
+apps\ceo\tests\test_ceo_pages.py:5:from apps.core.rbac.models import UserProfile
+apps\ceo\tests\test_ceo_pages.py:17:    UserProfile.objects.create(user=user, role="ceo")
+apps\ceo\tests\test_ceo_cash_summary.py:7:from apps.core.rbac.models import UserProfile
+apps\ceo\tests\test_ceo_cash_summary.py:21:    UserProfile.objects.create(user=user, role="hq")
+apps\ceo\tests\test_ceo_cash_summary.py:30:    UserProfile.objects.create(user=user, role="field")
+apps\field\mobile_views.py:11:from apps.core.rbac.models import Role
+apps\field\mobile_views.py:12:from apps.core.rbac.permissions import get_user_role
+apps\field\mobile_views.py:37:    if role != Role.FIELD:
+apps\closing\forms.py:6:from apps.core.rbac.models import Role, ProjectAssignment
+apps\closing\forms.py:48:        if role == Role.FIELD and user:
+apps\closing\forms.py:49:            project_ids = ProjectAssignment.objects.filter(
+apps\closing\forms.py:61:        if role == Role.FIELD:
+apps\cost\tests\test_cbs_utf8_labels.py:7:from apps.core.rbac.models import Role, UserProfile
+apps\cost\tests\test_cbs_utf8_labels.py:17:    UserProfile.objects.create(user=user, role=Role.CEO)
+apps\closing\api_views.py:3:from rest_framework.permissions import IsAuthenticated
+apps\closing\api_views.py:6:from apps.core.rbac.permissions import require_role
+apps\closing\api_views.py:12:    permission_classes = [IsAuthenticated]
+apps\closing\api_views.py:15:        require_role(request.user, ["hq", "ceo"], request=request)
+apps\closing\api_views.py:49:    permission_classes = [IsAuthenticated]
+apps\closing\api_views.py:52:        require_role(request.user, ["hq", "ceo"], request=request)
+apps\core\rbac\models.py:11:class UserProfile(models.Model):
+apps\core\rbac\models.py:15:    role = models.CharField(max_length=20, choices=Role.choices, default=Role.FIELD)
+apps\core\rbac\models.py:21:class ProjectAssignment(models.Model):
+apps\core\rbac\tests\test_audit2_hq_url_rbac.py:5:from apps.core.rbac.models import Role, UserProfile
+apps\core\rbac\tests\test_audit2_hq_url_rbac.py:19:    UserProfile.objects.create(user=user, role=role)
+apps\core\rbac\tests\test_audit2_hq_url_rbac.py:42:    client = _client_for_role(Role.FIELD, f"field-{abs(hash(url))}")
+apps\core\rbac\tests\test_audit2_hq_url_rbac.py:52:    client = _client_for_role(Role.HQ, f"hq-{abs(hash(url))}")
+apps\core\rbac\tests\test_audit2_hq_url_rbac.py:62:    client = _client_for_role(Role.CEO, f"ceo-{abs(hash(url))}")
+apps\core\rbac\tests\test_audit2_project_scope.py:5:from apps.core.rbac.models import ProjectAssignment, Role, UserProfile
+apps\core\rbac\tests\test_audit2_project_scope.py:20:    UserProfile.objects.create(user=user, role=role)
+apps\core\rbac\tests\test_audit2_project_scope.py:46:    field_user = _user(Role.FIELD, "field-scope-assigned")
+apps\core\rbac\tests\test_audit2_project_scope.py:49:    ProjectAssignment.objects.create(user=field_user, project=project, is_active=True)
+apps\core\rbac\tests\test_audit2_project_scope.py:61:    field_user = _user(Role.FIELD, "field-scope-unassigned")
+apps\core\rbac\tests\test_audit2_project_scope.py:66:    ProjectAssignment.objects.create(user=field_user, project=assigned, is_active=True)
+apps\core\rbac\tests\test_audit2_project_scope.py:81:    field_user = _user(Role.FIELD, "field-scope-inactive")
+apps\core\rbac\tests\test_audit2_project_scope.py:84:    ProjectAssignment.objects.create(user=field_user, project=project, is_active=False)
+apps\core\rbac\tests\test_audit2_project_scope.py:96:    hq_user = _user(Role.HQ, "hq-scope")
+apps\core\rbac\tests\test_rbac_assignment_regression.py:7:from apps.core.rbac.models import ProjectAssignment, UserProfile
+apps\core\rbac\tests\test_rbac_assignment_regression.py:25:    UserProfile.objects.create(user=user, role="field")
+apps\core\rbac\tests\test_rbac_assignment_regression.py:32:    UserProfile.objects.create(user=user, role="hq")
+apps\core\rbac\tests\test_rbac_assignment_regression.py:68:        "rbac.txt", b"rbac", content_type="text/plain"
+apps\core\rbac\tests\test_rbac_assignment_regression.py:73:        original_name="rbac.txt",
+apps\core\rbac\tests\test_rbac_assignment_regression.py:86:    ProjectAssignment.objects.create(user=field_user, project=project_a, is_active=True)
+apps\core\rbac\tests\test_rbac_assignment_regression.py:97:    ProjectAssignment.objects.create(user=field_user, project=project_a, is_active=True)
+apps\core\rbac\permissions.py:6:from .models import ProjectAssignment, Role, UserProfile
+apps\core\rbac\permissions.py:13:        return Role.FIELD
+apps\core\rbac\permissions.py:15:    if isinstance(profile, UserProfile):
+apps\core\rbac\permissions.py:18:        if normalized in (Role.CEO, Role.HQ, Role.FIELD):
+apps\core\rbac\permissions.py:21:            "CEO": Role.CEO,
+apps\core\rbac\permissions.py:22:            "HQ": Role.HQ,
+apps\core\rbac\permissions.py:23:            "FIELD": Role.FIELD,
+apps\core\rbac\permissions.py:24:            "ceo": Role.CEO,
+apps\core\rbac\permissions.py:25:            "hq": Role.HQ,
+apps\core\rbac\permissions.py:26:            "field": Role.FIELD,
+apps\core\rbac\permissions.py:35:            role_guess = Role.CEO
+apps\core\rbac\permissions.py:37:            role_guess = Role.HQ
+apps\core\rbac\permissions.py:39:            profile, _created = UserProfile.objects.get_or_create(
+apps\core\rbac\permissions.py:44:        return Role.CEO
+apps\core\rbac\permissions.py:46:        return Role.HQ
+apps\core\rbac\permissions.py:47:    return Role.FIELD
+apps\core\rbac\permissions.py:54:def require_role(user, allowed_roles: list[str], request=None) -> None:
+apps\core\rbac\permissions.py:69:    if role in (Role.CEO, Role.HQ):
+apps\core\rbac\permissions.py:71:    if role == Role.FIELD:
+apps\core\rbac\permissions.py:72:        return ProjectAssignment.objects.filter(
+apps\core\models.py:52:from .rbac.models import ProjectAssignment, Role, UserProfile  # noqa: E402,F401
+apps\core\tests\test_audit1_template_links.py:9:from apps.core.rbac.models import ProjectAssignment, Role, UserProfile
+apps\core\tests\test_audit1_template_links.py:37:    UserProfile.objects.create(user=user, role=role)
+apps\core\tests\test_audit1_template_links.py:64:    ProjectAssignment.objects.create(user=user, project=project, is_active=True)
+apps\core\tests\test_audit1_template_links.py:120:    hq_user = _user(Role.HQ, f"audit1-link-hq-{abs(hash(page_url))}")
+apps\core\tests\test_audit1_template_links.py:127:    field_user = _user(Role.FIELD, "audit1-link-field")
+apps\core\rbac\tests\test_rbac_project_access.py:5:from apps.core.rbac.models import ProjectAssignment, UserProfile
+apps\core\rbac\tests\test_rbac_project_access.py:22:    UserProfile.objects.create(user=user, role="field")
+apps\core\rbac\tests\test_rbac_project_access.py:29:    UserProfile.objects.create(user=user, role="hq")
+apps\core\rbac\tests\test_rbac_project_access.py:53:    ProjectAssignment.objects.create(user=field_user, project=project_a, is_active=True)
+apps\core\rbac\tests\test_rbac_project_access.py:64:    ProjectAssignment.objects.create(user=field_user, project=project_a, is_active=True)
+apps\core\tests\test_api_exception_format.py:16:    from apps.core.rbac.models import UserProfile
+apps\core\tests\test_api_exception_format.py:18:    UserProfile.objects.create(user=user, role="hq")
+apps\core\tests\test_api_exception_format.py:25:    from apps.core.rbac.models import UserProfile
+apps\core\tests\test_api_exception_format.py:27:    UserProfile.objects.create(user=user, role="field")
+apps\core\tests\test_audit1_redirects.py:6:from apps.core.rbac.models import Role, UserProfile
+apps\core\tests\test_audit1_redirects.py:20:    UserProfile.objects.create(user=user, role=role)
+apps\core\tests\test_audit1_redirects.py:36:    response = _client_for(Role.HQ, f"audit1-redirect-{abs(hash(source))}").get(source)
+apps\core\tests\test_audit1_redirects.py:46:    response = _client_for(Role.CEO, "audit1-ceo-cbs-redirect").get("/app/ceo/cbs/cbs/")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:16:from apps.core.rbac.models import ProjectAssignment, Role, UserProfile
+apps\core\tests\test_audit9_operational_smoke_matrix.py:56:    UserProfile.objects.create(user=user, role=role)
+apps\core\tests\test_audit9_operational_smoke_matrix.py:80:    return ProjectAssignment.objects.create(user=field_user, project=project, is_active=True)
+apps\core\tests\test_audit9_operational_smoke_matrix.py:244:    ceo = _user(Role.CEO, "audit9-ceo-matrix")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:245:    hq = _user(Role.HQ, "audit9-hq-matrix")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:246:    field = _user(Role.FIELD, "audit9-field-matrix")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:276:    field = _user(Role.FIELD, "audit9-field-progress")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:302:    ceo = _user(Role.CEO, "audit9-ceo-dashboard")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:303:    field = _user(Role.FIELD, "audit9-field-dashboard")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:326:    hq = _user(Role.HQ, "audit9-hq-labor")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:327:    ceo = _user(Role.CEO, "audit9-ceo-labor")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:328:    field = _user(Role.FIELD, "audit9-field-labor")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:347:    hq = _user(Role.HQ, "audit9-hq-excel")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:348:    field = _user(Role.FIELD, "audit9-field-excel")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:360:    hq = _user(Role.HQ, "audit9-hq-close")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:361:    field = _user(Role.FIELD, "audit9-field-close")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:378:    field = _user(Role.FIELD, "audit9-field-privacy")
+apps\core\tests\test_audit1_url_integrity.py:6:from apps.core.rbac.models import ProjectAssignment, Role, UserProfile
+apps\core\tests\test_audit1_url_integrity.py:21:    UserProfile.objects.create(user=user, role=role)
+apps\core\tests\test_audit1_url_integrity.py:44:    ProjectAssignment.objects.create(user=user, project=project, is_active=True)
+apps\core\tests\test_audit1_url_integrity.py:80:    hq_user = _user(Role.HQ, f"audit1-hq-{abs(hash(url))}")
+apps\core\tests\test_audit1_url_integrity.py:92:    ceo_user = _user(Role.CEO, f"audit1-ceo-{abs(hash(url))}")
+apps\core\tests\test_audit1_url_integrity.py:103:    field_user = _user(Role.FIELD, "audit1-field-user")
+apps\core\middleware\two_factor_enforce.py:12:from apps.core.rbac.models import Role
+apps\core\middleware\two_factor_enforce.py:13:from apps.core.rbac.permissions import get_user_role
+apps\core\middleware\two_factor_enforce.py:23:        if role not in (Role.CEO, Role.HQ, Role.FIELD):
+apps\core\middleware\two_factor_enforce.py:27:        if role == Role.FIELD and not require_for_field:
+apps\core\migrations\0002_rbac_models.py:15:            name="UserProfile",
+apps\core\migrations\0002_rbac_models.py:42:            name="ProjectAssignment",
+apps\core\migrations\0003_projectassignment_role_created_at.py:7:        ("core", "0002_rbac_models"),
+apps\kpi\api_views.py:4:from rest_framework.permissions import IsAuthenticated
+apps\kpi\api_views.py:6:from apps.core.rbac.permissions import can_view_project, require_role
+apps\kpi\api_views.py:15:    permission_classes = [IsAuthenticated]
+apps\kpi\api_views.py:18:        require_role(request.user, ["hq", "ceo"], request=request)
+apps\kpi\api_views.py:28:    permission_classes = [IsAuthenticated]
+apps\kpi\api_views.py:31:        require_role(request.user, ["hq", "ceo"], request=request)
+apps\kpi\api_views.py:48:    permission_classes = [IsAuthenticated]
+apps\kpi\api_views.py:51:        require_role(request.user, ["hq", "ceo", "field"], request=request)
+apps\master\api_views.py:7:from rest_framework.permissions import IsAuthenticated
+apps\master\api_views.py:11:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\master\api_views.py:12:from apps.core.rbac.models import Role
+apps\master\api_views.py:122:    permission_classes = [IsAuthenticated]
+apps\master\api_views.py:139:            if role == Role.FIELD:
+apps\master\api_views.py:146:            if role == Role.FIELD:
+apps\master\api_views.py:194:    permission_classes = [IsAuthenticated]
+apps\master\api_views.py:214:    permission_classes = [IsAuthenticated]
+apps\risk\views.py:5:from rest_framework.permissions import IsAuthenticated
+apps\risk\views.py:11:from apps.core.rbac.models import Role
+apps\risk\views.py:12:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\risk\views.py:17:    permission_classes = [IsAuthenticated]
+apps\risk\views.py:23:        if get_user_role(self.request.user) == Role.FIELD:
+apps\risk\views.py:53:    permission_classes = [IsAuthenticated]
+apps\risk\views.py:60:        elif get_user_role(request.user) == Role.FIELD:
+apps\risk\views.py:83:    permission_classes = [IsAuthenticated]
+apps\risk\views.py:92:        elif get_user_role(request.user) == Role.FIELD:
+apps\inventory\api_views.py:9:from apps.core.rbac.models import ProjectAssignment, Role
+apps\inventory\api_views.py:10:from apps.core.rbac.permissions import get_user_role, require_role
+apps\inventory\api_views.py:52:        if role == Role.FIELD:
+apps\inventory\api_views.py:53:            assigned_project_ids = ProjectAssignment.objects.filter(
+apps\inventory\api_views.py:73:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\api_views.py:107:        if role == Role.FIELD:
+apps\inventory\api_views.py:109:                if not ProjectAssignment.objects.filter(
+apps\inventory\api_views.py:136:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\api_views.py:195:        if role not in (Role.HQ, Role.CEO) and active in ("0", "false", "all", "any"):
+apps\inventory\api_views.py:227:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\api_views.py:298:        if role == Role.FIELD:
+apps\inventory\api_views.py:299:            assigned_project_ids = ProjectAssignment.objects.filter(
+apps\inventory\api_views.py:430:        if role == Role.FIELD:
+apps\inventory\api_views.py:431:            assigned_project_ids = ProjectAssignment.objects.filter(
+apps\inventory\api_views.py:443:        if include_inactive and role not in (Role.HQ, Role.CEO):
+apps\inventory\api_views.py:498:        if role == Role.FIELD:
+apps\inventory\api_views.py:499:            assigned_project_ids = ProjectAssignment.objects.filter(
+apps\inventory\api_views.py:549:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\api_views.py:640:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\api_views.py:704:        if role == Role.FIELD:
+apps\inventory\api_views.py:705:            assigned_project_ids = ProjectAssignment.objects.filter(
+apps\inventory\api_views.py:779:        if get_user_role(request.user) == Role.FIELD:
+apps\inventory\api_views.py:780:            has_access = ProjectAssignment.objects.filter(
+apps\master\web_views.py:15:from apps.core.rbac.models import Role
+apps\master\web_views.py:16:from apps.core.rbac.permissions import get_user_role, require_role
+apps\master\web_views.py:54:    _require_cbs_access(request, allowed_roles=[Role.HQ])
+apps\master\web_views.py:55:    return _render_cbs_list(request, role_override=Role.HQ)
+apps\master\web_views.py:59:    _require_cbs_access(request, allowed_roles=[Role.CEO])
+apps\master\web_views.py:60:    return _render_cbs_list(request, role_override=Role.CEO)
+apps\master\web_views.py:64:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:108:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:211:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:270:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:373:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:417:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:475:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:520:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:634:    _require_cbs_access(request, allowed_roles=[Role.HQ])
+apps\master\web_views.py:650:    _require_cbs_access(request, allowed_roles=[Role.HQ])
+apps\master\web_views.py:664:    _require_cbs_access(request, allowed_roles=[Role.HQ])
+apps\master\web_views.py:687:    _require_cbs_access(request, allowed_roles=[Role.CEO])
+apps\master\web_views.py:702:    _require_cbs_access(request, allowed_roles=[Role.CEO])
+apps\master\web_views.py:715:    _require_cbs_access(request, allowed_roles=[Role.CEO])
+apps\master\web_views.py:755:    _require_cbs_access(request, allowed_roles=[Role.CEO])
+apps\master\web_views.py:1247:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:1275:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:1323:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:1368:    require_role(request.user, [Role.HQ], request=request)
+apps\master\web_views.py:1420:    require_role(request.user, [Role.HQ], request=request)
+apps\risk\tests\test_risk_finding_api.py:6:from apps.core.rbac.models import UserProfile
+apps\risk\tests\test_risk_finding_api.py:15:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\api_views.py:6:from apps.core.rbac.models import Role
+apps\projects\api_views.py:7:from apps.core.rbac.permissions import require_role
+apps\projects\api_views.py:17:        require_role(request.user, [Role.CEO, Role.HQ], request=request)
+apps\projects\api_views.py:24:        require_role(request.user, [Role.CEO, Role.HQ], request=request)
+apps\labor\services.py:19:from apps.core.rbac.models import Role
+apps\labor\services.py:20:from apps.core.rbac.permissions import require_project_access, require_role
+apps\labor\services.py:63:# - RBAC: apps/core/rbac/permissions.py require_role
+apps\labor\services.py:518:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:547:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:577:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:621:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:688:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1025:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1250:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1486:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1583:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1612:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1743:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1840:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:1930:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2113:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2143:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2295:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2319:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2354:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2431:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2553:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2640:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2778:    require_role(actor, [Role.FIELD, Role.HQ, Role.CEO])
+apps\labor\services.py:2810:    require_role(actor, [Role.FIELD, Role.HQ, Role.CEO])
+apps\labor\services.py:2890:    require_role(actor, [Role.FIELD, Role.HQ, Role.CEO])
+apps\labor\services.py:2945:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:2971:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:3027:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:3068:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:3101:    require_role(actor, [Role.HQ, Role.CEO])
+apps\labor\services.py:3178:    require_role(actor, [Role.HQ, Role.CEO])
+apps\projects\approval_package_views.py:7:from apps.core.rbac.models import Role
+apps\projects\approval_package_views.py:8:from apps.core.rbac.permissions import require_role
+apps\projects\approval_package_views.py:26:    require_role(request.user, [Role.HQ])
+apps\projects\approval_package_views.py:80:    require_role(request.user, [Role.HQ])
+apps\projects\approval_package_views.py:125:    require_role(request.user, [Role.HQ])
+apps\projects\approval_package_views.py:149:    require_role(request.user, [Role.HQ])
+apps\labor\api_views.py:10:from apps.core.rbac.models import Role
+apps\labor\api_views.py:11:from apps.core.rbac.permissions import get_user_role, require_project_access, require_role
+apps\labor\api_views.py:70:        if role == Role.FIELD:
+apps\labor\api_views.py:91:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:111:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:150:        if role == Role.FIELD:
+apps\labor\api_views.py:178:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:202:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:263:        if role == Role.FIELD:
+apps\labor\api_views.py:286:        require_role(request.user, [Role.FIELD, Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:328:        if role == Role.FIELD and timesheet.created_by_id != request.user.id:
+apps\labor\api_views.py:361:        require_role(request.user, [Role.FIELD, Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:363:        if timesheet.created_by_id != request.user.id and get_user_role(request.user) == Role.FIELD:
+apps\labor\api_views.py:375:        require_role(request.user, [Role.FIELD, Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:377:        if timesheet.created_by_id != request.user.id and get_user_role(request.user) == Role.FIELD:
+apps\labor\api_views.py:392:        require_role(request.user, [Role.FIELD, Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:394:        if timesheet.created_by_id != request.user.id and get_user_role(request.user) == Role.FIELD:
+apps\labor\api_views.py:415:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:427:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:442:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:478:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:506:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:529:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\api_views.py:551:        require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:12:from apps.core.rbac.models import ProjectAssignment, Role
+apps\inventory\web_views.py:13:from apps.core.rbac.permissions import get_user_role, require_role
+apps\inventory\web_views.py:48:    assigned_project_ids = ProjectAssignment.objects.filter(
+apps\inventory\web_views.py:58:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:73:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:88:    require_role(request.user, [Role.FIELD], request=request)
+apps\inventory\web_views.py:99:    require_role(request.user, [Role.FIELD], request=request)
+apps\inventory\web_views.py:194:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:223:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:246:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:282:    require_role(request.user, [Role.HQ], request=request)
+apps\inventory\web_views.py:309:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:343:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:377:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:411:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:418:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:441:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:474:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:485:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\inventory\web_views.py:512:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\tests\test_audit2_labor_rbac.py:10:from apps.core.rbac.models import Role, UserProfile
+apps\labor\tests\test_audit2_labor_rbac.py:37:    UserProfile.objects.create(user=user, role=role)
+apps\labor\tests\test_audit2_labor_rbac.py:98:    field_user = _user(Role.FIELD, f"field-labor-{abs(hash(url))}")
+apps\labor\tests\test_audit2_labor_rbac.py:108:    field_user = _user(Role.FIELD, "field-labor-detail")
+apps\labor\tests\test_audit2_labor_rbac.py:127:    field_user = _user(Role.FIELD, "field-worker-write")
+apps\labor\tests\test_audit2_labor_rbac.py:144:    field_user = _user(Role.FIELD, "field-labor-service")
+apps\labor\tests\test_audit2_labor_rbac.py:156:    hq_user = _user(Role.HQ, "hq-labor-rbac")
+apps\labor\tests\test_audit2_labor_rbac.py:157:    ceo_user = _user(Role.CEO, "ceo-labor-rbac")
+apps\labor\tests\test_audit2_labor_rbac.py:166:    hq_user = _user(Role.HQ, "hq-labor-download")
+apps\labor\web_views.py:15:from apps.core.rbac.models import ProjectAssignment, Role
+apps\labor\web_views.py:16:from apps.core.rbac.permissions import get_user_role, require_project_access, require_role
+apps\labor\web_views.py:88:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:226:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:323:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:351:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:408:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:447:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:470:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:494:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:518:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:559:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:599:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:676:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:693:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:719:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:746:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:760:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:799:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:825:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:852:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:903:    require_role(request.user, [Role.FIELD], request=request)
+apps\labor\web_views.py:936:    require_role(request.user, [Role.FIELD], request=request)
+apps\labor\web_views.py:1059:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:1076:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:1092:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:1106:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:1157:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:1215:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:1256:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\labor\web_views.py:1297:    require_role(request.user, [Role.HQ, Role.CEO], request=request)
+apps\projects\forms.py:8:from apps.core.rbac.models import ProjectAssignment, Role
+apps\projects\forms.py:109:class ProjectAssignmentForm(forms.ModelForm):
+apps\projects\forms.py:111:        model = ProjectAssignment
+apps\projects\forms.py:118:            profile__role__in=[Role.FIELD, Role.HQ]
+apps\reports\web_views.py:13:from apps.core.rbac.models import Role
+apps\reports\web_views.py:14:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\reports\web_views.py:24:    if role in (Role.CEO, Role.HQ):
+apps\reports\web_views.py:26:    if role == Role.FIELD:
+apps\reports\web_views.py:37:    if role == Role.FIELD:
+apps\reports\web_views.py:66:    if role == Role.FIELD and report.created_by_id != user.id:
+apps\reports\web_views.py:329:    if role == Role.FIELD and report.created_by_id != request.user.id:
+apps\reports\web_views.py:337:        role == Role.FIELD
+apps\labor\tests\test_audit6_labpay_e2e.py:13:from apps.core.rbac.models import Role, UserProfile
+apps\labor\tests\test_audit6_labpay_e2e.py:71:    UserProfile.objects.create(user=user, role=role)
+apps\labor\tests\test_audit6_labpay_e2e.py:188:    hq = _user(Role.HQ, username)
+apps\labor\tests\test_audit6_labpay_e2e.py:408:    hq = _user(Role.HQ, "audit6-hq-payroll")
+apps\labor\tests\test_audit6_labpay_e2e.py:482:    hq = _user(Role.HQ, "audit6-hq-rbac")
+apps\labor\tests\test_audit6_labpay_e2e.py:483:    field = _user(Role.FIELD, "audit6-field-rbac")
+apps\labor\tests\test_audit6_labpay_e2e.py:487:        name="audit6_rbac.xlsx",
+apps\labor\tests\test_labor_closing_guards.py:9:from apps.core.rbac.models import Role, UserProfile
+apps\labor\tests\test_labor_closing_guards.py:29:    UserProfile.objects.create(user=user, role=Role.HQ)
+apps\inventory\services.py:14:from apps.core.rbac.models import ProjectAssignment, Role
+apps\inventory\services.py:15:from apps.core.rbac.permissions import get_user_role, require_role
+apps\inventory\services.py:152:    require_role(actor, [Role.HQ, Role.CEO])
+apps\inventory\services.py:189:    require_role(actor, [Role.HQ, Role.CEO])
+apps\inventory\services.py:329:    if role in (Role.CEO, Role.HQ):
+apps\inventory\services.py:331:    if role != Role.FIELD:
+apps\inventory\services.py:335:    if not ProjectAssignment.objects.filter(
+apps\inventory\services.py:507:    if role in (Role.CEO, Role.HQ):
+apps\inventory\services.py:509:    if role != Role.FIELD:
+apps\inventory\services.py:513:    if not ProjectAssignment.objects.filter(
+apps\inventory\services.py:532:    require_role(actor, [Role.HQ, Role.CEO])
+apps\inventory\services.py:599:    require_role(actor, [Role.HQ, Role.CEO])
+apps\inventory\services.py:620:    require_role(actor, [Role.HQ, Role.CEO])
+apps\inventory\services.py:708:    require_role(actor, [Role.HQ, Role.CEO])
+apps\inventory\services.py:741:    if role in (Role.CEO, Role.HQ):
+apps\inventory\services.py:743:    if role != Role.FIELD:
+apps\inventory\services.py:745:    if not ProjectAssignment.objects.filter(
+apps\inventory\services.py:763:    if role == Role.FIELD:
+apps\inventory\services.py:879:    if get_user_role(actor) == Role.FIELD and issue.created_by_id != actor.id:
+apps\inventory\services.py:920:    if get_user_role(actor) == Role.FIELD and issue.created_by_id != actor.id:
+apps\projects\wbs_change.py:18:from apps.core.rbac.models import Role
+apps\projects\wbs_change.py:117:    # - RBAC: Role from apps.core.rbac.models
+apps\labor\tests\test_closing_confirmation_guards.py:9:from apps.core.rbac.models import Role, UserProfile
+apps\labor\tests\test_closing_confirmation_guards.py:35:    UserProfile.objects.create(user=user, role=Role.HQ)
+apps\projects\hq_views.py:38:from apps.core.rbac.models import ProjectAssignment, Role
+apps\projects\hq_views.py:39:from apps.core.rbac.permissions import get_user_role, require_role
+apps\projects\hq_views.py:52:    ProjectAssignmentForm,
+apps\projects\hq_views.py:136:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\projects\hq_views.py:151:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\projects\hq_views.py:303:                                role=Role.HQ,
+apps\projects\hq_views.py:1236:            Role.HQ,
+apps\projects\hq_views.py:1288:            Role.HQ,
+apps\projects\hq_views.py:1372:            Role.HQ,
+apps\projects\hq_views.py:3258:                Role.HQ,
+apps\projects\hq_views.py:3312:        Role.HQ,
+apps\projects\hq_views.py:3322:        "actor_role": Role.HQ,
+apps\projects\hq_views.py:3347:        "actor_role": Role.HQ,
+apps\projects\hq_views.py:3559:    require_role(request.user, [Role.HQ, Role.CEO])
+apps\projects\hq_views.py:3567:        ProjectAssignment.objects.filter(project=project)
+apps\projects\hq_views.py:3571:    assignment_form = ProjectAssignmentForm(initial={"is_active": True})
+apps\projects\hq_views.py:3659:            if role != Role.CEO:
+apps\projects\hq_views.py:3688:            if role != Role.CEO:
+apps\projects\hq_views.py:3726:            assignment_form = ProjectAssignmentForm(request.POST)
+apps\projects\hq_views.py:3730:                assignment, created = ProjectAssignment.objects.get_or_create(
+apps\projects\hq_views.py:3766:                ProjectAssignment, id=assignment_id, project=project
+apps\projects\hq_views.py:3812:                    role=Role.HQ,
+apps\projects\hq_views.py:3820:                    role=Role.HQ,
+apps\projects\hq_views.py:3985:    require_role(request.user, [Role.HQ])
+apps\labor\tests\test_audit5_excel_reliability.py:14:from apps.core.rbac.models import Role, UserProfile
+apps\labor\tests\test_audit5_excel_reliability.py:53:    UserProfile.objects.create(user=user, role=role)
+apps\labor\tests\test_audit5_excel_reliability.py:167:    hq = _user(Role.HQ, username)
+apps\labor\tests\test_audit5_excel_reliability.py:227:    hq = _user(Role.HQ, "audit5-hq-invalid")
+apps\labor\tests\test_audit5_excel_reliability.py:249:    hq = _user(Role.HQ, "audit5-hq-missing-header")
+apps\labor\tests\test_audit5_excel_reliability.py:269:    hq = _user(Role.HQ, "audit5-hq-korean")
+apps\labor\tests\test_audit5_excel_reliability.py:305:    hq = _user(Role.HQ, "audit5-hq-numeric")
+apps\labor\tests\test_audit5_excel_reliability.py:344:    hq = _user(Role.HQ, "audit5-hq-privacy-failure")
+apps\labor\tests\test_audit5_excel_reliability.py:397:    hq = _user(Role.HQ, "audit5-hq-export-precondition")
+apps\labor\tests\test_audit5_excel_reliability.py:430:    field = _user(Role.FIELD, "audit5-field-download")
+apps\projects\views.py:2:from rest_framework.permissions import IsAuthenticated
+apps\projects\views.py:5:from apps.core.rbac.models import ProjectAssignment, Role
+apps\projects\views.py:6:from apps.core.rbac.permissions import get_user_role, require_project_access
+apps\projects\views.py:16:    permission_classes = [IsAuthenticated]
+apps\projects\views.py:20:        if get_user_role(self.request.user) == Role.FIELD:
+apps\projects\views.py:21:            allowed_ids = ProjectAssignment.objects.filter(
+apps\labor\tests\test_e_card_imports.py:15:from apps.core.rbac.models import Role, UserProfile
+apps\labor\tests\test_e_card_imports.py:41:    UserProfile.objects.create(user=user, role=role)
+apps\labor\tests\test_e_card_imports.py:190:    user = _build_user("labor-hq", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:202:    user = _build_user("labor-field", Role.FIELD)
+apps\labor\tests\test_e_card_imports.py:211:    user = _build_user("labor-hq-upload", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:243:    user = _build_user("labor-hq-upload-legacy", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:266:    user = _build_user(f"labor-hq-{filename}", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:287:    user = _build_user(f"labor-hq-parse-{worker_name}", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:378:    field_user = _build_user("labor-field-parse", Role.FIELD)
+apps\labor\tests\test_e_card_imports.py:570:    field_user = _build_user("labor-field-reconcile", Role.FIELD)
+apps\labor\tests\test_e_card_imports.py:663:    user = _build_user("labor-hq-exclusion", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:777:    field_user = _build_user("labor-field-detail", Role.FIELD)
+apps\labor\tests\test_e_card_imports.py:1267:    field_user = _build_user("labor-field-confirmed", Role.FIELD)
+apps\labor\tests\test_e_card_imports.py:1437:    field_user = _build_user("labor-field-export", Role.FIELD)
+apps\labor\tests\test_e_card_imports.py:1444:    user = _build_user("labor-hq-delete", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:1459:    user = _build_user("labor-hq-deactivate", Role.HQ)
+apps\labor\tests\test_e_card_imports.py:1478:    user = _build_user("labor-field-delete", Role.FIELD)
+apps\labor\tests\test_e_card_imports.py:1489:    user = _build_user("labor-hq-delete-get", Role.HQ)
+apps\projects\tests\test_audit7_field_progress_e2e.py:15:from apps.core.rbac.models import ProjectAssignment, Role, UserProfile
+apps\projects\tests\test_audit7_field_progress_e2e.py:32:    UserProfile.objects.create(user=user, role=role)
+apps\projects\tests\test_audit7_field_progress_e2e.py:52:    return ProjectAssignment.objects.create(user=field_user, project=project, is_active=True)
+apps\projects\tests\test_audit7_field_progress_e2e.py:155:    field_user = _user(Role.FIELD, "audit7-field-dropdown")
+apps\projects\tests\test_audit7_field_progress_e2e.py:175:    field_user = _user(Role.FIELD, "audit7-field-draft")
+apps\projects\tests\test_audit7_field_progress_e2e.py:199:    hq_user = _user(Role.HQ, "audit7-hq-progress-view")
+apps\projects\tests\test_audit7_field_progress_e2e.py:200:    field_user = _user(Role.FIELD, "audit7-field-submit")
+apps\projects\tests\test_audit7_field_progress_e2e.py:237:    field_user = _user(Role.FIELD, "audit7-field-no-work")
+apps\projects\tests\test_audit7_field_progress_e2e.py:254:    field_user = _user(Role.FIELD, "audit7-field-cross-task")
+apps\projects\tests\test_audit7_field_progress_e2e.py:280:    field_user = _user(Role.FIELD, "audit7-field-unassigned")
+apps\projects\tests\test_audit7_field_progress_e2e.py:303:    hq_user = _user(Role.HQ, "audit7-hq-close-month")
+apps\projects\tests\test_audit7_field_progress_e2e.py:304:    field_user = _user(Role.FIELD, "audit7-field-closed-month")
+apps\projects\tests\test_audit7_field_progress_e2e.py:321:    field_user = _user(Role.FIELD, "audit7-field-closed-project")
+apps\projects\tests\test_audit7_field_progress_e2e.py:339:    field_user = _user(Role.FIELD, "audit7-field-audit")
+apps\projects\tests\test_audit7_field_progress_e2e.py:361:    field_user = _user(Role.FIELD, "audit7-field-korean")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:13:from apps.core.rbac.models import Role, UserProfile
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:58:    UserProfile.objects.create(user=user, role=role)
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:224:    ceo = _user(Role.CEO, "audit8-ceo-render")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:225:    field_reporter = _user(Role.FIELD, "audit8-field-render")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:249:    ceo = _user(Role.CEO, "audit8-ceo-portfolio")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:250:    reporter = _user(Role.FIELD, "audit8-field-portfolio")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:295:    ceo = _user(Role.CEO, "audit8-ceo-card")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:296:    reporter = _user(Role.FIELD, "audit8-field-card")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:331:    ceo = _user(Role.CEO, "audit8-ceo-inactive")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:332:    reporter = _user(Role.FIELD, "audit8-field-inactive")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:389:def test_audit8_rbac_boundary_for_ceo_dashboard():
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:390:    ceo = _user(Role.CEO, "audit8-ceo-rbac")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:391:    hq = _user(Role.HQ, "audit8-hq-rbac")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:392:    field = _user(Role.FIELD, "audit8-field-rbac")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:401:    ceo = _user(Role.CEO, "audit8-ceo-privacy")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:402:    reporter = _user(Role.FIELD, "audit8-field-privacy")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:432:    ceo = _user(Role.CEO, "audit8-ceo-links")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:433:    reporter = _user(Role.FIELD, "audit8-field-links")
+apps\projects\tests\test_project_baseline_rejection.py:11:from apps.core.rbac.models import UserProfile
+apps\projects\tests\test_project_baseline_rejection.py:59:    UserProfile.objects.create(user=ceo, role="ceo")
+apps\projects\tests\test_project_baseline_rejection.py:84:    UserProfile.objects.create(user=hq, role="hq")
+apps\projects\tests\test_project_baseline_rejection.py:109:    UserProfile.objects.create(user=hq, role="hq")
+apps\projects\tests\test_project_baseline_rejection.py:110:    UserProfile.objects.create(user=ceo, role="ceo")
+apps\projects\tests\test_project_baseline_rejection.py:141:    UserProfile.objects.create(user=hq, role="hq")
+apps\projects\tests\test_project_baseline_rejection.py:142:    UserProfile.objects.create(user=ceo, role="ceo")
+apps\projects\tests\test_project_baseline_rejection.py:163:    UserProfile.objects.create(user=hq, role="hq")
+apps\projects\tests\test_project_baseline_rejection.py:189:    UserProfile.objects.create(user=ceo, role="ceo")
+apps\projects\tests\test_project_api.py:6:from apps.core.rbac.models import UserProfile
+apps\projects\tests\test_project_api.py:13:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_new_preview.py:12:from apps.core.rbac.models import UserProfile
+apps\projects\tests\test_project_new_preview.py:172:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_budget_detail_save.py:10:from apps.core.rbac.models import UserProfile
+apps\projects\tests\test_project_budget_detail_save.py:59:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_new_manual_create.py:6:from apps.core.rbac.models import UserProfile
+apps\projects\tests\test_project_new_manual_create.py:16:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_new_manual_create.py:83:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:13:from apps.core.rbac.models import UserProfile
+apps\projects\tests\test_project_import_commit.py:205:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:279:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:314:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:348:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:385:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:440:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:498:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:519:    UserProfile.objects.create(user=user, role="hq")
+apps\projects\tests\test_project_import_commit.py:551:    UserProfile.objects.create(user=user, role="hq")

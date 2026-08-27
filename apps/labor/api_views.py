@@ -7,8 +7,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.core.rbac.models import Role
-from apps.core.rbac.permissions import get_user_role, require_project_access, require_role
+from apps.core.rbac.models import LegalEntity, Role
+from apps.core.rbac.permissions import get_user_legal_entities, get_user_role, require_legal_entity_access, require_project_access, require_role
 from apps.projects.models import Project
 
 from .models import (
@@ -443,7 +443,9 @@ class PayrollBatchListView(APIView):
         year = request.GET.get("year")
         month = request.GET.get("month")
         status = request.GET.get("status")
-        qs = PayrollAllocationBatch.objects.order_by("-period_year", "-period_month", "-id")
+        qs = PayrollAllocationBatch.objects.filter(
+            legal_entity__in=get_user_legal_entities(request.user)
+        ).select_related("legal_entity").order_by("-period_year", "-period_month", "-id")
         if year:
             qs = qs.filter(period_year=year)
         if month:
@@ -463,6 +465,7 @@ class PayrollBatchListView(APIView):
                 {
                     "id": batch.id,
                     "batch_no": batch.batch_no,
+                    "legal_entity": batch.legal_entity.code,
                     "period_year": batch.period_year,
                     "period_month": batch.period_month,
                     "status": batch.status,
@@ -478,10 +481,15 @@ class PayrollBatchListView(APIView):
         require_role(request.user, [Role.HQ, Role.CEO], request=request)
         payload = request.data or {}
         try:
+            legal_entity = get_object_or_404(
+                LegalEntity, id=payload.get("legal_entity_id"), is_active=True
+            )
+            require_legal_entity_access(request.user, legal_entity, request=request)
             batch = create_payroll_batch(
                 year=int(payload.get("period_year")),
                 month=int(payload.get("period_month")),
                 total_amount=payload.get("total_amount"),
+                legal_entity=legal_entity,
                 actor=request.user,
                 note=str(payload.get("note") or ""),
             )
@@ -504,7 +512,8 @@ class PayrollBatchListView(APIView):
 class PayrollBatchDetailView(APIView):
     def patch(self, request, batch_id):
         require_role(request.user, [Role.HQ, Role.CEO], request=request)
-        batch = get_object_or_404(PayrollAllocationBatch, id=batch_id)
+        batch = get_object_or_404(PayrollAllocationBatch.objects.select_related("legal_entity"), id=batch_id)
+        require_legal_entity_access(request.user, batch.legal_entity, request=request)
         payload = request.data or {}
         try:
             batch = update_payroll_batch(batch, payload, actor=request.user)
@@ -527,7 +536,8 @@ class PayrollBatchDetailView(APIView):
 class PayrollBatchLinesView(APIView):
     def put(self, request, batch_id):
         require_role(request.user, [Role.HQ, Role.CEO], request=request)
-        batch = get_object_or_404(PayrollAllocationBatch, id=batch_id)
+        batch = get_object_or_404(PayrollAllocationBatch.objects.select_related("legal_entity"), id=batch_id)
+        require_legal_entity_access(request.user, batch.legal_entity, request=request)
         lines_payload = (request.data or {}).get("lines") or []
         try:
             upsert_payroll_lines(batch, lines_payload, actor=request.user)
@@ -549,7 +559,8 @@ class PayrollBatchLinesView(APIView):
 class PayrollBatchSubmitView(APIView):
     def post(self, request, batch_id):
         require_role(request.user, [Role.HQ, Role.CEO], request=request)
-        batch = get_object_or_404(PayrollAllocationBatch, id=batch_id)
+        batch = get_object_or_404(PayrollAllocationBatch.objects.select_related("legal_entity"), id=batch_id)
+        require_legal_entity_access(request.user, batch.legal_entity, request=request)
         try:
             batch, sum_lines, diff = submit_payroll_batch(batch, actor=request.user)
         except (ValidationError, PermissionDenied) as exc:

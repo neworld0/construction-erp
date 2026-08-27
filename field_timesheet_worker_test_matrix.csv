@@ -1,0 +1,6 @@
+Command,Result,Notes
+python manage.py check,PASS,No system issues
+python manage.py makemigrations --check --dry-run,PASS,Migration state matches models
+python manage.py migrate,PASS,labor.0013_timesheetline_worker applied locally
+pytest -q apps/labor/tests/test_field_timesheet_worker_selection.py,PASS,4 passed after visible validation-message fix
+pytest -q apps/labor/tests/test_e_card_imports.py apps/labor/tests/test_labor_closing_guards.py,PASS,46 passed in the combined regression before the display-only follow-up

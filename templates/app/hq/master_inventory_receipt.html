@@ -1,0 +1,52 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}중앙창고 입고{% endblock %}
+{% block content %}
+<style>
+  .item-search { position: relative; }
+  .item-results { position:absolute; z-index:10; left:0; right:0; max-height:240px; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:8px; display:none; }
+  .item-results button { width:100%; padding:9px 10px; border:0; background:transparent; color:var(--text); text-align:left; cursor:pointer; }
+  .item-results button:hover { background:rgba(56,189,248,.14); }
+</style>
+<div class="card"><h2 class="card-title">HQ 중앙창고 품목·재고 입고</h2><p class="muted">입고 즉시 재고 원장과 현재고가 갱신됩니다. 이후 현장 창고로 이관할 수 있습니다.</p><a class="btn btn-outline" href="/app/hq/master/items/new/">새 품목 마스터 등록</a></div>
+<div class="card" style="margin-top:16px;max-width:760px;"><form method="post" style="display:grid;gap:12px;">{% csrf_token %}
+<label>중앙창고<select class="form-control" name="warehouse_id" required>{% for warehouse in warehouses %}<option value="{{ warehouse.id }}">{{ warehouse.code }} - {{ warehouse.name }}</option>{% endfor %}</select></label>
+<label>품목<div class="item-search"><input class="form-control" id="item-search" type="text" autocomplete="off" placeholder="품목명 또는 코드로 검색" required><input type="hidden" name="item_id" id="item-id"><div id="item-results" class="item-results"></div></div></label>
+<div style="display:flex;gap:10px;flex-wrap:wrap;"><label>입고일<input class="form-control" type="date" name="receipt_date" value="{{ today|date:'Y-m-d' }}" required></label><label>수량<input class="form-control" type="number" step="0.001" min="0.001" name="qty" required></label><label>단가<input class="form-control" inputmode="numeric" name="unit_cost" placeholder="선택"></label></div>
+<label>비고<input class="form-control" name="note" placeholder="구매처·전표번호 등"></label><button class="btn" type="submit">입고 등록</button></form></div>
+<script>
+  (function () {
+    const input = document.getElementById("item-search");
+    const hidden = document.getElementById("item-id");
+    const results = document.getElementById("item-results");
+    let timer;
+    async function search() {
+      const q = input.value.trim();
+      hidden.value = "";
+      if (!q) { results.style.display = "none"; return; }
+      const url = new URL("/api/inventory/items/", window.location.origin);
+      url.searchParams.set("q", q);
+      url.searchParams.set("limit", "20");
+      const response = await fetch(url, {credentials: "same-origin"});
+      if (!response.ok) throw new Error("search failed");
+      const items = await response.json();
+      results.innerHTML = "";
+      items.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = item.display_label || `${item.code} - ${item.name}`;
+        button.addEventListener("click", () => {
+          input.value = button.textContent;
+          hidden.value = item.id;
+          results.style.display = "none";
+        });
+        results.appendChild(button);
+      });
+      results.style.display = items.length ? "block" : "none";
+    }
+    input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => search().catch(() => { results.style.display = "none"; }), 250); });
+    document.addEventListener("click", (event) => { if (!event.target.closest(".item-search")) results.style.display = "none"; });
+    input.form.addEventListener("submit", (event) => { if (!hidden.value) { event.preventDefault(); input.setCustomValidity("검색 결과에서 품목을 선택해 주세요."); input.reportValidity(); } });
+    input.addEventListener("input", () => input.setCustomValidity(""));
+  })();
+</script>
+{% endblock %}

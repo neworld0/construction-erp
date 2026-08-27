@@ -1,0 +1,5 @@
+﻿Issue_ID,Area,Severity,P0_P1_P2,Description,Evidence,Workaround,Required_Before_OPS1C,Required_Before_Full_Rollout,Followup_Prompt
+OPS1B-001,입력 데이터,High,P1,OPS-1A 데이터팩과 사용자 제공 비식별 프로젝트 데이터가 현재 체크아웃에 없음,ops1b_05_ops1a_csv_list.txt; ops1b_06_ops1a_md_list.txt,OPS-1A 산출물 복원 또는 비식별 작성본 제공,Yes,Yes,OPS-1B-REHEARSAL-RERUN
+OPS1B-002,수익 정책,Medium,P1,실제 수익 인식 기준일과 조정 정책이 제공되지 않아 실제 KPI 대사 불가,ops1b_input_result_matrix.csv,정책 담당자가 기준 확정,Yes,Yes,OPS-1C-KPI-RECONCILIATION
+OPS1B-003,한글 표시 품질,Medium,P1,CBS/CEO 관련 기존 source 문자열에서 mojibake 후보 확인,ops1b_13_model_discovery.txt; source inspection,별도 UTF-8 실제 화면 및 source 보수,No,Yes,STRICT-I18N-CEO-CBS
+OPS1B-004,테스트 환경,Low,P2,pytest 종료 시 Windows Public Documents 임시 폴더 접근 거부 경고,ops1b_18_23_pytest_baseline.txt,pytest 임시 경로를 프로젝트 내부로 고정,No,No,TEST-ENV-PYTEST-TEMP

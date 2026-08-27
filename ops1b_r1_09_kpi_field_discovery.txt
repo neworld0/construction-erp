@@ -1,0 +1,1050 @@
+﻿apps\contracts\serializers.py:            "contract_amount_delta",
+apps\contracts\models.py:    contract_amount_delta = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+apps\contracts\models.py:    base_contract_amount = models.DecimalField(max_digits=16, decimal_places=2)
+apps\contracts\models.py:    def total_contract_amount(self):
+apps\contracts\models.py:        return self.base_contract_amount
+apps\contracts\views.py:                "contract_amount_delta": str(change.contract_amount_delta),
+apps\contracts\views.py:                "contract_amount_delta": str(change.contract_amount_delta),
+apps\ceo\web_views.py:from .services.dashboard import get_ceo_project_summary, get_ceo_projects_list
+apps\ceo\web_views.py:def dashboard_page(request):
+apps\ceo\web_views.py:    as_of_date = _parse_date(request.GET.get("as_of_date"))
+apps\ceo\web_views.py:    summary = get_ceo_project_summary(project_id, as_of_date)
+apps\ceo\web_views.py:        "as_of_date": as_of_date,
+apps\ceo\web_urls.py:from .web_views import dashboard_page, project_detail_page
+apps\ceo\web_urls.py:    path("ceo/dashboard/", dashboard_page, name="ceo-dashboard"),
+apps\contracts\migrations\0002_contractsnapshot.py:                ("base_contract_amount", models.DecimalField(decimal_places=2, max_digits=16)),
+apps\contracts\tests\test_contract_snapshot_rotation.py:from apps.finance.services.profit_loss import get_profit_loss_by_project
+apps\contracts\tests\test_contract_snapshot_rotation.py:        contract_amount=Decimal("1000.00"),
+apps\contracts\tests\test_contract_snapshot_rotation.py:        contract_amount_delta=delta,
+apps\contracts\tests\test_contract_snapshot_rotation.py:    assert active.base_contract_amount == Decimal("1100.00")
+apps\contracts\tests\test_contract_snapshot_rotation.py:def test_profit_loss_uses_active_snapshot(project, approver):
+apps\contracts\tests\test_contract_snapshot_rotation.py:    summary = get_profit_loss_by_project(project.id)
+apps\contracts\tests\test_contract_snapshot_rotation.py:    assert "recognized_revenue" in summary
+apps\contracts\tests\test_contract_snapshot_rotation.py:    assert "profit" in summary
+apps\ceo\app_views.py:from apps.finance.services.profit_loss import _calculate_margin
+apps\ceo\app_views.py:from .services.dashboard import get_ceo_dashboard, get_ceo_projects_list
+apps\ceo\app_views.py:        progress = getattr(obj, "progress_percent", None)
+apps\ceo\app_views.py:    as_of_date = _parse_date(request.GET.get("as_of_date")) or timezone.localdate()
+apps\ceo\app_views.py:        as_of_date, compare_mode
+apps\ceo\app_views.py:    dashboard = get_ceo_dashboard(as_of_date)
+apps\ceo\app_views.py:    projects = dashboard.get("projects", [])
+apps\ceo\app_views.py:    chart_values = [float(p.get("overall_progress_percent") or 0) for p in projects]
+apps\ceo\app_views.py:    total_revenue = sum((_safe_decimal(p.get("recognized_revenue")) for p in projects), Decimal("0"))
+apps\ceo\app_views.py:    total_profit = total_revenue - total_cost
+apps\ceo\app_views.py:        sum((_safe_decimal(p.get("overall_progress_percent")) for p in projects), Decimal("0"))
+apps\ceo\app_views.py:    margin_percent = _calculate_margin(total_revenue, total_profit)
+apps\ceo\app_views.py:    prev_dashboard = get_ceo_dashboard(prev_period_end)
+apps\ceo\app_views.py:    prev_projects = prev_dashboard.get("projects", [])
+apps\ceo\app_views.py:        (_safe_decimal(p.get("recognized_revenue")) for p in prev_projects), Decimal("0")
+apps\ceo\app_views.py:    prev_total_profit = prev_total_revenue - prev_total_cost
+apps\ceo\app_views.py:    prev_margin_percent = _calculate_margin(prev_total_revenue, prev_total_profit)
+apps\ceo\app_views.py:        "profit": build_trend(total_profit, prev_total_profit),
+apps\ceo\app_views.py:        "margin": build_trend(margin_percent, prev_margin_percent),
+apps\ceo\app_views.py:            "profit": build_trend(None, None),
+apps\ceo\app_views.py:            "margin": build_trend(None, None),
+apps\ceo\app_views.py:        elapsed = project_elapsed_percent(project, as_of_date)
+apps\ceo\app_views.py:    query_bits = [f"as_of_date={as_of_date.isoformat()}"]
+apps\ceo\app_views.py:        "as_of_date": as_of_date,
+apps\ceo\app_views.py:        "total_profit": total_profit,
+apps\ceo\app_views.py:        "margin_percent": margin_percent,
+apps\ceo\app_views.py:    as_of_date = _parse_date(request.GET.get("as_of_date"))
+apps\ceo\app_views.py:    projects = get_ceo_projects_list({"as_of_date": as_of_date})
+apps\ceo\app_views.py:        "as_of_date": as_of_date,
+apps\ceo\app_views.py:    as_of_date = _parse_date(request.GET.get("as_of_date"))
+apps\ceo\app_views.py:    if as_of_date is None:
+apps\ceo\app_views.py:        as_of_date = timezone.localdate()
+apps\ceo\app_views.py:        project, as_of_date=as_of_date, include_submitted=include_submitted
+apps\ceo\app_views.py:    planned_progress = (kpi.get("baseline") or {}).get("planned_progress_percent") or Decimal(
+apps\ceo\app_views.py:    actual_progress = (kpi.get("actual") or {}).get("actual_progress_percent") or Decimal(
+apps\ceo\app_views.py:                    "weight": item.weight or Decimal("0"),
+apps\ceo\app_views.py:        "as_of_date": as_of_date,
+apps\ceo\app_views.py:def _sum_request_weights(lines):
+apps\ceo\app_views.py:        total += Decimal(str(line.weight or 0))
+apps\ceo\app_views.py:    weight_sum = _sum_request_weights(request_lines)
+apps\ceo\app_views.py:    weight_valid = abs(weight_sum - Decimal("100")) <= Decimal("0.1")
+apps\ceo\app_views.py:        "weight_sum": weight_sum,
+apps\ceo\app_views.py:        "weight_valid": weight_valid,
+apps\ceo\app_views.py:                "weight_sum": _sum_request_weights(change_request.lines.all()),
+apps\ceo\app_views.py:                "weight_valid": False,
+apps\ceo\app_views.py:                "weight_sum": _sum_request_weights(change_request.lines.all()),
+apps\ceo\app_views.py:                "weight_valid": False,
+apps\ceo\app_views.py:    weight_sum = _sum_request_weights(request_lines)
+apps\ceo\app_views.py:    if abs(weight_sum - Decimal("100")) > Decimal("0.1") or not request_lines or date_error:
+apps\ceo\app_views.py:                "weight_sum": weight_sum,
+apps\ceo\app_views.py:                "weight_valid": False,
+apps\ceo\app_views.py:                    weight=line.weight,
+apps\ceo\app_views.py:                "weight_sum": _sum_request_weights(change_request.lines.all()),
+apps\ceo\app_views.py:                "weight_valid": True,
+apps\ceo\views.py:from .services.dashboard import (
+apps\ceo\views.py:    get_ceo_dashboard,
+apps\ceo\views.py:        as_of_date = _parse_date(request.query_params.get("as_of_date"))
+apps\ceo\views.py:        data = get_ceo_dashboard(as_of_date)
+apps\ceo\views.py:            "as_of_date": _parse_date(request.query_params.get("as_of_date")),
+apps\ceo\views.py:        as_of_date = _parse_date(request.query_params.get("as_of_date"))
+apps\ceo\views.py:        data = get_ceo_project_summary(id, as_of_date)
+apps\ceo\views.py:        as_of_date = _parse_date(request.query_params.get("as_of_date"))
+apps\ceo\views.py:        data = get_ceo_dashboard(as_of_date)
+apps\ceo\views.py:                "overall_progress_percent",
+apps\ceo\views.py:                "recognized_revenue",
+apps\ceo\views.py:                "profit",
+apps\ceo\views.py:                "margin_percent",
+apps\ceo\views.py:                    item.get("overall_progress_percent", 0),
+apps\ceo\views.py:                    item.get("recognized_revenue", 0),
+apps\ceo\views.py:                    item.get("profit", 0),
+apps\ceo\views.py:                    item.get("margin_percent", 0),
+apps\ceo\views.py:                "as_of_date": as_of_date.isoformat() if as_of_date else None,
+apps\contracts\migrations\0001_initial.py:                ("contract_amount_delta", models.DecimalField(decimal_places=2, default=0, max_digits=16)),
+apps\contracts\tests\test_contract_change_api.py:        "contract_amount_delta": "1000.00",
+apps\ceo\urls.py:    path("ceo/dashboard/", CEODashboardView.as_view()),
+apps\contracts\services.py:        active.base_contract_amount
+apps\contracts\services.py:        else contract_change.project.contract_amount
+apps\contracts\services.py:    new_amount = base_amount + (contract_change.contract_amount_delta or 0)
+apps\contracts\services.py:        base_contract_amount=new_amount,
+apps\contracts\services.py:                "contract_amount_delta": str(change.contract_amount_delta),
+apps\contracts\services.py:                "contract_amount_delta": str(change.contract_amount_delta),
+apps\ceo\approval_package_views.py:                summary = f"#{obj.change_no} / delta {obj.contract_amount_delta}"
+apps\audit\tests\test_audit_logs.py:        contract_amount_delta=Decimal("5000"),
+apps\ceo\risk_summary.py:    Display-only risk summary generator for CEO dashboard.
+apps\contracts\admin.py:        "contract_amount_delta",
+apps\contracts\admin.py:        "base_contract_amount",
+apps\ceo\services\dashboard.py:from apps.finance.services.profit_loss import _calculate_margin, get_profit_loss_by_project
+apps\ceo\services\dashboard.py:def get_ceo_dashboard(as_of_date=None):
+apps\ceo\services\dashboard.py:    projects = get_ceo_projects_list({"as_of_date": as_of_date})
+apps\ceo\services\dashboard.py:        "as_of_date": as_of_date,
+apps\ceo\services\dashboard.py:    progress_map = _bulk_progress(project_ids, filters.get("as_of_date"))
+apps\ceo\services\dashboard.py:    accrual_map = _bulk_accrual(project_ids, filters.get("as_of_date"))
+apps\ceo\services\dashboard.py:        project_ids, as_of_date=filters.get("as_of_date") or timezone.localdate()
+apps\ceo\services\dashboard.py:    profit_map = _bulk_profit(project_ids, filters.get("as_of_date"))
+apps\ceo\services\dashboard.py:        progress = progress_map.get(project.id, {"overall_progress_percent": Decimal("0")})
+apps\ceo\services\dashboard.py:        profit_loss = profit_map.get(project.id, _empty_profit(project.id))
+apps\ceo\services\dashboard.py:        recognized_revenue = _safe_decimal(profit_loss.get("recognized_revenue"))
+apps\ceo\services\dashboard.py:        profit = recognized_revenue - accrual_cost
+apps\ceo\services\dashboard.py:        margin_percent = _calculate_margin(recognized_revenue, profit)
+apps\ceo\services\dashboard.py:            "overall_progress_percent": _safe_decimal(progress.get("overall_progress_percent")),
+apps\ceo\services\dashboard.py:            "recognized_revenue": recognized_revenue,
+apps\ceo\services\dashboard.py:            "profit": profit,
+apps\ceo\services\dashboard.py:            "margin_percent": margin_percent,
+apps\ceo\services\dashboard.py:    if sort_key == "profit_desc":
+apps\ceo\services\dashboard.py:        results.sort(key=lambda item: item["profit"], reverse=True)
+apps\ceo\services\dashboard.py:    elif sort_key == "margin_desc":
+apps\ceo\services\dashboard.py:        results.sort(key=lambda item: item["margin_percent"], reverse=True)
+apps\ceo\services\dashboard.py:        results.sort(key=lambda item: item["overall_progress_percent"], reverse=True)
+apps\ceo\services\dashboard.py:def get_ceo_project_summary(project_id, as_of_date=None):
+apps\ceo\services\dashboard.py:    if as_of_date is None:
+apps\ceo\services\dashboard.py:        as_of_date = timezone.localdate()
+apps\ceo\services\dashboard.py:    period_start = as_of_date.replace(day=1)
+apps\ceo\services\dashboard.py:    progress = get_project_progress(project_id, as_of_date)
+apps\ceo\services\dashboard.py:    profit_loss = get_profit_loss_by_project(project_id)
+apps\ceo\services\dashboard.py:    labor_summary = get_labor_totals_for_projects([project_id], as_of_date=as_of_date).get(
+apps\ceo\services\dashboard.py:    cash_summary = get_cash_summary(project_id, period_start, as_of_date)
+apps\ceo\services\dashboard.py:        "overall_progress_percent": _safe_decimal(progress.get("overall_progress_percent")),
+apps\ceo\services\dashboard.py:        "recognized_revenue": _safe_decimal(profit_loss.get("recognized_revenue")),
+apps\ceo\services\dashboard.py:        "profit": _safe_decimal(profit_loss.get("profit")),
+apps\ceo\services\dashboard.py:        "margin_percent": _safe_decimal(profit_loss.get("margin_percent")),
+apps\ceo\services\dashboard.py:def _bulk_progress(project_ids, as_of_date):
+apps\ceo\services\dashboard.py:    if as_of_date is None:
+apps\ceo\services\dashboard.py:        as_of_date = timezone.localdate()
+apps\ceo\services\dashboard.py:        .values("id", "plan_id", "name", "weight_percent")
+apps\ceo\services\dashboard.py:        DailyProgress.objects.filter(plan_id__in=plan_map.keys(), report_date__lte=as_of_date)
+apps\ceo\services\dashboard.py:        .values("task_id", "progress_percent")
+apps\ceo\services\dashboard.py:            latest_by_task[task_id] = row["progress_percent"]
+apps\ceo\services\dashboard.py:            {"overall_progress_percent": Decimal("0"), "tasks": []},
+apps\ceo\services\dashboard.py:        weight = task["weight_percent"] or Decimal("0")
+apps\ceo\services\dashboard.py:        entry["overall_progress_percent"] += (weight * progress) / Decimal("100")
+apps\ceo\services\dashboard.py:                "weight_percent": weight,
+apps\ceo\services\dashboard.py:                "latest_progress_percent": progress,
+apps\ceo\services\dashboard.py:def _bulk_accrual(project_ids, as_of_date=None):
+apps\ceo\services\dashboard.py:    if as_of_date is not None:
+apps\ceo\services\dashboard.py:        cost_filters["cost_actual__report_date__lte"] = as_of_date
+apps\ceo\services\dashboard.py:def _bulk_profit(project_ids, as_of_date=None):
+apps\ceo\services\dashboard.py:        "project_id", "-as_of_date", "-id"
+apps\ceo\services\dashboard.py:    if as_of_date is not None:
+apps\ceo\services\dashboard.py:        queryset = queryset.filter(as_of_date__lte=as_of_date)
+apps\ceo\services\dashboard.py:        recognized = revenue.recognized_revenue if revenue else Decimal("0")
+apps\ceo\services\dashboard.py:            "recognized_revenue": recognized,
+apps\ceo\services\dashboard.py:def _empty_profit(project_id):
+apps\ceo\services\dashboard.py:    return {"project_id": project_id, "recognized_revenue": Decimal("0"), "profit": Decimal("0"), "margin_percent": Decimal("0")}
+apps\ceo\services\kpi_engine.py:def _baseline_ready(project, contract_amount, budget_total, planned_progress_percent):
+apps\ceo\services\kpi_engine.py:    if contract_amount is None or contract_amount <= 0:
+apps\ceo\services\kpi_engine.py:    if planned_progress_percent is None:
+apps\ceo\services\kpi_engine.py:def _planned_progress_percent_for_items(project, wbs_items, as_of_date):
+apps\ceo\services\kpi_engine.py:            return _ratio_to_percent(project.start_date, project.end_date, as_of_date)
+apps\ceo\services\kpi_engine.py:        total_weight = sum((item.weight or Decimal("0") for item in wbs_items), Decimal("0"))
+apps\ceo\services\kpi_engine.py:        if total_weight <= 0:
+apps\ceo\services\kpi_engine.py:        weighted = Decimal("0")
+apps\ceo\services\kpi_engine.py:            ratio = _date_ratio(item.plan_start_date, item.plan_end_date, as_of_date)
+apps\ceo\services\kpi_engine.py:            weighted += (item.weight or Decimal("0")) * ratio
+apps\ceo\services\kpi_engine.py:        return (weighted / total_weight) * Decimal("100")
+apps\ceo\services\kpi_engine.py:        return _ratio_to_percent(project.start_date, project.end_date, as_of_date)
+apps\ceo\services\kpi_engine.py:def _date_ratio(start, end, as_of_date):
+apps\ceo\services\kpi_engine.py:    if not start or not end or not as_of_date:
+apps\ceo\services\kpi_engine.py:        return Decimal("1") if as_of_date >= end else Decimal("0")
+apps\ceo\services\kpi_engine.py:    if as_of_date <= start:
+apps\ceo\services\kpi_engine.py:    if as_of_date >= end:
+apps\ceo\services\kpi_engine.py:    elapsed = (as_of_date - start).days
+apps\ceo\services\kpi_engine.py:def _ratio_to_percent(start, end, as_of_date):
+apps\ceo\services\kpi_engine.py:    return _date_ratio(start, end, as_of_date) * Decimal("100")
+apps\ceo\services\kpi_engine.py:def compute_project_kpi(project, as_of_date=None, include_submitted=False):
+apps\ceo\services\kpi_engine.py:    if as_of_date is None:
+apps\ceo\services\kpi_engine.py:        as_of_date = timezone.localdate()
+apps\ceo\services\kpi_engine.py:    return compute_kpis_for_projects([project], as_of_date, include_submitted).get(
+apps\ceo\services\kpi_engine.py:def compute_kpis_for_projects(projects_queryset_or_ids, as_of_date=None, include_submitted=False):
+apps\ceo\services\kpi_engine.py:    if as_of_date is None:
+apps\ceo\services\kpi_engine.py:        as_of_date = timezone.localdate()
+apps\ceo\services\kpi_engine.py:        project.id: getattr(project, "contract_amount", None) for project in projects
+apps\ceo\services\kpi_engine.py:            "project_id", "contract_amount"
+apps\ceo\services\kpi_engine.py:            contract_map[row["project_id"]] = row["contract_amount"]
+apps\ceo\services\kpi_engine.py:            .annotate(total=Sum("planned_amount"))
+apps\ceo\services\kpi_engine.py:    labor_totals = get_labor_totals_for_projects(project_ids, as_of_date=as_of_date)
+apps\ceo\services\kpi_engine.py:        as_of_date=as_of_date,
+apps\ceo\services\kpi_engine.py:        project_ids, as_of_date=as_of_date
+apps\ceo\services\kpi_engine.py:    progress_by_project = _bulk_actual_progress(project_ids, as_of_date, progress_statuses)
+apps\ceo\services\kpi_engine.py:        contract_amount = _safe_decimal(contract_map.get(project.id))
+apps\ceo\services\kpi_engine.py:        planned_progress = _planned_progress_percent_for_items(
+apps\ceo\services\kpi_engine.py:            as_of_date,
+apps\ceo\services\kpi_engine.py:            project, contract_amount, budget_total, planned_progress
+apps\ceo\services\kpi_engine.py:        ev = contract_amount * (actual_progress / Decimal("100"))
+apps\ceo\services\kpi_engine.py:        pv = contract_amount * (
+apps\ceo\services\kpi_engine.py:        forecast_profit = (contract_amount - eac_budget) if eac_budget is not None else None
+apps\ceo\services\kpi_engine.py:                "contract_amount": contract_amount,
+apps\ceo\services\kpi_engine.py:                "planned_progress_percent": planned_progress,
+apps\ceo\services\kpi_engine.py:                "actual_progress_percent": actual_progress,
+apps\ceo\services\kpi_engine.py:            "forecast_profit": forecast_profit,
+apps\ceo\services\kpi_engine.py:def _bulk_actual_progress(project_ids, as_of_date, statuses):
+apps\ceo\services\kpi_engine.py:        .values("id", "plan_id", "weight_percent")
+apps\ceo\services\kpi_engine.py:            report_date__lte=as_of_date,
+apps\ceo\services\kpi_engine.py:        .values("task_id", "progress_percent")
+apps\ceo\services\kpi_engine.py:            latest_by_task[task_id] = row["progress_percent"]
+apps\ceo\services\kpi_engine.py:    weight_totals = {}
+apps\ceo\services\kpi_engine.py:        weight = task["weight_percent"] or Decimal("0")
+apps\ceo\services\kpi_engine.py:        weight_totals[project_id] = weight_totals.get(project_id, Decimal("0")) + weight
+apps\ceo\services\kpi_engine.py:        summary[project_id] = summary.get(project_id, Decimal("0")) + (weight * progress)
+apps\ceo\services\kpi_engine.py:    for project_id, weighted_sum in summary.items():
+apps\ceo\services\kpi_engine.py:        total_weight = weight_totals.get(project_id, Decimal("0"))
+apps\ceo\services\kpi_engine.py:        if total_weight > 0:
+apps\ceo\services\kpi_engine.py:            result[project_id] = (weighted_sum / total_weight)
+apps\kpi\timeline.py:            "contract_amount",
+apps\kpi\timeline.py:            "profit",
+apps\kpi\timeline.py:            "margin_pct",
+apps\kpi\timeline.py:        "contract_amount": "Contract baseline amount",
+apps\kpi\timeline.py:        "profit": "Contract - actual cost",
+apps\kpi\timeline.py:        "margin_pct": "Profit / contract amount",
+apps\kpi\timeline.py:    contract_amount = snapshot.get("contract", {}).get("amount")
+apps\kpi\timeline.py:    gross_margin = snapshot.get("metrics", {}).get("gross_margin_est")
+apps\kpi\timeline.py:    gross_margin_rate = snapshot.get("metrics", {}).get("gross_margin_rate_est")
+apps\kpi\timeline.py:        if metric == "contract_amount":
+apps\kpi\timeline.py:            result[metric] = contract_amount
+apps\kpi\timeline.py:        elif metric == "profit":
+apps\kpi\timeline.py:            result[metric] = gross_margin
+apps\kpi\timeline.py:        elif metric == "margin_pct":
+apps\kpi\timeline.py:            if gross_margin_rate is None:
+apps\kpi\timeline.py:                result[metric] = round(gross_margin_rate * 100, 2)
+apps\kpi\timeline.py:            project.id, as_of_date=period.end, include_submitted=False
+apps\ceo\tests\test_ceo_report_export.py:        base_contract_amount="1000.00",
+apps\closing\adjustments.py:def _period_filter(as_of_date: date):
+apps\closing\adjustments.py:    if as_of_date is None:
+apps\closing\adjustments.py:    return Q(period_year__lt=as_of_date.year) | Q(
+apps\closing\adjustments.py:        period_year=as_of_date.year, period_month__lte=as_of_date.month
+apps\closing\adjustments.py:def get_adjustment_totals(project_ids, *, target_type, as_of_date=None, statuses=None):
+apps\closing\adjustments.py:    qs = qs.filter(_period_filter(as_of_date))
+apps\closing\adjustments.py:def get_cost_adjustment_by_category(project_ids, *, as_of_date=None, statuses=None):
+apps\closing\adjustments.py:    qs = qs.filter(_period_filter(as_of_date))
+apps\closing\adjustments.py:def has_pending_adjustments(project_ids, *, target_type, as_of_date=None):
+apps\closing\adjustments.py:    qs = qs.filter(_period_filter(as_of_date))
+apps\kpi\services.py:# - contract model: apps.projects.models.ProjectContract (contract_amount)
+apps\kpi\services.py:# - budget model: apps.projects.models.BudgetItem (planned_amount)
+apps\kpi\services.py:def compute_project_kpi(project_id, as_of_date=None, include_submitted=False) -> dict:
+apps\kpi\services.py:    result = compute_portfolio_kpi([project_id], as_of_date, include_submitted)
+apps\kpi\services.py:    as_of_date=None,
+apps\kpi\services.py:    labor_totals = get_labor_totals_for_projects(project_ids, as_of_date=as_of_date)
+apps\kpi\services.py:        as_of_date=as_of_date,
+apps\kpi\services.py:        as_of_date=as_of_date,
+apps\kpi\services.py:        contract_amount, contract_status, contract_source, contract_notes = (
+apps\kpi\services.py:        metrics = _calc_metrics(contract_amount, budget_amount, actual_submitted)
+apps\kpi\services.py:        if as_of_date:
+apps\kpi\services.py:                project_id, as_of_date.year, as_of_date.month
+apps\kpi\services.py:                    "amount": _to_int(contract_amount),
+apps\kpi\services.py:            .annotate(total=Sum("planned_amount"))
+apps\kpi\services.py:            .annotate(total=Sum("planned_amount"))
+apps\kpi\services.py:        amount = contract.contract_amount
+apps\kpi\services.py:    if project.contract_amount is not None and project.contract_amount > 0:
+apps\kpi\services.py:        return project.contract_amount, "FALLBACK", "ProjectLegacy", notes
+apps\kpi\services.py:def _calc_metrics(contract_amount, budget_amount, actual_submitted):
+apps\kpi\services.py:    contract_amount = _to_decimal(contract_amount)
+apps\kpi\services.py:    gross_margin_est = None
+apps\kpi\services.py:    gross_margin_rate_est = None
+apps\kpi\services.py:    if contract_amount is not None and actual_submitted is not None:
+apps\kpi\services.py:        gross_margin_est = contract_amount - actual_submitted
+apps\kpi\services.py:        if contract_amount != 0:
+apps\kpi\services.py:            gross_margin_rate_est = gross_margin_est / contract_amount
+apps\kpi\services.py:        "gross_margin_est": _to_int(gross_margin_est),
+apps\kpi\services.py:        "gross_margin_rate_est": _to_float(gross_margin_rate_est),
+apps\ceo\tests\test_ceo_cash_summary.py:        f"/api/ceo/projects/{project.id}/summary/?as_of_date=2024-01-20"
+apps\ceo\tests\test_ceo_pages.py:def test_dashboard_requires_login(client):
+apps\ceo\tests\test_ceo_pages.py:    response = client.get("/ceo/dashboard/")
+apps\ceo\tests\test_ceo_pages.py:def test_dashboard_login_success(client, user):
+apps\ceo\tests\test_ceo_pages.py:    response = client.get("/ceo/dashboard/")
+apps\cost\admin.py:    list_display = ("project", "as_of_date", "progress_percent", "recognized_revenue", "delta_revenue")
+apps\cost\models.py:    as_of_date = models.DateField()
+apps\cost\models.py:    progress_percent = models.DecimalField(max_digits=6, decimal_places=3)
+apps\cost\models.py:    recognized_revenue = models.DecimalField(max_digits=16, decimal_places=2)
+apps\cost\models.py:                fields=["project", "contract_snapshot", "as_of_date"],
+apps\cost\models.py:        ordering = ["-as_of_date"]
+apps\cost\models.py:        if snapshot is not None and not hasattr(snapshot, "total_contract_amount"):
+apps\cost\models.py:            total_amount = getattr(snapshot, "total_contract_amount", None)
+apps\cost\models.py:        progress_ratio = (self.progress_percent or Decimal("0")) / Decimal("100")
+apps\cost\models.py:        self.recognized_revenue = (total_amount or Decimal("0")) * progress_ratio
+apps\cost\models.py:        filter_kwargs = {"project": self.project, "as_of_date__lt": self.as_of_date}
+apps\cost\models.py:            .order_by("-as_of_date")
+apps\cost\models.py:        previous_amount = previous.recognized_revenue if previous else Decimal("0")
+apps\cost\models.py:        self.delta_revenue = self.recognized_revenue - previous_amount
+apps\schedule\views.py:            "new_progress": str(progress.progress_percent),
+apps\schedule\views.py:            "delta_percent": str(progress.progress_percent),
+apps\schedule\views.py:        prev_progress = instance.progress_percent
+apps\schedule\views.py:        delta = (progress.progress_percent or 0) - (prev_progress or 0)
+apps\schedule\views.py:            "new_progress": str(progress.progress_percent),
+apps\schedule\views.py:        as_of_date_str = request.query_params.get("as_of_date")
+apps\schedule\views.py:        as_of_date = None
+apps\schedule\views.py:        if as_of_date_str:
+apps\schedule\views.py:                as_of_date = date.fromisoformat(as_of_date_str)
+apps\schedule\views.py:                    {"detail": "as_of_date must be YYYY-MM-DD."},
+apps\schedule\views.py:        data = get_project_progress(project_id, as_of_date)
+apps\schedule\views.py:        "as_of_date": data["as_of_date"].isoformat() if data["as_of_date"] else None,
+apps\schedule\views.py:        "overall_progress_percent": str(data["overall_progress_percent"]),
+apps\schedule\views.py:                "weight_percent": str(task["weight_percent"]),
+apps\schedule\views.py:                "latest_progress_percent": str(task["latest_progress_percent"]),
+apps\field\web_views.py:    weight = getattr(task, "weight_percent", None)
+apps\field\web_views.py:    if weight not in (None, ""):
+apps\field\web_views.py:        return f"{prefix}{task.name} / {weight}%"
+apps\field\web_views.py:                        weight_percent=wbs.weight or Decimal("0"),
+apps\field\web_views.py:def _normalize_progress_percent(value):
+apps\field\web_views.py:            .exclude(progress_percent=None)
+apps\field\web_views.py:            .order_by("-progress_percent")
+apps\field\web_views.py:            .values_list("progress_percent", flat=True)
+apps\field\web_views.py:            .exclude(progress_percent=None)
+apps\field\web_views.py:            .order_by("-progress_percent")
+apps\field\web_views.py:            .values_list("progress_percent", flat=True)
+apps\field\web_views.py:def field_dashboard(request):
+apps\field\web_views.py:    return render(request, "field/dashboard.html", context)
+apps\field\web_views.py:    Field progress flow uses dashboard detail/edit hybrid.
+apps\field\web_views.py:    progress_percent = request.POST.get("progress_percent")
+apps\field\web_views.py:    if not task_id or progress_percent in (None, ""):
+apps\field\web_views.py:        value = float(progress_percent)
+apps\field\web_views.py:    progress.progress_percent = round(value, 1)
+apps\field\web_views.py:            "progress": f"{float(progress.progress_percent):.1f}",
+apps\field\web_views.py:        if progress.task_id is None or progress.progress_percent is None:
+apps\field\web_views.py:            value=progress.progress_percent,
+apps\field\web_views.py:    progress_percent = request.POST.get("progress_percent")
+apps\field\web_views.py:    if progress_percent in (None, ""):
+apps\field\web_views.py:        value = float(progress_percent)
+apps\field\web_views.py:            existing.progress_percent = round(value, 1)
+apps\field\web_views.py:                existing.save(update_fields=["progress_percent", "note", "status", "updated_at"])
+apps\field\web_views.py:                existing.save(update_fields=["progress_percent", "note", "updated_at"])
+apps\field\web_views.py:                progress_percent=round(value, 1),
+apps\field\web_views.py:        .only("id", "project_id", "project__name", "task__name", "report_date", "progress_percent", "note")
+apps\field\web_views.py:            progress_value = _normalize_progress_percent(obj.progress_percent)
+apps\cost\views.py:        queryset = RevenueRecognition.objects.all().order_by("-as_of_date", "-id")
+apps\cost\serializers.py:            "as_of_date",
+apps\cost\serializers.py:            "progress_percent",
+apps\cost\serializers.py:            "recognized_revenue",
+apps\cost\serializers.py:    as_of_date = serializers.DateField()
+apps\cost\serializers.py:    progress_percent = serializers.DecimalField(max_digits=6, decimal_places=3)
+apps\cost\serializers.py:    def validate_progress_percent(self, value):
+apps\cost\serializers.py:            raise serializers.ValidationError("progress_percent must be between 0 and 100.")
+apps\cost\serializers.py:    def validate_as_of_date(self, value):
+apps\cost\serializers.py:            raise serializers.ValidationError("as_of_date cannot be in the future.")
+apps\cost\serializers.py:        progress_percent = validated_data["progress_percent"]
+apps\cost\serializers.py:        as_of_date = validated_data["as_of_date"]
+apps\cost\serializers.py:            as_of_date=as_of_date,
+apps\cost\serializers.py:            progress_percent=progress_percent,
+apps\cost\management\commands\repair_project_owner_supplied_budget.py:            self.stdout.write(f"  Amount: {item.planned_amount}")
+apps\cost\management\commands\repair_project_budget_cbs.py:        totals[key] += int(item.planned_amount or 0)
+apps\cost\management\commands\repair_project_budget_cbs.py:    help = "Repair project budget CBS grouping for labor/expense/profit rows."
+apps\cost\management\commands\repair_project_budget_cbs.py:        profit_item = _pick_cost_item("CIVIL-PROFIT")
+apps\cost\management\commands\repair_project_budget_cbs.py:        if labor_item is None or expense_item is None or profit_item is None:
+apps\cost\management\commands\repair_project_budget_cbs.py:                if item.cost_item_id == profit_item.id and "안전관리책임자" in (item.note or ""):
+apps\cost\management\commands\repair_project_budget_cbs.py:                    existing.planned_amount = int(existing.planned_amount or 0) + int(item.planned_amount or 0)
+apps\cost\management\commands\repair_project_budget_cbs.py:                    existing.save(update_fields=["planned_amount", "category", "name", "note", "updated_at"])
+apps\cost\migrations\0003_revenue_recognition.py:                ("as_of_date", models.DateField()),
+apps\cost\migrations\0003_revenue_recognition.py:                ("progress_percent", models.DecimalField(decimal_places=3, max_digits=6)),
+apps\cost\migrations\0003_revenue_recognition.py:                ("recognized_revenue", models.DecimalField(decimal_places=2, max_digits=16)),
+apps\cost\migrations\0003_revenue_recognition.py:                "ordering": ["-as_of_date"],
+apps\cost\migrations\0003_revenue_recognition.py:                fields=("project", "contract_snapshot", "as_of_date"),
+apps\cost\management\commands\repair_project_budget_categories.py:        .aggregate(total=Sum("planned_amount"))
+apps\cost\management\commands\repair_project_budget_categories.py:        .aggregate(total=Sum("planned_amount"))
+apps\cost\management\commands\repair_project_budget_categories.py:        .aggregate(total=Sum("planned_amount"))
+apps\cost\management\commands\repair_project_budget_categories.py:        .aggregate(total=Sum("planned_amount"))
+apps\cost\management\commands\repair_project_budget_categories.py:    contract_amount = contract.contract_amount if contract else Decimal("0")
+apps\cost\management\commands\repair_project_budget_categories.py:    difference = contract_amount - grand_total
+apps\cost\management\commands\repair_project_budget_categories.py:        "contract": contract_amount,
+apps\core\management\commands\seed_demo_flow.py:                contract_amount_delta=Decimal("500.00"),
+apps\core\management\commands\seed_demo_flow.py:            defaults={"weight_percent": Decimal("100.000"), "sort_order": 1},
+apps\core\management\commands\seed_demo_flow.py:            defaults={"progress_percent": Decimal("25.000")},
+apps\kpi\api_views.py:        as_of_date = parse_date(request.GET.get("as_of_date") or "")
+apps\kpi\api_views.py:        data = compute_project_kpi(project_id, as_of_date, include_submitted)
+apps\kpi\api_views.py:        as_of_date = parse_date(request.GET.get("as_of_date") or "")
+apps\kpi\api_views.py:        data = compute_portfolio_kpi(project_ids, as_of_date, include_submitted)
+apps\field\web_urls.py:    field_dashboard,
+apps\field\web_urls.py:    path("", field_dashboard),
+apps\core\views.py:        "dashboard_home_url": "/app/ceo/" if is_ceo else "/app/hq/",
+apps\core\views.py:        "dashboard_home_label": "CEO 대시보드" if is_ceo else "HQ 대시보드",
+apps\schedule\tests\test_progress_api.py:        plan=active_plan, name="Task A", weight_percent=Decimal("40.000"), sort_order=1
+apps\schedule\tests\test_progress_api.py:        plan=active_plan, name="Task B", weight_percent=Decimal("60.000"), sort_order=2
+apps\schedule\tests\test_progress_api.py:    assert data["overall_progress_percent"] == "0"
+apps\schedule\tests\test_progress_api.py:        progress_percent=Decimal("50.000"),
+apps\schedule\tests\test_progress_api.py:    assert Decimal(data["overall_progress_percent"]) == Decimal("20.000")
+apps\schedule\tests\test_progress_api.py:def test_weighted_progress_correct(auth_client, project, active_plan, tasks):
+apps\schedule\tests\test_progress_api.py:        progress_percent=Decimal("50.000"),
+apps\schedule\tests\test_progress_api.py:        progress_percent=Decimal("25.000"),
+apps\schedule\tests\test_progress_api.py:    assert Decimal(data["overall_progress_percent"]).quantize(Decimal("0.001")) == Decimal("35.000")
+apps\schedule\tests\test_progress_api.py:def test_as_of_date_uses_latest(auth_client, project, active_plan, tasks):
+apps\schedule\tests\test_progress_api.py:        progress_percent=Decimal("10.000"),
+apps\schedule\tests\test_progress_api.py:        progress_percent=Decimal("40.000"),
+apps\schedule\tests\test_progress_api.py:        f"/api/progress/?project_id={project.id}&as_of_date=2024-01-01"
+apps\schedule\tests\test_progress_api.py:    assert Decimal(data["overall_progress_percent"]) == Decimal("4.000")
+apps\core\management\commands\seed_demo_3sites_e2e.py:        parser.add_argument("--target-margin", type=Decimal, default=None)
+apps\core\management\commands\seed_demo_3sites_e2e.py:        target_margin = options.get("target_margin")
+apps\core\management\commands\seed_demo_3sites_e2e.py:                target_margin=target_margin,
+apps\core\management\commands\seed_demo_3sites_e2e.py:                target_margin=target_margin,
+apps\core\management\commands\seed_demo_3sites_e2e.py:    def _run_d3e2_seed(self, *, month: str, dry_run: bool, ops: bool = False, target_progress=None, target_margin=None):
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    "contract_amount": spec["amount"],
+apps\core\management\commands\seed_demo_3sites_e2e.py:            project.contract_amount = spec["amount"]
+apps\core\management\commands\seed_demo_3sites_e2e.py:            contract.contract_amount = spec["amount"]
+apps\core\management\commands\seed_demo_3sites_e2e.py:                target_margin=target_margin,
+apps\core\management\commands\seed_demo_3sites_e2e.py:    def _run_d3e4(self, *, month: str, dry_run: bool, target_progress=None, target_margin=None):
+apps\core\management\commands\seed_demo_3sites_e2e.py:        totals_cost = get_adjustment_totals([p1.id, p2.id, p3.id], target_type="COST", as_of_date=date(year, month_no, 28))
+apps\core\management\commands\seed_demo_3sites_e2e.py:        totals_labor = get_adjustment_totals([p1.id, p2.id, p3.id], target_type="LABOR", as_of_date=date(year, month_no, 28))
+apps\core\management\commands\seed_demo_3sites_e2e.py:            target_margin=target_margin,
+apps\core\management\commands\seed_demo_3sites_e2e.py:    def _seed_ops_data(self, *, year, month, projects_by_key, user_map, cbs_items, target_progress=None, target_margin=None):
+apps\core\management\commands\seed_demo_3sites_e2e.py:                            weight_percent=Decimal("33.333"),
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    progress_percent=Decimal(str(15 + (p_idx * 8) % 70)),
+apps\core\management\commands\seed_demo_3sites_e2e.py:            target_margin=target_margin,
+apps\core\management\commands\seed_demo_3sites_e2e.py:    def _seed_finance_metrics(self, *, year, month, projects, hq_user, target_progress=None, target_margin=None):
+apps\core\management\commands\seed_demo_3sites_e2e.py:            progress_percent = Decimal(getattr(approved_progress, "progress_percent", 0) or 0)
+apps\core\management\commands\seed_demo_3sites_e2e.py:                progress_percent = Decimal(target_progress)
+apps\core\management\commands\seed_demo_3sites_e2e.py:            if progress_percent > Decimal("100"):
+apps\core\management\commands\seed_demo_3sites_e2e.py:                progress_percent = Decimal("100")
+apps\core\management\commands\seed_demo_3sites_e2e.py:            if progress_percent < Decimal("0"):
+apps\core\management\commands\seed_demo_3sites_e2e.py:                progress_percent = Decimal("0")
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    base_contract_amount=Decimal(getattr(project, "contract_amount", 0) or 0),
+apps\core\management\commands\seed_demo_3sites_e2e.py:                as_of_date=month_end,
+apps\core\management\commands\seed_demo_3sites_e2e.py:                defaults={"progress_percent": progress_percent},
+apps\core\management\commands\seed_demo_3sites_e2e.py:                Decimal(getattr(snapshot, "base_contract_amount", 0) or 0)
+apps\core\management\commands\seed_demo_3sites_e2e.py:                * (progress_percent / Decimal("100"))
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    as_of_date__lt=month_end,
+apps\core\management\commands\seed_demo_3sites_e2e.py:                .order_by("-as_of_date", "-id")
+apps\core\management\commands\seed_demo_3sites_e2e.py:            previous_amount = Decimal(getattr(previous_revenue, "recognized_revenue", 0) or 0)
+apps\core\management\commands\seed_demo_3sites_e2e.py:                progress_percent=progress_percent,
+apps\core\management\commands\seed_demo_3sites_e2e.py:                recognized_revenue=target_revenue,
+apps\core\management\commands\seed_demo_3sites_e2e.py:            inflow_amount = (revenue.recognized_revenue * Decimal("0.35")).quantize(Decimal("1.00"))
+apps\core\management\commands\seed_demo_3sites_e2e.py:            margin_percent = Decimal(target_margin) if target_margin is not None else None
+apps\core\management\commands\seed_demo_3sites_e2e.py:            if margin_percent is not None:
+apps\core\management\commands\seed_demo_3sites_e2e.py:                if margin_percent > Decimal("99"):
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    margin_percent = Decimal("99")
+apps\core\management\commands\seed_demo_3sites_e2e.py:                if margin_percent < Decimal("0"):
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    margin_percent = Decimal("0")
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    revenue.recognized_revenue * (Decimal("100") - margin_percent) / Decimal("100")
+apps\core\management\commands\seed_demo_3sites_e2e.py:                        description="D3E finance margin align",
+apps\core\management\commands\seed_demo_3sites_e2e.py:                        description="D3E finance margin align",
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    "progress_percent": str(progress_percent),
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    "recognized_revenue": str(revenue.recognized_revenue),
+apps\core\management\commands\seed_demo_3sites_e2e.py:        for idx, (name, weight) in enumerate(task_specs, start=1):
+apps\core\management\commands\seed_demo_3sites_e2e.py:            span = max(int(days_total * (weight / 100)), 1)
+apps\core\management\commands\seed_demo_3sites_e2e.py:                weight=Decimal(str(weight)),
+apps\core\management\commands\seed_demo_3sites_e2e.py:    def _ensure_budget(self, BudgetItem, project, cbs_items, contract_amount):
+apps\core\management\commands\seed_demo_3sites_e2e.py:        total_budget = int((Decimal(contract_amount) * Decimal("0.82")).quantize(Decimal("1")))
+apps\core\management\commands\seed_demo_3sites_e2e.py:            planned_amount = per_line + (idx % 4) * 1000000
+apps\core\management\commands\seed_demo_3sites_e2e.py:                    "planned_amount": planned_amount,
+apps\core\management\commands\seed_demo_3sites_e2e.py:            budget.planned_amount = planned_amount
+apps\field\tests\test_field_progress.py:        weight="63.37",
+apps\field\tests\test_field_progress.py:        weight="10.00",
+apps\field\tests\test_field_progress.py:        weight="12.50",
+apps\field\tests\test_field_progress.py:        weight="63.37",
+apps\field\tests\test_field_progress.py:            "progress_percent": "10.0",
+apps\field\tests\test_field_progress.py:        weight="20.00",
+apps\field\tests\test_field_progress.py:        weight="63.37",
+apps\field\tests\test_field_progress.py:            "progress_percent": "10.0",
+apps\field\tests\test_field_progress.py:        weight="12.50",
+apps\field\tests\test_field_progress.py:            "progress_percent": "10.0",
+apps\field\tests\test_field_progress.py:        weight="10.00",
+apps\field\tests\test_field_progress.py:        progress_percent=Decimal("10.0"),
+apps\field\tests\test_field_progress.py:            "progress_percent": "15.0",
+apps\field\tests\test_dailyreport_api.py:        contract_amount="10000.00",
+apps\evidence\tests\test_evidence_policy_gate.py:        "contract_amount_delta": "100.00",
+apps\evidence\tests\test_evidence_policy_gate.py:        "proposed_payload": [{"name": "New Task", "weight_percent": 100}],
+apps\schedule\tests\test_plan_change_request_api.py:        plan=base_plan, name="Base Task", weight_percent=50, sort_order=1
+apps\schedule\tests\test_plan_change_request_api.py:            {"name": "New Task", "weight_percent": 100, "sort_order": 1}
+apps\schedule\tests\test_plan_change_request_api.py:        progress_percent=50,
+apps\schedule\tests\test_plan_change_request_api.py:        "contract_amount_delta": "500.00",
+apps\schedule\tests\test_plan_change_request_api.py:        "proposed_payload": [{"name": "New Task", "weight_percent": 100}],
+apps\schedule\tests\test_plan_change_request_api.py:        "proposed_payload": [{"name": "New Task", "weight_percent": 100}],
+apps\schedule\tests\test_plan_change_request_api.py:        "proposed_payload": [{"name": "New Task", "weight_percent": 100}],
+apps\schedule\tests\test_plan_change_request_api.py:        "proposed_payload": [{"name": "New Task", "weight_percent": 100}],
+apps\schedule\admin.py:    list_display = ("project", "task", "report_date", "progress_percent", "reporter")
+apps\core\rbac\tests\test_rbac_project_access.py:def test_field_unassigned_profit_loss_forbidden(field_client, project_a):
+apps\core\rbac\tests\test_rbac_project_access.py:    response = field_client.get(f"/api/profit-loss/?project_id={project_a.id}")
+apps\core\rbac\tests\test_rbac_project_access.py:def test_field_assigned_profit_loss_allowed(field_client, field_user, project_a):
+apps\core\rbac\tests\test_rbac_project_access.py:    response = field_client.get(f"/api/profit-loss/?project_id={project_a.id}")
+apps\core\rbac\tests\test_rbac_project_access.py:    response_b = hq_client.get(f"/api/profit-loss/?project_id={project_b.id}")
+apps\core\rbac\tests\test_rbac_project_access.py:    response = field_client.get("/api/ceo/dashboard/")
+apps\finance\views.py:from .services.profit_loss import get_profit_loss_by_project, get_profit_loss_by_snapshot
+apps\finance\views.py:            data = get_profit_loss_by_snapshot(snapshot_id)
+apps\finance\views.py:            data = get_profit_loss_by_project(project_id)
+apps\core\tests\test_audit_utf8_source_integrity.py:    "apps/projects/tests/test_audit8_ceo_dashboard_lineage.py": [
+apps\core\management\commands\seed_demo_3sites.py:                    "contract_amount": Decimal("1000000.00"),
+apps\core\management\commands\seed_demo_3sites.py:    for name, weight, sort_order, start_date, end_date in items:
+apps\core\management\commands\seed_demo_3sites.py:                "weight": weight,
+apps\core\management\commands\seed_demo_3sites.py:    contract_amount = contract.contract_amount if contract else Decimal("0")
+apps\core\management\commands\seed_demo_3sites.py:    target_total = int((contract_amount * target_ratio).to_integral_value())
+apps\core\management\commands\seed_demo_3sites.py:        planned_amount = per_item + (idx % 5) * 500000
+apps\core\management\commands\seed_demo_3sites.py:                "planned_amount": planned_amount,
+apps\core\management\commands\seed_demo_3sites.py:                "weight_percent": item.weight,
+apps\core\management\commands\seed_demo_3sites.py:                    "progress_percent": min(
+apps\schedule\migrations\0002_daily_progress.py:                ("progress_percent", models.DecimalField(decimal_places=3, max_digits=6)),
+apps\schedule\migrations\0001_initial.py:                ("weight_percent", models.DecimalField(decimal_places=3, default=0, max_digits=6)),
+apps\schedule\models.py:    weight_percent = models.DecimalField(max_digits=6, decimal_places=3, default=0)
+apps\schedule\models.py:    progress_percent = models.DecimalField(max_digits=6, decimal_places=3)
+apps\schedule\models.py:        if self.progress_percent is not None:
+apps\schedule\models.py:            if self.progress_percent < 0 or self.progress_percent > 100:
+apps\schedule\models.py:                raise ValidationError({"progress_percent": "progress_percent must be 0~100."})
+apps\finance\urls.py:    path("profit-loss/", ProfitLossView.as_view()),
+apps\core\rbac\tests\test_rbac_assignment_regression.py:        contract_amount_delta="100.00",
+apps\core\rbac\tests\test_rbac_assignment_regression.py:def test_field_unassigned_profit_loss_forbidden(field_client, project_a):
+apps\core\rbac\tests\test_rbac_assignment_regression.py:    response = field_client.get(f"/api/profit-loss/?project_id={project_a.id}")
+apps\core\rbac\tests\test_rbac_assignment_regression.py:def test_field_assigned_profit_loss_allowed(field_client, field_user, project_a):
+apps\core\rbac\tests\test_rbac_assignment_regression.py:    response = field_client.get(f"/api/profit-loss/?project_id={project_a.id}")
+apps\core\rbac\tests\test_rbac_assignment_regression.py:    profit_loss = hq_client.get(f"/api/profit-loss/?project_id={project_b.id}")
+apps\core\rbac\tests\test_rbac_assignment_regression.py:    assert profit_loss.status_code == 200
+apps\schedule\serializers.py:            "progress_percent",
+apps\schedule\serializers.py:    def validate_progress_percent(self, value):
+apps\schedule\serializers.py:            raise serializers.ValidationError("progress_percent must be 0~100.")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:        planned_amount=amount,
+apps\core\tests\test_audit9_operational_smoke_matrix.py:        weight=Decimal("100.00"),
+apps\core\tests\test_audit9_operational_smoke_matrix.py:        base_contract_amount=Decimal(str(amount)),
+apps\core\tests\test_audit9_operational_smoke_matrix.py:def _revenue(project, snapshot, progress_percent="50.0", as_of=date(2026, 6, 29)):
+apps\core\tests\test_audit9_operational_smoke_matrix.py:        as_of_date=as_of,
+apps\core\tests\test_audit9_operational_smoke_matrix.py:        progress_percent=Decimal(str(progress_percent)),
+apps\core\tests\test_audit9_operational_smoke_matrix.py:        recognized_revenue=Decimal("0"),
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    _revenue(project, snapshot, progress_percent="50.0")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:        "progress_percent": "12.5",
+apps\core\tests\test_audit9_operational_smoke_matrix.py:def _dashboard_context(response):
+apps\core\tests\test_audit9_operational_smoke_matrix.py:def test_audit9_ceo_dashboard_smoke_shows_source_backed_project_summary():
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    ceo = _user(Role.CEO, "audit9-ceo-dashboard")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    field = _user(Role.FIELD, "audit9-field-dashboard")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    response = _client(ceo).get("/app/ceo/?as_of_date=2026-06-30")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    context = _dashboard_context(response)
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    assert project_rows[project.id]["recognized_revenue"] == Decimal("500000.00")
+apps\core\tests\test_audit9_operational_smoke_matrix.py:    assert project_rows[project.id]["profit"] == Decimal("300000.00")
+apps\schedule\services\plan_change.py:                weight_percent=item.get("weight_percent", 0),
+apps\core\rbac\tests\test_audit2_project_scope.py:        weight="100.00",
+apps\core\rbac\tests\test_audit2_project_scope.py:def test_hq_can_access_field_dashboard_for_any_project_scope():
+apps\core\tests\test_approval_daily_progress.py:    task = ScheduleTask.objects.create(plan=plan, name="Task 1", weight_percent=100)
+apps\core\tests\test_approval_daily_progress.py:        progress_percent=25.0,
+apps\risk\services\engine.py:    amount_delta = Decimal(str(payload.get("contract_amount_delta", 0)))
+apps\schedule\services\progress_agg.py:def get_task_progress(plan_id, as_of_date):
+apps\schedule\services\progress_agg.py:    if as_of_date is None:
+apps\schedule\services\progress_agg.py:        as_of_date = timezone.localdate()
+apps\schedule\services\progress_agg.py:        DailyProgress.objects.filter(plan_id=plan_id, report_date__lte=as_of_date)
+apps\schedule\services\progress_agg.py:        .values("task_id", "progress_percent")
+apps\schedule\services\progress_agg.py:            latest_by_task[task_id] = row["progress_percent"]
+apps\schedule\services\progress_agg.py:                "weight_percent": task.weight_percent,
+apps\schedule\services\progress_agg.py:                "latest_progress_percent": latest_by_task.get(task.id, Decimal("0")),
+apps\schedule\services\progress_agg.py:def get_project_progress(project_id, as_of_date=None):
+apps\schedule\services\progress_agg.py:    if as_of_date is None:
+apps\schedule\services\progress_agg.py:        as_of_date = timezone.localdate()
+apps\schedule\services\progress_agg.py:            "as_of_date": as_of_date,
+apps\schedule\services\progress_agg.py:            "overall_progress_percent": Decimal("0"),
+apps\schedule\services\progress_agg.py:    tasks = get_task_progress(plan.id, as_of_date)
+apps\schedule\services\progress_agg.py:        weight = task["weight_percent"] or Decimal("0")
+apps\schedule\services\progress_agg.py:        progress = task["latest_progress_percent"] or Decimal("0")
+apps\schedule\services\progress_agg.py:        total += (weight * progress) / Decimal("100")
+apps\schedule\services\progress_agg.py:        "as_of_date": as_of_date,
+apps\schedule\services\progress_agg.py:        "overall_progress_percent": total,
+apps\finance\tests\test_revenue_recognition.py:        base_contract_amount=amount,
+apps\finance\tests\test_revenue_recognition.py:def test_progress_percent_out_of_range_rejected(auth_client, project):
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-01",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "-1",
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-01",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "101",
+apps\finance\tests\test_revenue_recognition.py:def test_recognized_revenue_calculated(auth_client, project):
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-01",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "10.000",
+apps\finance\tests\test_revenue_recognition.py:    assert Decimal(response.json()["recognized_revenue"]) == Decimal("100.00")
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-01",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "10.000",
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-02",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "20.000",
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-01",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "10.000",
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-01",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "10.000",
+apps\finance\tests\test_revenue_recognition.py:def test_future_as_of_date_rejected(auth_client, project):
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": future_date.isoformat(),
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "10.000",
+apps\finance\tests\test_revenue_recognition.py:            "as_of_date": "2024-01-01",
+apps\finance\tests\test_revenue_recognition.py:            "progress_percent": "10.000",
+apps\core\tests\test_api_exception_format.py:    response = client.get("/api/ceo/dashboard/")
+apps\core\tests\test_audit1_template_links.py:        weight="100.00",
+apps\core\tests\test_audit1_url_integrity.py:        weight="100.00",
+apps\core\tests\test_audit1_url_integrity.py:def test_audit1_field_dashboard_resolves_and_opens_for_assigned_project():
+apps\core\tests\test_atomic_flows.py:        proposed_payload=[{"name": "Task", "weight_percent": 100}],
+apps\finance\services\profit_loss.py:        "as_of_date": None,
+apps\finance\services\profit_loss.py:        "recognized_revenue": Decimal("0"),
+apps\finance\services\profit_loss.py:        "profit": Decimal("0"),
+apps\finance\services\profit_loss.py:        "margin_percent": Decimal("0"),
+apps\finance\services\profit_loss.py:    return queryset.order_by("-as_of_date", "-id").first()
+apps\finance\services\profit_loss.py:def _calculate_margin(revenue, profit):
+apps\finance\services\profit_loss.py:        return (profit / revenue) * Decimal("100")
+apps\finance\services\profit_loss.py:def get_profit_loss_by_snapshot(snapshot_id):
+apps\finance\services\profit_loss.py:    revenue = latest.recognized_revenue if latest else Decimal("0")
+apps\finance\services\profit_loss.py:    profit = revenue - accrual["total_cost"]
+apps\finance\services\profit_loss.py:    margin = _calculate_margin(revenue, profit)
+apps\finance\services\profit_loss.py:        "as_of_date": latest.as_of_date if latest else None,
+apps\finance\services\profit_loss.py:        "recognized_revenue": revenue,
+apps\finance\services\profit_loss.py:        "profit": profit,
+apps\finance\services\profit_loss.py:        "margin_percent": margin,
+apps\finance\services\profit_loss.py:def get_profit_loss_by_project(project_id):
+apps\finance\services\profit_loss.py:    revenue = latest.recognized_revenue if latest else Decimal("0")
+apps\finance\services\profit_loss.py:    profit = revenue - accrual["total_cost"]
+apps\finance\services\profit_loss.py:    margin = _calculate_margin(revenue, profit)
+apps\finance\services\profit_loss.py:        "as_of_date": latest.as_of_date if latest else None,
+apps\finance\services\profit_loss.py:        "recognized_revenue": revenue,
+apps\finance\services\profit_loss.py:        "profit": profit,
+apps\finance\services\profit_loss.py:        "margin_percent": margin,
+apps\finance\tests\test_profit_loss.py:        base_contract_amount=amount,
+apps\finance\tests\test_profit_loss.py:def _create_revenue(project, snapshot, progress_percent, as_of_date):
+apps\finance\tests\test_profit_loss.py:        as_of_date=as_of_date,
+apps\finance\tests\test_profit_loss.py:        progress_percent=progress_percent,
+apps\finance\tests\test_profit_loss.py:    response = auth_client.get("/api/profit-loss/")
+apps\finance\tests\test_profit_loss.py:    response = auth_client.get(f"/api/profit-loss/?project_id={project.id}")
+apps\finance\tests\test_profit_loss.py:    assert data["as_of_date"] is None
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["recognized_revenue"]) == Decimal("0")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["profit"]) == Decimal("0")
+apps\finance\tests\test_profit_loss.py:def test_profit_calculation(auth_client, project, cost_item):
+apps\finance\tests\test_profit_loss.py:    response = auth_client.get(f"/api/profit-loss/?project_id={project.id}")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["recognized_revenue"]) == Decimal("100.00")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["profit"]) == Decimal("-100.00")
+apps\finance\tests\test_profit_loss.py:def test_margin_percent_when_revenue_positive(auth_client, project, cost_item):
+apps\finance\tests\test_profit_loss.py:    response = auth_client.get(f"/api/profit-loss/?project_id={project.id}")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["recognized_revenue"]) == Decimal("200.00")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["profit"]) == Decimal("100.00")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["margin_percent"]).quantize(Decimal("0.01")) == Decimal("50.00")
+apps\finance\tests\test_profit_loss.py:    response_one = auth_client.get(f"/api/profit-loss/?snapshot_id={snapshot_one.id}")
+apps\finance\tests\test_profit_loss.py:    response_two = auth_client.get(f"/api/profit-loss/?snapshot_id={snapshot_two.id}")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(response_one.json()["recognized_revenue"]) == Decimal("100.00")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(response_two.json()["recognized_revenue"]) == Decimal("200.00")
+apps\finance\tests\test_profit_loss.py:    response = auth_client.get(f"/api/profit-loss/?project_id={project.id}")
+apps\finance\tests\test_profit_loss.py:    assert Decimal(data["recognized_revenue"]) == Decimal("200.00")
+apps\projects\approval_package_views.py:                summary = f"#{obj.change_no} / delta {obj.contract_amount_delta}"
+apps\labor\services.py:def get_labor_totals_for_projects(project_ids, *, as_of_date=None) -> dict:
+apps\labor\services.py:    if as_of_date is None:
+apps\labor\services.py:        as_of_date = timezone.localdate()
+apps\labor\services.py:            timesheet__work_date__lte=as_of_date,
+apps\labor\services.py:            Q(batch__period_year__lt=as_of_date.year)
+apps\labor\services.py:                batch__period_year=as_of_date.year,
+apps\labor\services.py:                batch__period_month__lte=as_of_date.month,
+apps\master\management\commands\seed_master_templates.py:                for idx, (name, weight) in enumerate(wbs_rows, start=1):
+apps\master\management\commands\seed_master_templates.py:                            weight=weight,
+apps\master\forms.py:            "weight",
+apps\master\web_views.py:                    weight=item.weight,
+apps\master\web_views.py:        weight_sum = Decimal("0")
+apps\master\web_views.py:            weight_sum += Decimal(form.cleaned_data.get("weight") or 0)
+apps\master\web_views.py:        if weight_sum != Decimal("100"):
+apps\master\web_views.py:                weight=form.cleaned_data.get("weight") or 0,
+apps\projects\wbs_change.py:                "weight": item.weight,
+apps\projects\wbs_change.py:        weight = form.cleaned_data.get("weight") or Decimal("0")
+apps\projects\wbs_change.py:        if not task_name and weight == 0 and not planned_start and not planned_end and not note:
+apps\projects\wbs_change.py:                "weight": weight,
+apps\projects\wbs_change.py:    weight_sum = sum(Decimal(str(line.get("weight") or 0)) for line in lines)
+apps\projects\wbs_change.py:    if abs(weight_sum - Decimal("100")) > Decimal("0.1"):
+apps\projects\wbs_change.py:                            weight=line["weight"],
+apps\projects\wbs_change.py:                    "weight": line.weight,
+apps\master\models.py:    weight = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+apps\projects\forms.py:    contract_amount = forms.CharField(
+apps\projects\forms.py:        fields = ["contract_amount", "contract_file", "contract_start_date", "contract_end_date", "memo"]
+apps\projects\forms.py:    def clean_contract_amount(self):
+apps\projects\forms.py:        raw = self.cleaned_data.get("contract_amount")
+apps\projects\forms.py:        fields = ["category", "cost_item", "name", "planned_amount", "note"]
+apps\projects\forms.py:    def clean_planned_amount(self):
+apps\projects\forms.py:        raw = self.cleaned_data.get("planned_amount")
+apps\projects\forms.py:            "weight",
+apps\projects\forms.py:            "weight": forms.NumberInput(
+apps\projects\forms.py:        weight_attrs = self.fields["weight"].widget.attrs
+apps\projects\forms.py:        weight_attrs["class"] = "form-control"
+apps\projects\forms.py:        weight_attrs["step"] = "0.01"
+apps\projects\forms.py:        weight_attrs["min"] = "0"
+apps\projects\forms.py:        weight_attrs["max"] = "100"
+apps\projects\forms.py:        weight_attrs["inputmode"] = "decimal"
+apps\projects\forms.py:        fields = ["task_name", "weight", "planned_start", "planned_end", "note"]
+apps\projects\forms.py:        weight_attrs = self.fields["weight"].widget.attrs
+apps\projects\forms.py:        weight_attrs["class"] = "form-control"
+apps\projects\forms.py:        weight_attrs["step"] = "0.01"
+apps\projects\forms.py:        weight_attrs["min"] = "0"
+apps\projects\forms.py:        weight_attrs["max"] = "100"
+apps\projects\forms.py:        weight_attrs["inputmode"] = "decimal"
+apps\projects\excel_import.py:    "weight": ["\uac00\uc911\uce58", "\ube44\uc911", "weight", "\ubcf4\ud560"],
+apps\projects\excel_import.py:                "weight_column": 3,
+apps\projects\excel_import.py:                summary["contract_amount_label"] = _normalize_text(cell_value)
+apps\projects\excel_import.py:        "contract_amount_label": "",
+apps\projects\excel_import.py:        summary["contract_amount_label"] = "도급예정액"
+apps\projects\excel_import.py:            physical_weight_raw = data_ws.cell(row_idx, layout["weight_column"]).value
+apps\projects\excel_import.py:            physical_weight_decimal = _coerce_decimal(physical_weight_raw)
+apps\projects\excel_import.py:            if physical_weight_decimal is None or physical_weight_decimal == 0:
+apps\projects\excel_import.py:            _, weight_raw = _extract_value_pair(
+apps\projects\excel_import.py:                data_ws, formula_ws, row_idx, layout["weight_column"], data_merged_map, formula_merged_map
+apps\projects\excel_import.py:            _append_formula_warning(row_warnings, weight_raw, physical_weight_raw, "\uac00\uc911\uce58")
+apps\projects\excel_import.py:            weight_decimal = physical_weight_decimal
+apps\projects\excel_import.py:            if Decimal("0") < weight_decimal <= Decimal("1"):
+apps\projects\excel_import.py:                weight_decimal *= Decimal("100")
+apps\projects\excel_import.py:                str(weight_decimal.quantize(Decimal("0.0000000001"))),
+apps\projects\excel_import.py:                "weight": weight_decimal,
+apps\projects\excel_import.py:        weight_value, weight_raw = _extract_value_pair(data_ws, formula_ws, row_idx, mapping.get("weight"), data_merged_map, formula_merged_map)
+apps\projects\excel_import.py:        _append_formula_warning(row_warnings, weight_raw, weight_value, "\uac00\uc911\uce58")
+apps\projects\excel_import.py:        weight_decimal = _coerce_decimal(weight_value)
+apps\projects\excel_import.py:        if weight_decimal is None:
+apps\projects\excel_import.py:            weight_decimal = Decimal("0")
+apps\projects\excel_import.py:            "weight": weight_decimal,
+apps\projects\migrations\0001_initial.py:                ("contract_amount", models.DecimalField(decimal_places=2, default=0, max_digits=14)),
+apps\projects\migrations\0002_projectcontract.py:                ("contract_amount", models.DecimalField(decimal_places=2, max_digits=16)),
+apps\projects\models.py:    contract_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+apps\projects\models.py:    planned_amount = models.BigIntegerField(default=0)
+apps\projects\models.py:        if self.planned_amount is not None and self.planned_amount < 0:
+apps\projects\models.py:            raise ValidationError({"planned_amount": "planned_amount must be >= 0."})
+apps\projects\models.py:    weight = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+apps\projects\models.py:    weight = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+apps\projects\models.py:    contract_amount = models.DecimalField(max_digits=16, decimal_places=2, default=0)
+apps\projects\models.py:        if self.contract_amount is not None and self.contract_amount < 0:
+apps\projects\models.py:            raise ValidationError({"contract_amount": "contract_amount must be >= 0."})
+apps\projects\hq_views.py:                                        "planned_amount": item["planned_amount"],
+apps\projects\hq_views.py:                            wbs_items, wbs_weight_sum = _collect_wbs_items(
+apps\projects\hq_views.py:                            elif not _is_weight_sum_valid(wbs_weight_sum):
+apps\projects\hq_views.py:                                                planned_amount=item["planned_amount"],
+apps\projects\hq_views.py:                                                weight=item["weight"],
+apps\projects\hq_views.py:def _is_exact_profit_row(item_name):
+apps\projects\hq_views.py:                "planned_amount": "",
+apps\projects\hq_views.py:            ensure(review_key)["planned_amount"] = value
+apps\projects\hq_views.py:        if _is_exact_profit_row(item_name):
+apps\projects\hq_views.py:        if _is_exact_profit_row(review_row.get("source_item_name")):
+apps\projects\hq_views.py:        row["requires_manual_profit_mapping"] = True
+apps\projects\hq_views.py:        if _is_exact_profit_row(row.get("item_name")) and (
+apps\projects\hq_views.py:        if _is_exact_profit_row(row.get("item_name")) and base_cost_item is not None:
+apps\projects\hq_views.py:        "planned_amount": int(entry["planned_amount"] or 0),
+apps\projects\hq_views.py:        "source_planned_amount": int(entry["planned_amount"] or 0),
+apps\projects\hq_views.py:        requested_amount = adjustment.get("planned_amount")
+apps\projects\hq_views.py:                row["planned_amount"] = int(amount)
+apps\projects\hq_views.py:                if int(amount) != int(row.get("source_planned_amount") or 0):
+apps\projects\hq_views.py:        source_amount = Decimal(str(row.get("source_planned_amount") or 0))
+apps\projects\hq_views.py:        current_amount = Decimal(str(row.get("planned_amount") or 0))
+apps\projects\hq_views.py:        elif int(row.get("planned_amount") or 0) != int(row.get("source_planned_amount") or 0):
+apps\projects\hq_views.py:                    "cause": f"원본 {row['source_planned_amount']} → 현재 {row['planned_amount']}",
+apps\projects\hq_views.py:                    "planned_amount": 0,
+apps\projects\hq_views.py:            bucket["planned_amount"] += int(row.get("planned_amount") or 0)
+apps\projects\hq_views.py:                "planned_amount": item["planned_amount"],
+apps\projects\hq_views.py:                "planned_amount": row["planned_amount"],
+apps\projects\hq_views.py:        if bucket == BUDGET_BUCKET_EXPENSE and _is_exact_profit_row(row.get("item_name")):
+apps\projects\hq_views.py:                "planned_amount": int(amount),
+apps\projects\hq_views.py:        row["requires_manual_profit_mapping"] = False
+apps\projects\hq_views.py:            and not _is_exact_profit_row(row.get("item_name"))
+apps\projects\hq_views.py:                        Decimal(str(entry["planned_amount"] or 0))
+apps\projects\hq_views.py:                                "amount": Decimal(str(entry["planned_amount"])),
+apps\projects\hq_views.py:                            detail_labor_total_amount += Decimal(str(entry["planned_amount"]))
+apps\projects\hq_views.py:                            detail_material_total_amount += Decimal(str(entry["planned_amount"]))
+apps\projects\hq_views.py:                            detail_expense_total_amount += Decimal(str(entry["planned_amount"]))
+apps\projects\hq_views.py:                                "planned_amount": 0,
+apps\projects\hq_views.py:                        bucket["planned_amount"] += int(entry["planned_amount"] or 0)
+apps\projects\hq_views.py:                    if bucket == BUDGET_BUCKET_EXPENSE and _is_exact_profit_row(row.get("item_name")):
+apps\projects\hq_views.py:                        row["requires_manual_profit_mapping"] = True
+apps\projects\hq_views.py:                                    "planned_amount": int(bucket_amount),
+apps\projects\hq_views.py:                                    "planned_amount": int(bucket_amount),
+apps\projects\hq_views.py:                        _is_exact_profit_row(row.get("item_name"))
+apps\projects\hq_views.py:                    if row.get("requires_manual_profit_mapping"):
+apps\projects\hq_views.py:                if row.get("requires_manual_profit_mapping"):
+apps\projects\hq_views.py:                    profit_amount = Decimal(str(row.get("expense_amount") or row.get("amount") or 0))
+apps\projects\hq_views.py:                        profit_amount,
+apps\projects\hq_views.py:                                "planned_amount": int(profit_amount),
+apps\projects\hq_views.py:                                "note": _make_budget_bucket_note(row, BUDGET_BUCKET_EXPENSE, profit_amount),
+apps\projects\hq_views.py:            if cost_item.code == "CIVIL-PROFIT" and not _is_exact_profit_row(row.get("item_name")):
+apps\projects\hq_views.py:                        Decimal(str(entry["planned_amount"] or 0))
+apps\projects\hq_views.py:                                "amount": Decimal(str(entry["planned_amount"])),
+apps\projects\hq_views.py:                            detail_labor_total_amount += Decimal(str(entry["planned_amount"]))
+apps\projects\hq_views.py:                            detail_material_total_amount += Decimal(str(entry["planned_amount"]))
+apps\projects\hq_views.py:                            detail_expense_total_amount += Decimal(str(entry["planned_amount"]))
+apps\projects\hq_views.py:                                "planned_amount": 0,
+apps\projects\hq_views.py:                        bucket["planned_amount"] += int(entry["planned_amount"] or 0)
+apps\projects\hq_views.py:                            if bucket == BUDGET_BUCKET_EXPENSE and _is_exact_profit_row(row.get("item_name")):
+apps\projects\hq_views.py:                                row["requires_manual_profit_mapping"] = True
+apps\projects\hq_views.py:                                            "planned_amount": int(bucket_amount),
+apps\projects\hq_views.py:                                            "planned_amount": int(bucket_amount),
+apps\projects\hq_views.py:                        "planned_amount": 0,
+apps\projects\hq_views.py:                bucket["planned_amount"] += int(row.get("amount") or 0)
+apps\projects\hq_views.py:                        "planned_amount": int(row.get("amount") or 0),
+apps\projects\hq_views.py:                        "planned_amount": int(row.get("amount") or 0),
+apps\projects\hq_views.py:                        "source_planned_amount": int(row.get("amount") or 0),
+apps\projects\hq_views.py:    generated_subcontract_amount = Decimal("0")
+apps\projects\hq_views.py:        amount = Decimal(str(review_row.get("planned_amount") or 0))
+apps\projects\hq_views.py:            generated_subcontract_amount += amount
+apps\projects\hq_views.py:        "budget_import_generated_subcontract_amount": generated_subcontract_amount,
+apps\projects\hq_views.py:        "budget_import_generated_contract_amount": (
+apps\projects\hq_views.py:            + generated_subcontract_amount
+apps\projects\hq_views.py:    original_weights = [Decimal(row.get("weight") or 0) for row in rows]
+apps\projects\hq_views.py:    original_sum = sum(original_weights, Decimal("0"))
+apps\projects\hq_views.py:        quantized_weight = _quantize_wbs_weight(row.get("weight"))
+apps\projects\hq_views.py:                "weight": quantized_weight,
+apps\projects\hq_views.py:    rounded_sum = sum((Decimal(item["weight"] or 0) for item in initial), Decimal("0"))
+apps\projects\hq_views.py:        adjustment = _quantize_wbs_weight(Decimal("100") - rounded_sum)
+apps\projects\hq_views.py:            initial[-1]["weight"] = _quantize_wbs_weight(
+apps\projects\hq_views.py:                Decimal(initial[-1]["weight"] or 0) + adjustment
+apps\projects\hq_views.py:def _quantize_wbs_weight(value):
+apps\projects\hq_views.py:        decimal_places = WBSItem._meta.get_field("weight").decimal_places or 2
+apps\projects\hq_views.py:        "budget_import_generated_subcontract_amount": Decimal("0"),
+apps\projects\hq_views.py:        "budget_import_generated_contract_amount": Decimal("0"),
+apps\projects\hq_views.py:        "budget_summary_contract_amount": None,
+apps\projects\hq_views.py:        "budget_contract_amount_difference": None,
+apps\projects\hq_views.py:            context["budget_summary_contract_amount"] = summary_info.get("contract_expected_amount")
+apps\projects\hq_views.py:            context["budget_summary_contract_label"] = summary_info.get("contract_amount_label") or ""
+apps\projects\hq_views.py:            entered_contract_amount = None
+apps\projects\hq_views.py:                entered_contract_amount = _coerce_optional_decimal(post_data.get("contract_amount"))
+apps\projects\hq_views.py:            summary_contract_amount = context.get("budget_summary_contract_amount")
+apps\projects\hq_views.py:            if entered_contract_amount is not None and summary_contract_amount is not None:
+apps\projects\hq_views.py:                context["budget_contract_amount_difference"] = entered_contract_amount - summary_contract_amount
+apps\projects\hq_views.py:            if summary_contract_amount is not None:
+apps\projects\hq_views.py:                    summary_contract_amount
+apps\projects\hq_views.py:                    - context["budget_import_generated_contract_amount"]
+apps\projects\hq_views.py:                summary_contract_amount is not None
+apps\projects\hq_views.py:                and summary_contract_amount is not None
+apps\projects\hq_views.py:                and context["budget_contract_amount_difference"] is None
+apps\projects\hq_views.py:                context["budget_contract_amount_difference"] = Decimal("0")
+apps\projects\hq_views.py:            "weight": weight,
+apps\projects\hq_views.py:        for idx, (name, weight) in enumerate(template)
+apps\projects\hq_views.py:                "weight": item.weight,
+apps\projects\hq_views.py:        planned_amount = form.cleaned_data.get("planned_amount")
+apps\projects\hq_views.py:        if not cost_item or planned_amount in (None, ""):
+apps\projects\hq_views.py:        amount_value = int(planned_amount)
+apps\projects\hq_views.py:                "planned_amount": amount_value,
+apps\projects\hq_views.py:            items_by_cost_item[key]["planned_amount"] += amount_value
+apps\projects\hq_views.py:    weight_sum = Decimal("0")
+apps\projects\hq_views.py:        weight = form.cleaned_data.get("weight") or Decimal("0")
+apps\projects\hq_views.py:        weight_sum += Decimal(weight)
+apps\projects\hq_views.py:                "weight": weight,
+apps\projects\hq_views.py:    return items, weight_sum
+apps\projects\hq_views.py:def _is_weight_sum_valid(total):
+apps\projects\hq_views.py:        budget_qs.aggregate(total=Sum("planned_amount")).get("total") or Decimal("0")
+apps\projects\hq_views.py:        labor_qs.aggregate(total=Sum("planned_amount")).get("total") or Decimal("0")
+apps\projects\hq_views.py:        material_qs.aggregate(total=Sum("planned_amount")).get("total") or Decimal("0")
+apps\projects\hq_views.py:        subcontract_qs.aggregate(total=Sum("planned_amount")).get("total")
+apps\projects\hq_views.py:        expense_qs.aggregate(total=Sum("planned_amount")).get("total") or Decimal("0")
+apps\projects\hq_views.py:    if contract and contract.contract_amount is not None:
+apps\projects\hq_views.py:            contract.contract_amount - budget_grand_total_amount
+apps\projects\hq_views.py:    meaningful_fields = ("cost_item", "name", "planned_amount", "note")
+apps\projects\hq_views.py:            if contract.contract_amount is None or contract.contract_amount <= 0:
+apps\projects\serializers.py:            "contract_amount",
+apps\projects\serializers.py:    def validate_contract_amount(self, value):
+apps\projects\serializers.py:            raise serializers.ValidationError("contract_amount must be >= 0.")
+apps\projects\migrations\0003_budgetitem.py:                ("planned_amount", models.DecimalField(decimal_places=2, max_digits=14)),
+apps\projects\services\wbs_change_approval.py:def _sum_weights(lines: list[WBSChangeLine]) -> Decimal:
+apps\projects\services\wbs_change_approval.py:        total += Decimal(str(line.weight or 0))
+apps\projects\services\wbs_change_approval.py:    weight_sum = _sum_weights(request_lines)
+apps\projects\services\wbs_change_approval.py:    if abs(weight_sum - Decimal("100")) > Decimal("0.1"):
+apps\projects\services\wbs_change_approval.py:        raise ValueError("WBS weight sum must be 100.")
+apps\projects\services\wbs_change_approval.py:                    weight=line.weight,
+apps\master\migrations\0003_master_templates.py:                ("weight", models.DecimalField(decimal_places=2, default=0, max_digits=5)),
+apps\projects\migrations\0005_wbsitem.py:                ("weight", models.DecimalField(decimal_places=2, default=0, max_digits=6)),
+apps\projects\services\approval_package.py:# - ContractChange: apps/contracts/models.py (status, contract_amount_delta)
+apps\projects\services\approval_package.py:# - ProjectContract: apps/projects/models.py (contract_amount)
+apps\projects\services\approval_package.py:# - BudgetItem: apps/projects/models.py (planned_amount)
+apps\projects\tests\test_excel_import.py:def test_parse_commencement_wbs_excel_real_layout_maps_periods_and_weight_percent():
+apps\projects\tests\test_excel_import.py:    assert round(float(result["rows"][0]["weight"]), 4) == 63.3695
+apps\projects\tests\test_excel_import.py:    assert round(sum(float(row["weight"]) for row in result["rows"]), 4) == 100.0
+apps\projects\tests\test_excel_import.py:    assert all(float(row["weight"]) > 0 for row in result["rows"])
+apps\projects\migrations\0008_projectcontract.py:                ("contract_amount", models.DecimalField(decimal_places=2, max_digits=16, default=0)),
+apps\projects\tests\test_audit7_field_progress_e2e.py:        planned_amount=1000000,
+apps\projects\tests\test_audit7_field_progress_e2e.py:    weight=Decimal("63.37"),
+apps\projects\tests\test_audit7_field_progress_e2e.py:        weight=weight,
+apps\projects\tests\test_audit7_field_progress_e2e.py:def _draft_payload(project, task, *, progress_percent="12.5", note="현장 진행률 메모"):
+apps\projects\tests\test_audit7_field_progress_e2e.py:        "progress_percent": progress_percent,
+apps\projects\tests\test_audit7_field_progress_e2e.py:    assert task.weight_percent == Decimal("63.370")
+apps\projects\tests\test_audit7_field_progress_e2e.py:    assert progress.progress_percent == Decimal("12.500")
+apps\projects\tests\test_audit7_field_progress_e2e.py:    field_client.post("/app/field/", _draft_payload(project, task, progress_percent="25.0"))
+apps\projects\tests\test_audit7_field_progress_e2e.py:        weight_percent=Decimal("10.000"),
+apps\projects\tests\test_audit7_field_progress_e2e.py:    response = client.post("/app/field/", _draft_payload(project, task, progress_percent="10.0"))
+apps\projects\tests\test_audit7_field_progress_e2e.py:    client.post("/app/field/", _draft_payload(project, task, progress_percent="10.0"))
+apps\projects\tests\test_audit7_field_progress_e2e.py:    client.post("/app/field/", _draft_payload(project, task, progress_percent="15.0", note="흙터파기 진행"))
+apps\projects\tests\test_audit7_field_progress_e2e.py:    _create_wbs_item(project, name="되메우기", weight=Decimal("20.00"))
+apps\projects\tests\test_project_new_preview.py:def _budget_workbook_with_bucket_gap_and_manual_profit():
+apps\projects\tests\test_project_new_preview.py:def test_summary_sheet_contract_amount_is_authoritative(hq_user):
+apps\projects\tests\test_project_new_preview.py:            "contract_amount": "571022700",
+apps\projects\tests\test_project_new_preview.py:            "budget_excel": _xlsx_upload("budget-gap.xlsx", _budget_workbook_with_bucket_gap_and_manual_profit()),
+apps\projects\migrations\0013_wbs_change_request.py:                ("weight", models.DecimalField(decimal_places=2, default=0, max_digits=6)),
+apps\projects\tests\test_project_budget_detail_save.py:        contract_amount=Decimal("10000"),
+apps\projects\tests\test_project_budget_detail_save.py:        planned_amount=1000,
+apps\projects\tests\test_project_budget_detail_save.py:        weight=Decimal("100.00"),
+apps\projects\tests\test_project_budget_detail_save.py:        "budget-0-planned_amount": "9999",
+apps\projects\tests\test_project_budget_detail_save.py:        "wbs-0-weight": "100.00",
+apps\projects\tests\test_project_budget_detail_save.py:    assert expense_item.planned_amount == 1000
+apps\projects\tests\test_project_budget_detail_save.py:        planned_amount=1000,
+apps\projects\tests\test_project_budget_detail_save.py:        "budget-0-planned_amount": "1000",
+apps\projects\tests\test_project_budget_detail_save.py:        planned_amount=1000,
+apps\projects\tests\test_project_budget_detail_save.py:        "budget-0-planned_amount": "2000",
+apps\projects\tests\test_project_budget_detail_save.py:    assert item.planned_amount == 2000
+apps\projects\tests\test_project_budget_detail_save.py:        planned_amount=1000,
+apps\projects\tests\test_project_budget_detail_save.py:        "budget-0-planned_amount": "1000",
+apps\projects\tests\test_project_budget_detail_save.py:        "budget-1-planned_amount": "2500",
+apps\projects\tests\test_project_budget_detail_save.py:    assert corrected.planned_amount == 2500
+apps\projects\tests\test_project_budget_detail_save.py:        planned_amount=1000,
+apps\projects\tests\test_project_budget_detail_save.py:        planned_amount=2000,
+apps\projects\tests\test_project_budget_detail_save.py:        planned_amount=1000,
+apps\projects\tests\test_project_budget_detail_save.py:        "budget-0-planned_amount": "9999",
+apps\projects\tests\test_project_budget_detail_save.py:    assert item.planned_amount == 1000
+apps\projects\migrations\0010_update_budgetitem_fields.py:            name="planned_amount",
+apps\projects\tests\test_project_api.py:        "contract_amount": "1000.00",
+apps\projects\tests\test_project_api.py:def test_project_rejects_negative_contract_amount(auth_client):
+apps\projects\tests\test_project_api.py:        contract_amount="100.00",
+apps\projects\tests\test_project_api.py:        "contract_amount": "-1.00",
+apps\projects\tests\test_project_api.py:    assert "contract_amount" in response.json()["details"]
+apps\projects\tests\test_project_api.py:        {"contract_amount": "-5.00"},
+apps\projects\tests\test_project_api.py:    assert "contract_amount" in response.json()["details"]
+apps\projects\tests\test_project_api.py:        contract_amount="1200.00",
+apps\projects\tests\test_project_baseline_rejection.py:        contract_amount="1000000.00",
+apps\projects\tests\test_project_import_budget_initial.py:    _is_weight_sum_valid,
+apps\projects\tests\test_project_import_budget_initial.py:    assert initial[0]["planned_amount"] == 12538592
+apps\projects\tests\test_project_import_budget_initial.py:def test_build_wbs_initial_from_import_rows_quantizes_weights_to_model_precision():
+apps\projects\tests\test_project_import_budget_initial.py:        {"name": "1. 국도46호선 호평IC교(상)", "weight": Decimal("63.3694747566030300"), "plan_start_date": None, "plan_end_date": None, "warnings": []},
+apps\projects\tests\test_project_import_budget_initial.py:        {"name": "2. 국도46호선 신구로(춘천)", "weight": Decimal("36.63052524339696600"), "plan_start_date": None, "plan_end_date": None, "warnings": []},
+apps\projects\tests\test_project_import_budget_initial.py:    assert initial[0]["weight"] == Decimal("63.37")
+apps\projects\tests\test_project_import_budget_initial.py:    assert initial[1]["weight"] == Decimal("36.63")
+apps\projects\tests\test_project_import_budget_initial.py:    total = sum((item["weight"] for item in initial), Decimal("0"))
+apps\projects\tests\test_project_import_budget_initial.py:    assert _is_weight_sum_valid(total)
+apps\projects\tests\test_project_import_budget_initial.py:def test_wbs_item_form_weight_widget_attrs_are_html5_safe():
+apps\projects\tests\test_project_import_budget_initial.py:    attrs = form.fields["weight"].widget.attrs
+apps\projects\tests\test_project_import_budget_initial.py:    assert any(item["planned_amount"] == 12538592 for item in initial)
+apps\projects\tests\test_project_import_budget_initial.py:def test_profit_is_not_auto_matched():
+apps\projects\tests\test_project_import_budget_initial.py:    assert rows[0]["requires_manual_profit_mapping"] is True
+apps\projects\tests\test_project_import_budget_initial.py:def test_profit_can_be_manually_mapped_to_profit_cbs():
+apps\projects\tests\test_project_import_budget_initial.py:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps\projects\tests\test_project_import_budget_initial.py:    manual_mapping = {_make_budget_import_key(row, 0): str(profit_item.id)}
+apps\projects\tests\test_project_import_budget_initial.py:    assert initial[0]["cost_item"] == profit_item.id
+apps\projects\tests\test_project_import_budget_initial.py:    assert initial[0]["planned_amount"] == 51113990
+apps\projects\tests\test_project_import_budget_initial.py:def test_safety_manager_does_not_match_profit():
+apps\projects\tests\test_project_import_budget_initial.py:    assert initial[0]["planned_amount"] == 1000
+apps\projects\tests\test_project_import_budget_initial.py:def test_summary_sheet_parses_three_bucket_contract_amounts():
+apps\projects\tests\test_project_import_budget_initial.py:    by_category = {row["category"]: row["planned_amount"] for row in initial}
+apps\projects\tests\test_project_import_budget_initial.py:    assert sum(row["planned_amount"] for row in initial) == 12538592
+apps\projects\tests\test_project_import_budget_initial.py:                "planned_amount": Decimal("900"),
+apps\projects\tests\test_project_import_budget_initial.py:    assert adjusted_initial[0]["planned_amount"] == Decimal("900")
+apps\projects\tests\test_project_import_budget_initial.py:        planned_amount=1000,
+apps\projects\tests\test_project_import_budget_initial.py:    assert by_category[BudgetCategory.LABOR]["planned_amount"] == 7234106
+apps\projects\tests\test_project_import_budget_initial.py:    assert by_category[BudgetCategory.MATERIAL]["planned_amount"] == 2378552
+apps\projects\tests\test_project_import_budget_initial.py:    assert by_category[BudgetCategory.OTHER]["planned_amount"] == 2925934
+apps\projects\tests\test_project_import_budget_initial.py:    assert stats["budget_import_generated_contract_amount"] == Decimal("571022700")
+apps\projects\tests\test_project_import_budget_initial.py:def test_missing_profit_is_reported_as_manual_required_expense_not_dropped():
+apps\projects\tests\test_project_import_commit.py:        "contract_amount": "1000000",
+apps\projects\tests\test_project_import_commit.py:        "wbs-0-weight": "63.37",
+apps\projects\tests\test_project_import_commit.py:        "wbs-1-weight": "36.63",
+apps\projects\tests\test_project_import_commit.py:            "budget-0-planned_amount": "150000",
+apps\projects\tests\test_project_import_commit.py:        planned_amount=1000,
+apps\projects\tests\test_project_import_commit.py:        planned_amount=2000,
+apps\projects\tests\test_project_import_commit.py:    assert sum(item.planned_amount for item in items) == 3000
+apps\projects\tests\test_project_import_commit.py:    assert sum(item.planned_amount for item in items) == 3000
+apps\projects\tests\test_project_import_commit.py:            "budget-0-planned_amount": "150000",
+apps\projects\tests\test_project_import_commit.py:            "budget-0-planned_amount": "150000",
+apps\projects\tests\test_project_import_commit.py:        contract_amount=10000,
+apps\projects\tests\test_project_import_commit.py:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=expense_item, category=BudgetCategory.OTHER, name="경비", planned_amount=1000)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.OTHER, name="이윤", planned_amount=2000)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=labor_item, category=BudgetCategory.LABOR, name="노무비", planned_amount=3000)
+apps\projects\tests\test_project_import_commit.py:def test_repair_project_budget_cbs_command_moves_safety_manager_out_of_profit():
+apps\projects\tests\test_project_import_commit.py:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps\projects\tests\test_project_import_commit.py:        cost_item=profit_item,
+apps\projects\tests\test_project_import_commit.py:        planned_amount=14127540,
+apps\projects\tests\test_project_import_commit.py:    assert not BudgetItem.objects.filter(project=project, cost_item=profit_item, note__contains="안전관리책임자").exists()
+apps\projects\tests\test_project_import_commit.py:    assert labor_budget.planned_amount == 14127540
+apps\projects\tests\test_project_import_commit.py:def test_profit_is_general_budget_even_if_saved_as_labor():
+apps\projects\tests\test_project_import_commit.py:    user = get_user_model().objects.create_user(username="profit-hq", password="pass")
+apps\projects\tests\test_project_import_commit.py:    ProjectContract.objects.create(project=project, contract_amount=1000, contract_start_date="2026-05-01", contract_end_date="2026-05-31", status="approved")
+apps\projects\tests\test_project_import_commit.py:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.LABOR, name="이윤", planned_amount=1000)
+apps\projects\tests\test_project_import_commit.py:    budget = BudgetItem.objects.get(project=project, cost_item=profit_item)
+apps\projects\tests\test_project_import_commit.py:    assert sum(item.planned_amount for item in items) == 12538592
+apps\projects\tests\test_project_import_commit.py:    ProjectContract.objects.create(project=project, contract_amount=2100, contract_start_date="2026-05-01", contract_end_date="2026-05-31", status="approved")
+apps\projects\tests\test_project_import_commit.py:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=labor_item, category=BudgetCategory.LABOR, name="노무비", planned_amount=100)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=material_item, category=BudgetCategory.MATERIAL, name="재료비", planned_amount=200)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=subcon_item, category=BudgetCategory.SUBCON, name="하도급", planned_amount=300)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=expense_item, category=BudgetCategory.OTHER, name="경비", planned_amount=400)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=equipment_item, category=BudgetCategory.EQUIP, name="장비비", planned_amount=500)
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.OTHER, name="이윤", planned_amount=600)
+apps\projects\tests\test_project_import_commit.py:    ProjectContract.objects.create(project=project, contract_amount=5000, contract_start_date="2026-05-01", contract_end_date="2026-05-31", status="approved")
+apps\projects\tests\test_project_import_commit.py:    profit_item = CostItem.objects.get(code="CIVIL-PROFIT")
+apps\projects\tests\test_project_import_commit.py:    BudgetItem.objects.create(project=project, cost_item=profit_item, category=BudgetCategory.LABOR, name="", planned_amount=1000)
+apps\projects\tests\test_project_import_commit.py:    repaired = BudgetItem.objects.get(project=project, cost_item=profit_item)
+apps\projects\tests\test_project_import_commit.py:    budget_item = BudgetItem.objects.create(project=project, cost_item=equipment_item, category=BudgetCategory.EQUIP, name="장비비", planned_amount=500)
+apps\projects\tests\test_project_new_manual_create.py:            "contract_amount": "1000000",
+apps\projects\tests\test_project_new_manual_create.py:            "budget-0-planned_amount": "1000000",
+apps\projects\tests\test_project_new_manual_create.py:            "wbs-0-weight": "100.00",
+apps\projects\tests\test_project_new_manual_create.py:            "contract_amount": "1000000",
+apps\projects\tests\test_project_new_manual_create.py:            "budget-0-planned_amount": "1000000",
+apps\projects\tests\test_project_new_manual_create.py:            "wbs-0-weight": "100.00",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def _dashboard_url(as_of=date(2026, 6, 30)):
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    return f"/app/ceo/?as_of_date={as_of.isoformat()}"
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        planned_amount=amount,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        base_contract_amount=Decimal(str(amount)),
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def _revenue(project, snapshot, as_of, progress_percent):
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        as_of_date=as_of,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent=Decimal(str(progress_percent)),
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        recognized_revenue=Decimal("0"),
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        weight_percent=Decimal("100.000"),
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent=Decimal(str(percent)),
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    contract_amount,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    progress_percent,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    _budget_item(project, cost_item, contract_amount // 2, name="토공사 예산")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    snapshot = _contract_snapshot(project, contract_amount)
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    _progress(project, reporter, progress_percent, report_date=as_of - timedelta(days=3))
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def _dashboard_context(response):
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    raise AssertionError(f"project {project.id} missing from CEO dashboard context")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def test_audit8_ceo_dashboard_renders_for_ceo_with_clean_korean_labels():
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=1000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="40.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    response = _client(ceo).get(_dashboard_url())
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert _project_summary(_dashboard_context(response), project)["project_name"] == project.name
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=1000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="40.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=2000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="80.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    response = _client(ceo).get(_dashboard_url(as_of))
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    context = _dashboard_context(response)
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert context["total_profit"] == Decimal("500000.00")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=3000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="33.3",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=4000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="90.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    response = _client(ceo).get(_dashboard_url())
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    context = _dashboard_context(response)
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert summary["recognized_revenue"] == Decimal("300000.00")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert summary["profit"] == Decimal("176544.00")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert summary["overall_progress_percent"] == Decimal("33.300")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert unrelated_summary["recognized_revenue"] == Decimal("800000.00")
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def test_audit8_ceo_dashboard_excludes_inactive_projects_and_keeps_closed_read_only():
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=1000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="20.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=9000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="100.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=2000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="70.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    response = _client(ceo).get(_dashboard_url())
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    context = _dashboard_context(response)
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def test_audit8_rbac_boundary_for_ceo_dashboard():
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert _client(ceo).get(_dashboard_url()).status_code == 200
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert _client(field).get(_dashboard_url()).status_code == 403
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert _client(hq).get(_dashboard_url()).status_code == 403
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def test_audit8_ceo_dashboard_does_not_expose_raw_labor_pii_or_secret_values():
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=1000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="10.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    response = _client(ceo).get(_dashboard_url())
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    context_payload = json.dumps(_dashboard_context(response), ensure_ascii=False, default=str)
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:def test_audit8_ceo_dashboard_project_links_resolve_with_clean_korean_labels():
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        contract_amount=1000000,
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:        progress_percent="55.0",
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    dashboard = client.get(_dashboard_url())
+apps\projects\tests\test_audit8_ceo_dashboard_lineage.py:    assert dashboard.status_code == 200
+apps\projects\migrations\0009_budgetitem_wbsitem.py:                ("planned_amount", models.DecimalField(decimal_places=2, max_digits=14)),
+apps\projects\migrations\0009_budgetitem_wbsitem.py:                ("weight", models.DecimalField(decimal_places=2, default=0, max_digits=6)),

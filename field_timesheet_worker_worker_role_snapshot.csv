@@ -1,0 +1,11 @@
+﻿Worker_ID,Worker_Name_Masked_Or_Display,Default_Labor_Role_Code,Default_Labor_Role_Name,Is_Active,Visible_To_FIELD_Timesheet,Project_Assigned,Required_For_LOCAL_OPS,Gap,Notes
+12,김로컬,ORDINARY-WORKER,보통인부,True,True,N/A (no worker-project assignment model),True,,"No resident number, phone, or account data exported."
+4,김철수,LAND-WORKER,조경공,True,True,N/A (no worker-project assignment model),False,,"No resident number, phone, or account data exported."
+11,박영희,SIGNAL-WORKER,신호수,True,True,N/A (no worker-project assignment model),False,,"No resident number, phone, or account data exported."
+13,박포장,CIVIL-PAVING,포장공,True,True,N/A (no worker-project assignment model),True,,"No resident number, phone, or account data exported."
+6,오부택,LAND-WORKER,조경공,True,True,N/A (no worker-project assignment model),False,,"No resident number, phone, or account data exported."
+10,이영수,SIGNAL-CRANE,장비유도원,True,True,N/A (no worker-project assignment model),False,,"No resident number, phone, or account data exported."
+14,이장비,LAB-EQP,장비공,True,True,N/A (no worker-project assignment model),True,,"No resident number, phone, or account data exported."
+16,정도색,LAB-PNT,도색공,True,True,N/A (no worker-project assignment model),True,,"No resident number, phone, or account data exported."
+15,최다짐,LAB-CMP,다짐공,True,True,N/A (no worker-project assignment model),True,,"No resident number, phone, or account data exported."
+8,홍길동,CIVIL-PAVING,포장공,True,True,N/A (no worker-project assignment model),False,,"No resident number, phone, or account data exported."

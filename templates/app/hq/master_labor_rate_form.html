@@ -1,17 +1,17 @@
 {% extends "app/base_app.html" %}
 
-{% block page_title %}직종 단가 {% if mode == "edit" %}수정{% else %}등록{% endif %}{% endblock %}
+{% block page_title %}노무 관리 · 직종 단가 {% if mode == "edit" %}수정{% else %}등록{% endif %}{% endblock %}
 
 {% block content %}
 <div class="card">
   <div class="card-title" style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
     <div>
       <div style="font-size:20px; font-weight:700;">
-        직종 단가 {% if mode == "edit" %}수정{% else %}등록{% endif %}
+        노무 관리 · 직종 단가 {% if mode == "edit" %}수정{% else %}등록{% endif %}
       </div>
-      <div class="hint">프로젝트별/회사 공통 단가를 관리합니다.</div>
+      <div class="hint">기본 직종, 근로자, 프로젝트, 프로젝트+근로자 단가를 우선순위에 따라 적용합니다.</div>
     </div>
-    <a class="btn btn-outline" href="/app/hq/master/labor/rates/">목록으로</a>
+    <a class="btn btn-outline" href="/app/hq/labor/rates/">목록으로</a>
   </div>
 </div>
 
@@ -29,16 +29,16 @@
   <form method="post" style="display:grid; gap:12px;">
     {% csrf_token %}
     <label>
-      직종
+      노무역할
       {{ form.labor_role }}
       {% if form.labor_role.errors %}<div class="error">{{ form.labor_role.errors|join:", " }}</div>{% endif %}
     </label>
     <label>
-      단가 유형
+      단가유형
       {{ form.rate_type }}
     </label>
     <label>
-      단가(원)
+      일 단가 또는 시간 단가(원)
       {{ form.unit_rate }}
       {% if form.unit_rate.errors %}<div class="error">{{ form.unit_rate.errors|join:", " }}</div>{% endif %}
     </label>
@@ -67,6 +67,11 @@
       {% if form.project.errors %}<div class="error">{{ form.project.errors|join:", " }}</div>{% endif %}
     </label>
     <label>
+      근로자
+      {{ form.worker }}
+      {% if form.worker.errors %}<div class="error">{{ form.worker.errors|join:", " }}</div>{% endif %}
+    </label>
+    <label>
       활성
       {{ form.is_active }}
     </label>
@@ -76,7 +81,7 @@
     </label>
     <div style="display:flex; gap:8px;">
       <button class="btn" type="submit">저장</button>
-      <a class="btn btn-outline" href="/app/hq/master/labor/rates/">취소</a>
+      <a class="btn btn-outline" href="/app/hq/labor/rates/">취소</a>
     </div>
   </form>
 </div>

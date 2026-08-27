@@ -262,6 +262,65 @@ CIVIL_ROAD_CBS_SPECS = [
         ],
     },
     {
+        "code": "CIVIL-QUALITY",
+        "name": "품질관리비",
+        "category": CostItemCategory.OTHER,
+        "cost_type": "E",
+        "work_type": "99",
+        "is_direct": True,
+        "sort_order": 195,
+        "aliases": [
+            "품질관리비",
+            "다짐 및 품질관리",
+            "다짐장비",
+            "현장시험",
+        ],
+    },
+    {
+        "code": "CIVIL-FINISH",
+        "name": "마감공사",
+        "category": CostItemCategory.OTHER,
+        "cost_type": "E",
+        "work_type": "99",
+        "is_direct": True,
+        "sort_order": 196,
+        "aliases": [
+            "마감공사",
+            "현장정리 및 마감",
+            "원상복구",
+            "마감",
+        ],
+    },
+    {
+        "code": "CIVIL-DOCUMENT",
+        "name": "준공자료",
+        "category": CostItemCategory.OTHER,
+        "cost_type": "E",
+        "work_type": "99",
+        "is_direct": True,
+        "sort_order": 197,
+        "aliases": [
+            "준공자료",
+            "검측 및 준공도서 작성",
+            "검측자료",
+            "준공도서",
+        ],
+    },
+    {
+        "code": "CIVIL-CLEANUP",
+        "name": "현장정리",
+        "category": CostItemCategory.OTHER,
+        "cost_type": "E",
+        "work_type": "99",
+        "is_direct": True,
+        "sort_order": 198,
+        "aliases": [
+            "현장정리",
+            "준공청소",
+            "폐기물 정리",
+        ],
+    },
+    {
         "code": "CIVIL-EXPENSE",
         "name": "경비",
         "category": CostItemCategory.OTHER,
@@ -361,10 +420,11 @@ def _looks_broken_text(value):
 
 
 def _find_cost_item(spec):
-    item = CostItem.objects.filter(code=spec["code"]).first()
-    if item:
-        return item
-    return CostItem.objects.filter(name=spec["name"]).order_by("id").first()
+    # The CIVIL-* code is the stable master-data identifier used by imports,
+    # budget mappings, and FIELD cost entry.  A demo or legacy item may have
+    # the same display name (for example, "장비비"), but must not satisfy a
+    # missing canonical CBS code.
+    return CostItem.objects.filter(code=spec["code"]).first()
 
 
 def _ensure_cost_item(spec):

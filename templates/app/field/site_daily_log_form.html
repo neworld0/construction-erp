@@ -1,0 +1,6 @@
+{% extends "app/base_app.html" %}
+{% block page_title %}공사일보{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header"><h2>{% if is_new %}공사일보 작성{% else %}공사일보 · {{ log.report_date }}{% endif %}</h2><a class="btn btn-outline" href="/app/field/site-daily-logs/">목록</a></div>{% if log and log.reject_reason %}<p class="alert alert-danger">반려 사유: {{ log.reject_reason }}</p>{% endif %}
+{% if is_new %}<p class="muted">먼저 공사일보를 생성한 뒤 물량행을 입력할 수 있습니다.</p><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit" formaction="/app/field/site-daily-logs/new/save/">임시저장</button></form>{% else %}<form method="post">{% csrf_token %}{{ form.as_p }}{% if work_formset %}{{ work_formset.management_form }}<h3>WBS 물량실적</h3>{% for work_form in work_formset %}<div class="card" style="margin:8px 0">{{ work_form.as_p }}</div>{% endfor %}{% endif %}{% if can_edit %}<button class="btn" type="submit">임시저장</button>{% endif %}</form>{% if can_edit %}<form method="post" action="/app/field/site-daily-logs/{{ log.id }}/submit/" style="margin-top:10px">{% csrf_token %}<button class="btn" type="submit">제출</button></form>{% endif %}{% endif %}</div>
+{% endblock %}

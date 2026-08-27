@@ -1,0 +1,18 @@
+Epic-LABPAY
+일용노무비·전자카드 대사·근로내용확인신고·퇴직공제·지급총괄 자동화
+최종 구현 순서
+LABPAY-1  WorkerMaster 근로자 마스터
+LABPAY-2  LaborWorkLedger 실투입 노무 원장
+LABPAY-3  월별 노무비 지급명세
+LABPAY-4  실투입→신고용 현장 매핑
+LABPAY-5  전자카드 엑셀 업로드/원본 보관
+LABPAY-6  전자카드 원본 파싱/일별 정규화
+LABPAY-7  ERP 출역 vs 전자카드 자동 대사
+LABPAY-8  HQ 대사 수정/확정 화면
+LABPAY-9  LaborConfirmedWorkDay 확정 근로내역 생성
+LABPAY-10 공제회 수정업로드용 동일 양식 엑셀 생성
+LABPAY-11 근로내용확인신고 엑셀 생성
+LABPAY-12 퇴직공제 신고 보조자료 생성
+LABPAY-13 일용노무비 지급 총괄표 생성
+LABPAY-14 노무비 월마감/정정/AuditLog
+LABPAY-15 개인정보 다운로드 권한/이력 관리

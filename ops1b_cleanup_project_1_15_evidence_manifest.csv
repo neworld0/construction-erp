@@ -1,0 +1,12 @@
+Artifact,Exists,Purpose
+ops1b_cleanup_project_1_15_manifest.csv,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_dependent_manifest.csv,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_dryrun_result.txt,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_ceo_visibility_check.csv,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_data_issue_register.csv,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_report.md,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_04_manage_check.txt,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_05_makemigrations_check.txt,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_apply_result.txt,True,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_final_manage_check.txt,False,OPS-1B-CLEANUP evidence
+ops1b_cleanup_project_1_15_final_makemigrations_check.txt,False,OPS-1B-CLEANUP evidence

@@ -1,0 +1,9 @@
+field,returned,reason
+id,yes,TimesheetLine.worker FK 저장에 필요
+text,yes,근로자명과 기본 노무 역할만 결합한 표시값
+role_id,yes,선택 시 기본 노무 역할 반영에 필요
+resident_registration_number,no,민감 식별정보
+rrn_masked,no,검색 선택에 불필요
+phone,no,개인 연락처
+account_number,no,금융정보
+address,no,개인 주소

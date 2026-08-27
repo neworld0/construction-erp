@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
+from apps.core.rbac.models import default_asan_legal_entity_id
+
 
 class WarehouseType(models.TextChoices):
     HQ = "hq", "HQ"
@@ -10,6 +12,12 @@ class WarehouseType(models.TextChoices):
 
 
 class Warehouse(models.Model):
+    legal_entity = models.ForeignKey(
+        "core.LegalEntity",
+        on_delete=models.PROTECT,
+        related_name="warehouses",
+        default=default_asan_legal_entity_id,
+    )
     name = models.CharField(max_length=120)
     code = models.CharField(max_length=50, unique=True)
     warehouse_type = models.CharField(
@@ -47,6 +55,8 @@ class Warehouse(models.Model):
             raise ValidationError({"project": "HQ warehouse must not have project."})
         if self.warehouse_type == WarehouseType.SITE and self.project_id is None:
             raise ValidationError({"project": "SITE warehouse must have project."})
+        if self.project_id and self.legal_entity_id != self.project.legal_entity_id:
+            raise ValidationError({"legal_entity": "현장 창고의 법인은 프로젝트 계약 법인과 같아야 합니다."})
 
 
 class Location(models.Model):
@@ -167,6 +177,38 @@ class ItemMaster(models.Model):
         return f"{self.code} - {self.name}"
 
 
+class MaterialRequestStatus(models.TextChoices):
+    SUBMITTED = "submitted", "SUBMITTED"
+    APPROVED = "approved", "APPROVED"
+    REJECTED = "rejected", "REJECTED"
+
+
+class ProjectMaterialRequest(models.Model):
+    """FIELD request for an unbudgeted or missing material master item."""
+    project = models.ForeignKey("projects.Project", on_delete=models.CASCADE, related_name="material_requests")
+    item_name = models.CharField(max_length=120)
+    spec = models.TextField(blank=True, default="")
+    uom_text = models.CharField(max_length=10, default="EA")
+    requested_qty = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="requested_project_materials")
+    requested_at = models.DateTimeField(auto_now_add=True)
+    reason = models.TextField(blank=True, default="")
+    status = models.CharField(max_length=16, choices=MaterialRequestStatus.choices, default=MaterialRequestStatus.SUBMITTED)
+    requested_cbs = models.ForeignKey("cost.CostItem", on_delete=models.SET_NULL, null=True, blank=True, related_name="requested_project_materials")
+    approved_cbs = models.ForeignKey("cost.CostItem", on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_project_materials")
+    approved_item = models.ForeignKey(ItemMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_project_material_requests")
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviewed_project_materials")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reject_reason = models.TextField(blank=True, default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["project", "status"]), models.Index(fields=["status", "requested_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.project_id} {self.item_name} {self.status}"
+
+
 class ItemCodeSequence(models.Model):
     key = models.CharField(max_length=20, unique=True)
     last_number = models.IntegerField(default=0)
@@ -212,10 +254,10 @@ class TransferNumberSequence(models.Model):
 
 
 class IssueStatus(models.TextChoices):
-    DRAFT = "DRAFT", "DRAFT"
-    SUBMITTED = "SUBMITTED", "SUBMITTED"
-    APPROVED = "APPROVED", "APPROVED"
-    REJECTED = "REJECTED", "REJECTED"
+    DRAFT = "DRAFT", "임시저장"
+    SUBMITTED = "SUBMITTED", "제출"
+    APPROVED = "APPROVED", "승인"
+    REJECTED = "REJECTED", "반려"
 
 
 class IssueNumberSequence(models.Model):
@@ -293,6 +335,11 @@ class Transfer(models.Model):
         if self.from_warehouse_id and self.to_warehouse_id:
             if self.from_warehouse_id == self.to_warehouse_id:
                 raise ValidationError("from_warehouse and to_warehouse must differ.")
+            if self.from_warehouse.legal_entity_id != self.to_warehouse.legal_entity_id:
+                raise ValidationError("법인이 다른 창고 사이에는 직접 재고 이관을 할 수 없습니다.")
+        if self.project_id and self.from_warehouse_id:
+            if self.project.legal_entity_id != self.from_warehouse.legal_entity_id:
+                raise ValidationError("프로젝트 계약 법인과 출고 창고 소유 법인이 일치해야 합니다.")
         if self.direction == TransferDirection.HQ_TO_SITE:
             if self.project_id is None:
                 raise ValidationError({"project": "Project is required for HQ_TO_SITE."})
@@ -371,6 +418,13 @@ class IssueToWork(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="created_issue_to_work",
+    )
+    cost_actual = models.OneToOneField(
+        "cost.CostActual",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="inventory_issue_to_work",
     )
     submitted_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)

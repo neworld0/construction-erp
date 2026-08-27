@@ -1,0 +1,4 @@
+﻿Source_Row_No,WBS_Code,WBS_Name,CBS_Code,CBS_Name,Item_Name,Labor_Amount,Material_Amount,Expense_Amount,Subcontract_Amount,Contract_Amount,Upload_Status,Match_Status,Matched_CostItem_Code,Match_Method,Failure_Reason,Action_Required
+7,WBS-03,아스콘 포장,CIVIL-QUALITY,품질관리비,다짐 및 품질관리,3000000,0,5400000,0,8400000,업로드대상,UNMATCHED_CBS before master provision / EXACT_CODE after provision,,EXACT_CODE,CBS코드가 파서에 보존되지 않아 공종코드 휴리스틱에 의존하던 기존 흐름,CBS master 등록 또는 HQ 수동 매핑
+9,WBS-04,차선도색 및 마감,CIVIL-FINISH,마감공사,현장정리 및 마감,4000000,1000000,2800000,0,7800000,업로드대상,UNMATCHED_CBS before master provision / EXACT_CODE after provision,,EXACT_CODE,CBS코드가 파서에 보존되지 않아 공종코드 휴리스틱에 의존하던 기존 흐름,CBS master 등록 또는 HQ 수동 매핑
+10,WBS-05,정리·검측·준공자료,CIVIL-DOCUMENT,준공자료,검측 및 준공도서 작성,5000000,0,3000000,0,8000000,업로드대상,UNMATCHED_CBS before master provision / EXACT_CODE after provision,,EXACT_CODE,CBS코드가 파서에 보존되지 않아 공종코드 휴리스틱에 의존하던 기존 흐름,CBS master 등록 또는 HQ 수동 매핑

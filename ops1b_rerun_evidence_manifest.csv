@@ -1,0 +1,8 @@
+Evidence_ID,Step,Evidence_Type,File_or_Screen,Description,Contains_PII,Storage_Note,Reviewer
+OPS1BR-E01,OPS1A,Template,ops1a_pilot_data_pack.md,비식별 데이터팩 설명,No,로컬 산출물,Implementation Lead
+OPS1BR-E02,PII,Safety,ops1b_rerun_pii_safety_check.txt,OPS1A 및 seed script PII 검사,No,로컬 산출물,Implementation Lead
+OPS1BR-E03,Project,Seed,ops1b_rerun_seed_apply_result.txt,프로젝트와 KPI source 생성 결과,No,로컬 demo DB 증적,Implementation Lead
+OPS1BR-E04,Dashboard,Verification,ops1b_rerun_seed_verification.txt,CEO 집계와 AuditLog action 확인,No,로컬 demo DB 증적,Implementation Lead
+OPS1BR-E05,LABPAY,Safety,ops1b_rerun_ecard_safety_check.txt,후보 전자카드 파일 PII 형식 count,No,값 자체 미기록,Implementation Lead
+OPS1BR-E06,Baseline,Regression,ops1b_rerun_18_23_pytest_baseline.txt,운영 회귀 57개 통과,No,로컬 테스트 증적,Implementation Lead
+OPS1BR-E07,Final,Source scan,ops1b_rerun_24_source_scan.txt,OPS1B-RERUN 산출물 UTF-8 및 PII 검사,No,로컬 산출물,Implementation Lead

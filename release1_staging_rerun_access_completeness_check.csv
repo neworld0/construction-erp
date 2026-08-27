@@ -1,0 +1,12 @@
+Input_ID,Area,Required_Input,Provided_Status,Authority_Status,Blocks_Rerun,Blocks_Staging_Pilot,Evidence,Result,Notes
+I-01,Host,Linux staging host identifier and SSH method,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-02,Service,"service account, project root, and virtualenv path",MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-03,Release,deployment branch and immutable commit,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-04,Settings,settings module and secure env-file path,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-05,Database,staging DB host classification and non-production proof,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-06,Restore,isolated restore target and CREATEDB/pre-created approval,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-07,Backup,backup archive location and checksum,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-08,Proxy,Gunicorn/Nginx service paths and execution authority,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-09,Media,"media access, backup, and retention policy",MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-10,RBAC,staging-safe CEO/HQ/FIELD test users,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed
+I-11,Approval,release owner smoke rerun approval,MISSING,MISSING,YES,YES,release1_staging_smoke_rerun_input_manifest.csv,HOLD,Access Pack placeholder not completed

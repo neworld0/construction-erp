@@ -39,6 +39,9 @@ SENSITIVE_KEY_FRAGMENTS = (
     "계좌번호",
     "phone_raw",
     "raw_phone",
+    "birth_date",
+    "birth_date_encrypted",
+    "birth_date_masked",
 )
 
 SENSITIVE_KEY_EXACT = (

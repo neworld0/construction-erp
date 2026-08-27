@@ -1,0 +1,9 @@
+Artifact,Status,Description
+labor_role_master_06_discovery_notes.md,PASS,Model form and seed discovery
+labor_role_master_root_cause.md,PASS,Root-cause analysis
+labor_role_master_role_snapshot.csv,PASS,Post-seed role snapshot
+labor_role_master_worker_form_dropdown_snapshot.csv,PASS,Active dropdown snapshot
+labor_role_master_seed_result.csv,PASS,Seed outcome
+labor_role_master_test_matrix.csv,PASS,Verification results
+labor_role_master_source_scan.txt,PASS,UTF-8 and scope scan
+labor_role_master_report.md,PASS,Final operational report

@@ -1,0 +1,2 @@
+Project_Code,Project_Name,Project_Type,Client_Name,Site_Address,Contract_Amount,Start_Date,End_Date,HQ_User,FIELD_User,Data_Mode
+SAMPLE-PROJ-001,국도 유지보수 파일럿 공사,civil,발주처-비식별,현장주소-비식별,571022700,2026-01-01,2026-12-31,hq,field1,SANITIZED_TEMPLATE_DATA

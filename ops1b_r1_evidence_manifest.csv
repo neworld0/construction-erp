@@ -1,0 +1,8 @@
+Evidence_ID,Step,Evidence_Type,File_or_Screen,Description,Contains_PII,Storage_Note,Reviewer
+OPS1BR1-E01,Discovery,Rerun snapshot,ops1b_r1_04_rerun_report_snapshot.txt,이전 보류 상태 확인,No,로컬 증적,Implementation Lead
+OPS1BR1-E02,Update,Seed result,ops1b_r1_seed_update_result.txt,WBS 예산 수익 before after,No,local demo DB 증적,Implementation Lead
+OPS1BR1-E03,Verification,Dashboard,ops1b_r1_seed_verification.txt,CEO KPI 값 대사,No,local demo DB 증적,Implementation Lead
+OPS1BR1-E04,Policy,WBS CSV,ops1b_r1_wbs_baseline_policy.csv,기타공정 기준선 정책,No,로컬 산출물,Implementation Lead
+OPS1BR1-E05,Policy,Revenue CSV,ops1b_r1_revenue_policy.csv,수익 인식 공식,No,로컬 산출물,Implementation Lead
+OPS1BR1-E06,Regression,Pytest,ops1b_r1_12_13_pytest_baseline.txt,UTF-8 및 운영 회귀,No,로컬 테스트 증적,Implementation Lead
+OPS1BR1-E07,Final,Source scan,ops1b_r1_24_source_scan.txt,R1 UTF-8 및 PII 점검,No,로컬 산출물,Implementation Lead

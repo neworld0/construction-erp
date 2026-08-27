@@ -51,19 +51,19 @@
     font-weight: 600;
   }
   .badge-critical {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
+    background: #fee2e2;
+    color: #b91c1c;
   }
   .badge-open {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fbbf24;
+    background: #fef3c7;
+    color: #a16207;
   }
   .badge-baseline {
-    background: rgba(14, 165, 233, 0.2);
-    color: #7dd3fc;
+    background: #e0f2fe;
+    color: #0369a1;
   }
   .badge-neutral {
-    background: rgba(148, 163, 184, 0.2);
+    background: var(--panel-raised);
     color: var(--text);
   }
   .card + .card {
@@ -101,8 +101,14 @@
     {% endif %}
   </div>
   <div class="page-actions">
-    <a class="btn btn-outline" href="/app/ceo/">CEO 대시보드로</a>
+    <a class="btn btn-outline" href="/app/ceo/?as_of_date={{ as_of_date|date:'Y-m-d' }}">이전 화면</a>
   </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">예정 대비 실제 진행률 추이</h3>
+  <canvas id="projectProgressTimeline" height="120"></canvas>
+  <p class="muted" style="margin:8px 0 0;">예정은 활성 기준선의 태스크별 계획일·가중치, 실제는 승인된 진행률 기준입니다. {{ progress_timeline.basis_status }}</p>
 </div>
 
 <div class="card">
@@ -254,4 +260,25 @@
     </table>
   </div>
 </div>
+{{ progress_timeline.labels|json_script:"project-progress-labels" }}
+{{ progress_timeline.planned|json_script:"project-progress-planned" }}
+{{ progress_timeline.actual|json_script:"project-progress-actual" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    var canvas = document.getElementById("projectProgressTimeline");
+    if (!canvas) return;
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: JSON.parse(document.getElementById("project-progress-labels").textContent || "[]"),
+        datasets: [
+          { label: "예정 진행률", data: JSON.parse(document.getElementById("project-progress-planned").textContent || "[]"), borderColor: "#f59e0b", backgroundColor: "rgba(245, 158, 11, .15)", spanGaps: false, tension: .2 },
+          { label: "실제 진행률", data: JSON.parse(document.getElementById("project-progress-actual").textContent || "[]"), borderColor: "#38bdf8", backgroundColor: "rgba(56, 189, 248, .15)", tension: .2 }
+        ]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+  })();
+</script>
 {% endblock %}

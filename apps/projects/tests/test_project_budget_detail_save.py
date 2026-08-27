@@ -65,6 +65,22 @@ def _detail_path(project):
 
 
 @pytest.mark.django_db
+def test_hq_project_detail_displays_persisted_project_code():
+    user = _hq_user("project-code-display-hq")
+    project = _create_project("프로젝트 코드 표시 공사")
+    project.code = "LOCAL-OPS-20260814-001"
+    project.save(update_fields=["code"])
+
+    request = _build_request(user, _detail_path(project), method="get")
+    response = hq_project_detail(request, project.id)
+    content = response.content.decode("utf-8")
+
+    assert response.status_code == 200
+    assert "프로젝트 코드" in content
+    assert project.code in content
+
+
+@pytest.mark.django_db
 def test_budget_save_invalid_form_does_not_fall_through_to_wbs_save():
     seed_civil_road_cbs()
     user = _hq_user("budget-invalid-hq")

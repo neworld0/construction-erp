@@ -1,0 +1,11 @@
+artifact,purpose
+labor_rate_master_06_discovery_notes.md,기존 모델과 HQ UI 발견
+labor_rate_master_08_submit_path_notes.md,FIELD 제출 경로와 오류 처리
+labor_rate_master_model_decision.md,기존 모델 재사용 결정
+labor_rate_master_role_rate_snapshot.csv,역할별 현재 단가 스냅샷
+labor_rate_master_timesheet_rate_resolution_snapshot.csv,출역부 행별 단가 해석 스냅샷
+labor_rate_master_before_after_matrix.csv,전후 정책 비교
+labor_rate_master_local_ops_payroll_matrix.csv,LOCAL-OPS 1780000원 검산
+labor_rate_master_test_matrix.csv,검증 실행 결과
+labor_rate_master_source_scan.txt,PII UTF-8 범위 점검
+labor_rate_master_report.md,운영 보고서

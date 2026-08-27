@@ -1,0 +1,12 @@
+﻿Step,Workflow,Input_Source,Execution_Mode,Actor_Role,Route_or_Model,Expected_Result,Actual_Result,PASS_FAIL_HOLD,Evidence,Notes
+1,프로젝트 마스터,OPS-1A 비식별 템플릿,SANITIZED_TEMPLATE_REHEARSAL,HQ,Project; ProjectContract,고유 프로젝트 생성,OPS1B-RERUN-SAMPLE-001 생성,PASS,ops1b_rerun_seed_apply_result.txt,local demo DB guard
+2,FIELD 배정,OPS-1A 프로젝트 템플릿,SANITIZED_TEMPLATE_REHEARSAL,HQ/FIELD,ProjectAssignment; /app/field/,field1 접근,FIELD 화면 HTTP 200,PASS,ops1b_rerun_seed_apply_result.txt,배정 활성화
+3,CBS WBS 예산,OPS-1A CBS WBS 예산,SANITIZED_TEMPLATE_REHEARSAL,HQ,CostItem; WBSItem; BudgetItem,3개 기준선 생성,예산 390000000원,PASS,ops1b_rerun_seed_verification.txt,WBS 합계 85%
+4,계약 Snapshot,OPS-1A 프로젝트 템플릿,SANITIZED_TEMPLATE_REHEARSAL,HQ,ContractSnapshot,계약금액 확보,571022700원,PASS,ops1b_rerun_seed_apply_result.txt,예산 차이 181022700원
+5,FIELD 진행률,OPS-1A 진행률 템플릿,SANITIZED_TEMPLATE_REHEARSAL,FIELD,/app/field/,포장공사 12.5 저장 제출,submitted 12.500,PASS,ops1b_rerun_seed_apply_result.txt,AuditLog 생성
+6,원가 입력,OPS-1A 원가 정책,SANITIZED_TEMPLATE_REHEARSAL,HQ,CostActual; CostActualLine,원가 10000000 반영,10000000.00,PASS,ops1b_rerun_seed_apply_result.txt,승인 상태
+7,수익 인식,OPS-1A 수익 정책,SANITIZED_TEMPLATE_REHEARSAL,HQ,RevenueRecognition,진행률 기준 잠정 수익,71377837.50,HOLD,ops1b_rerun_seed_verification.txt,POLICY_PENDING
+8,CEO dashboard,생성 seed,SANITIZED_TEMPLATE_REHEARSAL,CEO,/app/ceo/,KPI 집계,HTTP 200 및 값 확인,PASS,ops1b_rerun_seed_verification.txt,대시보드 진행률 5.625
+9,LABPAY 전자카드,sample_files 후보,SAFETY_CHECK,HQ,/app/hq/labor/e-card-imports/,안전 파일만 업로드,PII 형식값 감지,HOLD,ops1b_rerun_ecard_safety_check.txt,NEEDS_SAFE_REAL_FILE
+10,Closing,기존 회귀 fixture,TEST_CLIENT,HQ/FIELD,close_month; FIELD progress,마감 후 변경 차단,회귀 PASS,PASS,ops1b_rerun_18_23_pytest_baseline.txt,전역 마감 신규 생성 안 함
+11,AuditLog 개인정보,생성 seed,SANITIZED_TEMPLATE_REHEARSAL,FIELD,AuditLog,행위 로그 및 원문 PII 미노출,DRAFT_SAVE 및 SUBMIT 확인,PASS,ops1b_rerun_seed_verification.txt,LABPAY privacy 회귀 PASS

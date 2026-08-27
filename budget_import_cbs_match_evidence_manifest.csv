@@ -1,0 +1,9 @@
+﻿Artifact,Purpose,Result
+budget_import_cbs_match_report.md,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED
+budget_import_cbs_match_root_cause.md,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED
+budget_import_cbs_match_cbs_master_check.csv,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED
+budget_import_cbs_match_row_diagnostics.csv,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED
+budget_import_cbs_match_totals_before_after.csv,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED
+budget_import_cbs_match_unmatched_rows.csv,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED
+budget_import_cbs_match_test_matrix.csv,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED
+budget_import_cbs_match_source_scan.txt,BUDGET-IMPORT-CBS-MATCH-01 evidence,CREATED

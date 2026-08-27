@@ -1,0 +1,1261 @@
+$ python -u 'C:\projects\bidding\tune_regime_config.py' --backtest_py 'C:\projects\bidding\bidding_backtest_codex_v3.py' --history_root 'C:\projects\bidding\history' --cal_path 'C:\projects\bidding\bidding_cal_regime_shrink.py' --bidlist_xlsx 'C:\projects\bidding\낙찰정보리스트.xlsx' --out_dir 'C:\projects\bidding\tune_runs_regime' --live_config_path 'C:\projects\bidding\bidding_cal_config.json' --max_budget 120 --seed 7 --jobs 6 --score_weights ok=0.35,hit=0.20,issuer=0.25,regime=0.20 --issuer_col '발주기관' --trade_col '업종' --date_col '개찰일' --y_col '예가/기초(100%)' --base_col '기초금액' --bidders_col '업체수' --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --lock_base_adj_on on --require_base_adj_offsets on --require_offsets_keys_mode all --require_offsets_trades '토목,조경,조경+토목' --require_offsets_min_vars_total 33 --require_offsets_min_nonzero_ratio 0.10 --require_offsets_min_nonzero_abs 0.001 --offset_min -0.006 --offset_max 0.006 --offset_step 0.001 --auto_emit_offsets_searchspace on --auto_emit_offsets_searchspace_path 'C:\projects\bidding\tune_runs_regime\search_space_base_adj_offsets.json' --auto_emit_overwrite on --force_base_adj_xform raw --force_trade_xform on --warn_if_bins_scale_mismatch on --adaptive_on on --stage_sizes 20,20,40 --plateau_on on --plateau_window 20 --plateau_base_min_improve 0.002 --plateau_min_new_bests 2 --plateau_use_sigma on --plateau_sigma_mult 0.5 --plateau_ok_drop 0.01 --plateau_regime_drop 0.02 --plateau_topm 8 --refine_on on --refine_trigger on_plateau --refine_rounds_max 1 --refine_budget 40 --refine_topk_anchor 3 --refine_shrink_factor 0.4 --refine_keep_discrete_topn 2 --refine_write_space_json on --hit_thresholds 0.02,0.03,0.04,0.05 --hit_regime_weight_mode grid --hit_regime_agg nrows --hit_regime_weight_default 'R1:0.35,0.30,0.20,0.15;R2:0.25,0.30,0.20,0.25;R3:0.10,0.15,0.25,0.50' --hit_regime_weight_grid 'R1:0.35,0.30,0.20,0.15;R2:0.25,0.30,0.20,0.25;R3:0.10,0.15,0.25,0.50' --search_space_json 'C:\projects\bidding\tune_runs_regime\search_space_base_adj_offsets.json' --bidders_regime_weights_json 'C:\projects\bidding\bidders_regime_weights.json'
+[start] tuning
+[tuning] seed=7 jobs=6
+[weights] {'ok': 0.35, 'hit': 0.2, 'issuer': 0.25, 'regime': 0.2}
+[space] C:\projects\bidding\tune_runs_regime\search_space_base_adj_offsets.json
+[hit] thresholds=0.02,0.03,0.04,0.05 mode=grid agg=nrows
+[policy] lock_base_adj_on=on force_base_adj_xform=raw force_trade_xform=on
+IGNORE_SEARCHSPACE_KEY key=base_adj_on reason=base_adj_on_locked
+BASE_ADJ_CAND trade=조경 min=-0.003000 max=0.006000 mean=0.001333 hash=a56a95cd6ab62c254bcad98e81a12da80768a219
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=-0.000600 hash=503967fb2a8dcfaf9a5b3ea4eeae9f1973093567
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=0.000636 hash=676b966f71e49f2082aae5a99dbbb4ff600d19c9
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0000.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0000.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0000 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=30s
+[running] tuning elapsed=60s
+[running] tuning elapsed=90s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435543 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=0
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=0 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.02990015469822038
+CONFIG_BACKUP path=C:\projects\bidding\bidding_cal_config.json.backup_20260224_132001.json
+BEST_UPDATE iter=0 score=0.435543 live=C:\projects\bidding\bidding_cal_config.json snapshot=C:\projects\bidding\tune_runs_regime\best_config_20260224_132001.json candidate=C:\projects\bidding\tune_runs_regime\candidate_0000.json
+BASE_ADJ_COVERAGE nonzero_candidates=1/1
+CAND_EVIDENCE score=0.435543 vars_nonzero=32/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[001] stage=1 refine=0 score=0.435543 ok=0.8737 hit=0.0299 issuer=0.0000 regime=0.6188 best=0.435543 (BEST)
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.005000 mean=-0.000750 hash=64b648e9e75016a5cfb8744e1fbfd7afe420258b
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=-0.001400 hash=f194b0bb6337667e1160ff8234a0c6aca815ab5f
+BASE_ADJ_CAND trade=조경+토목 min=-0.004000 max=0.005000 mean=-0.000091 hash=cf1c4d8207ff409757db463b6c616245d7b84326
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0001.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0001.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0001 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=120s
+[running] tuning elapsed=150s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-43214576.899846 min=-617313339.852337 max=-60530.724546
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (60530.724546>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=60530.724546 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=1 rows=388 deltaB_nonzero=339 maxabs=60530.724546 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=2/2
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=27/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[002] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.435543
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.004000 mean=-0.001417 hash=05d7bad0b2cfd9a67bd21afac511a9f436966ab9
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.003000 mean=-0.002300 hash=2c8fdc3307f8d8cc5e366f426d4eece98f65936b
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.003000 mean=-0.000909 hash=ce021f20a984c80bdd047ddf4d7015b78a681f26
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0002.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0002.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0002 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=180s
+[running] tuning elapsed=210s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-62070105.517901 min=-886661551.921091 max=-86942.253735
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (86942.253735>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=86942.253735 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=2 rows=388 deltaB_nonzero=339 maxabs=86942.253735 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=3/3
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=32/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[003] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.435543
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000083 hash=3a006c7aed73dc466b987220f85b8dc22bf21877
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=-0.000200 hash=cf8f196de9d14882427f9f8c032dbae61a80fff4
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.004000 mean=-0.000273 hash=4eadb524f5fca774d69c58004b52e9767d544586
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0003.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0003.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0003 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=240s
+[running] tuning elapsed=270s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.432726 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=3
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=3 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0303056787068106
+BASE_ADJ_COVERAGE nonzero_candidates=4/4
+CAND_EVIDENCE score=0.432726 vars_nonzero=33/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[004] stage=1 refine=0 score=0.432726 ok=0.8737 hit=0.0303 issuer=0.0000 regime=0.6043 best=0.435543
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=0.000333 hash=a63f431e162f10c26dbd5f82167c86e265b865b3
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=-0.001400 hash=4eabd417b853c1eb4dac18f861b1e03a0a44e555
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.000273 hash=d2291a68d73fadc321b3eb3b189e593241c03c9c
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0004.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0004.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0004 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=300s
+[running] tuning elapsed=330s
+[running] tuning elapsed=360s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435395 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=4
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=4 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03729356349121999
+BASE_ADJ_COVERAGE nonzero_candidates=5/5
+CAND_EVIDENCE score=0.435395 vars_nonzero=30/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[005] stage=1 refine=0 score=0.435395 ok=0.8737 hit=0.0373 issuer=0.0000 regime=0.6107 best=0.435543
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000833 hash=b4e9eaa0eab7fcd0890407e51554492f1064be88
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=-0.001200 hash=5514d728ec01203fceb70ed85f466728ddc3edcb
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.005000 mean=-0.001455 hash=0071023e2b566af5621b4da67789eef5c94b75a0
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0005.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0005.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0005 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=390s
+[running] tuning elapsed=421s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.441065 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=5
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=5 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.048611585580843726
+BEST_UPDATE iter=5 score=0.441065 live=C:\projects\bidding\bidding_cal_config.json snapshot=C:\projects\bidding\tune_runs_regime\best_config_20260224_132533.json candidate=C:\projects\bidding\tune_runs_regime\candidate_0005.json
+BASE_ADJ_COVERAGE nonzero_candidates=6/6
+CAND_EVIDENCE score=0.441065 vars_nonzero=29/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[006] stage=1 refine=0 score=0.441065 ok=0.8737 hit=0.0486 issuer=0.0000 regime=0.6277 best=0.441065 (BEST)
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=-0.000667 hash=52f2329d41c416b374f380f838d127a4b487758e
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=-0.000500 hash=43f60f626d707ed54be63aff802ee5d325de93f2
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.003000 mean=-0.001636 hash=ee23fdf50fac0f530192ae8e85e4066ad9248b66
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0006.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0006.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0006 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=451s
+[running] tuning elapsed=481s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=70134525.865273 min=98238.379662 max=1001860506.876264
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (1001860506.876264>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=1001860506.876264 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=6 rows=388 deltaB_nonzero=339 maxabs=1001860506.876264 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=7/7
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=31/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[007] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.441065
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=-0.001583 hash=d2bd4f237ad80eaeea1dc4c7565e36a0c691a1b2
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=-0.000400 hash=928c97a9fb796b741aa6bffed1bd78ad0cce96f6
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.005000 mean=-0.000545 hash=e162d6de606bcc554ca58adad29569745d10b784
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0007.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0007.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0007 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=511s
+[running] tuning elapsed=541s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=77986443.758007 min=109236.358094 max=1114023904.738327
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (1114023904.738327>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=1114023904.738327 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=7 rows=388 deltaB_nonzero=339 maxabs=1114023904.738327 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=8/8
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=30/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[008] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.441065
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.004000 max=0.006000 mean=0.002750 hash=3120f30f691b94e20e2c627b73b8f2c5bfaa7042
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=0.000700 hash=4c3b4749a7e4b61a49787af7e8880cb3f50bf5c7
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.002091 hash=cae1d6f5f17c3c6020ba223d12163c232e35cd7e
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0008.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0008.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0008 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=571s
+[running] tuning elapsed=601s
+[running] tuning elapsed=631s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436470 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=8
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=8 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03611722649877608
+BASE_ADJ_COVERAGE nonzero_candidates=9/9
+CAND_EVIDENCE score=0.436470 vars_nonzero=32/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[009] stage=1 refine=0 score=0.436470 ok=0.8737 hit=0.0361 issuer=0.0000 regime=0.6172 best=0.441065
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=-0.000667 hash=f3d76fd1fbbbdd228110843e8dcf6a67a9ec39f2
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.005000 mean=0.000600 hash=80c42418e448190c099ecf445caeef4523c7459f
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=0.000909 hash=a87bac156f9420526afb7c8a0be83a530772de39
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0009.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0009.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0009 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=661s
+[running] tuning elapsed=692s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-42668159.554170 min=-609507856.433511 max=-59765.264444
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (59765.264444>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=59765.264444 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=9 rows=388 deltaB_nonzero=339 maxabs=59765.264444 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=10/10
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=33/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[010] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.441065
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=-0.000917 hash=028af3bee331bf85a73ca782432fdd9488f7e6ca
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=-0.001000 hash=51f8e4ce0283503de56c22f0c4c25f9504234e4d
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=-0.001727 hash=deaac1295d02a9cc6971afe763b650a336a671da
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0010.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0010.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0010 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=722s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-39732704.313516 min=-567575340.603077 max=-55654.004985
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (55654.004985>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=55654.004985 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=10 rows=388 deltaB_nonzero=339 maxabs=55654.004985 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=11/11
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=28/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[011] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.441065
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0011.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0011.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0011 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=752s
+[running] tuning elapsed=782s
+[running] tuning elapsed=812s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.443289 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=11
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=11 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.050730071849478794
+BEST_UPDATE iter=11 score=0.443289 live=C:\projects\bidding\bidding_cal_config.json snapshot=C:\projects\bidding\tune_runs_regime\best_config_20260224_133207.json candidate=C:\projects\bidding\tune_runs_regime\candidate_0011.json
+BASE_ADJ_COVERAGE nonzero_candidates=12/12
+CAND_EVIDENCE score=0.443289 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[012] stage=1 refine=0 score=0.443289 ok=0.8737 hit=0.0507 issuer=0.0000 regime=0.6367 best=0.443289 (BEST)
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000917 hash=ae8d17004e81ef22a23674e6957572a50e0e2b30
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=-0.001200 hash=dfdb3e34ecba0fc8ff53500b160ab4671a43bab3
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=-0.000273 hash=95edb140476b7fb521a97fbdf9e0044353063b5e
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0012.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0012.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0012 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=842s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=52901804.636481 min=74099.958227 max=755693839.066029
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (755693839.066029>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=755693839.066029 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=12 rows=388 deltaB_nonzero=339 maxabs=755693839.066029 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=13/13
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=32/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[013] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=-0.000333 hash=73f9a43f009540a0090402b0e7ca206abedc392f
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=0.000400 hash=28cb0369f8f702918c87d7febf869f91ec989578
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=-0.000455 hash=88e0214f12cccfc2935e85bb161f48aaefcbadeb
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0013.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0013.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0013 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=872s
+[running] tuning elapsed=902s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.441397 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=13
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=13 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.045260574559649915
+BASE_ADJ_COVERAGE nonzero_candidates=14/14
+CAND_EVIDENCE score=0.441397 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[014] stage=1 refine=0 score=0.441397 ok=0.8737 hit=0.0453 issuer=0.0000 regime=0.6327 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=-0.000917 hash=f0eab15fedbed8d566fc7b565aeca6bd452c463d
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=0.000900 hash=25a9a88f30e3c6d0c6edd39bb1491b4ab98e0500
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.001000 hash=0a755dbb08ff6814422998aa3656ef8242ce30a3
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0014.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0014.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0014 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=932s
+[running] tuning elapsed=963s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436564 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=14
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=14 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03972091901202327
+BASE_ADJ_COVERAGE nonzero_candidates=15/15
+CAND_EVIDENCE score=0.436564 vars_nonzero=28/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[015] stage=1 refine=0 score=0.436564 ok=0.8737 hit=0.0397 issuer=0.0000 regime=0.6141 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.001083 hash=50e6b3ca1012eaf1552dd6ddf5056e157d5c9ba3
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=0.000600 hash=734840d5bd5712990add2d04f83f953ed9c7db1e
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.004000 mean=-0.001273 hash=7efd897b169fe23f8360d3005b3a85c618473053
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0015.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0015.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0015 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=993s
+[running] tuning elapsed=1023s
+[running] tuning elapsed=1053s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=63155420.996621 min=88462.778421 max=902165106.187372
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (902165106.187372>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=902165106.187372 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=15 rows=388 deltaB_nonzero=339 maxabs=902165106.187372 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=16/16
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=31/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[016] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.001000 mean=-0.003417 hash=94a0e8f0a9cc2dccd70e88c203e6aaaeb7ebfe03
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=0.000600 hash=6b1b1fc811a094ff0ca1f7a224d49692dd33f130
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.003000 mean=-0.000545 hash=78b1985199d57e5d34376015b6e5fa737b9c31f0
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0016.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0016.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0016 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1083s
+[running] tuning elapsed=1113s
+[running] tuning elapsed=1143s
+[running] tuning elapsed=1173s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-62543449.942222 min=-893423208.231430 max=-87604.765107
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (87604.765107>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=87604.765107 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=16 rows=388 deltaB_nonzero=339 maxabs=87604.765107 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=17/17
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=33/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[017] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=0.000167 hash=235420249e9c834396d33cf0084855ae3a285c31
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=-0.000100 hash=8719b35f5954d3732de68f122c76b014376ff347
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=-0.000818 hash=b5556c33144f90c359f1b8c3d57af6c71ac778bb
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0017.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0017.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0017 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1203s
+[running] tuning elapsed=1233s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.441645 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=17
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=17 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.05151530871320435
+BASE_ADJ_COVERAGE nonzero_candidates=18/18
+CAND_EVIDENCE score=0.441645 vars_nonzero=25/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[018] stage=1 refine=0 score=0.441645 ok=0.8737 hit=0.0515 issuer=0.0000 regime=0.6277 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=-0.000917 hash=c44601b29162f4bc16ebaa19c2ea5944dd65e9dd
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.003000 mean=-0.001100 hash=d17d73361bf19a396c6b21706e2e85de8f08a768
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=0.001455 hash=fea282179349ebda172b5668e9b5468bc4994f7f
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0018.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0018.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0018 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1263s
+[running] tuning elapsed=1294s
+[running] tuning elapsed=1324s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=57342502.191886 min=80319.818627 max=819128498.594339
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (819128498.594339>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=819128498.594339 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=18 rows=388 deltaB_nonzero=339 maxabs=819128498.594339 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=19/19
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=30/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[019] stage=1 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.001250 hash=c03745780dd91042d8081c73d5bd10734dc3080e
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=0.001100 hash=7488039f5c6ab8414c01d790c647aadb71fb272f
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=-0.000455 hash=f63f7759fe28cb5e679354a466da3e7833996a40
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0019.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0019.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0019 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1354s
+[running] tuning elapsed=1384s
+[running] tuning elapsed=1414s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.433670 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=19
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=19 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.02847538535377307
+BASE_ADJ_COVERAGE nonzero_candidates=20/20
+CAND_EVIDENCE score=0.433670 vars_nonzero=32/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[020] stage=1 refine=0 score=0.433670 ok=0.8737 hit=0.0285 issuer=0.0000 regime=0.6109 best=0.443289
+ADAPTIVE_STAGE_DONE stage=1 ran=20 total=20 best=0.443289 decision=continue
+BASE_ADJ_COVERAGE nonzero_candidates=20/20
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=0.001083 hash=ec914ed5e2e3ce501ccb35cb5f47f2b29bde6033
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=-0.000900 hash=f4c757c5e5eb6bc46112f167247e2421f5cc3b4a
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.005000 mean=-0.000636 hash=9e65e6bd683208a32f179846c7fa6ddc2c699e22
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0020.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0020.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0020 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1444s
+[running] tuning elapsed=1474s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435596 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=20
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=20 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.030468759225800352
+BASE_ADJ_COVERAGE nonzero_candidates=21/21
+CAND_EVIDENCE score=0.435596 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[021] stage=2 refine=0 score=0.435596 ok=0.8737 hit=0.0305 issuer=0.0000 regime=0.6185 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=-0.001583 hash=0a067220a0924090794e12175fef302e73f01491
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=-0.001200 hash=962d6011c0db8424fcb3a46bf8d10de5d6bfdfb9
+BASE_ADJ_CAND trade=조경+토목 min=-0.004000 max=0.004000 mean=0.000818 hash=8e33200ee399202e08700901a55407e9ddb31614
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0021.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0021.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0021 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1504s
+[running] tuning elapsed=1534s
+[running] tuning elapsed=1564s
+[running] tuning elapsed=1595s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-89049359.769517 min=-1272055901.548627 max=-124731.771596
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (124731.771596>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=124731.771596 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=21 rows=388 deltaB_nonzero=339 maxabs=124731.771596 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=22/22
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=30/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[022] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.003000 max=0.005000 mean=0.001083 hash=535e3c4ccf2cc8e2acdd119b7be9285314293ccf
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.005000 mean=-0.001100 hash=179d124fca21b31835521e8861d79d9ff1312515
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.000091 hash=e972f6d2f9242ab2c63b8312bc9114faa3f37b7f
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0022.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0022.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0022 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1625s
+[running] tuning elapsed=1655s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=28488766.436806 min=39904.236661 max=406957485.920574
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (406957485.920574>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=406957485.920574 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=22 rows=388 deltaB_nonzero=339 maxabs=406957485.920574 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=23/23
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=30/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[023] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=-0.000917 hash=ce75880d9f156365ab10c037ee7ab9b0eec914cc
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=-0.000300 hash=fc9d1a7d487bb806f76357c753aeb9c56cc63cab
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.001091 hash=6dd183bae7a661087bfaa670357ad018e2227308
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0023.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0023.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0023 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1685s
+[running] tuning elapsed=1715s
+[running] tuning elapsed=1745s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434915 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=23
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=23 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03508974647711496
+BASE_ADJ_COVERAGE nonzero_candidates=24/24
+CAND_EVIDENCE score=0.434915 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[024] stage=2 refine=0 score=0.434915 ok=0.8737 hit=0.0351 issuer=0.0000 regime=0.6105 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=-0.000667 hash=97db59a4f667ab71d9a21b4674d4edc8818a07b4
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=0.001100 hash=f07de5d680a3f80239d1cbfabe02e27260d5ffed
+BASE_ADJ_CAND trade=조경+토목 min=-0.004000 max=0.006000 mean=0.001091 hash=2b7f3b0717d491722bfdcd465a821cba2bf1429d
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0024.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0024.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0024 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1775s
+[running] tuning elapsed=1805s
+[running] tuning elapsed=1835s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=27391067.791668 min=38366.525154 max=391277037.990751
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (391277037.990751>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=391277037.990751 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=24 rows=388 deltaB_nonzero=339 maxabs=391277037.990751 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=25/25
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=28/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[025] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.004000 mean=-0.002250 hash=c85f25bd1a886483b298c22cebb70965e8c108a6
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=-0.000500 hash=20bbaf1d6930b401e5f8d3e7434bfc7a9031a0cb
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.000273 hash=31628b531517adda59f174a46e6166ad20b53100
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0025.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0025.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0025 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1865s
+[running] tuning elapsed=1895s
+[running] tuning elapsed=1925s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=91276058.401757 min=127850.953878 max=1303863933.211886
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (1303863933.211886>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=1303863933.211886 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=25 rows=388 deltaB_nonzero=339 maxabs=1303863933.211886 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=26/26
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=28/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[026] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=0.001333 hash=36aea2a11354a3f323446f0f6abdc403d02a69e6
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=-0.000300 hash=46f2f1126d5ee645fbb9164f11d61cc9f508f985
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=0.000455 hash=5131d869b337987266fb872c19576eb42cb5188d
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0026.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0026.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0026 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=1955s
+[running] tuning elapsed=1985s
+[running] tuning elapsed=2016s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436857 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=26
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=26 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04060866242553988
+BASE_ADJ_COVERAGE nonzero_candidates=27/27
+CAND_EVIDENCE score=0.436857 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[027] stage=2 refine=0 score=0.436857 ok=0.8737 hit=0.0406 issuer=0.0000 regime=0.6147 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.003000 max=0.006000 mean=0.001500 hash=16c29669cd9db3a9f14fa69e579abc1fc0c3f6ed
+BASE_ADJ_CAND trade=토목 min=-0.004000 max=0.006000 mean=0.002100 hash=7201a62470b6c346d5b40c4a54f906c70a041edb
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.000364 hash=807cb25360180eb6255d642924796275f8158c53
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0027.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0027.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0027 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2046s
+[running] tuning elapsed=2076s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=63123135.121269 min=88417.362737 max=901703910.171433
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (901703910.171433>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=901703910.171433 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=27 rows=388 deltaB_nonzero=339 maxabs=901703910.171433 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=28/28
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=30/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[028] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.005000 mean=-0.000917 hash=19062c4b28592c502384f50ad50c54c3592149bf
+BASE_ADJ_CAND trade=토목 min=-0.003000 max=0.006000 mean=0.001600 hash=cd11c185d7e61c1b5e97ddcde43f122195b793ba
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.005000 mean=-0.000455 hash=aca7524ad893c96250d8ef1a7836b477380745b4
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0028.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0028.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0028 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2106s
+[running] tuning elapsed=2136s
+[running] tuning elapsed=2166s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=58515888.360713 min=81964.133942 max=835890122.905850
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (835890122.905850>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=835890122.905850 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=28 rows=388 deltaB_nonzero=339 maxabs=835890122.905850 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=29/29
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=32/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[029] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000333 hash=6312992c6b064e97d107e636da55b3ee9ff6d52f
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.002000 mean=-0.001400 hash=c9f6bcfc788d96387c26b4b75a17a9c8609a0bd0
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=-0.000364 hash=bf70cb26292e7ff952fe0dd93ab9b231e136c16d
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0029.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0029.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0029 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2196s
+[running] tuning elapsed=2226s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-26851397.733257 min=-383567936.940496 max=-37610.632803
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (37610.632803>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=37610.632803 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=29 rows=388 deltaB_nonzero=339 maxabs=37610.632803 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=30/30
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=30/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[030] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=0.000750 hash=baee5a77c851916a0073fe8f8baea915943c1411
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.004000 mean=-0.000900 hash=3a27e22e97e0aa665444c107e7fdd1e50b029bf4
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.000636 hash=06e97540c8778fb466cfd6a9f8cab26b079014d4
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0030.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0030.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0030 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2256s
+[running] tuning elapsed=2286s
+[running] tuning elapsed=2317s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434813 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=30
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=30 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03464070832215693
+BASE_ADJ_COVERAGE nonzero_candidates=31/31
+CAND_EVIDENCE score=0.434813 vars_nonzero=28/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[031] stage=2 refine=0 score=0.434813 ok=0.8737 hit=0.0346 issuer=0.0000 regime=0.6104 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=0.000833 hash=1a9a0ffd22c5995487b3941c4dc33162a857f7d4
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.004000 mean=-0.001600 hash=3b49aec702f394b3940af9f7eb48f50024c9643a
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=0.000545 hash=483acee2f3ccd21a8d8b20bc6c1cdcac4d04671f
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0031.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0031.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0031 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2347s
+[running] tuning elapsed=2377s
+[running] tuning elapsed=2407s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.437071 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=31
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=31 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0440770045397264
+BASE_ADJ_COVERAGE nonzero_candidates=32/32
+CAND_EVIDENCE score=0.437071 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[032] stage=2 refine=0 score=0.437071 ok=0.8737 hit=0.0441 issuer=0.0000 regime=0.6123 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=0.001250 hash=969f56d2715f3c19d24a202fcc77721052ba72d3
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=0.002300 hash=01ecdcccf9360a7b0aa452a613a5a185005ac781
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.001273 hash=031abc2635f26d225a232b5120a172a3cbc47ae1
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0032.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0032.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0032 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2437s
+[running] tuning elapsed=2467s
+[running] tuning elapsed=2497s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.433654 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=32
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=32 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.031300631192357195
+BASE_ADJ_COVERAGE nonzero_candidates=33/33
+CAND_EVIDENCE score=0.433654 vars_nonzero=30/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[033] stage=2 refine=0 score=0.433654 ok=0.8737 hit=0.0313 issuer=0.0000 regime=0.6080 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.003000 mean=-0.002583 hash=1eb5e993ba518e727c6e280576e9512c1bef7e5a
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=0.000700 hash=d9cc452b37359cd9a22451b6a9b39f0b269d6046
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.005000 mean=-0.000091 hash=7a5cfa3d3087f617cbc000d837156fc8379b24d4
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0033.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0033.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0033 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2527s
+[running] tuning elapsed=2557s
+[running] tuning elapsed=2587s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436409 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=33
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=33 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.034127975241536726
+BASE_ADJ_COVERAGE nonzero_candidates=34/34
+CAND_EVIDENCE score=0.436409 vars_nonzero=30/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[034] stage=2 refine=0 score=0.436409 ok=0.8737 hit=0.0341 issuer=0.0000 regime=0.6189 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.006000 mean=-0.000250 hash=7184440eed12061fcd4ac0c5d5bbca85e5b5abcc
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.001000 mean=-0.001200 hash=f1ab57ed13c83bc6eaec48c0c23dff301222e984
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=-0.000818 hash=d499a6b29799c831c94b12e0189726393e45fbc5
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0034.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0034.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0034 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2617s
+[running] tuning elapsed=2647s
+[running] tuning elapsed=2677s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.437095 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=34
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=34 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03784463372623645
+BASE_ADJ_COVERAGE nonzero_candidates=35/35
+CAND_EVIDENCE score=0.437095 vars_nonzero=30/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[035] stage=2 refine=0 score=0.437095 ok=0.8737 hit=0.0378 issuer=0.0000 regime=0.6186 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=-0.001583 hash=facd7a343a4e5671b6c3596cc4be64b9295965be
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.006000 mean=-0.001500 hash=afbbad400f9232b44f189cc47ff177e3669567bc
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=0.000182 hash=933df8d52094223118247b3f28d9a2f9f3cf0e0e
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0035.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0035.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0035 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2708s
+[running] tuning elapsed=2738s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=79252686.008028 min=111009.506619 max=1132111979.731719
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (1132111979.731719>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=1132111979.731719 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=35 rows=388 deltaB_nonzero=339 maxabs=1132111979.731719 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=36/36
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=30/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[036] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=-0.000250 hash=d30b2aa01af1ae14c8019c8b4bc640ce393eea4f
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=-0.000500 hash=f29ee55de48e98aab2409b8623227b280e9df329
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=0.000909 hash=ae6bcb9aabb075523c1712e9c58b5a8624f0ffae
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0036.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0036.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0036 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2768s
+[running] tuning elapsed=2798s
+[running] tuning elapsed=2828s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436509 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=36
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=36 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03427111748798431
+BASE_ADJ_COVERAGE nonzero_candidates=37/37
+CAND_EVIDENCE score=0.436509 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[037] stage=2 refine=0 score=0.436509 ok=0.8737 hit=0.0343 issuer=0.0000 regime=0.6193 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.005000 mean=0.001167 hash=32b1ed208e0799ee5ed18c9931d9110daf3cc00c
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=-0.001500 hash=6fa97d2c175820481b03cba2bad7959be17196c2
+BASE_ADJ_CAND trade=조경+토목 min=-0.006000 max=0.006000 mean=-0.000455 hash=046d01be40bc8a279db7224e08c52cae0a0af182
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0037.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0037.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0037 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2858s
+[running] tuning elapsed=2888s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.437661 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=37
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=37 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03731464049112045
+BASE_ADJ_COVERAGE nonzero_candidates=38/38
+CAND_EVIDENCE score=0.437661 vars_nonzero=27/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[038] stage=2 refine=0 score=0.437661 ok=0.8737 hit=0.0373 issuer=0.0000 regime=0.6220 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.006000 max=0.004000 mean=-0.000667 hash=4d8fce28687e470c8f4b768c684830a20d07d28a
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.002000 mean=-0.002900 hash=5ef147c255e4bfaf0086a70e4dbd90268eee3d06
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.003000 mean=-0.001455 hash=ab9b2b2b6642a3c0cda37ae9c79e71d304244604
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0038.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0038.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0038 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=2918s
+[running] tuning elapsed=2948s
+[running] tuning elapsed=2979s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436552 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=38
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=38 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.036583651333491916
+BASE_ADJ_COVERAGE nonzero_candidates=39/39
+CAND_EVIDENCE score=0.436552 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[039] stage=2 refine=0 score=0.436552 ok=0.8737 hit=0.0366 issuer=0.0000 regime=0.6172 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.004000 max=0.005000 mean=0.000250 hash=b1e2827e7059db829e3909ee5a7ccfbf4e21d9ee
+BASE_ADJ_CAND trade=토목 min=-0.006000 max=0.006000 mean=0.000700 hash=236b71ec3e96b0f31a688085e91eaf5faf838bd1
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.006000 mean=0.002000 hash=8ea2a67d19a3a13dbb96b79f4f15bd4a88a05db6
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0039.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0039.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0039 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3009s
+[running] tuning elapsed=3039s
+BASE_ADJ_EVIDENCE nonzero=339/388 mean=-95939628.857576 min=-1370482283.948728 max=-134383.942350
+[warn] BASE_ADJ_GUARD deltaB_abs_max_limit exceeded (134383.942350>0.006000)
+BASE_ADJ_EVIDENCE score=-1000000000000000000.000000 nonzero=0.873711 maxabs=134383.942350 match=1.000000
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=39 rows=388 deltaB_nonzero=339 maxabs=134383.942350 mode=BLOWUP
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0
+BASE_ADJ_COVERAGE nonzero_candidates=40/40
+CAND_EVIDENCE score=-1000000000000000000.000000 vars_nonzero=31/33 rows_deltaB_nonzero=0.873711 match=1.000000
+[040] stage=2 refine=0 score=-1000000000000000000.000000 ok=0.8737 hit=0.0000 issuer=0.0000 regime=0.6691 best=0.443289
+PLATEAU_HIT total=40 delta_best=0.000000 min_improve=248746859276655008.000000 new_best=0 ok_avg=0.8737 ok_best=0.8737 regime_avg=0.6177 regime_best=0.6367
+ADAPTIVE_STAGE_DONE stage=2 ran=20 total=40 best=0.443289 decision=refine
+BASE_ADJ_COVERAGE nonzero_candidates=40/40
+REFINE_SPACE_SUMMARY before=69 after=67
+REFINE_SPACE_WRITTEN C:\projects\bidding\tune_runs_regime\refined_space_round1.json
+REFINE_START round=1 budget=40
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0040.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0040.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0040 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3069s
+[running] tuning elapsed=3099s
+[running] tuning elapsed=3129s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.443024 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=40
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=40 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.05328363631916082
+BASE_ADJ_COVERAGE nonzero_candidates=41/41
+CAND_EVIDENCE score=0.443024 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[041] stage=2 refine=1 score=0.443024 ok=0.8737 hit=0.0533 issuer=0.0000 regime=0.6328 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0041.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0041.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0041 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3159s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.439577 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=41
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=41 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04354929930309886
+BASE_ADJ_COVERAGE nonzero_candidates=42/42
+CAND_EVIDENCE score=0.439577 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[042] stage=2 refine=1 score=0.439577 ok=0.8737 hit=0.0435 issuer=0.0000 regime=0.6253 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0042.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0042.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0042 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3189s
+[running] tuning elapsed=3219s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434192 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=42
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=42 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.032809571467372504
+BASE_ADJ_COVERAGE nonzero_candidates=43/43
+CAND_EVIDENCE score=0.434192 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[043] stage=2 refine=1 score=0.434192 ok=0.8737 hit=0.0328 issuer=0.0000 regime=0.6092 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0043.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0043.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0043 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3250s
+[running] tuning elapsed=3280s
+[running] tuning elapsed=3310s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.443268 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=43
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=43 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.05152555725942908
+BASE_ADJ_COVERAGE nonzero_candidates=44/44
+CAND_EVIDENCE score=0.443268 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[044] stage=2 refine=1 score=0.443268 ok=0.8737 hit=0.0515 issuer=0.0000 regime=0.6358 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0044.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0044.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0044 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3340s
+[running] tuning elapsed=3370s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435649 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=44
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=44 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03837716801036495
+BASE_ADJ_COVERAGE nonzero_candidates=45/45
+CAND_EVIDENCE score=0.435649 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[045] stage=2 refine=1 score=0.435649 ok=0.8737 hit=0.0384 issuer=0.0000 regime=0.6109 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0045.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0045.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0045 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3400s
+[running] tuning elapsed=3430s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436977 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=45
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=45 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.039790813675525116
+BASE_ADJ_COVERAGE nonzero_candidates=46/46
+CAND_EVIDENCE score=0.436977 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[046] stage=2 refine=1 score=0.436977 ok=0.8737 hit=0.0398 issuer=0.0000 regime=0.6161 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0046.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0046.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0046 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3460s
+[running] tuning elapsed=3491s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.437582 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=46
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=46 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04098123714714213
+BASE_ADJ_COVERAGE nonzero_candidates=47/47
+CAND_EVIDENCE score=0.437582 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[047] stage=2 refine=1 score=0.437582 ok=0.8737 hit=0.0410 issuer=0.0000 regime=0.6179 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0047.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0047.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0047 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3521s
+[running] tuning elapsed=3551s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434822 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=47
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=47 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03204566465407149
+BASE_ADJ_COVERAGE nonzero_candidates=48/48
+CAND_EVIDENCE score=0.434822 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[048] stage=2 refine=1 score=0.434822 ok=0.8737 hit=0.0320 issuer=0.0000 regime=0.6131 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0048.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0048.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0048 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3581s
+[running] tuning elapsed=3611s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.430855 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=48
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=48 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.02583647959484924
+BASE_ADJ_COVERAGE nonzero_candidates=49/49
+CAND_EVIDENCE score=0.430855 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[049] stage=2 refine=1 score=0.430855 ok=0.8737 hit=0.0258 issuer=0.0000 regime=0.5994 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0049.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0049.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0049 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3641s
+[running] tuning elapsed=3671s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436688 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=49
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=49 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0379428489608902
+BASE_ADJ_COVERAGE nonzero_candidates=50/50
+CAND_EVIDENCE score=0.436688 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[050] stage=2 refine=1 score=0.436688 ok=0.8737 hit=0.0379 issuer=0.0000 regime=0.6165 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0050.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0050.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0050 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3701s
+[running] tuning elapsed=3731s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435073 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=50
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=50 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03197215347682985
+BASE_ADJ_COVERAGE nonzero_candidates=51/51
+CAND_EVIDENCE score=0.435073 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[051] stage=2 refine=1 score=0.435073 ok=0.8737 hit=0.0320 issuer=0.0000 regime=0.6144 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0051.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0051.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0051 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3761s
+[running] tuning elapsed=3791s
+[running] tuning elapsed=3822s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435653 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=51
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=51 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0363495057923265
+BASE_ADJ_COVERAGE nonzero_candidates=52/52
+CAND_EVIDENCE score=0.435653 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[052] stage=2 refine=1 score=0.435653 ok=0.8737 hit=0.0363 issuer=0.0000 regime=0.6129 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0052.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0052.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0052 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3852s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.437960 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=52
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=52 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04001610244834817
+BASE_ADJ_COVERAGE nonzero_candidates=53/53
+CAND_EVIDENCE score=0.437960 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[053] stage=2 refine=1 score=0.437960 ok=0.8737 hit=0.0400 issuer=0.0000 regime=0.6208 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0053.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0053.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0053 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3882s
+[running] tuning elapsed=3912s
+[running] tuning elapsed=3942s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.442066 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=53
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=53 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04653993474670486
+BASE_ADJ_COVERAGE nonzero_candidates=54/54
+CAND_EVIDENCE score=0.442066 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[054] stage=2 refine=1 score=0.442066 ok=0.8737 hit=0.0465 issuer=0.0000 regime=0.6348 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0054.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0054.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0054 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=3972s
+[running] tuning elapsed=4002s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.439600 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=54
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=54 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.045075236138314045
+BASE_ADJ_COVERAGE nonzero_candidates=55/55
+CAND_EVIDENCE score=0.439600 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[055] stage=2 refine=1 score=0.439600 ok=0.8737 hit=0.0451 issuer=0.0000 regime=0.6239 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0055.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0055.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0055 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4032s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436889 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=55
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=55 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.038969833425275026
+BASE_ADJ_COVERAGE nonzero_candidates=56/56
+CAND_EVIDENCE score=0.436889 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[056] stage=2 refine=1 score=0.436889 ok=0.8737 hit=0.0390 issuer=0.0000 regime=0.6165 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0056.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0056.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0056 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4062s
+[running] tuning elapsed=4093s
+[running] tuning elapsed=4123s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.432633 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=56
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=56 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03051937987438572
+BASE_ADJ_COVERAGE nonzero_candidates=57/57
+CAND_EVIDENCE score=0.432633 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[057] stage=2 refine=1 score=0.432633 ok=0.8737 hit=0.0305 issuer=0.0000 regime=0.6036 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0057.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0057.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0057 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4153s
+[running] tuning elapsed=4183s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.436013 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=57
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=57 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.035489218360671225
+BASE_ADJ_COVERAGE nonzero_candidates=58/58
+CAND_EVIDENCE score=0.436013 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[058] stage=2 refine=1 score=0.436013 ok=0.8737 hit=0.0355 issuer=0.0000 regime=0.6156 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0058.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0058.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0058 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4213s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.441986 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=58
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=58 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.05054887713047453
+BASE_ADJ_COVERAGE nonzero_candidates=59/59
+CAND_EVIDENCE score=0.441986 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[059] stage=2 refine=1 score=0.441986 ok=0.8737 hit=0.0505 issuer=0.0000 regime=0.6304 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0059.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0059.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0059 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4243s
+[running] tuning elapsed=4273s
+[running] tuning elapsed=4304s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.432248 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=59
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=59 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03250054405862674
+BASE_ADJ_COVERAGE nonzero_candidates=60/60
+CAND_EVIDENCE score=0.432248 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[060] stage=2 refine=1 score=0.432248 ok=0.8737 hit=0.0325 issuer=0.0000 regime=0.5997 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0060.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0060.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0060 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4334s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.438384 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=60
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=60 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04331821145576592
+BASE_ADJ_COVERAGE nonzero_candidates=61/61
+CAND_EVIDENCE score=0.438384 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[061] stage=2 refine=1 score=0.438384 ok=0.8737 hit=0.0433 issuer=0.0000 regime=0.6196 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0061.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0061.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0061 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4364s
+[running] tuning elapsed=4394s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435355 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=61
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=61 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.036380841882223534
+BASE_ADJ_COVERAGE nonzero_candidates=62/62
+CAND_EVIDENCE score=0.435355 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[062] stage=2 refine=1 score=0.435355 ok=0.8737 hit=0.0364 issuer=0.0000 regime=0.6114 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0062.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0062.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0062 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4424s
+[running] tuning elapsed=4454s
+[running] tuning elapsed=4484s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.438554 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=62
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=62 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04437487663786952
+BASE_ADJ_COVERAGE nonzero_candidates=63/63
+CAND_EVIDENCE score=0.438554 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[063] stage=2 refine=1 score=0.438554 ok=0.8737 hit=0.0444 issuer=0.0000 regime=0.6194 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0063.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0063.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0063 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4514s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435594 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=63
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=63 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03403282824448729
+BASE_ADJ_COVERAGE nonzero_candidates=64/64
+CAND_EVIDENCE score=0.435594 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[064] stage=2 refine=1 score=0.435594 ok=0.8737 hit=0.0340 issuer=0.0000 regime=0.6149 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0064.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0064.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0064 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4544s
+[running] tuning elapsed=4574s
+[running] tuning elapsed=4604s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434012 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=64
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=64 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.036608840404408476
+BASE_ADJ_COVERAGE nonzero_candidates=65/65
+CAND_EVIDENCE score=0.434012 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[065] stage=2 refine=1 score=0.434012 ok=0.8737 hit=0.0366 issuer=0.0000 regime=0.6045 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0065.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0065.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0065 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4634s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.435929 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=65
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=65 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04138307083558969
+BASE_ADJ_COVERAGE nonzero_candidates=66/66
+CAND_EVIDENCE score=0.435929 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[066] stage=2 refine=1 score=0.435929 ok=0.8737 hit=0.0414 issuer=0.0000 regime=0.6093 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0066.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0066.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0066 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4665s
+[running] tuning elapsed=4695s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.440905 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=66
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=66 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04980619492987969
+BASE_ADJ_COVERAGE nonzero_candidates=67/67
+CAND_EVIDENCE score=0.440905 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[067] stage=2 refine=1 score=0.440905 ok=0.8737 hit=0.0498 issuer=0.0000 regime=0.6257 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0067.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0067.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0067 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4725s
+[running] tuning elapsed=4755s
+[running] tuning elapsed=4785s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.432461 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=67
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=67 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0287900325929075
+BASE_ADJ_COVERAGE nonzero_candidates=68/68
+CAND_EVIDENCE score=0.432461 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[068] stage=2 refine=1 score=0.432461 ok=0.8737 hit=0.0288 issuer=0.0000 regime=0.6045 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0068.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0068.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0068 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4815s
+[running] tuning elapsed=4845s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.439405 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=68
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=68 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.043041911914799565
+BASE_ADJ_COVERAGE nonzero_candidates=69/69
+CAND_EVIDENCE score=0.439405 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[069] stage=2 refine=1 score=0.439405 ok=0.8737 hit=0.0430 issuer=0.0000 regime=0.6250 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0069.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0069.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0069 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4875s
+[running] tuning elapsed=4905s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.439938 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=69
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=69 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04985846040687151
+BASE_ADJ_COVERAGE nonzero_candidates=70/70
+CAND_EVIDENCE score=0.439938 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[070] stage=2 refine=1 score=0.439938 ok=0.8737 hit=0.0499 issuer=0.0000 regime=0.6208 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0070.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0070.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0070 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4935s
+[running] tuning elapsed=4966s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.442874 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=70
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=70 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04908640325794115
+BASE_ADJ_COVERAGE nonzero_candidates=71/71
+CAND_EVIDENCE score=0.442874 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[071] stage=2 refine=1 score=0.442874 ok=0.8737 hit=0.0491 issuer=0.0000 regime=0.6363 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0071.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0071.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0071 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=4996s
+[running] tuning elapsed=5026s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434612 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=71
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=71 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.03414734415039974
+BASE_ADJ_COVERAGE nonzero_candidates=72/72
+CAND_EVIDENCE score=0.434612 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[072] stage=2 refine=1 score=0.434612 ok=0.8737 hit=0.0341 issuer=0.0000 regime=0.6099 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0072.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0072.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0072 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5056s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.442404 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=72
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=72 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0474756944971633
+BASE_ADJ_COVERAGE nonzero_candidates=73/73
+CAND_EVIDENCE score=0.442404 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[073] stage=2 refine=1 score=0.442404 ok=0.8737 hit=0.0475 issuer=0.0000 regime=0.6355 best=0.443289
+IGNORE_BINS_PARAM path=base_adj_bins
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0073.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0073.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0073 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5086s
+[running] tuning elapsed=5116s
+[running] tuning elapsed=5146s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.440515 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=73
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=73 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0494282112533255
+BASE_ADJ_COVERAGE nonzero_candidates=74/74
+CAND_EVIDENCE score=0.440515 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[074] stage=2 refine=1 score=0.440515 ok=0.8737 hit=0.0494 issuer=0.0000 regime=0.6242 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0074.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0074.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0074 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5176s
+[running] tuning elapsed=5206s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434175 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=74
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=74 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.029748661784478554
+BASE_ADJ_COVERAGE nonzero_candidates=75/75
+CAND_EVIDENCE score=0.434175 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[075] stage=2 refine=1 score=0.434175 ok=0.8737 hit=0.0297 issuer=0.0000 regime=0.6121 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0075.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0075.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0075 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5236s
+[running] tuning elapsed=5266s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.439944 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=75
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=75 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0478348680847618
+BASE_ADJ_COVERAGE nonzero_candidates=76/76
+CAND_EVIDENCE score=0.439944 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[076] stage=2 refine=1 score=0.439944 ok=0.8737 hit=0.0478 issuer=0.0000 regime=0.6229 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0076.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0076.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0076 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5296s
+[running] tuning elapsed=5327s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.440821 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=76
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=76 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.04889304102623796
+BASE_ADJ_COVERAGE nonzero_candidates=77/77
+CAND_EVIDENCE score=0.440821 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[077] stage=2 refine=1 score=0.440821 ok=0.8737 hit=0.0489 issuer=0.0000 regime=0.6262 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0077.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0077.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0077 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5357s
+[running] tuning elapsed=5387s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434673 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=77
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=77 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.041154724368934165
+BASE_ADJ_COVERAGE nonzero_candidates=78/78
+CAND_EVIDENCE score=0.434673 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[078] stage=2 refine=1 score=0.434673 ok=0.8737 hit=0.0412 issuer=0.0000 regime=0.6032 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0078.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0078.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0078 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5417s
+[running] tuning elapsed=5447s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.434759 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=78
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=78 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.0339693652818055
+BASE_ADJ_COVERAGE nonzero_candidates=79/79
+CAND_EVIDENCE score=0.434759 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[079] stage=2 refine=1 score=0.434759 ok=0.8737 hit=0.0340 issuer=0.0000 regime=0.6108 best=0.443289
+BASE_ADJ_CAND trade=조경 min=-0.005000 max=0.006000 mean=0.000250 hash=06095171112932c379ac73dc13de128250059e72
+BASE_ADJ_CAND trade=토목 min=-0.005000 max=0.004000 mean=0.000100 hash=79d36ec9c34b0e9a2140ce9170e3aa80639970ad
+BASE_ADJ_CAND trade=조경+토목 min=-0.005000 max=0.002000 mean=-0.002000 hash=f3ed288a9021452533e846ab795fdf3c96950c85
+[CMD] BACKTEST_CMD=C:\Users\misan\AppData\Local\Programs\Python\Python311\python.exe C:\projects\bidding\bidding_backtest_codex_v3.py --history_root C:\projects\bidding\history --cal_path C:\projects\bidding\bidding_cal_regime_shrink.py --cal_config C:\projects\bidding\tune_runs_regime\candidate_0079.json --infile C:\projects\bidding\낙찰정보리스트.xlsx --out_xlsx C:\projects\bidding\tune_runs_regime\backtest_run_0079.xlsx --issuer_col 발주기관 --trade_col 업종 --date_col 개찰일 --y_col 예가/기초(100%) --base_col 기초금액 --bidders_col 업체수 --bidders_regime_on on --bidders_regime_edges 300,900 --bidders_regime_weight_mode custom --bidders_min_regime_n 30 --bidders_weight_norm mean1 --final_score_use_bidders_regime off --hit_thresholds 0.02,0.03,0.04,0.05 --jobs 6 --debug_cal_tail on --debug_cal_tail_lines 40 --debug_cal_tail_every 1 --debug_cal_dir C:\projects\bidding\tune_runs_regime\cal_logs --run_tag candidate_0079 --debug_base_adj on --debug_base_adj_rows 5 --debug_base_adj_on_severe on --debug_base_adj_write_csv on --debug_base_adj_csv_path C:\projects\bidding\tune_runs_regime\base_adj_debug_last.csv --bidders_regime_weights_json C:\projects\bidding\bidders_regime_weights.json
+[running] tuning elapsed=5477s
+[running] tuning elapsed=5507s
+BASE_ADJ_EVIDENCE nonzero=0/388 mean=0.000000 min=0.000000 max=0.000000
+[warn] BASE_ADJ_GUARD deltaB_nonzero_ratio<0.0300 (0.0000)
+BASE_ADJ_EVIDENCE score=0.443845 nonzero=0.000000 maxabs=0.000000 match=1.000000
+[warn] CAND_SEVERE nonzero offsets vars but row deltaB never nonzero idx=79
+[SUMMARY] BASE_ADJ_DEBUG_SUMMARY cand_idx=79 rows=388 deltaB_nonzero=0 maxabs=0.000000 mode=ZERO
+HIT_REGIME wR1=0.3500,0.3000,0.2000,0.1500 wR2=0.2500,0.3000,0.2000,0.2500 wR3=0.1000,0.1500,0.2500,0.5000 hit_score=0.05283880512916542
+BEST_UPDATE iter=79 score=0.443845 live=C:\projects\bidding\bidding_cal_config.json snapshot=C:\projects\bidding\tune_runs_regime\best_config_20260224_145046.json candidate=C:\projects\bidding\tune_runs_regime\candidate_0079.json
+BASE_ADJ_COVERAGE nonzero_candidates=80/80
+CAND_EVIDENCE score=0.443845 vars_nonzero=31/33 rows_deltaB_nonzero=0.000000 match=1.000000
+[080] stage=2 refine=1 score=0.443845 ok=0.8737 hit=0.0528 issuer=0.0000 regime=0.6374 best=0.443845 (BEST)
+REFINE_STOP plateau persisted and refine_rounds exhausted
+BEST_FINAL score=0.443845 live=C:\projects\bidding\bidding_cal_config.json snapshot=C:\projects\bidding\tune_runs_regime\best_config_final_20260224_145046.json leaderboard=C:\projects\bidding\tune_runs_regime\leaderboard_topk.xlsx total=80 status=ok
+BASE_ADJ_COVERAGE nonzero_candidates=80/80
+RUN_LOG path=C:\projects\bidding\tune_runs_regime\run_log_20260224_131831.txt

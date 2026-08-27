@@ -1,0 +1,56 @@
+{% extends "app/base_app.html" %}
+{% load humanize %}
+
+{% block page_title %}노무 신고·지급명세서 엑셀{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:20px;font-weight:700;">노무 신고·지급명세서 엑셀</div>
+        <div class="hint">월 마감 완료 후 승인된 출역부를 기준으로 생성합니다. 생성 후의 원본 데이터 변경은 이미 생성한 파일에 반영되지 않습니다.</div>
+      </div>
+      <a class="btn btn-outline" href="/app/hq/">HQ 대시보드</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <form method="post" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;align-items:end;">
+      {% csrf_token %}
+      <label>프로젝트
+        <select class="input" name="project_id" required>
+          <option value="">선택</option>
+          {% for project in projects %}<option value="{{ project.id }}">{{ project.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>마감 월<input class="input" name="month" type="month" required></label>
+      <label>생성 파일
+        <select class="input" name="export_type">
+          {% for value,label in export_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="btn" type="submit">엑셀 생성</button>
+    </form>
+    <div class="hint" style="margin-top:12px;">근로내용확인신고는 근로자 주민등록번호·근로복지공단 직종코드가 필요합니다. 누락 시 생성 전에 대상 근로자를 안내합니다.</div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:18px;font-weight:700;margin-bottom:12px;">생성 이력</div>
+    <div style="overflow-x:auto;">
+      <table class="table" style="min-width:850px;">
+        <thead><tr><th>생성일시</th><th>파일 유형</th><th>프로젝트</th><th>기준 월</th><th>승인 출역 행</th><th>생성자</th><th>다운로드</th></tr></thead>
+        <tbody>
+        {% for export in exports %}
+          <tr>
+            <td>{{ export.generated_at|date:"Y-m-d H:i" }}</td><td>{{ export.get_export_type_display }}</td><td>{{ export.project.name }}</td><td>{{ export.year_month|date:"Y-m" }}</td>
+            <td>{{ export.source_summary.approved_daily_rows|default:0|intcomma }}</td><td>{{ export.generated_by|default:"-" }}</td>
+            <td><a class="btn btn-outline" href="/app/hq/labor/compliance-exports/{{ export.id }}/download/">다운로드</a></td>
+          </tr>
+        {% empty %}<tr><td colspan="7" class="muted">아직 생성한 파일이 없습니다.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -70,8 +70,10 @@ class CEOProjectSummaryReportView(APIView):
         ).values("project_id", "version_no")
         snapshot_map = {row["project_id"]: row["version_no"] for row in snapshots}
 
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=\"project-summary.csv\""
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = "attachment; filename*=UTF-8''project-summary.csv"
+        # Excel on Windows reliably detects Korean UTF-8 CSV only with a BOM.
+        response.write("\ufeff")
         writer = csv.writer(response)
         writer.writerow(
             [

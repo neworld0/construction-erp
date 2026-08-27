@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.rbac.models import ProjectAssignment, Role
-from apps.core.rbac.permissions import get_user_role, require_role
+from apps.core.rbac.permissions import get_current_legal_entity, get_user_legal_entities, get_user_role, require_legal_entity_access, require_role
 from apps.audit.services.logger import log_action
 from apps.projects.models import Project
 
@@ -48,7 +48,9 @@ from .services import (
 class WarehouseListView(APIView):
     def get(self, request):
         role = get_user_role(request.user)
-        qs = Warehouse.objects.select_related("project").order_by("warehouse_type", "name")
+        qs = Warehouse.objects.select_related("project", "legal_entity").filter(
+            legal_entity__in=get_user_legal_entities(request.user)
+        ).order_by("warehouse_type", "name")
         if role == Role.FIELD:
             assigned_project_ids = ProjectAssignment.objects.filter(
                 user=request.user, is_active=True
@@ -81,11 +83,16 @@ class WarehouseListView(APIView):
         if warehouse_type not in (WarehouseType.HQ, WarehouseType.SITE):
             return Response({"detail": "warehouse_type must be HQ or SITE."}, status=400)
         if warehouse_type == WarehouseType.HQ:
-            warehouse = create_hq_warehouse(name, code, actor=request.user)
+            legal_entity = get_current_legal_entity(request)
+            if legal_entity is None:
+                return Response({"detail": "법인 접근 권한이 없습니다."}, status=403)
+            require_legal_entity_access(request.user, legal_entity, request=request)
+            warehouse = create_hq_warehouse(name, code, legal_entity=legal_entity, actor=request.user)
         else:
             if not project_id:
                 return Response({"detail": "project_id is required for SITE."}, status=400)
             project = get_object_or_404(Project, id=project_id)
+            require_legal_entity_access(request.user, project.legal_entity, request=request)
             warehouse = create_site_warehouse(project, name=name, code=code, actor=request.user)
         return Response(
             {
@@ -103,7 +110,8 @@ class WarehouseListView(APIView):
 class WarehouseLocationsView(APIView):
     def get(self, request, warehouse_id):
         role = get_user_role(request.user)
-        warehouse = get_object_or_404(Warehouse.objects.select_related("project"), id=warehouse_id)
+        warehouse = get_object_or_404(Warehouse.objects.select_related("project", "legal_entity"), id=warehouse_id)
+        require_legal_entity_access(request.user, warehouse.legal_entity, request=request)
         if role == Role.FIELD:
             if warehouse.warehouse_type == WarehouseType.SITE:
                 if not ProjectAssignment.objects.filter(

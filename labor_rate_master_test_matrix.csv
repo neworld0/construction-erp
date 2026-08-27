@@ -1,0 +1,7 @@
+command,result,coverage
+python manage.py seed_labor_rates --dry-run,PASS,다섯 기본 DAY 단가 생성 대상 확인
+python manage.py check,PASS,Django system check
+python manage.py makemigrations --check --dry-run,PASS,No migration changes
+pytest combined LABPAY regression suite,PASS,97 passed before legacy-equivalent seed extension
+python manage.py seed_labor_rates,PASS,기존 보통인부 포장공 역할을 포함한 7개 단가 행 확인
+python scripts/local_ops_labor_rate_diagnostic.py,PASS,출역부 3번 두 행 RATE_RESOLVED 확인

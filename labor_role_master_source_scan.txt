@@ -1,0 +1,8 @@
+Scope: apps/labor/forms.py; apps/labor/role_master.py; apps/labor/management/commands/seed_labor_roles.py; apps/labor/tests/test_labor_role_master_dropdown.py; scripts/local_ops_labor_role_diagnostic.py
+Korean mojibake: none
+Replacement character: none
+Raw PII or secrets: none
+Migration files added: none
+Duplicate code creation risk: none; LaborRole.code is unique and the seed uses get_or_create by code
+Note: the test contains the literal "???" only to assert that the rendered response has no mojibake.
+OVERALL_SOURCE_SCAN_PASS: True
